@@ -6,6 +6,12 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# OS / editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -128,6 +134,36 @@ dist
 # pnpm
 .pnpm-store
 
+# Local configuration and agent tooling
+.config/
+.aws/
+.codex/
+.agents/
+.claude/
+.cursor/
+.windsurf/
+.continue/
+.vercel/
+.netlify/
+.mcp.json
+.mcp.local.json
+.cursorrules
+.cursorignore
+.windsurfrules
+.aider*
+AGENTS.md
+AGENTS.override.md
+CLAUDE.md
+GEMINI.md
+CODEX.md
+.graphifyignore
+
+# Local agent context and handoff
+/docs/README.md
+/docs/resources/IS216_Bookedz_Codex_Project_Handoff.md
+/docs/resources/README.md
+/docs/superpowers/
+
 # yarn v3
 .pnp.*
 .yarn/*
@@ -141,3 +177,32 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Local Restricted course documents and derived knowledge graph
+/docs/resources/project/
+/graphify-out/
+_test/src/App.vue
+_test/src/main.js
+_test/src/assets/main.css
+_test/src/components/AddressSearch.vue
+_test/src/components/ClashWarning.vue
+_test/src/components/EventSummary.vue
+_test/src/components/NavBar.vue
+_test/src/components/OfferBanner.vue
+_test/src/components/RsvpStatusBadge.vue
+_test/src/components/RsvpTable.vue
+_test/src/components/StepIndicator.vue
+_test/src/components/WaitlistTable.vue
+_test/src/router/index.js
+_test/src/stores/counter.js
+_test/src/utils/api.js
+_test/src/utils/helpers.js
+_test/src/utils/mockData.js
+_test/src/utils/waitlistScore.js
+_test/src/utils/__tests__/waitlistScore.spec.js
+_test/src/views/CreateEventView.vue
+_test/src/views/EventsPlaceholderView.vue
+_test/src/views/ManageRsvpsView.vue
+_test/src/views/MyRsvpsView.vue
+_test/src/views/OrganiserEventsView.vue
+_test/src/views/RsvpView.vue

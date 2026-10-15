@@ -1,0 +1,10 @@
+/* Small app-wide tweaks. Huxley owns the shared theme, so keep this file light. */
+
+body {
+  background-color: #f5f6fa;
+}
+
+/* Keeps long descriptions' line breaks (what the organiser typed) */
+.keep-line-breaks {
+  white-space: pre-line;
+}
