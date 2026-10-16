@@ -1,35 +1,19 @@
-// ALL data calls for Feature 2 live in this one file.
+// MOCK BACKEND: every function works on placeholder data saved in localStorage,
+// so the pages can be clicked through with no database at all.
 //
-// Right now every function works on placeholder data saved in localStorage (Week 6),
-// so the pages can be clicked through before the backend exists. Each function is
-// `async`, so pages already call it the WAD2 way:
-//
-//     try {
-//       event.value = await getEvent(id)
-//     } catch (error) {
-//       errorMessage.value = error.message
-//     }
-//
-// When Timothy's backend (Supabase + Express) is ready, ONLY this file changes: swap each
-// function's body for the axios call in its comment. The pages stay the same.
+// supabaseApi.js has the SAME functions returning the SAME shapes, backed by the real
+// database. api.js picks one of the two — pages never import this file directly.
+// If you change what a function returns here, change supabaseApi.js to match.
 
 import { createSeedData } from './mockData.js'
 import { calculateWaitlistScore } from './waitlistScore.js'
-// import axios from 'axios'
-// const BASE_URL = 'http://localhost:3000/api'   // TODO: Timothy's Express server
+import { OFFER_HOURS, ACTIVE_STATUSES } from './helpers.js'
 
-// Who is "logged in" for the demo. TODO: replace with the Supabase Auth user.
-export const CURRENT_USER_ID = 'u1'
-export const CURRENT_ORGANISER_ID = 'org1'
-
-export const OFFER_HOURS = 24
-
-// RSVPs that still hold or want a place at the event
-export const ACTIVE_STATUSES = ['pending', 'confirmed', 'waitlisted', 'offered']
-// RSVPs that count as "you've joined" for the clash warning
-export const JOINED_STATUSES = ['pending', 'confirmed', 'offered']
-// RSVPs that are over
-export const CLOSED_STATUSES = ['rejected', 'cancelled', 'declined', 'expired']
+// Who is "logged in" for the demo. In Supabase mode this comes from the login session instead.
+// Alex (u1) is the participant and the Demo Club (org1) is the organiser, so one person can
+// click through both sides without switching accounts.
+const CURRENT_USER_ID = 'u1'
+const CURRENT_ORGANISER_ID = 'org1'
 
 // ---------------------------------------------------------------------------
 // Placeholder "database" kept in localStorage
@@ -98,6 +82,7 @@ function withCounts(db, event) {
   const count = (status) => rsvps.filter((r) => r.status === status).length
   return {
     ...event,
+    isMine: event.organiserId === CURRENT_ORGANISER_ID, // can the logged-in person manage it?
     confirmedCount: count('confirmed'),
     offeredCount: count('offered'),
     pendingCount: count('pending'),
@@ -172,11 +157,35 @@ function loadFreshDb() {
 }
 
 // ---------------------------------------------------------------------------
+// Sign-in (pretend): in mock mode Alex is always logged in
+// ---------------------------------------------------------------------------
+
+export async function getCurrentUser() {
+  const db = loadDb()
+  const user = findUser(db, CURRENT_USER_ID)
+  return { id: user.id, email: user.email }
+}
+
+export async function signIn() {
+  throw new Error('Sign-in needs Supabase. Add your keys to client/.env (see .env.example).')
+}
+
+export async function signUp() {
+  throw new Error('Sign-up needs Supabase. Add your keys to client/.env (see .env.example).')
+}
+
+export async function signOut() {}
+
+// Nothing ever changes who is logged in, so there is nothing to listen for
+export function onAuthChange() {
+  return () => {}
+}
+
+// ---------------------------------------------------------------------------
 // Events
 // ---------------------------------------------------------------------------
 
 export async function getEvents() {
-  // Later: const response = await axios.get(BASE_URL + '/events'); return response.data
   await fakeDelay()
   const db = loadFreshDb()
   return db.events
@@ -185,24 +194,22 @@ export async function getEvents() {
 }
 
 export async function getEvent(eventId) {
-  // Later: const response = await axios.get(BASE_URL + '/events/' + eventId); return response.data
   await fakeDelay()
   const db = loadFreshDb()
   return withCounts(db, findEvent(db, eventId))
 }
 
-export async function getOrganiserEvents(organiserId) {
-  // Later: axios.get(BASE_URL + '/events', { params: { organiserId: organiserId } })
+// Events the logged-in organiser runs
+export async function getOrganiserEvents() {
   await fakeDelay()
   const db = loadFreshDb()
   return db.events
-    .filter((e) => e.organiserId === organiserId)
+    .filter((e) => e.organiserId === CURRENT_ORGANISER_ID)
     .map((e) => withCounts(db, e))
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
 }
 
 export async function createEvent(eventData) {
-  // Later: const response = await axios.post(BASE_URL + '/events', eventData); return response.data
   await fakeDelay()
   const db = loadFreshDb()
   const event = {
@@ -221,32 +228,32 @@ export async function createEvent(eventData) {
 // Users
 // ---------------------------------------------------------------------------
 
-export async function getUser(userId) {
-  // Later: Supabase profile of the signed-in user
+// The logged-in participant's profile: { id, name, email, interests }
+export async function getUser() {
   await fakeDelay()
   const db = loadDb()
-  return findUser(db, userId)
+  return findUser(db, CURRENT_USER_ID)
 }
 
 // ---------------------------------------------------------------------------
 // RSVPs — participant side
 // ---------------------------------------------------------------------------
 
-export async function getMyRsvps(userId) {
-  // Later: axios.get(BASE_URL + '/rsvps', { params: { userId: userId } })
+// The logged-in participant's RSVPs, each with its event attached
+export async function getMyRsvps() {
   await fakeDelay()
   const db = loadFreshDb()
   return db.rsvps
-    .filter((r) => r.userId === userId)
+    .filter((r) => r.userId === CURRENT_USER_ID)
     .map((r) => ({ ...r, event: withCounts(db, findEvent(db, r.eventId)) }))
     .sort((a, b) => new Date(a.event.startTime) - new Date(b.event.startTime))
 }
 
-export async function createRsvp({ eventId, userId, name, email, answers }) {
-  // Later: axios.post(BASE_URL + '/rsvps', { eventId, userId, name, email, answers })
+export async function createRsvp({ eventId, name, email, answers }) {
   await fakeDelay()
   const db = loadFreshDb()
   const event = findEvent(db, eventId)
+  const userId = CURRENT_USER_ID
 
   const alreadyIn = db.rsvps.some(
     (r) => r.eventId === eventId && r.userId === userId && ACTIVE_STATUSES.includes(r.status),
@@ -276,7 +283,6 @@ export async function createRsvp({ eventId, userId, name, email, answers }) {
 }
 
 export async function cancelRsvp(rsvpId) {
-  // Later: axios.put(BASE_URL + '/rsvps/' + rsvpId, { status: 'cancelled' })
   await fakeDelay()
   const db = loadFreshDb()
   const rsvp = findRsvp(db, rsvpId)
@@ -294,7 +300,6 @@ export async function cancelRsvp(rsvpId) {
 
 // accept = true → take the spot; accept = false → pass it to the next person
 export async function respondToOffer(rsvpId, accept) {
-  // Later: axios.post(BASE_URL + '/rsvps/' + rsvpId + '/offer', { accept: accept })
   await fakeDelay()
   const db = loadFreshDb() // expires old offers first, so a late "yes" is refused
   const rsvp = findRsvp(db, rsvpId)
@@ -317,7 +322,6 @@ export async function respondToOffer(rsvpId, accept) {
 
 // Every RSVP for one event, with the person's details, member flag, score and waitlist rank
 export async function getRsvpsForEvent(eventId) {
-  // Later: axios.get(BASE_URL + '/events/' + eventId + '/rsvps')
   await fakeDelay()
   const db = loadFreshDb()
   const event = findEvent(db, eventId)
@@ -338,7 +342,6 @@ export async function getRsvpsForEvent(eventId) {
 }
 
 export async function approveRsvp(rsvpId) {
-  // Later: axios.post(BASE_URL + '/rsvps/' + rsvpId + '/approve')
   await fakeDelay()
   const db = loadFreshDb()
   const rsvp = findRsvp(db, rsvpId)
@@ -351,7 +354,6 @@ export async function approveRsvp(rsvpId) {
 }
 
 export async function rejectRsvp(rsvpId) {
-  // Later: axios.post(BASE_URL + '/rsvps/' + rsvpId + '/reject')
   await fakeDelay()
   const db = loadFreshDb()
   const rsvp = findRsvp(db, rsvpId)
@@ -363,7 +365,6 @@ export async function rejectRsvp(rsvpId) {
 }
 
 export async function setMember(organiserId, userId, makeMember) {
-  // Later: makeMember ? axios.post(BASE_URL + '/members', {...}) : axios.delete(BASE_URL + '/members', { data: {...} })
   await fakeDelay()
   const db = loadDb()
   db.members = db.members.filter((m) => !(m.organiserId === organiserId && m.userId === userId))

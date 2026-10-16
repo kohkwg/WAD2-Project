@@ -9,7 +9,6 @@ import {
   getUser,
   getMyRsvps,
   createRsvp,
-  CURRENT_USER_ID,
   ACTIVE_STATUSES,
   JOINED_STATUSES,
 } from '../utils/api.js'
@@ -33,8 +32,8 @@ const result = ref(null) // the RSVP we get back after submitting
 onMounted(async () => {
   try {
     event.value = await getEvent(eventId)
-    const user = await getUser(CURRENT_USER_ID)
-    myRsvps.value = await getMyRsvps(CURRENT_USER_ID)
+    const user = await getUser() // whoever is signed in
+    myRsvps.value = await getMyRsvps()
 
     // Automation: fill in details from the participant's profile
     name.value = user.name
@@ -96,7 +95,6 @@ async function submitRsvp() {
   try {
     result.value = await createRsvp({
       eventId: eventId,
-      userId: CURRENT_USER_ID,
       name: name.value.trim(),
       email: email.value.trim(),
       answers: answers.value,

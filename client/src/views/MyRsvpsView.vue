@@ -3,13 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import OfferBanner from '../components/OfferBanner.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
-import {
-  getMyRsvps,
-  cancelRsvp,
-  respondToOffer,
-  CURRENT_USER_ID,
-  CLOSED_STATUSES,
-} from '../utils/api.js'
+import { getMyRsvps, cancelRsvp, respondToOffer, CLOSED_STATUSES } from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
 
 const rsvps = ref([])
@@ -25,7 +19,7 @@ const now = ref(Date.now())
 let timer = null
 
 async function loadRsvps() {
-  rsvps.value = await getMyRsvps(CURRENT_USER_ID)
+  rsvps.value = await getMyRsvps()
 }
 
 onMounted(async () => {

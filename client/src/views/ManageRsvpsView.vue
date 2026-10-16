@@ -11,7 +11,6 @@ import {
   rejectRsvp,
   setMember,
   expireOffersNow,
-  CURRENT_ORGANISER_ID,
   CLOSED_STATUSES,
 } from '../utils/api.js'
 import { formatEventTime, formatShortDateTime } from '../utils/helpers.js'
@@ -54,8 +53,9 @@ onUnmounted(() => {
   clearInterval(timer) // stop the timer when we leave the page
 })
 
-// TODO (Timothy - row-level security): the database should also block other organisers
-const isMyEvent = computed(() => event.value && event.value.organiserId === CURRENT_ORGANISER_ID)
+// Only hides the page. The real protection is in the database: with Supabase, RLS and the
+// SQL functions refuse other people's events even if someone skips this check.
+const isMyEvent = computed(() => event.value && event.value.isMine)
 
 // ---------- Split RSVPs into the tabs ----------
 

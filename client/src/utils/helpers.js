@@ -1,5 +1,17 @@
 // Small helper functions shared by several pages.
 
+// ---------- RSVP rules (used by the pages AND by both backends: mockApi + supabaseApi) ----------
+
+// How long someone has to accept a waitlist offer
+export const OFFER_HOURS = 24
+
+// RSVPs that still hold or want a place at the event
+export const ACTIVE_STATUSES = ['pending', 'confirmed', 'waitlisted', 'offered']
+// RSVPs that count as "you've joined" for the clash warning
+export const JOINED_STATUSES = ['pending', 'confirmed', 'offered']
+// RSVPs that are over
+export const CLOSED_STATUSES = ['rejected', 'cancelled', 'declined', 'expired']
+
 // ---------- Dates and times ----------
 
 // "Sat, 18 Oct, 7:00 pm – 10:00 pm"

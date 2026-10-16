@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { getOrganiserEvents, CURRENT_ORGANISER_ID } from '../utils/api.js'
+import { getOrganiserEvents } from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
 
 // The organiser's list of events. (This may later merge into Denzel's organiser dashboard.)
@@ -17,7 +17,7 @@ const justCreatedId = computed(() => route.query.created)
 
 onMounted(async () => {
   try {
-    events.value = await getOrganiserEvents(CURRENT_ORGANISER_ID)
+    events.value = await getOrganiserEvents() // the signed-in organiser's events
   } catch (error) {
     errorMessage.value = 'Could not load your events: ' + error.message
   } finally {

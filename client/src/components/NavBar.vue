@@ -1,6 +1,26 @@
 <script setup>
-import { RouterLink } from 'vue-router'
-import { resetDemoData } from '../utils/api.js'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { USING_SUPABASE, getCurrentUser, onAuthChange, signOut, resetDemoData } from '../utils/api.js'
+
+const router = useRouter()
+const user = ref(null) // { id, email } of whoever is signed in
+let stopListening = () => {}
+
+onMounted(async () => {
+  user.value = await getCurrentUser()
+  // Keep the navbar up to date when they sign in or out
+  stopListening = onAuthChange((newUser) => {
+    user.value = newUser
+  })
+})
+
+onUnmounted(() => stopListening())
+
+async function logOut() {
+  await signOut()
+  router.push('/login')
+}
 
 function resetDemo() {
   resetDemoData()
@@ -51,9 +71,23 @@ function resetDemo() {
           </li>
         </ul>
 
-        <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetDemo">
-          Reset demo data
-        </button>
+        <!-- Supabase: real accounts -->
+        <div v-if="USING_SUPABASE && user" class="d-flex align-items-center gap-2">
+          <span class="small text-secondary">{{ user.email }}</span>
+          <button type="button" class="btn btn-outline-secondary btn-sm" @click="logOut">
+            Sign out
+          </button>
+        </div>
+
+        <!-- Mock: demo data in this browser -->
+        <div v-else-if="!USING_SUPABASE" class="d-flex align-items-center gap-2">
+          <span class="badge text-bg-warning" title="Add Supabase keys to client/.env to use the real database">
+            Mock data
+          </span>
+          <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetDemo">
+            Reset demo data
+          </button>
+        </div>
       </div>
     </div>
   </nav>
