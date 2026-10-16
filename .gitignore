@@ -28,6 +28,10 @@ lib-cov
 coverage
 *.lcov
 
+# Playwright test output
+/client/playwright-report/
+/client/test-results/
+
 # nyc test coverage
 .nyc_output
 
@@ -151,15 +155,16 @@ dist
 .cursorignore
 .windsurfrules
 .aider*
-AGENTS.md
+# Share the root AGENTS.md; machine-specific additions remain local.
+AGENTS.local.md
 AGENTS.override.md
 CLAUDE.md
 GEMINI.md
 CODEX.md
 .graphifyignore
 
-# Local agent context and handoff
-/docs/README.md
+# Private reference material and planning; public handoffs live directly in docs/.
+/docs/local/
 /docs/resources/IS216_Bookedz_Codex_Project_Handoff.md
 /docs/resources/README.md
 /docs/superpowers/

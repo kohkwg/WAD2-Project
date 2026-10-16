@@ -18,7 +18,7 @@ function percent(value) {
 
 <template>
   <!-- People who have been offered a spot and are deciding -->
-  <h6 class="mt-3">Offers waiting for a reply</h6>
+  <h2 class="h6 mt-3">Offers waiting for a reply</h2>
   <p v-if="offers.length === 0" class="text-secondary small">No open offers.</p>
   <ul v-else class="list-group mb-4">
     <li
@@ -37,7 +37,7 @@ function percent(value) {
   </ul>
 
   <!-- The ranked waitlist -->
-  <h6>Waitlist (highest score gets the next spot)</h6>
+  <h2 class="h6">Waitlist (highest score gets the next spot)</h2>
   <p class="small text-secondary mb-2">
     Score = {{ WEIGHTS.member }} × member + {{ WEIGHTS.interest }} × interest match +
     {{ WEIGHTS.showUp }} × show-up rate. Recent events count more; late cancellations lower the
@@ -67,7 +67,7 @@ function percent(value) {
           <td>
             <div class="small fw-semibold">{{ rsvp.score.total.toFixed(2) }}</div>
             <div class="progress" style="height: 6px">
-              <div class="progress-bar" :style="{ width: percent(rsvp.score.total) }"></div>
+              <div class="progress-bar" aria-hidden="true" :style="{ width: percent(rsvp.score.total) }"></div>
             </div>
           </td>
           <td class="small">

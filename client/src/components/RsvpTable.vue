@@ -24,6 +24,7 @@ function formatAnswer(question, answer) {
 
   <div v-else class="table-responsive">
     <table class="table align-middle">
+      <caption class="visually-hidden">RSVPs</caption>
       <thead class="table-light">
         <tr>
           <th scope="col">Name</th>

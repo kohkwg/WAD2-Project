@@ -135,6 +135,23 @@ export function createSeedData() {
 
   const events = [
     {
+      id: 'e-weather-demo',
+      organiserId: 'org1',
+      title: 'Campus Green Social · Weather demo',
+      description: 'A near-start demo event for checking real two-hour forecasts and the backup venue workflow. Weather readings come from data.gov.sg.',
+      tags: ['music', 'tech'],
+      startTime: hoursFromNow(0.5),
+      endTime: hoursFromNow(2),
+      capacity: 30,
+      requiresApproval: false,
+      isOutdoor: true,
+      venue: { ...smuGreen },
+      backupVenue: { ...smuAdmin },
+      questions: [],
+      status: 'published',
+      createdAt: daysAgo(1),
+    },
+    {
       id: 'e1',
       organiserId: 'org1',
       title: 'Acoustic Night @ Campus Green',

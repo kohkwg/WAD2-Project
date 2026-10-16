@@ -12,7 +12,9 @@ const events = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
 
-onMounted(async () => {
+async function loadEvents() {
+  loading.value = true
+  errorMessage.value = ''
   try {
     events.value = await getEvents()
   } catch (error) {
@@ -20,24 +22,29 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+onMounted(loadEvents)
 </script>
 
 <template>
   <h1 class="h3">Events</h1>
   <p class="text-secondary small">Placeholder list (Aishani's discovery page goes here).</p>
 
-  <div v-if="loading" class="text-center my-5">
-    <div class="spinner-border text-primary" role="status"></div>
+  <div v-if="loading" class="text-center my-5" role="status" aria-live="polite">
+    <div class="spinner-border text-primary" aria-hidden="true"></div>
+    <span class="visually-hidden">Loading events…</span>
   </div>
 
-  <div v-else-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+  <div v-else-if="errorMessage" class="alert alert-danger" role="alert">
+    {{ errorMessage }}
+    <button type="button" class="btn btn-sm btn-outline-danger ms-2" @click="loadEvents">Retry loading events</button>
+  </div>
 
   <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
     <div class="col" v-for="event in events" :key="event.id">
       <div class="card h-100 shadow-sm">
         <div class="card-body">
-          <h5 class="card-title">{{ event.title }}</h5>
+          <h2 class="h5 card-title">{{ event.title }}</h2>
           <p class="small text-secondary mb-2">{{ formatEventTime(event) }}</p>
           <p class="small mb-2">{{ event.venue.name }}</p>
           <span v-for="tag in event.tags" :key="tag" class="badge text-bg-light border me-1">

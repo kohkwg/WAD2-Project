@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import StepIndicator from '../components/StepIndicator.vue'
 import AddressSearch from '../components/AddressSearch.vue'
@@ -53,16 +53,19 @@ function addTag(tag) {
 // ---------- Checking each step before moving on ----------
 
 const stepErrors = computed(() => {
-  const f = form.value
+  return errorsForStep(form.value, step.value)
+})
+
+function errorsForStep(f, stepNumber, now = new Date()) {
   const errors = []
 
-  if (step.value === 1) {
+  if (stepNumber === 1) {
     if (f.title.trim() === '') errors.push('Give your event a title.')
     if (f.startTime === '' || f.endTime === '') {
       errors.push('Set a start and end time.')
     } else if (new Date(f.endTime) <= new Date(f.startTime)) {
       errors.push('The end time must be after the start time.')
-    } else if (new Date(f.startTime) < new Date()) {
+    } else if (new Date(f.startTime) < now) {
       errors.push('The start time cannot be in the past.')
     }
     if (!Number.isInteger(f.capacity) || f.capacity < 1) {
@@ -73,7 +76,7 @@ const stepErrors = computed(() => {
     }
   }
 
-  if (step.value === 2) {
+  if (stepNumber === 2) {
     if (!f.venue) errors.push('Choose the venue from the address search.')
     if (f.isOutdoor && !f.backupVenue) {
       errors.push('Outdoor events need a backup venue in case of rain.')
@@ -81,20 +84,41 @@ const stepErrors = computed(() => {
   }
 
   return errors
-})
+}
+
+async function focusStep() {
+  await nextTick()
+  let targetId = 'step-content-heading'
+  if (step.value === 1) {
+    const f = form.value
+    if (!f.title.trim()) targetId = 'title'
+    else if (!f.startTime) targetId = 'start'
+    else if (!f.endTime || new Date(f.endTime) <= new Date(f.startTime)) targetId = 'end'
+    else if (new Date(f.startTime) < new Date()) targetId = 'start'
+    else if (!Number.isInteger(f.capacity) || f.capacity < 1) targetId = 'capacity'
+    else if (f.tags.length === 0) targetId = 'tag-music'
+  } else if (step.value === 2) {
+    targetId = form.value.venue ? 'step-content-heading' : 'venue-search'
+    if (form.value.isOutdoor && !form.value.backupVenue) targetId = 'backup-search'
+  }
+  document.getElementById(targetId)?.focus()
+}
 
 function nextStep() {
   if (stepErrors.value.length > 0) {
     showErrors.value = true
+    focusStep()
     return
   }
   showErrors.value = false
   step.value++
+  focusStep()
 }
 
 function previousStep() {
   showErrors.value = false
   step.value--
+  focusStep()
 }
 
 // ---------- Step 2: venue ----------
@@ -127,6 +151,13 @@ function removeQuestion(index) {
 // ---------- Step 4: publish ----------
 
 async function publish() {
+  const invalidStep = [1, 2].find((stepNumber) => errorsForStep(form.value, stepNumber).length > 0)
+  if (invalidStep) {
+    step.value = invalidStep
+    showErrors.value = true
+    await focusStep()
+    return
+  }
   publishing.value = true
   errorMessage.value = ''
   try {
@@ -156,12 +187,15 @@ async function publish() {
     <div class="card shadow-sm">
       <div class="card-body p-4">
         <!-- ================= STEP 1: BASICS ================= -->
-        <div v-if="step === 1">
+        <div v-if="step === 1" aria-labelledby="step-content-heading">
+          <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">Basics</h2>
           <div class="mb-3">
             <label for="title" class="form-label">Event title</label>
             <input
               id="title"
               class="form-control"
+              :aria-describedby="showErrors && stepErrors.length ? 'validation-error-list' : undefined"
+              :aria-invalid="showErrors && stepErrors.some((error) => error.includes('title')) || undefined"
               v-model="form.title"
               placeholder="e.g. Acoustic Night at the Campus Green"
             />
@@ -185,6 +219,8 @@ async function publish() {
                 id="start"
                 type="datetime-local"
                 class="form-control"
+                :aria-describedby="showErrors && stepErrors.length ? 'validation-error-list' : undefined"
+                :aria-invalid="showErrors && stepErrors.some((error) => error.includes('time')) || undefined"
                 v-model="form.startTime"
                 :min="nowForInput"
               />
@@ -195,6 +231,7 @@ async function publish() {
                 id="end"
                 type="datetime-local"
                 class="form-control"
+                :aria-describedby="showErrors && stepErrors.length ? 'validation-error-list' : undefined"
                 v-model="form.endTime"
                 :min="form.startTime || nowForInput"
               />
@@ -209,6 +246,7 @@ async function publish() {
                 type="number"
                 min="1"
                 class="form-control"
+                :aria-describedby="showErrors && stepErrors.length ? 'validation-error-list' : undefined"
                 v-model.number="form.capacity"
               />
               <div class="form-text">When it's full, new RSVPs join the waitlist.</div>
@@ -247,7 +285,8 @@ async function publish() {
         </div>
 
         <!-- ================= STEP 2: VENUE ================= -->
-        <div v-else-if="step === 2">
+        <div v-else-if="step === 2" aria-labelledby="step-content-heading">
+          <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">Venue</h2>
           <h5>Main venue</h5>
           <div v-if="form.venue" class="border rounded p-3 mb-3 bg-light">
             <div class="fw-semibold">{{ form.venue.name }}</div>
@@ -304,7 +343,8 @@ async function publish() {
         </div>
 
         <!-- ================= STEP 3: RSVP QUESTIONS ================= -->
-        <div v-else-if="step === 3">
+        <div v-else-if="step === 3" aria-labelledby="step-content-heading">
+          <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">RSVP questions</h2>
           <div class="form-check form-switch mb-4">
             <input
               class="form-check-input"
@@ -393,7 +433,8 @@ async function publish() {
         </div>
 
         <!-- ================= STEP 4: REVIEW ================= -->
-        <div v-else>
+        <div v-else aria-labelledby="step-content-heading">
+          <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">Review</h2>
           <p class="text-secondary">
             Check everything before publishing. Use Back to change anything; nothing is lost.
           </p>
@@ -420,12 +461,13 @@ async function publish() {
         </div>
 
         <!-- Errors for the current step -->
-        <div v-if="showErrors && stepErrors.length > 0" class="alert alert-danger mt-4 mb-0">
-          <ul class="mb-0">
+        <div v-if="showErrors && stepErrors.length > 0" class="alert alert-danger mt-4 mb-0" role="alert" aria-labelledby="validation-summary-heading">
+          <h3 id="validation-summary-heading" class="h6">Fix these items before continuing</h3>
+          <ul id="validation-error-list" class="mb-0">
             <li v-for="error in stepErrors" :key="error">{{ error }}</li>
           </ul>
         </div>
-        <div v-if="errorMessage" class="alert alert-danger mt-4 mb-0">{{ errorMessage }}</div>
+        <div v-if="errorMessage" class="alert alert-danger mt-4 mb-0" role="alert">{{ errorMessage }}</div>
       </div>
 
       <!-- Back / Next / Publish -->

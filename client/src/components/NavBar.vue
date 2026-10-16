@@ -1,33 +1,36 @@
 <script setup>
-import { RouterLink } from 'vue-router'
+import { ref, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import { resetDemoData } from '../utils/api.js'
 
+const route = useRoute()
+const menuOpen = ref(false)
+watch(() => route.fullPath, () => { menuOpen.value = false })
+
 function resetDemo() {
+  if (!window.confirm('Reset demo data? This removes saved events, RSVPs and organiser work in this browser.')) return
   resetDemoData()
   window.location.reload() // reload so every page reads the fresh demo data
 }
 </script>
 
 <template>
-  <!-- Placeholder navbar so the Feature 2 pages can be reached. Swap for the team's shared one. -->
-  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+  <nav class="navbar navbar-expand-lg app-navbar" aria-label="Main navigation">
     <div class="container">
       <RouterLink class="navbar-brand fw-bold text-primary" to="/events">Bookedz</RouterLink>
 
-      <!-- Hamburger button on small screens; data-bs-target must match the id below -->
       <button
         class="navbar-toggler"
         type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#mainNav"
         aria-controls="mainNav"
-        aria-expanded="false"
+        :aria-expanded="menuOpen"
         aria-label="Toggle navigation"
+        @click="menuOpen = !menuOpen"
       >
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <div class="collapse navbar-collapse" id="mainNav">
+      <div class="collapse navbar-collapse" :class="{ show: menuOpen }" id="mainNav">
         <!-- active-class="active": Bootstrap highlights the link of the page you are on -->
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
@@ -37,10 +40,10 @@ function resetDemo() {
             <RouterLink class="nav-link" active-class="active" to="/my-rsvps">My RSVPs</RouterLink>
           </li>
           <li class="nav-item ms-lg-4">
-            <span class="nav-link text-uppercase small fw-semibold text-secondary">Organiser</span>
+            <span class="nav-section-label">Organiser</span>
           </li>
           <li class="nav-item">
-            <RouterLink class="nav-link" active-class="active" to="/organiser/events">
+            <RouterLink class="nav-link" active-class="" :class="{ active: route.path.startsWith('/organiser/events') && route.path !== '/organiser/events/new' }" to="/organiser/events">
               My events
             </RouterLink>
           </li>

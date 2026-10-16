@@ -21,7 +21,7 @@ const isExpired = computed(() => timeLeft.value === 'expired')
     :class="isExpired ? 'alert-secondary' : 'alert-warning'"
   >
     <div>
-      <div class="fw-semibold">A spot opened up for {{ rsvp.event.title }}</div>
+      <h2 class="h6 fw-semibold mb-0">A spot opened up for {{ rsvp.event.title }}</h2>
       <div class="small">{{ formatEventTime(rsvp.event) }}</div>
       <div v-if="!isExpired" class="small mt-1">
         Time left to confirm: <strong>{{ timeLeft }}</strong>

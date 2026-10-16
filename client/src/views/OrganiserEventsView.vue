@@ -15,7 +15,9 @@ const errorMessage = ref('')
 // After publishing, Create Event sends us here as /organiser/events?created=<id>
 const justCreatedId = computed(() => route.query.created)
 
-onMounted(async () => {
+async function loadEvents() {
+  loading.value = true
+  errorMessage.value = ''
   try {
     events.value = await getOrganiserEvents(CURRENT_ORGANISER_ID)
   } catch (error) {
@@ -23,10 +25,11 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+onMounted(loadEvents)
 
 function fillPercent(event) {
-  return Math.round(((event.confirmedCount + event.offeredCount) / event.capacity) * 100)
+  return Math.min(100, Math.round(((event.confirmedCount + event.offeredCount) / event.capacity) * 100))
 }
 </script>
 
@@ -40,11 +43,15 @@ function fillPercent(event) {
     Event published. Participants can now find it and RSVP.
   </div>
 
-  <div v-if="loading" class="text-center my-5">
-    <div class="spinner-border text-primary" role="status"></div>
+  <div v-if="loading" class="text-center my-5" role="status" aria-live="polite">
+    <div class="spinner-border text-primary" aria-hidden="true"></div>
+    <span class="visually-hidden">Loading your events…</span>
   </div>
 
-  <div v-else-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+  <div v-else-if="errorMessage" class="alert alert-danger" role="alert">
+    {{ errorMessage }}
+    <button type="button" class="btn btn-sm btn-outline-danger ms-2" @click="loadEvents">Retry loading events</button>
+  </div>
 
   <div v-else-if="events.length === 0" class="card card-body text-center text-secondary">
     You haven't created any events yet.
@@ -54,16 +61,15 @@ function fillPercent(event) {
     <div class="col" v-for="event in events" :key="event.id">
       <div class="card h-100 shadow-sm" :class="{ 'border-success': event.id === justCreatedId }">
         <div class="card-body">
-          <h5 class="card-title mb-1">{{ event.title }}</h5>
+          <h2 class="h5 card-title mb-1">{{ event.title }}</h2>
           <p class="small text-secondary mb-3">
             {{ formatEventTime(event) }} · {{ event.venue.name }}
           </p>
 
           <div class="d-flex justify-content-between small mb-1">
-            <span>{{ event.confirmedCount }} confirmed of {{ event.capacity }}</span>
-            <span v-if="event.offeredCount > 0">{{ event.offeredCount }} offer(s) out</span>
+            <span>{{ event.confirmedCount }} confirmed + {{ event.offeredCount }} offers out of {{ event.capacity }} seats</span>
           </div>
-          <div class="progress mb-3" style="height: 8px">
+          <div class="progress mb-3" style="height: 8px" aria-hidden="true">
             <div class="progress-bar bg-success" :style="{ width: fillPercent(event) + '%' }"></div>
           </div>
 
@@ -74,7 +80,8 @@ function fillPercent(event) {
             {{ event.waitlistCount }} on waitlist
           </span>
         </div>
-        <div class="card-footer bg-white d-flex gap-2">
+        <div class="card-footer bg-white d-flex flex-wrap gap-2">
+          <RouterLink :to="'/organiser/events/' + event.id + '/manage?tab=tasks'" class="btn btn-primary btn-sm">Manage event</RouterLink>
           <RouterLink
             :to="'/organiser/events/' + event.id + '/rsvps'"
             class="btn btn-outline-primary btn-sm"

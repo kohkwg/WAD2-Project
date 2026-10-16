@@ -21,11 +21,11 @@ function badgeClass(stepNumber) {
   <div class="mb-4">
     <ol class="list-unstyled d-flex flex-wrap gap-3 mb-2">
       <li v-for="(label, index) in steps" :key="label" class="d-flex align-items-center">
-        <span class="badge rounded-pill me-2" :class="badgeClass(index + 1)">{{ index + 1 }}</span>
+        <span class="badge rounded-pill me-2" :class="badgeClass(index + 1)" :aria-current="index + 1 === current ? 'step' : undefined">{{ index + 1 }}</span>
         <span :class="index + 1 === current ? 'fw-semibold' : 'text-secondary'">{{ label }}</span>
       </li>
     </ol>
-    <div class="progress" style="height: 6px">
+    <div class="progress" style="height: 6px" role="progressbar" :aria-label="'Creation step: ' + current + ' of ' + steps.length" :aria-valuenow="current" :aria-valuemin="1" :aria-valuemax="steps.length">
       <div class="progress-bar" :style="{ width: percentDone + '%' }"></div>
     </div>
   </div>

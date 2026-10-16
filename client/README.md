@@ -1,16 +1,30 @@
-# Bookedz Client
+# Bookedz client
 
-Vue 3, Vite, Bootstrap, and JavaScript. Run from this directory:
+Vue 3, Vite, Bootstrap 5 and JavaScript. From this directory:
 
 ```sh
-pnpm install
+pnpm install --frozen-lockfile --ignore-scripts
 pnpm dev
+pnpm build
 ```
 
-The dev server uses `http://127.0.0.1:5173`. Use `pnpm build` for a production
-build. Existing event/RSVP views use localStorage demo data. The supplied Supabase
-initializer is available for later integration; it is not used by those views.
+Open [My events](http://127.0.0.1:5173/organiser/events), then **Manage event** for
+Feature 4. The demo uses localStorage and fixed identities; Supabase auth/cloud
+persistence are deferred. Express is optional. Reset demo data asks for
+confirmation before discarding local changes and reseeding relative event dates.
 
-For live integration, copy `.env.example` to `.env` and obtain the URL/publishable
-key from the team. Never put server secrets in `VITE_` variables. Automated tests
-and lint scripts are not configured yet.
+```sh
+pnpm test:unit
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
+
+Install Chromium once. Browser tests start/reuse Vite and isolate demo data.
+The separate waitlist Vitest spec is unconfigured and excluded; no lint script exists.
+
+See the [current Feature 4 guide](../docs/feature4.md) for behaviour/API contracts,
+[verification](../docs/testing.md) for results and limitations, and
+[teammate handoffs](../docs/iteration2-teammate-handoff.md) for integration.
+Live integration uses `.env.example` with team-supplied values; server secrets must
+never use `VITE_` names. AI authorship and library attribution are in the
+[root README](../README.md#ai-assistance-disclosure).

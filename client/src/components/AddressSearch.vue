@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import axios from 'axios'
 
 // Type an address → OneMap suggests matches → click one → we send it (with coordinates) to the parent.
@@ -17,45 +17,61 @@ const loading = ref(false)
 const errorMessage = ref('')
 
 let timer = null
+let requestId = 0
 
 // Runs on every keystroke, but waits until the user pauses for 0.4s before asking OneMap,
 // so typing "victoria street" sends 1 request instead of 15.
 function onType() {
   clearTimeout(timer)
+  requestId++
   errorMessage.value = ''
+  loading.value = false
+  results.value = []
   if (query.value.trim().length < 3) {
-    results.value = []
     return
   }
-  timer = setTimeout(searchOneMap, 400)
+  const currentRequestId = requestId
+  timer = setTimeout(() => searchOneMap(currentRequestId, query.value.trim()), 400)
 }
 
-async function searchOneMap() {
+function dismissSearch() {
+  requestId++
+  clearTimeout(timer)
+  loading.value = false
+  results.value = []
+}
+
+async function searchOneMap(currentRequestId, searchValue) {
   loading.value = true
   try {
     // OneMap search does not need an API key
     const response = await axios.get('https://www.onemap.gov.sg/api/common/elastic/search', {
       params: {
-        searchVal: query.value.trim(),
+        searchVal: searchValue,
         returnGeom: 'Y', // include coordinates
         getAddrDetails: 'Y', // include the full address + postal code
         pageNum: 1,
       },
     })
+    if (currentRequestId !== requestId) return
     results.value = response.data.results.slice(0, 6) // top 6 is plenty
     if (results.value.length === 0) {
       errorMessage.value = 'No matching address. Try a postal code or building name.'
     }
   } catch (error) {
+    if (currentRequestId !== requestId) return
     results.value = []
     errorMessage.value = 'Could not reach OneMap (' + error.message + ').'
   } finally {
-    loading.value = false
+    if (currentRequestId === requestId) loading.value = false
   }
 }
 
 // Turn OneMap's result into the venue shape we store
 function choose(place) {
+  requestId++
+  clearTimeout(timer)
+  loading.value = false
   emit('select', {
     name: place.BUILDING !== 'NIL' ? place.BUILDING : place.SEARCHVAL,
     address: place.ADDRESS,
@@ -69,6 +85,9 @@ function choose(place) {
 
 // Backup plan if OneMap is down: keep what they typed, without coordinates
 function useTypedAddress() {
+  requestId++
+  clearTimeout(timer)
+  loading.value = false
   emit('select', {
     name: query.value.trim(),
     address: query.value.trim(),
@@ -79,6 +98,11 @@ function useTypedAddress() {
   query.value = ''
   errorMessage.value = ''
 }
+
+onUnmounted(() => {
+  requestId++
+  clearTimeout(timer)
+})
 </script>
 
 <template>
@@ -93,10 +117,10 @@ function useTypedAddress() {
         autocomplete="off"
         v-model="query"
         @input="onType"
-        @keydown.esc="results = []"
+        @keydown.esc.prevent="dismissSearch"
       />
       <span v-if="loading" class="input-group-text">
-        <span class="spinner-border spinner-border-sm" role="status"></span>
+        <span class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Searching addresses…</span></span>
       </span>
     </div>
 
@@ -115,7 +139,7 @@ function useTypedAddress() {
       </button>
     </div>
 
-    <div v-if="errorMessage" class="form-text text-danger">
+    <div v-if="errorMessage" class="form-text text-danger" role="alert">
       {{ errorMessage }}
       <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @click="useTypedAddress">
         Use "{{ query }}" anyway

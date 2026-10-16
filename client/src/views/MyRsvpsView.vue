@@ -23,26 +23,66 @@ const showClosed = ref(false)
 // `now` ticks every 30 seconds so the offer countdown moves
 const now = ref(Date.now())
 let timer = null
+let mounted = false
+let loadRequest = 0
+let refreshing = false
+let pendingLoad = null
 
-async function loadRsvps() {
-  rsvps.value = await getMyRsvps(CURRENT_USER_ID)
+async function loadRsvps(allowBusy = false) {
+  if (!mounted || (busyId.value && !allowBusy)) return
+  if (refreshing) {
+    if (!allowBusy) return
+    await pendingLoad
+    if (!mounted) return
+  }
+  refreshing = true
+  const request = ++loadRequest
+  try {
+    pendingLoad = getMyRsvps(CURRENT_USER_ID)
+    const rows = await pendingLoad
+    if (mounted && request === loadRequest) rsvps.value = rows
+  } finally {
+    if (request === loadRequest) {
+      refreshing = false
+      pendingLoad = null
+    }
+  }
 }
 
-onMounted(async () => {
+async function refreshRsvps() {
+  if (refreshing || busyId.value) return
+  errorMessage.value = ''
   try {
     await loadRsvps()
   } catch (error) {
-    errorMessage.value = 'Could not load your RSVPs: ' + error.message
+    if (mounted) errorMessage.value = 'Could not load your RSVPs: ' + error.message
+  }
+}
+
+function onFocus() {
+  refreshRsvps()
+}
+
+onMounted(async () => {
+  mounted = true
+  try {
+    await refreshRsvps()
   } finally {
+    if (!mounted) return
     loading.value = false
   }
   timer = setInterval(() => {
     now.value = Date.now()
+    refreshRsvps()
   }, 30000)
+  window.addEventListener('focus', onFocus)
 })
 
 onUnmounted(() => {
+  mounted = false
+  loadRequest++
   clearInterval(timer)
+  window.removeEventListener('focus', onFocus)
 })
 
 const offers = computed(() => rsvps.value.filter((r) => r.status === 'offered'))
@@ -52,20 +92,28 @@ const activeRsvps = computed(() =>
 const closedRsvps = computed(() => rsvps.value.filter((r) => CLOSED_STATUSES.includes(r.status)))
 
 async function answerOffer(rsvpId, accept) {
+  if (busyId.value) return
   busyId.value = rsvpId
   errorMessage.value = ''
   statusMessage.value = ''
   try {
     await respondToOffer(rsvpId, accept)
-    await loadRsvps() // reload first, then show the message, so both agree
+    if (!mounted) return
+    await loadRsvps(true) // reload first, then show the message, so both agree
+    if (!mounted) return
     statusMessage.value = accept
       ? 'Spot confirmed. See you there!'
       : 'Offer declined. The spot goes to the next person on the waitlist.'
   } catch (error) {
+    if (!mounted) return
     errorMessage.value = error.message
-    await loadRsvps()
+    try {
+      await loadRsvps(true)
+    } catch (refreshError) {
+      errorMessage.value = error.message + ' Could not refresh RSVPs: ' + refreshError.message
+    }
   } finally {
-    busyId.value = null
+    if (mounted) busyId.value = null
   }
 }
 
@@ -78,18 +126,21 @@ function declineOffer(rsvpId) {
 }
 
 async function cancel(rsvpId) {
+  if (busyId.value) return
   busyId.value = rsvpId
   errorMessage.value = ''
   statusMessage.value = ''
   try {
     await cancelRsvp(rsvpId)
-    await loadRsvps()
+    if (!mounted) return
+    await loadRsvps(true)
+    if (!mounted) return
     confirmCancelId.value = null
     statusMessage.value = 'RSVP cancelled.'
   } catch (error) {
-    errorMessage.value = error.message
+    if (mounted) errorMessage.value = error.message
   } finally {
-    busyId.value = null
+    if (mounted) busyId.value = null
   }
 }
 </script>
@@ -98,10 +149,22 @@ async function cancel(rsvpId) {
   <h1 class="h3 mb-3">My RSVPs</h1>
 
   <div v-if="loading" class="text-center my-5">
-    <div class="spinner-border text-primary" role="status"></div>
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading your RSVPs…</span>
+    </div>
   </div>
 
   <template v-else>
+    <div class="d-flex justify-content-end mb-3">
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        :disabled="busyId !== null"
+        @click="refreshRsvps"
+      >
+        Refresh RSVPs
+      </button>
+    </div>
     <div
       v-if="statusMessage"
       class="alert alert-success d-flex justify-content-between align-items-center"
@@ -183,10 +246,16 @@ async function cancel(rsvpId) {
 
     <!-- Older / closed RSVPs hidden until asked for -->
     <div v-if="closedRsvps.length > 0" class="mt-4">
-      <button type="button" class="btn btn-link p-0" @click="showClosed = !showClosed">
+      <button
+        type="button"
+        class="btn btn-link p-0"
+        aria-controls="closed-rsvps"
+        :aria-expanded="showClosed"
+        @click="showClosed = !showClosed"
+      >
         {{ showClosed ? 'Hide' : 'Show' }} cancelled and closed RSVPs ({{ closedRsvps.length }})
       </button>
-      <ul v-if="showClosed" class="list-group mt-2">
+      <ul v-if="showClosed" id="closed-rsvps" class="list-group mt-2">
         <li
           v-for="rsvp in closedRsvps"
           :key="rsvp.id"

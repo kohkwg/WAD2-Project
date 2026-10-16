@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import RsvpTable from '../components/RsvpTable.vue'
 import WaitlistTable from '../components/WaitlistTable.vue'
@@ -17,7 +17,7 @@ import {
 import { formatEventTime, formatShortDateTime } from '../utils/helpers.js'
 
 const route = useRoute()
-const eventId = route.params.id // e.g. "e1" from /organiser/events/e1/rsvps
+const eventId = computed(() => String(route.params.id || ''))
 
 const event = ref(null)
 const rsvps = ref([])
@@ -30,27 +30,61 @@ const activeTab = ref('confirmed')
 // `now` ticks every 30 seconds so offer countdowns stay current
 const now = ref(Date.now())
 let timer = null
+let mounted = false
+let loadRequest = 0
+let actionEventId = null
+let actionRequest = 0
+let routeVersion = 0
 
-async function loadData() {
-  event.value = await getEvent(eventId)
-  rsvps.value = await getRsvpsForEvent(eventId)
+async function loadData(id = eventId.value) {
+  if (id !== eventId.value) return
+  const request = ++loadRequest
+  const version = routeVersion
+  try {
+    const [nextEvent, nextRsvps] = await Promise.all([getEvent(id), getRsvpsForEvent(id)])
+    if (mounted && request === loadRequest && version === routeVersion && id === eventId.value) {
+      event.value = nextEvent
+      rsvps.value = nextRsvps
+      if (nextEvent.requiresApproval) activeTab.value = 'pending'
+      loading.value = false
+      return true
+    }
+    return false
+  } catch (error) {
+    if (mounted && request === loadRequest && version === routeVersion && id === eventId.value) {
+      errorMessage.value = 'Could not load this event: ' + error.message
+      loading.value = false
+    }
+    return false
+  }
 }
 
-onMounted(async () => {
-  try {
-    await loadData()
-    if (event.value.requiresApproval) activeTab.value = 'pending'
-  } catch (error) {
-    errorMessage.value = 'Could not load this event: ' + error.message
-  } finally {
-    loading.value = false
-  }
+watch(eventId, (id) => {
+  routeVersion++
+  loadRequest++
+  loading.value = true
+  event.value = null
+  rsvps.value = []
+  errorMessage.value = ''
+  statusMessage.value = ''
+  busyId.value = null
+  actionEventId = null
+  actionRequest++
+  activeTab.value = 'confirmed'
+  loadData(id)
+})
+
+onMounted(() => {
+  mounted = true
+  loadData()
   timer = setInterval(() => {
     now.value = Date.now()
   }, 30000)
 })
 
 onUnmounted(() => {
+  mounted = false
+  loadRequest++
   clearInterval(timer) // stop the timer when we leave the page
 })
 
@@ -78,69 +112,115 @@ const tabs = computed(() => [
   { key: 'closed', label: 'Rejected / cancelled', count: closed.value.length },
 ])
 
-const spotsTaken = computed(() => event.value.confirmedCount + event.value.offeredCount)
-const fillPercent = computed(() => Math.round((spotsTaken.value / event.value.capacity) * 100))
+const spotsTaken = computed(() => event.value ? event.value.confirmedCount + event.value.offeredCount : 0)
+const fillPercent = computed(() => event.value?.capacity ? Math.round((spotsTaken.value / event.value.capacity) * 100) : 0)
+
+function isCurrentEvent(id, version = routeVersion) {
+  return mounted && id === eventId.value && routeVersion === version
+}
 
 // ---------- Actions ----------
 // Each one: save → reload the list → THEN show the message, so the message and the list agree.
 
 async function approve(rsvpId) {
+  if (busyId.value) return
+  const id = eventId.value
+  const version = routeVersion
+  const action = ++actionRequest
   busyId.value = rsvpId
+  actionEventId = id
   errorMessage.value = ''
   statusMessage.value = ''
   try {
     const updated = await approveRsvp(rsvpId)
-    await loadData()
+    if (!isCurrentEvent(id, version)) return
+    if (!(await loadData(id)) || !isCurrentEvent(id, version)) return
     statusMessage.value =
       updated.status === 'confirmed'
         ? 'Approved. They are confirmed.'
         : 'Approved, but the event is full, so they joined the waitlist.'
   } catch (error) {
-    errorMessage.value = error.message
+    if (isCurrentEvent(id, version)) errorMessage.value = error.message
   } finally {
-    busyId.value = null
+    if (actionRequest === action && actionEventId === id && routeVersion === version) {
+      busyId.value = null
+      actionEventId = null
+    }
   }
 }
 
 async function reject(rsvpId) {
+  if (busyId.value) return
+  const id = eventId.value
+  const version = routeVersion
+  const action = ++actionRequest
   busyId.value = rsvpId
+  actionEventId = id
   errorMessage.value = ''
   statusMessage.value = ''
   try {
     await rejectRsvp(rsvpId)
-    await loadData()
+    if (!isCurrentEvent(id, version)) return
+    if (!(await loadData(id)) || !isCurrentEvent(id, version)) return
     statusMessage.value = 'RSVP rejected.'
   } catch (error) {
-    errorMessage.value = error.message
+    if (isCurrentEvent(id, version)) errorMessage.value = error.message
   } finally {
-    busyId.value = null
+    if (actionRequest === action && actionEventId === id && routeVersion === version) {
+      busyId.value = null
+      actionEventId = null
+    }
   }
 }
 
 async function toggleMember(userId, makeMember) {
+  if (busyId.value || !event.value) return
+  const id = eventId.value
+  const version = routeVersion
+  const action = ++actionRequest
+  busyId.value = `member:${userId}`
+  actionEventId = id
   errorMessage.value = ''
   statusMessage.value = ''
   try {
     await setMember(event.value.organiserId, userId, makeMember)
-    await loadData()
+    if (!isCurrentEvent(id, version)) return
+    if (!(await loadData(id)) || !isCurrentEvent(id, version)) return
     statusMessage.value = makeMember
       ? 'Marked as a member. The waitlist order has been updated.'
       : 'No longer marked as a member. The waitlist order has been updated.'
   } catch (error) {
-    errorMessage.value = error.message
+    if (isCurrentEvent(id, version)) errorMessage.value = error.message
+  } finally {
+    if (actionRequest === action && actionEventId === id && routeVersion === version) {
+      busyId.value = null
+      actionEventId = null
+    }
   }
 }
 
 // DEMO ONLY: skip ahead 24 hours so the class can see expiry + promotion happen
 async function demoExpireOffers() {
+  if (busyId.value) return
+  const id = eventId.value
+  const version = routeVersion
+  const action = ++actionRequest
+  busyId.value = 'expiry'
+  actionEventId = id
   errorMessage.value = ''
   statusMessage.value = ''
   try {
-    await expireOffersNow(eventId)
-    await loadData()
+    await expireOffersNow(id)
+    if (!isCurrentEvent(id, version)) return
+    if (!(await loadData(id)) || !isCurrentEvent(id, version)) return
     statusMessage.value = 'Offers expired. Spots were offered to the next people on the waitlist.'
   } catch (error) {
-    errorMessage.value = error.message
+    if (isCurrentEvent(id, version)) errorMessage.value = error.message
+  } finally {
+    if (actionRequest === action && actionEventId === id && routeVersion === version) {
+      busyId.value = null
+      actionEventId = null
+    }
   }
 }
 </script>
@@ -149,7 +229,9 @@ async function demoExpireOffers() {
   <RouterLink to="/organiser/events" class="small">&larr; My events</RouterLink>
 
   <div v-if="loading" class="text-center my-5">
-    <div class="spinner-border text-primary" role="status"></div>
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading RSVP details…</span>
+    </div>
   </div>
 
   <div v-else-if="!event" class="alert alert-danger mt-3">{{ errorMessage }}</div>
@@ -190,7 +272,7 @@ async function demoExpireOffers() {
       </div>
     </div>
 
-    <div class="progress mb-4" style="height: 10px" :title="fillPercent + '% of spots taken'">
+    <div class="progress mb-4" style="height: 10px" role="progressbar" :aria-label="'Occupancy: ' + spotsTaken + ' of ' + event.capacity + ' spots'" :aria-valuenow="Math.min(spotsTaken, event.capacity)" :aria-valuemin="0" :aria-valuemax="event.capacity" :title="fillPercent + '% of spots taken'">
       <div class="progress-bar bg-success" :style="{ width: fillPercent + '%' }"></div>
     </div>
 
@@ -209,19 +291,20 @@ async function demoExpireOffers() {
     <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
 
     <!-- Tabs: Vue decides which one is showing (activeTab), so no Bootstrap JS needed -->
-    <ul class="nav nav-tabs">
-      <li class="nav-item" v-for="tab in tabs" :key="tab.key">
+    <div class="nav nav-tabs" role="group" aria-label="Filter RSVPs by status">
         <button
+          v-for="tab in tabs"
+          :key="tab.key"
           type="button"
           class="nav-link"
           :class="{ active: activeTab === tab.key }"
+          :aria-pressed="activeTab === tab.key"
           @click="activeTab = tab.key"
         >
           {{ tab.label }}
           <span class="badge rounded-pill text-bg-secondary ms-1">{{ tab.count }}</span>
         </button>
-      </li>
-    </ul>
+    </div>
 
     <div class="bg-white border border-top-0 rounded-bottom p-3">
       <template v-if="activeTab === 'pending'">
@@ -259,7 +342,7 @@ async function demoExpireOffers() {
           @toggle-member="toggleMember"
         />
         <div v-if="offers.length > 0" class="border-top pt-3 mt-2">
-          <button type="button" class="btn btn-outline-secondary btn-sm" @click="demoExpireOffers">
+          <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="busyId !== null" @click="demoExpireOffers">
             Demo: pretend 24 hours have passed
           </button>
           <span class="small text-secondary ms-2"
