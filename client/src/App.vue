@@ -1,4 +1,4 @@
-<script setup>
+<!-- <script setup>
 import axios from 'axios'
 import { ref } from 'vue'
 
@@ -18,4 +18,13 @@ async function checkServer() {
       Check Server
     </button>
   </main>
+</template> -->
+
+
+<script setup>
+import Editor from './editor.vue'
+</script>
+
+<template>
+  <Editor />
 </template>
