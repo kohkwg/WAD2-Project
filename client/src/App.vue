@@ -1,21 +1,14 @@
 <script setup>
-import axios from 'axios'
-import { ref } from 'vue'
-
-const message = ref('Ready to build')
-
-async function checkServer() {
-  const response = await axios.get('http://127.0.0.1:3000/health')
-  message.value = response.data.message
-}
+import { RouterLink, RouterView } from 'vue-router'
 </script>
 
 <template>
-  <main class="container py-4">
-    <h1>Vue Template</h1>
-    <p>{{ message }}</p>
-    <button class="btn btn-primary" type="button" @click="checkServer">
-      Check Server
-    </button>
-  </main>
+  <nav class="navbar navbar-expand bg-white border-bottom shadow-sm px-3">
+    <RouterLink class="navbar-brand fw-bold text-primary" to="/">Bookedz</RouterLink>
+    <div class="navbar-nav">
+      <RouterLink class="nav-link text-secondary" to="/">Home</RouterLink>
+      <RouterLink class="nav-link text-secondary" to="/profile">Profile</RouterLink>
+    </div>
+  </nav>
+  <RouterView />
 </template>
