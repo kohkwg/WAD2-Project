@@ -1,21 +1,23 @@
 <script setup>
-import axios from 'axios'
-import { ref } from 'vue'
+import { nextTick, ref, watch } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
+import NavBar from './components/NavBar.vue'
 
-const message = ref('Ready to build')
-
-async function checkServer() {
-  const response = await axios.get('http://127.0.0.1:3000/health')
-  message.value = response.data.message
-}
+const route = useRoute()
+const main = ref(null)
+watch(() => route.meta.title, title => {
+  document.title = title ? `${title} · Bookedz` : 'Bookedz'
+}, { immediate: true })
+watch(() => route.path, async () => {
+  await nextTick()
+  main.value?.focus({ preventScroll: true })
+})
 </script>
 
 <template>
-  <main class="container py-4">
-    <h1>Vue Template</h1>
-    <p>{{ message }}</p>
-    <button class="btn btn-primary" type="button" @click="checkServer">
-      Check Server
-    </button>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <NavBar />
+  <main id="main-content" ref="main" class="container app-main" tabindex="-1">
+    <RouterView />
   </main>
 </template>

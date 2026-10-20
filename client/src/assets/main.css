@@ -1,0 +1,80 @@
+/* Shared Bootstrap refinements authorised for iteration 2; coordinate future
+   design-system changes with Huxley. References: https://getbootstrap.com/docs/5.3/
+   and https://preview.tabler.io/ (layout inspiration, no added dependencies). */
+:root {
+  --bookedz-canvas: #f4f6f9;
+  --bookedz-surface: #fff;
+  --bookedz-ink: #202b3c;
+  --bookedz-muted: #596579;
+  --bookedz-border: #dce2ea;
+  --bs-body-color: var(--bookedz-ink);
+  --bs-body-bg: var(--bookedz-canvas);
+  --bs-secondary-color: var(--bookedz-muted);
+  --bs-secondary-rgb: 89, 101, 121;
+  --bs-border-color: var(--bookedz-border);
+  --bs-link-color: #0b57c5;
+  --bs-link-color-rgb: 11, 87, 197;
+  --bs-link-hover-color: #084fa9;
+  --bs-link-hover-color-rgb: 8, 79, 169;
+}
+body { background: var(--bookedz-canvas); line-height: 1.5; }
+a { text-underline-offset: .18em; }
+.app-main { padding-top: 2rem; padding-bottom: 3rem; }
+.app-main h1 { font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem); font-weight: 600; letter-spacing: -.025em; line-height: 1.25; }
+.app-main h2 { font-size: 1.375rem; font-weight: 600; letter-spacing: -.015em; }
+.app-main .card-title { font-size: 1.125rem; font-weight: 600; line-height: 1.4; }
+.app-main .event-summary h1 { font-size: 1.5rem; line-height: 1.3; }
+.app-main .shadow-sm { box-shadow: none !important; }
+.card { --bs-card-bg: var(--bookedz-surface); --bs-card-border-color: var(--bookedz-border); --bs-card-cap-bg: var(--bookedz-surface); }
+.card-body { padding: 1.25rem; }
+.form-label { font-weight: 500; }
+.form-text { color: var(--bookedz-muted); }
+.btn { font-weight: 500; }
+.btn-outline-primary { --bs-btn-color: #0b57c5; --bs-btn-border-color: #0b57c5; }
+.btn-outline-secondary { --bs-btn-color: var(--bookedz-muted); --bs-btn-border-color: var(--bookedz-muted); }
+.btn-outline-danger { --bs-btn-color: #b02a37; --bs-btn-border-color: #b02a37; }
+.text-success { color: #146c43 !important; }
+.text-danger { color: #b02a37 !important; }
+.badge { font-weight: 600; }
+.table { --bs-table-bg: var(--bookedz-surface); vertical-align: middle; }
+.table th { font-size: .875rem; font-weight: 600; color: var(--bookedz-muted); }
+.keep-line-breaks { white-space: pre-line; overflow-wrap: anywhere; }
+.card-title, .workspace-header h1, .workspace-venue { overflow-wrap: anywhere; }
+:focus-visible { outline: 3px solid #0b57c5; outline-offset: 3px; }
+/* The route destination is focused for reading, without framing the whole page.
+   Keyboard rings remain visible on links, fields and other interactive controls. */
+.app-main:focus { outline: none; }
+.skip-link { position: fixed; top: .5rem; left: 1rem; z-index: 1100; padding: .6rem 1rem; background: white; border: 2px solid #0b57c5; border-radius: .375rem; transform: translateY(-180%); }
+.skip-link:focus { transform: translateY(0); }
+.app-navbar { background: var(--bookedz-surface); border-bottom: 1px solid var(--bookedz-border); min-height: 4.25rem; }
+.app-navbar .navbar-brand { font-size: 1.25rem; letter-spacing: -.04em; margin-right: 1.5rem; }
+.app-navbar .nav-link { color: var(--bookedz-muted); border-radius: .375rem; padding: .5rem .75rem; }
+.app-navbar .nav-link.active { color: #084fa9; background: #edf4ff; font-weight: 600; }
+.nav-section-label { display: block; padding: .5rem .75rem; color: var(--bookedz-muted); font-size: .875rem; }
+.workspace-header { padding-bottom: 1.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--bookedz-border); }
+.workspace-venue { margin: .5rem 0; }
+.workspace-venue span:first-child { color: var(--bookedz-muted); margin-right: .5rem; }
+.workspace-meta { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: baseline; font-size: .875rem; color: var(--bookedz-muted); }
+.workspace-address summary { cursor: pointer; color: var(--bookedz-muted); font-size: .875rem; }
+.workspace-address p { font-size: .875rem; margin: .5rem 0; overflow-wrap: anywhere; }
+.event-tool-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25rem; padding: .25rem; background: #e8edf4; border-radius: .5rem; max-width: 44rem; }
+.event-tool-nav .nav-link { color: var(--bookedz-muted); border-radius: .375rem; text-align: center; font-weight: 500; padding: .65rem .5rem; }
+.event-tool-nav .nav-link.active { color: #084fa9; background: white; box-shadow: 0 1px 3px rgb(32 43 60 / 8%); }
+.tool-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.tool-heading h2 { margin: 0 0 .4rem; }
+.tool-description { color: var(--bookedz-muted); margin: 0; max-width: 65ch; }
+.workspace-panel { background: var(--bookedz-surface); border: 1px solid var(--bookedz-border); border-radius: .5rem; padding: 1.25rem; }
+.section-heading { font-size: 1.0625rem; font-weight: 600; margin-bottom: 1rem; }
+.workspace-panel input, .workspace-panel textarea { scroll-margin: 4rem; }
+@media (min-width: 576px) { .event-tool-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 991.98px) {
+  .app-navbar .navbar-collapse { padding: .75rem 0; }
+  .nav-section-label { border-top: 1px solid var(--bookedz-border); margin-top: .5rem; padding-top: 1rem; }
+  .app-navbar .navbar-collapse > .btn { margin: .75rem; }
+}
+@media (max-width: 575.98px) {
+  .app-main { padding-top: 1.25rem; }
+  .card-body, .workspace-panel { padding: 1rem; }
+  .btn:not(.btn-sm) { min-height: 2.75rem; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
