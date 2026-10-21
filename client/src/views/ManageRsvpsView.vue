@@ -9,11 +9,12 @@ import {
   getRsvpsForEvent,
   approveRsvp,
   rejectRsvp,
+  removeRsvp,
   setMember,
   expireOffersNow,
   CLOSED_STATUSES,
 } from '../utils/api.js'
-import { formatEventTime, formatShortDateTime } from '../utils/helpers.js'
+import { formatEventTime, formatShortDateTime, fillColour } from '../utils/helpers.js'
 
 const route = useRoute()
 const eventId = route.params.id // e.g. "e1" from /organiser/events/e1/rsvps
@@ -75,7 +76,7 @@ const tabs = computed(() => [
     label: 'Waitlist & offers',
     count: waitlist.value.length + offers.value.length,
   },
-  { key: 'closed', label: 'Rejected / cancelled', count: closed.value.length },
+  { key: 'closed', label: 'Removed / cancelled', count: closed.value.length },
 ])
 
 const spotsTaken = computed(() => event.value.confirmedCount + event.value.offeredCount)
@@ -117,6 +118,25 @@ async function reject(rsvpId) {
   }
 }
 
+// Take someone off after accepting them. If anyone is waiting, the spot is offered to them.
+async function remove(rsvpId) {
+  busyId.value = rsvpId
+  errorMessage.value = ''
+  statusMessage.value = ''
+  try {
+    const hadWaitlist = waitlist.value.length > 0 // check BEFORE reloading
+    await removeRsvp(rsvpId)
+    await loadData()
+    statusMessage.value = hadWaitlist
+      ? 'Removed. Their spot was offered to the next person on the waitlist.'
+      : 'Removed. Their spot is open again.'
+  } catch (error) {
+    errorMessage.value = error.message
+  } finally {
+    busyId.value = null
+  }
+}
+
 async function toggleMember(userId, makeMember) {
   errorMessage.value = ''
   statusMessage.value = ''
@@ -148,6 +168,7 @@ async function demoExpireOffers() {
 <template>
   <RouterLink to="/organiser/events" class="small">&larr; My events</RouterLink>
 
+  <!-- Only ONE of these shows: loading → event not found → not your event → the dashboard -->
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status"></div>
   </div>
@@ -190,10 +211,16 @@ async function demoExpireOffers() {
       </div>
     </div>
 
+    <!-- Bar width = % of spots taken; :title shows the number on hover -->
     <div class="progress mb-4" style="height: 10px" :title="fillPercent + '% of spots taken'">
-      <div class="progress-bar bg-success" :style="{ width: fillPercent + '%' }"></div>
+      <div
+        class="progress-bar"
+        :class="fillColour(fillPercent)"
+        :style="{ width: fillPercent + '%' }"
+      ></div>
     </div>
 
+    <!-- Success message; the × button clears it -->
     <div
       v-if="statusMessage"
       class="alert alert-success d-flex justify-content-between align-items-center"
@@ -224,10 +251,13 @@ async function demoExpireOffers() {
     </ul>
 
     <div class="bg-white border border-top-0 rounded-bottom p-3">
+      <!-- Tab content: only the block matching activeTab renders (pending → confirmed → waitlist → else = closed) -->
       <template v-if="activeTab === 'pending'">
+        <!-- Note for auto-confirm events, since nothing will ever be pending -->
         <p v-if="!event.requiresApproval" class="small text-secondary">
           This event confirms RSVPs automatically, so nothing waits here.
         </p>
+        <!-- Same RsvpTable as the Confirmed tab, but with Approve/Reject buttons -->
         <RsvpTable
           :rsvps="pending"
           :questions="event.questions"
@@ -240,13 +270,16 @@ async function demoExpireOffers() {
         />
       </template>
 
+      <!-- Same RsvpTable, but with a Remove button instead of Approve/Reject -->
       <RsvpTable
         v-else-if="activeTab === 'confirmed'"
         :rsvps="confirmed"
         :questions="event.questions"
         :show-actions="false"
+        :show-remove="true"
         :busy-id="busyId"
         empty-text="Nobody is confirmed yet."
+        @remove="remove"
         @toggle-member="toggleMember"
       />
 
@@ -258,6 +291,7 @@ async function demoExpireOffers() {
           :busy-id="busyId"
           @toggle-member="toggleMember"
         />
+        <!-- Demo button only shows when there are open offers to expire -->
         <div v-if="offers.length > 0" class="border-top pt-3 mt-2">
           <button type="button" class="btn btn-outline-secondary btn-sm" @click="demoExpireOffers">
             Demo: pretend 24 hours have passed
@@ -268,6 +302,7 @@ async function demoExpireOffers() {
         </div>
       </template>
 
+      <!-- v-else = the last tab: cancelled / rejected / declined / expired RSVPs (read-only) -->
       <template v-else>
         <p v-if="closed.length === 0" class="text-secondary my-4">Nothing here yet.</p>
         <div v-else class="table-responsive">

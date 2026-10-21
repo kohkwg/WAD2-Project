@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-// The two values come from client/.env (copy .env.example and fill it in).
-// Vite only exposes variables starting with VITE_ to browser code.
+//Keys
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 

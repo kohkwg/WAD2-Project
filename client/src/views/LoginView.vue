@@ -65,6 +65,7 @@ async function submit() {
   <div class="col-md-6 col-lg-5 mx-auto">
     <div class="card shadow-sm">
       <div class="card-body p-4">
+        <!-- Two tabs switch the form between Sign in and Create account (mode) -->
         <ul class="nav nav-pills nav-fill mb-4">
           <li class="nav-item">
             <button
@@ -88,7 +89,9 @@ async function submit() {
           </li>
         </ul>
 
+        <!-- .prevent stops the page reloading; novalidate turns off browser pop-ups so our formErrors show instead -->
         <form @submit.prevent="submit" novalidate>
+          <!-- Name is only needed when creating an account -->
           <div v-if="mode === 'signup'" class="mb-3">
             <label for="name" class="form-label">Name</label>
             <input id="name" class="form-control" v-model="name" autocomplete="name" />
@@ -99,6 +102,7 @@ async function submit() {
           </div>
           <div class="mb-3">
             <label for="password" class="form-label">Password</label>
+            <!-- autocomplete tells password managers to fill a saved password (sign in) or suggest a new one (sign up) -->
             <input
               id="password"
               type="password"
@@ -108,14 +112,17 @@ async function submit() {
             />
           </div>
 
+          <!-- Validation errors only appear after the first submit attempt (triedSubmit) -->
           <div v-if="triedSubmit && formErrors.length > 0" class="alert alert-danger">
             <ul class="mb-0">
               <li v-for="error in formErrors" :key="error">{{ error }}</li>
             </ul>
           </div>
           <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <!-- Shown after sign-up: tells them to check their email for the confirmation link -->
           <div v-if="infoMessage" class="alert alert-success">{{ infoMessage }}</div>
 
+          <!-- Disabled while loading; label changes with the mode -->
           <button type="submit" class="btn btn-primary w-100" :disabled="loading">
             <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
             {{ mode === 'signin' ? 'Sign in' : 'Create account' }}

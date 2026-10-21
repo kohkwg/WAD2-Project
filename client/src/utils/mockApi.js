@@ -199,6 +199,15 @@ export async function getEvent(eventId) {
   return withCounts(db, findEvent(db, eventId))
 }
 
+export async function deleteEvent(eventId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  db.events = db.events.filter((e) => e.id !== eventId)
+  db.rsvps = db.rsvps.filter((r) => r.eventId !== eventId) // its RSVPs go too
+  saveDb(db)
+}
+
+
 // Events the logged-in organiser runs
 export async function getOrganiserEvents() {
   await fakeDelay()
@@ -360,6 +369,26 @@ export async function rejectRsvp(rsvpId) {
   if (rsvp.status !== 'pending') throw new Error('Only pending RSVPs can be rejected.')
 
   rsvp.status = 'rejected'
+  saveDb(db)
+  return rsvp
+}
+
+// Organiser takes someone off the event after accepting them (or off the waitlist / an offer).
+// Status 'rejected', not 'cancelled': cancelling counts as a late cancel against the person,
+// but here it was the organiser's decision, so their show-up rate shouldn't suffer.
+export async function removeRsvp(rsvpId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const rsvp = findRsvp(db, rsvpId)
+  if (!['confirmed', 'offered', 'waitlisted'].includes(rsvp.status)) {
+    throw new Error('Only confirmed, offered or waitlisted RSVPs can be removed.')
+  }
+
+  const wasHoldingSpot = rsvp.status === 'confirmed' || rsvp.status === 'offered'
+  rsvp.status = 'rejected'
+  rsvp.offerExpiresAt = null
+
+  if (wasHoldingSpot) fillFreeSpots(db, rsvp.eventId) // the freed spot goes to the waitlist
   saveDb(db)
   return rsvp
 }

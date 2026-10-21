@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue'
 import { formatShortDateTime } from '../utils/helpers.js'
 
 // Table of RSVPs for the organiser. Used for both "Pending approval" and "Confirmed".
@@ -7,10 +8,19 @@ defineProps({
   rsvps: Array,
   questions: Array, // the event's custom questions, so we can show each answer
   showActions: Boolean, // true → show Approve / Reject buttons
+  showRemove: Boolean, // true → show a Remove button (for people already accepted)
   busyId: String, // the RSVP currently being saved (its buttons are disabled)
   emptyText: String,
 })
-const emit = defineEmits(['approve', 'reject', 'toggle-member'])
+const emit = defineEmits(['approve', 'reject', 'remove', 'toggle-member'])
+
+// Which row is showing "Remove them? Yes / Keep" (a second click, so one slip can't remove someone)
+const confirmRemoveId = ref(null)
+
+function confirmRemove(rsvpId) {
+  emit('remove', rsvpId)
+  confirmRemoveId.value = null
+}
 
 function formatAnswer(question, answer) {
   if (answer === undefined || answer === '') return '—'
@@ -31,6 +41,7 @@ function formatAnswer(question, answer) {
           <th scope="col">Member</th>
           <th scope="col">RSVP'd</th>
           <th scope="col" v-if="showActions" class="text-end">Decision</th>
+          <th scope="col" v-if="showRemove" class="text-end">Remove</th>
         </tr>
       </thead>
       <tbody>
@@ -83,6 +94,36 @@ function formatAnswer(question, answer) {
               @click="emit('reject', rsvp.id)"
             >
               Reject
+            </button>
+          </td>
+
+          <td v-if="showRemove" class="text-end text-nowrap">
+            <template v-if="confirmRemoveId === rsvp.id">
+              <span class="small me-2">Remove them?</span>
+              <button
+                type="button"
+                class="btn btn-danger btn-sm me-1"
+                :disabled="busyId === rsvp.id"
+                @click="confirmRemove(rsvp.id)"
+              >
+                Yes, remove
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                @click="confirmRemoveId = null"
+              >
+                Keep
+              </button>
+            </template>
+            <button
+              v-else
+              type="button"
+              class="btn btn-outline-danger btn-sm"
+              :disabled="busyId === rsvp.id"
+              @click="confirmRemoveId = rsvp.id"
+            >
+              Remove
             </button>
           </td>
         </tr>

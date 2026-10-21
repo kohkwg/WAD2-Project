@@ -6,14 +6,7 @@
 // If client/.env has the Supabase keys we use Supabase; otherwise the mock
 // (or set VITE_USE_MOCK=true to use the mock anyway).
 // The pages can't tell the difference: same function names, same data shapes.
-//
-// Every function is `async`, so pages call them the WAD2 way:
-//
-//     try {
-//       event.value = await getEvent(id)
-//     } catch (error) {
-//       errorMessage.value = error.message
-//     }
+
 
 import * as mockApi from './mockApi.js'
 import * as supabaseApi from './supabaseApi.js'
@@ -39,6 +32,8 @@ export const getEvents = () => backend.getEvents()
 export const getEvent = (eventId) => backend.getEvent(eventId)
 export const getOrganiserEvents = () => backend.getOrganiserEvents() // the signed-in organiser's
 export const createEvent = (eventData) => backend.createEvent(eventData)
+export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
+
 
 // ---------- Users ----------
 export const getUser = () => backend.getUser() // the signed-in user's profile
@@ -53,6 +48,7 @@ export const respondToOffer = (rsvpId, accept) => backend.respondToOffer(rsvpId,
 export const getRsvpsForEvent = (eventId) => backend.getRsvpsForEvent(eventId)
 export const approveRsvp = (rsvpId) => backend.approveRsvp(rsvpId)
 export const rejectRsvp = (rsvpId) => backend.rejectRsvp(rsvpId)
+export const removeRsvp = (rsvpId) => backend.removeRsvp(rsvpId) // take an accepted person off
 export const setMember = (organiserId, userId, makeMember) =>
   backend.setMember(organiserId, userId, makeMember)
 export const expireOffersNow = (eventId) => backend.expireOffersNow(eventId) // demo button

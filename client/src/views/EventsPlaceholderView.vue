@@ -27,6 +27,7 @@ onMounted(async () => {
   <h1 class="h3">Events</h1>
   <p class="text-secondary small">Placeholder list (Aishani's discovery page goes here).</p>
 
+  <!-- Only ONE of these shows: loading → error → event cards -->
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status"></div>
   </div>
@@ -40,11 +41,13 @@ onMounted(async () => {
           <h5 class="card-title">{{ event.title }}</h5>
           <p class="small text-secondary mb-2">{{ formatEventTime(event) }}</p>
           <p class="small mb-2">{{ event.venue.name }}</p>
+          <!-- One small badge per tag -->
           <span v-for="tag in event.tags" :key="tag" class="badge text-bg-light border me-1">
             {{ tag }}
           </span>
         </div>
         <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+          <!-- Spots left (with "spot"/"spots" plural) or, if full, a waitlist note -->
           <span v-if="event.spotsLeft > 0" class="small text-success">
             {{ event.spotsLeft }} spot{{ event.spotsLeft === 1 ? '' : 's' }} left
           </span>

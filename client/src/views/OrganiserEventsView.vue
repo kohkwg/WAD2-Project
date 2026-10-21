@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { getOrganiserEvents } from '../utils/api.js'
-import { formatEventTime } from '../utils/helpers.js'
+import { getOrganiserEvents, deleteEvent } from '../utils/api.js'
+import { formatEventTime, fillColour } from '../utils/helpers.js'
 
 // The organiser's list of events. (This may later merge into Denzel's organiser dashboard.)
 
@@ -28,6 +28,24 @@ onMounted(async () => {
 function fillPercent(event) {
   return Math.round(((event.confirmedCount + event.offeredCount) / event.capacity) * 100)
 }
+
+const confirmDeleteId = ref(null) // which event is showing "Yes, delete / Keep"
+const busyId = ref(null) // the event being deleted (its button is disabled)
+const deleteError = ref('')
+
+async function removeEvent(eventId) {
+  busyId.value = eventId
+  deleteError.value = ''
+  try {
+    await deleteEvent(eventId)
+    events.value = events.value.filter((e) => e.id !== eventId) // take it off the list
+  } catch (error) {
+    deleteError.value = 'Could not delete the event: ' + error.message
+  } finally {
+    busyId.value = null
+    confirmDeleteId.value = null
+  }
+}
 </script>
 
 <template>
@@ -36,10 +54,15 @@ function fillPercent(event) {
     <RouterLink to="/organiser/events/new" class="btn btn-primary">+ Create event</RouterLink>
   </div>
 
+  <!-- Shown after publishing: Create event redirects here with ?created=<id> -->
   <div v-if="justCreatedId" class="alert alert-success">
     Event published. Participants can now find it and RSVP.
   </div>
 
+  <!-- Kept outside the v-if chain below, so a failed delete doesn't hide the list -->
+  <div v-if="deleteError" class="alert alert-danger">{{ deleteError }}</div>
+
+  <!-- Only ONE of these shows: loading → error → no events → event cards -->
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status"></div>
   </div>
@@ -52,6 +75,7 @@ function fillPercent(event) {
 
   <div v-else class="row row-cols-1 row-cols-md-2 g-3">
     <div class="col" v-for="event in events" :key="event.id">
+      <!-- Class object: green border only on the event you just created -->
       <div class="card h-100 shadow-sm" :class="{ 'border-success': event.id === justCreatedId }">
         <div class="card-body">
           <h5 class="card-title mb-1">{{ event.title }}</h5>
@@ -61,12 +85,19 @@ function fillPercent(event) {
 
           <div class="d-flex justify-content-between small mb-1">
             <span>{{ event.confirmedCount }} confirmed of {{ event.capacity }}</span>
+            <!-- Only shown when at least one offer is waiting for a reply -->
             <span v-if="event.offeredCount > 0">{{ event.offeredCount }} offer(s) out</span>
           </div>
           <div class="progress mb-3" style="height: 8px">
-            <div class="progress-bar bg-success" :style="{ width: fillPercent(event) + '%' }"></div>
+            <!-- Bar width = % of capacity filled; colour goes green → amber → red as it fills (fillColour) -->
+            <div
+              class="progress-bar"
+              :class="fillColour(fillPercent(event))"
+              :style="{ width: fillPercent(event) + '%' }"
+            ></div>
           </div>
 
+          <!-- Badges only appear when their count is above 0 -->
           <span v-if="event.pendingCount > 0" class="badge text-bg-secondary me-2">
             {{ event.pendingCount }} awaiting approval
           </span>
@@ -75,6 +106,7 @@ function fillPercent(event) {
           </span>
         </div>
         <div class="card-footer bg-white d-flex gap-2">
+          <!-- Link is built from the event id, e.g. /organiser/events/abc123/rsvps -->
           <RouterLink
             :to="'/organiser/events/' + event.id + '/rsvps'"
             class="btn btn-outline-primary btn-sm"
@@ -84,6 +116,35 @@ function fillPercent(event) {
           <RouterLink :to="'/events/' + event.id + '/rsvp'" class="btn btn-link btn-sm">
             View RSVP page
           </RouterLink>
+
+          <!-- Delete with a second "are you sure?" step, like Cancel RSVP -->
+          <div class="ms-auto">
+            <template v-if="confirmDeleteId === event.id">
+              <button
+                type="button"
+                class="btn btn-danger btn-sm me-1"
+                :disabled="busyId === event.id"
+                @click="removeEvent(event.id)"
+              >
+                Yes, delete
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                @click="confirmDeleteId = null"
+              >
+                Keep
+              </button>
+            </template>
+            <button
+              v-else
+              type="button"
+              class="btn btn-outline-danger btn-sm"
+              @click="confirmDeleteId = event.id"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>

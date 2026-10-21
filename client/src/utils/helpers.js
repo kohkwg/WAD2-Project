@@ -62,6 +62,14 @@ export function eventsOverlap(a, b) {
   return new Date(a.startTime) < new Date(b.endTime) && new Date(b.startTime) < new Date(a.endTime)
 }
 
+// Progress bar colour by how full an event is: green → amber from 80% → red when full.
+// The colour lets organisers spot busy events at a glance without reading the numbers.
+export function fillColour(percent) {
+  if (percent >= 100) return 'bg-danger'
+  if (percent >= 80) return 'bg-warning'
+  return 'bg-success'
+}
+
 // ---------- Tags ----------
 
 export const TAG_OPTIONS = [

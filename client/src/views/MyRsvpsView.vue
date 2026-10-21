@@ -63,14 +63,6 @@ async function answerOffer(rsvpId, accept) {
   }
 }
 
-function confirmOffer(rsvpId) {
-  answerOffer(rsvpId, true)
-}
-
-function declineOffer(rsvpId) {
-  answerOffer(rsvpId, false)
-}
-
 async function cancel(rsvpId) {
   busyId.value = rsvpId
   errorMessage.value = ''
@@ -91,11 +83,14 @@ async function cancel(rsvpId) {
 <template>
   <h1 class="h3 mb-3">My RSVPs</h1>
 
+  <!-- Spinner while loading, otherwise (v-else) the whole page below -->
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status"></div>
   </div>
 
+  <!-- <template> groups elements without adding an extra div to the page -->
   <template v-else>
+    <!-- Success message; the × button clears it -->
     <div
       v-if="statusMessage"
       class="alert alert-success d-flex justify-content-between align-items-center"
@@ -111,21 +106,24 @@ async function cancel(rsvpId) {
     <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
 
     <!-- 24-hour offers go on top so they're not missed -->
+    <!-- One banner per offer; Confirm/Decline both call answerOffer (true = accept, false = decline) -->
     <OfferBanner
       v-for="rsvp in offers"
       :key="rsvp.id"
       :rsvp="rsvp"
       :now="now"
       :busy="busyId === rsvp.id"
-      @confirm="confirmOffer"
-      @decline="declineOffer"
+      @confirm="(rsvpId) => answerOffer(rsvpId, true)"
+      @decline="(rsvpId) => answerOffer(rsvpId, false)"
     />
 
+    <!-- Empty state: only when there are no active RSVPs AND no offers -->
     <div v-if="activeRsvps.length === 0 && offers.length === 0" class="card card-body text-center">
       <p class="text-secondary mb-2">You haven't RSVP'd to anything yet.</p>
       <RouterLink to="/events" class="btn btn-primary align-self-center">Find events</RouterLink>
     </div>
 
+    <!-- One card per active RSVP (confirmed / pending / waitlisted) -->
     <div v-for="rsvp in activeRsvps" :key="rsvp.id" class="card shadow-sm mb-3">
       <div class="card-body d-flex flex-column flex-md-row justify-content-between gap-3">
         <div>
@@ -134,6 +132,7 @@ async function cancel(rsvpId) {
             {{ formatEventTime(rsvp.event) }} · {{ rsvp.event.venue.name }}
           </p>
           <RsvpStatusBadge :status="rsvp.status" />
+          <!-- Extra hint only for waitlisted or pending RSVPs -->
           <p v-if="rsvp.status === 'waitlisted'" class="small mb-0 mt-2">
             If a spot opens up, you'll see a banner here and have 24 hours to confirm.
           </p>
@@ -144,6 +143,7 @@ async function cancel(rsvpId) {
 
         <!-- Cancel with a second "are you sure?" step instead of a browser pop-up -->
         <div class="text-md-end flex-shrink-0">
+          <!-- v-if: this card is in "are you sure?" mode; v-else: the normal Cancel button -->
           <template v-if="confirmCancelId === rsvp.id">
             <p class="small mb-2">Cancel this RSVP?</p>
             <button
@@ -177,6 +177,7 @@ async function cancel(rsvpId) {
 
     <!-- Older / closed RSVPs hidden until asked for -->
     <div v-if="closedRsvps.length > 0" class="mt-4">
+      <!-- Flips showClosed; the list below only renders when it's true -->
       <button type="button" class="btn btn-link p-0" @click="showClosed = !showClosed">
         {{ showClosed ? 'Hide' : 'Show' }} cancelled and closed RSVPs ({{ closedRsvps.length }})
       </button>

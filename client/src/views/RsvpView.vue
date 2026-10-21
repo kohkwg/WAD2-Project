@@ -110,19 +110,23 @@ async function submitRsvp() {
 <template>
   <RouterLink to="/events" class="small">&larr; All events</RouterLink>
 
+  <!-- Only ONE of these shows: loading spinner → event not found → the RSVP page -->
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status"></div>
   </div>
 
+  <!-- Loading finished but no event came back (e.g. a bad id in the URL) -->
   <div v-else-if="!event" class="alert alert-danger mt-3">{{ errorMessage }}</div>
 
   <div v-else class="row g-4 mt-1">
     <!-- Left: the form (or the result) -->
     <div class="col-lg-7 order-2 order-lg-1">
       <!-- After submitting -->
+      <!-- Left column shows ONE of: result (just submitted) → already RSVP'd → the form -->
       <div v-if="result" class="card card-body shadow-sm">
         <h2 class="h4">RSVP sent</h2>
         <p class="mb-2">Status: <RsvpStatusBadge :status="result.status" /></p>
+        <!-- Message depends on the status we got back; v-else covers waitlisted -->
         <p v-if="result.status === 'confirmed'">See you there. We've saved your spot.</p>
         <p v-else-if="result.status === 'pending'">The organiser will review your RSVP soon.</p>
         <p v-else>
@@ -145,6 +149,7 @@ async function submitRsvp() {
       </div>
 
       <!-- The RSVP form -->
+      <!-- .prevent stops the page reloading; novalidate turns off browser pop-ups so our formErrors show instead -->
       <form v-else class="card card-body shadow-sm" @submit.prevent="submitRsvp" novalidate>
         <h2 class="h4 mb-1">RSVP</h2>
         <p class="form-text mt-0">
@@ -162,6 +167,7 @@ async function submitRsvp() {
           </div>
         </div>
 
+        <!-- Only show this section if the organiser added questions -->
         <template v-if="event.questions.length > 0">
           <h3 class="h6 mt-2">Questions from the organiser</h3>
           <div v-for="question in event.questions" :key="question.id" class="mb-3">
@@ -170,6 +176,7 @@ async function submitRsvp() {
               <span v-if="question.required" class="text-danger">*</span>
             </label>
 
+            <!-- 'text' question → text box; otherwise (v-else) it's yes/no → two radios. Answers are saved under answers[question.id] -->
             <input
               v-if="question.type === 'text'"
               :id="question.id"
@@ -204,17 +211,22 @@ async function submitRsvp() {
           </div>
         </template>
 
+        <!-- Warns if this event overlaps another event you've already joined (shows nothing if no clash) -->
         <ClashWarning :clashes="clashes" />
 
+        <!-- Tells the user what happens next: needs approval / confirmed now / goes to waitlist -->
         <div class="alert alert-light border small">{{ whatHappensNext }}</div>
 
+        <!-- Validation errors only appear after the first submit attempt (triedSubmit) -->
         <div v-if="triedSubmit && formErrors.length > 0" class="alert alert-danger">
           <ul class="mb-0">
             <li v-for="error in formErrors" :key="error">{{ error }}</li>
           </ul>
         </div>
+        <!-- Error from the API/server, separate from form validation -->
         <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
 
+        <!-- Disabled while sending so it can't be submitted twice -->
         <button type="submit" class="btn btn-primary align-self-start" :disabled="submitting">
           <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
           {{ submitting ? 'Sending…' : 'RSVP' }}
@@ -225,6 +237,7 @@ async function submitRsvp() {
     <!-- Right: event details (shown first on phones) -->
     <div class="col-lg-5 order-1 order-lg-2">
       <EventSummary :event="event">
+        <!-- Everything inside <EventSummary> goes into its <slot> at the bottom of the card -->
         <hr />
         <p v-if="event.spotsLeft > 0" class="mb-0 text-success fw-semibold">
           {{ event.spotsLeft }} of {{ event.capacity }} spots left

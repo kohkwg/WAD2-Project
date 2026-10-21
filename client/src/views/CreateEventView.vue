@@ -151,11 +151,13 @@ async function publish() {
 <template>
   <div class="col-lg-9 mx-auto">
     <h1 class="h3 mb-3">Create an event</h1>
+    <!-- Step progress at the top; highlights the current step -->
     <StepIndicator :steps="steps" :current="step" />
 
     <div class="card shadow-sm">
       <div class="card-body p-4">
         <!-- ================= STEP 1: BASICS ================= -->
+        <!-- Wizard: only ONE step block shows at a time (1 → 2 → 3 → v-else = 4 Review) -->
         <div v-if="step === 1">
           <div class="mb-3">
             <label for="title" class="form-label">Event title</label>
@@ -181,6 +183,7 @@ async function publish() {
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="start" class="form-label">Starts</label>
+              <!-- :min stops picking a past time; the end time can't be before the start -->
               <input
                 id="start"
                 type="datetime-local"
@@ -204,6 +207,7 @@ async function publish() {
           <div class="row">
             <div class="col-md-4 mb-3">
               <label for="capacity" class="form-label">Capacity</label>
+              <!-- v-model.number saves it as a number, not a string -->
               <input
                 id="capacity"
                 type="number"
@@ -219,6 +223,7 @@ async function publish() {
             <label class="form-label d-block">Tags</label>
             <!-- Bootstrap "btn-check": a checkbox that looks like a toggle button -->
             <div class="d-flex flex-wrap gap-2">
+              <!-- <template v-for> repeats each input + label pair without a wrapper div; v-model on an array adds/removes the tag -->
               <template v-for="tag in TAG_OPTIONS" :key="tag">
                 <input
                   type="checkbox"
@@ -231,6 +236,7 @@ async function publish() {
                 <label class="btn btn-sm btn-outline-primary" :for="'tag-' + tag">{{ tag }}</label>
               </template>
             </div>
+            <!-- Suggested tags from the title/description that aren't picked yet -->
             <div v-if="suggestedTags.length > 0" class="small mt-2">
               <span class="text-secondary">Suggested from your title and description:</span>
               <button
@@ -249,6 +255,7 @@ async function publish() {
         <!-- ================= STEP 2: VENUE ================= -->
         <div v-else-if="step === 2">
           <h5>Main venue</h5>
+          <!-- Venue picked → show it with a "Change" link; otherwise (v-else) show the search box -->
           <div v-if="form.venue" class="border rounded p-3 mb-3 bg-light">
             <div class="fw-semibold">{{ form.venue.name }}</div>
             <div class="small text-secondary">{{ form.venue.address }}</div>
@@ -281,6 +288,7 @@ async function publish() {
             </div>
           </div>
 
+          <!-- Backup venue is only asked for outdoor events -->
           <template v-if="form.isOutdoor">
             <h5>Backup venue (if it rains)</h5>
             <div v-if="form.backupVenue" class="border rounded p-3 mb-3 bg-light">
@@ -326,6 +334,7 @@ async function publish() {
             Optional. Use these to screen sign-ups, e.g. "Which year are you in?"
           </p>
 
+          <!-- List of added questions, or "No questions yet" -->
           <ul v-if="form.questions.length > 0" class="list-group mb-3">
             <li
               v-for="(question, index) in form.questions"
@@ -354,6 +363,7 @@ async function publish() {
             <div class="row g-2 align-items-end">
               <div class="col-md-6">
                 <label for="q-text" class="form-label small">Question</label>
+                <!-- Pressing Enter also adds the question -->
                 <input
                   id="q-text"
                   class="form-control"
@@ -381,6 +391,7 @@ async function publish() {
                 </div>
               </div>
             </div>
+            <!-- Disabled until a question is typed -->
             <button
               type="button"
               class="btn btn-outline-primary btn-sm mt-3"
@@ -397,6 +408,7 @@ async function publish() {
           <p class="text-secondary">
             Check everything before publishing. Use Back to change anything; nothing is lost.
           </p>
+          <!-- Preview using the same card participants see; extra lines go into its <slot> -->
           <EventSummary :event="form">
             <hr />
             <p class="mb-1">
@@ -420,6 +432,7 @@ async function publish() {
         </div>
 
         <!-- Errors for the current step -->
+        <!-- Errors only show after pressing Next (showErrors) -->
         <div v-if="showErrors && stepErrors.length > 0" class="alert alert-danger mt-4 mb-0">
           <ul class="mb-0">
             <li v-for="error in stepErrors" :key="error">{{ error }}</li>
@@ -430,6 +443,7 @@ async function publish() {
 
       <!-- Back / Next / Publish -->
       <div class="card-footer bg-white d-flex justify-content-between">
+        <!-- Back is disabled on step 1; Next shows until the last step, then becomes Publish -->
         <button
           type="button"
           class="btn btn-outline-secondary"

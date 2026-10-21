@@ -282,6 +282,14 @@ export async function createEvent(eventData) {
   return event
 }
 
+// Deleting the event also deletes its RSVPs, questions and tags (on delete cascade in the database)
+export async function deleteEvent(eventId) {
+  const rows = check(await supabase.from('events').delete().eq('id', eventId).select('id'))
+  // The database hides events you don't organise, so "nothing deleted" means you weren't allowed
+  if (rows.length === 0) throw new Error('You can only delete events you organise.')
+}
+
+
 // ---------------------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------------------
@@ -400,6 +408,25 @@ export async function approveRsvp(rsvpId) {
 
 export async function rejectRsvp(rsvpId) {
   return toRsvp(check(await supabase.rpc('reject_registration', { p_registration_id: rsvpId })))
+}
+
+// Organiser takes someone off the event after accepting them (or off the waitlist / an offer).
+// Status 'rejected', not 'cancelled': the database counts a 'cancelled' close to the start as
+// the PERSON's late cancel (lowers their score), but this was the organiser's decision.
+// When a held spot is freed, a database trigger offers it to the top of the waitlist.
+// RLS only lets the event's organisers change a registration's status.
+export async function removeRsvp(rsvpId) {
+  const rows = check(
+    await supabase
+      .from('registrations')
+      .update({ status: 'rejected' })
+      .eq('id', rsvpId)
+      .in('status', ['confirmed', 'offered', 'waitlisted'])
+      .select(),
+  )
+  // No row changed → not found, already closed, or not your event
+  if (rows.length === 0) throw new Error('This RSVP could not be removed. It may already be closed.')
+  return toRsvp(rows[0])
 }
 
 // Members get a higher waitlist score. RLS only lets you mark members of your OWN club.
