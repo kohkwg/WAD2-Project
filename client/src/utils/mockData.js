@@ -135,23 +135,6 @@ export function createSeedData() {
 
   const events = [
     {
-      id: 'e-weather-demo',
-      organiserId: 'org1',
-      title: 'Campus Green Social · Weather demo',
-      description: 'A near-start demo event for checking real two-hour forecasts and the backup venue workflow. Weather readings come from data.gov.sg.',
-      tags: ['music', 'tech'],
-      startTime: hoursFromNow(0.5),
-      endTime: hoursFromNow(2),
-      capacity: 30,
-      requiresApproval: false,
-      isOutdoor: true,
-      venue: { ...smuGreen },
-      backupVenue: { ...smuAdmin },
-      questions: [],
-      status: 'published',
-      createdAt: daysAgo(1),
-    },
-    {
       id: 'e1',
       organiserId: 'org1',
       title: 'Acoustic Night @ Campus Green',
@@ -399,5 +382,15 @@ export function createSeedData() {
     { userId: 'u4', eventDate: daysAgo(35), attended: false, lateCancel: false },
   ]
 
+  // The near-start weather event is a test fixture only; the demo keeps Gregory's seed list.
+  const testSeed = import.meta.env?.VITE_FEATURE4_TEST_SEED === 'true'
+    || (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+  if (testSeed) events.unshift({
+    id: 'e-weather-demo', organiserId: 'org1', title: 'Campus Green Social · Weather demo',
+    description: 'Near-start outdoor event for isolated weather checks.', tags: ['music', 'tech'],
+    startTime: hoursFromNow(0.5), endTime: hoursFromNow(2), capacity: 30,
+    requiresApproval: false, isOutdoor: true, venue: { ...smuGreen },
+    backupVenue: { ...smuAdmin }, questions: [], status: 'published', createdAt: daysAgo(1),
+  })
   return { users, events, rsvps, members, attendanceHistory }
 }

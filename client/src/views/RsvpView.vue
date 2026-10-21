@@ -4,12 +4,14 @@ import { RouterLink, useRoute } from 'vue-router'
 import EventSummary from '../components/EventSummary.vue'
 import AnnouncementFeed from '../components/event-operations/AnnouncementFeed.vue'
 import ClashWarning from '../components/ClashWarning.vue'
+import VenueMap from '../components/VenueMap.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import {
   getEvent,
   getUser,
   getMyRsvps,
   createRsvp,
+  getCurrentUser,
   CURRENT_USER_ID,
   ACTIVE_STATUSES,
   JOINED_STATUSES,
@@ -30,6 +32,7 @@ const submitting = ref(false)
 const triedSubmit = ref(false) // only show form errors after the first try
 const errorMessage = ref('')
 const result = ref(null) // the RSVP we get back after submitting
+const signedIn = ref(false)
 const validationSummary = ref(null)
 
 let loadRequest = 0
@@ -46,15 +49,20 @@ watch(eventId, async (id) => {
   triedSubmit.value = false
   submitting.value = false
   try {
-    const [loadedEvent, user, rsvps] = await Promise.all([
-      getEvent(id), getUser(CURRENT_USER_ID), getMyRsvps(CURRENT_USER_ID),
-    ])
+    const loadedEvent = await getEvent(id)
     if (ticket !== loadRequest) return
     event.value = loadedEvent
-    myRsvps.value = rsvps
-    name.value = user.name
-    email.value = user.email
     for (const question of loadedEvent.questions) answers.value[question.id] = ''
+    const sessionUser = await getCurrentUser()
+    if (ticket !== loadRequest) return
+    signedIn.value = Boolean(sessionUser)
+    if (sessionUser) {
+      const [user, rsvps] = await Promise.all([getUser(CURRENT_USER_ID), getMyRsvps(CURRENT_USER_ID)])
+      if (ticket !== loadRequest) return
+      myRsvps.value = rsvps
+      name.value = user.name
+      email.value = user.email
+    }
   } catch (error) {
     if (ticket === loadRequest) errorMessage.value = 'Could not load this event: ' + error.message
   } finally {
@@ -143,6 +151,7 @@ async function submitRsvp() {
     <!-- Public context and updates come first in both DOM and mobile reading order. -->
     <div class="col-lg-5 order-1 order-lg-2">
       <EventSummary v-if="event" :event="event" heading-tag="h1">
+        <VenueMap v-if="event.venue?.lat" :lat="event.venue.lat" :lng="event.venue.lng" class="my-3" />
         <hr />
         <p v-if="event.spotsLeft > 0" class="mb-0 text-success fw-semibold">
           {{ event.spotsLeft }} of {{ event.capacity }} spots left
@@ -162,8 +171,13 @@ async function submitRsvp() {
       </div>
       <div v-else-if="!event" class="alert alert-danger mt-3" role="alert">{{ errorMessage }}</div>
       <template v-else>
+      <div v-if="!signedIn" class="card card-body shadow-sm">
+        <h2 class="h4">Ready to RSVP?</h2>
+        <p>Sign in to reserve a place. Event details and announcements are available above.</p>
+        <RouterLink :to="{ path: '/login', query: { redirect: route.fullPath } }" class="btn btn-primary align-self-start">Sign in</RouterLink>
+      </div>
       <!-- After submitting -->
-      <div v-if="result" class="card card-body shadow-sm">
+      <div v-else-if="result" class="card card-body shadow-sm">
         <h2 class="h4">RSVP sent</h2>
         <p class="mb-2">Status: <RsvpStatusBadge :status="result.status" /></p>
         <p v-if="result.status === 'confirmed'">See you there. We've saved your spot.</p>

@@ -26,7 +26,7 @@ const errors = reactive({ tasks: '', announcements: '', budget: '', weather: '' 
 const successes = reactive({ tasks: '', announcements: '', budget: '', weather: '' })
 const retries = reactive({ tasks: null, announcements: null, budget: null, weather: null })
 const retryVersions = { tasks: 0, announcements: 0, budget: 0, weather: 0 }
-const isOwner = computed(() => workspace.value?.event.organiserId === api.CURRENT_ORGANISER_ID)
+const isOwner = computed(() => workspace.value?.event.isMine || workspace.value?.event.organiserId === api.CURRENT_ORGANISER_ID)
 let epoch = 0
 let weatherRequest = 0
 

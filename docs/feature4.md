@@ -1,6 +1,6 @@
 # Feature 4: organiser operations
 
-Current guide after two iterations and the review-fix pass, 17 October 2026. Denzel owns tasks,
+Current guide after the Gregory merge review, 21 October 2026. Denzel owns tasks,
 announcements, budget tracking and weather-assisted venue switching. The app uses
 Vue 3 Composition API, JavaScript, Bootstrap 5 and an asynchronous localStorage
 demo layer. Weather uses real public HTTP reads; tests substitute controlled data.
@@ -19,8 +19,8 @@ The route is `/organiser/events/:id/manage?tab=tasks`; other tools are
 `announcements`, `budget` and `weather`. The public event/feed route is
 `/events/:id/rsvp`.
 
-Fresh storage includes `e-weather-demo`, starting 30 minutes after seeding.
-Saved data does not gain this event automatically. **Reset demo data** asks for
+The ordinary demo uses Gregory’s event list. Browser and Node tests add
+`e-weather-demo` only inside their isolated test environment. **Reset demo data** asks for
 confirmation, deletes all local event/RSVP/Feature 4 edits and reseeds on reload.
 The demo event ages with saved storage; switch availability depends on current
 weather and the event falling inside the forecast window.
@@ -76,9 +76,12 @@ and before RSVP actions in mobile/DOM order. Required question groups use native
 semantics, associated errors and a focused validation summary.
 
 The fixed `org1`/`u1` identities and local ownership checks are demo workflow
-guards. Browser storage is editable by its user and provides no production auth,
-RLS, cross-tab transaction or multi-user concurrency guarantee. No map or floor-plan
-renderer is implemented. Future venue displays must match the effective venue.
+guards. Event deletion now cascades in the demo through RSVPs, tasks, posts,
+budget and saved forecast choice; the imported SQL has database cascades. Browser storage is editable by its user and provides no production auth,
+RLS, cross-tab transaction or multi-user concurrency guarantee. Gregory’s Leaflet
+map now renders event pins; the organiser may move the pin, whose coordinates
+are authoritative for weather even if the address text stays the same. The
+effective venue and pin must match after a backup switch.
 
 ## Components and data flow
 
@@ -112,9 +115,13 @@ Preserve async success/failure, exact money and public/private separation in a l
 
 ## Live integration handoff
 
-Timothy's initializer and initial SQL are imported source, not deployment proof.
+Timothy’s `tim` branch contains the same imported initial SQL and a CRUD
+script, not an additional Feature 4 contract. The browser publishable key
+connects to the supplied project; the local server secret key was rejected
+by Supabase, so no test accounts were created.
 The agreed direction uses the existing browser Supabase client with real user
-auth/RLS and the existing `switch_event_venue` RPC. Feature 4 needs no parallel
+auth/RLS. Live Feature 4 stays unavailable until Timothy approves its contracts;
+the venue switch remains disabled. Feature 4 needs no parallel
 Express CRUD layer. Keep privileged keys server-side and failed live writes
 visible; do not silently substitute demo writes.
 
@@ -126,11 +133,14 @@ visible; do not silently substitute demo writes.
 | Effective venue | Derive from original `venue_id`, `backup_venue_id` and `using_backup`; retain the primary venue |
 | Switch RPC | `switch_event_venue(p_event_id, p_use_backup=true, p_message=null)` returns an announcement row; refetch event for the UI contract |
 
-Before activation, agree the development project, deployed migrations, real auth
-sessions/test records and these gaps with Timothy:
+Before activation, confirm deployed migrations, real auth sessions/test records
+and these gaps with Timothy:
 
 - Public anonymous/pre-RSVP announcement reads and owner-only private tools versus
   imported helper/co-organiser permissions.
+- The follow-up `20261021000000_public_announcements.sql` migration grants anonymous
+  read access to `everyone` posts for published events. It is prepared for
+  Timothy's review and has not been deployed or verified against cloud RLS.
 - Authoritative positive overall budget limit; exact decimal mapping and the
   database's smaller amount range (maximum SGD 9,999,999,999.99 per amount).
 - Immutable automatic posts, manual edited timestamps, atomic board saves and a

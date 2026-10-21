@@ -1,5 +1,17 @@
 // Small helper functions shared by several pages.
 
+// ---------- RSVP rules (used by the pages AND by both backends: mockApi + supabaseApi) ----------
+
+// How long someone has to accept a waitlist offer
+export const OFFER_HOURS = 24
+
+// RSVPs that still hold or want a place at the event
+export const ACTIVE_STATUSES = ['pending', 'confirmed', 'waitlisted', 'offered']
+// RSVPs that count as "you've joined" for the clash warning
+export const JOINED_STATUSES = ['pending', 'confirmed', 'offered']
+// RSVPs that are over
+export const CLOSED_STATUSES = ['rejected', 'cancelled', 'declined', 'expired']
+
 // ---------- Dates and times ----------
 
 // "Sat, 18 Oct, 7:00 pm – 10:00 pm"
@@ -48,6 +60,14 @@ export function toDateTimeInputValue(date) {
 // Back-to-back (A ends 8pm, B starts 8pm) is NOT a clash.
 export function eventsOverlap(a, b) {
   return new Date(a.startTime) < new Date(b.endTime) && new Date(b.startTime) < new Date(a.endTime)
+}
+
+// Progress bar colour by how full an event is: green → amber from 80% → red when full.
+// The colour lets organisers spot busy events at a glance without reading the numbers.
+export function fillColour(percent) {
+  if (percent >= 100) return 'bg-danger'
+  if (percent >= 80) return 'bg-warning'
+  return 'bg-success'
 }
 
 // ---------- Tags ----------

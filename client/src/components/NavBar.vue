@@ -1,11 +1,24 @@
 <script setup>
-import { ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
-import { resetDemoData } from '../utils/api.js'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { USING_SUPABASE, getCurrentUser, onAuthChange, signOut, resetDemoData } from '../utils/api.js'
 
 const route = useRoute()
+const router = useRouter()
 const menuOpen = ref(false)
+const user = ref(null)
+let stopListening = () => {}
+onMounted(async () => {
+  if (USING_SUPABASE) user.value = await getCurrentUser()
+  stopListening = onAuthChange((nextUser) => { user.value = nextUser })
+})
+onUnmounted(() => stopListening())
 watch(() => route.fullPath, () => { menuOpen.value = false })
+
+async function logOut() {
+  await signOut()
+  router.push('/login')
+}
 
 function resetDemo() {
   if (!window.confirm('Reset demo data? This removes saved events, RSVPs and organiser work in this browser.')) return
@@ -54,9 +67,12 @@ function resetDemo() {
           </li>
         </ul>
 
-        <button type="button" class="btn btn-outline-secondary btn-sm" @click="resetDemo">
-          Reset demo data
-        </button>
+        <div v-if="USING_SUPABASE && user" class="d-flex align-items-center gap-2">
+          <span class="small text-secondary">{{ user.email }}</span>
+          <button type="button" class="btn btn-outline-secondary btn-sm" @click="logOut">Sign out</button>
+        </div>
+        <RouterLink v-else-if="USING_SUPABASE" to="/login" class="btn btn-outline-primary btn-sm">Sign in</RouterLink>
+        <button v-else type="button" class="btn btn-outline-secondary btn-sm" @click="resetDemo">Reset demo data</button>
       </div>
     </div>
   </nav>

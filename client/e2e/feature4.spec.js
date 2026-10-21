@@ -98,6 +98,21 @@ test.afterEach(async ({}, testInfo) => {
   expect(diagnostics.failedRequests.filter(request => !request.url.includes('/two-hr-forecast'))).toEqual([])
 })
 
+test('organiser event deletion cascades across RSVPs and Feature 4 records', async ({ page }) => {
+  await page.goto('/organiser/events/e1/manage?tab=tasks')
+  await addTask(page, 'Remove with event')
+  await page.goto('/organiser/events')
+  const eventCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Acoustic Night @ Campus Green' }) })
+  await eventCard.getByRole('button', { name: 'Delete event' }).click()
+  await eventCard.getByRole('button', { name: 'Yes, delete event' }).click()
+  await expect(page.getByRole('status')).toContainText('Event deleted')
+  const saved = await db(page)
+  expect(saved.events.some(event => event.id === 'e1')).toBe(false)
+  expect(saved.rsvps.some(rsvp => rsvp.eventId === 'e1')).toBe(false)
+  expect(saved.feature4.tasks.some(task => task.eventId === 'e1')).toBe(false)
+  expect(saved.events.some(event => event.id === 'e2')).toBe(true)
+})
+
 test('task CRUD, keyboard column moves/order, reload and event isolation', async ({ page }) => {
   await openTool(page)
   await addTask(page, 'Book microphones')

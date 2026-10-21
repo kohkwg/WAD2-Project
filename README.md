@@ -2,8 +2,9 @@
 
 Vue 3/Vite/Bootstrap frontend and optional Express health scaffold for SMU IS216.
 Feature 4 provides organiser tasks, public announcements, SGD budgets and a
-weather-assisted backup switch. Event/RSVP and organiser persistence currently
-use browser localStorage with demo identities; hosted auth/data are deferred.
+weather-assisted backup switch. Event/RSVP/auth use Supabase when the client
+environment is configured; Feature 4 live writes remain disabled pending
+Timothy’s backend contracts. Without client credentials, the app uses demo data.
 
 ## Run locally
 
@@ -39,7 +40,9 @@ pnpm --dir client exec playwright install chromium
 pnpm --dir client test:e2e
 ```
 
-Latest checks, 17 October 2026: **27 Node tests, 50 Chromium tests and build passed**.
+Latest merge checks, 21 October 2026: **28 Node tests, 51 Chromium tests
+and the production build passed**. A read-only live browser check loaded
+public events; sign-in and hosted writes remain unverified.
 Browser tests isolate localStorage and control weather/time. The waitlist Vitest
 spec is unconfigured/excluded; neither package has a lint script. Hosted behaviour
 and live external-service availability remain unverified.
@@ -119,3 +122,15 @@ performed integration review and verification and prepared portable agent,
 technical and merge handoff documentation plus ignore rules. These changes relied
 on AI implementation and require team review; ownership of the affected features
 stays with their assigned teammates. Hosted integration remains deferred.
+
+On 21 October 2026, Codex resolved the Gregory/`dev` merge conflicts under
+Denzel’s direction. Codex authored the combined API boundary, offline Feature 4
+retention, public/auth routing, effective-venue mapping, event-deletion cascade,
+frontend reconciliation, test fixture and regression changes, and updated these
+handoffs. Gregory’s event/RSVP adapter and Leaflet map remain Gregory’s original
+contribution; Timothy’s SQL and server script remain Timothy’s contribution.
+Live Feature 4 and the prepared public-announcement SQL migration still require
+Timothy’s backend review.
+[Leaflet](https://github.com/Leaflet/Leaflet) (BSD-2-Clause) powers the map;
+[Supabase JavaScript](https://github.com/supabase/supabase-js) (MIT) powers the
+browser data adapter. Carry these attributions into presentation materials.

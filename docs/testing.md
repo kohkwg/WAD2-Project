@@ -12,8 +12,22 @@ pnpm --dir client test:e2e
 
 Install Chromium once. Playwright starts/reuses Vite on `127.0.0.1:5173`, uses
 isolated localStorage and Singapore time, controls external responses and blocks
-Supabase requests. It does not reset a user's browser data. Browser reports and
+Supabase requests. The weather event is injected for tests only. It does not reset a user's browser data. Browser reports and
 build output are generated locally and ignored.
+
+## Merge review: 21 October 2026
+
+The Gregory merge worktree built successfully with the configured browser
+publishable key. The Feature 4 Node suite passed (28 cases, including event
+delete cascade), and the complete isolated Chromium suite passed 51/51. Browser
+tests force mock mode and add the near-start weather event as a test fixture.
+A read-only live browser check loaded 37 public event cards and one public
+RSVP page without login, including its effective venue map and sign-in prompt.
+No live sign-in/write flow was verified: the local server secret key was
+rejected, so no test accounts were created. Anonymous announcement access is
+addressed by a follow-up migration prepared for Timothy's review; that migration
+has not been deployed or verified against cloud RLS.
+
 
 ## Final run: 17 October 2026
 
