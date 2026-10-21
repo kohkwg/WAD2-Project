@@ -4,14 +4,38 @@ import { api } from '@/lib/api'
 
 const PAGE_SIZE = 12
 
+async function confirmedAttendees(eventIds) {
+  // Read through the user's existing RLS permissions. Never use a service key
+  // here: other participants' registrations may intentionally be private.
+  const attendees = new Map()
+  const batchSize = 200
+  for (let offset = 0; ; offset += batchSize) {
+    const { data, error } = await supabase.from('registrations')
+      .select('id, event_id, user_id, profile:profiles!registrations_user_id_fkey(id, display_name, avatar_key)')
+      .eq('status', 'confirmed').in('event_id', eventIds)
+      .order('id').range(offset, offset + batchSize - 1)
+    if (error) return attendees // Optional photos must not prevent browsing.
+    for (const row of data || []) {
+      const profile = Array.isArray(row.profile) ? row.profile[0] : row.profile
+      if (!profile) continue
+      if (!attendees.has(row.event_id)) attendees.set(row.event_id, [])
+      attendees.get(row.event_id).push({ ...profile, id: profile.id || row.user_id })
+    }
+    if (!data || data.length < batchSize) return attendees
+  }
+}
+
 async function withEventDetails(rows) {
   const venueIds = [...new Set(rows.map(e => e.venue_id).filter(Boolean))]
   const { data: sessionData } = await supabase.auth.getSession()
   const userId = sessionData.session?.user.id
-  const [venues, registrations] = await Promise.all([
+  const [venues, attendees, registrations] = await Promise.all([
     venueIds.length
-      ? supabase.from('venues').select('id, name').in('id', venueIds)
+      ? supabase.from('venues').select('id, name, address').in('id', venueIds)
       : Promise.resolve({ data: [] }),
+    userId && rows.length
+      ? confirmedAttendees(rows.map(e => e.id))
+      : Promise.resolve(new Map()),
     userId && rows.length
       ? supabase.from('registrations').select('event_id, status')
         .eq('user_id', userId).in('event_id', rows.map(e => e.id))
@@ -19,11 +43,13 @@ async function withEventDetails(rows) {
   ])
   if (registrations.error) throw registrations.error
   // Venues are optional; missing/inaccessible names simply omit the venue line.
-  const names = new Map((venues.data || []).map(v => [v.id, v.name]))
+  const venueDetails = new Map((venues.data || []).map(v => [v.id, v]))
   const statuses = new Map((registrations.data || []).map(r => [r.event_id, r.status]))
   return rows.map(e => ({
-    ...e, venue_name: names.get(e.venue_id) || '',
+    ...e, venue_name: venueDetails.get(e.venue_id)?.name || e.venue_name || '',
+    venue_address: venueDetails.get(e.venue_id)?.address || e.venue_address || '',
     registration_status: statuses.get(e.id) || null,
+    attendees: attendees.get(e.id) || e.attendees || [],
   }))
 }
 
@@ -34,7 +60,7 @@ export function useEvents() {
   const error = ref('')
   let requestId = 0
 
-  // filters: { search, category, tag, dateFrom, dateTo, availableOnly, sort, page }
+  // filters: { search, category (legacy), categories, tag, dateFrom, dateTo, availableOnly, sort, page }
   async function fetchEvents(filters = {}) {
     const currentRequest = ++requestId
     loading.value = true
@@ -64,7 +90,8 @@ export function useEvents() {
         if (matchingVenueIds.length) terms.push(`venue_id.in.(${matchingVenueIds.join(',')})`)
         q = q.or(terms.join(','))
       }
-      if (filters.category) q = q.eq('category', filters.category)
+      if (filters.categories?.length) q = q.in('category', [...new Set(filters.categories)])
+      else if (filters.category) q = q.eq('category', filters.category)
       if (filters.tag) q = q.contains('tags', [filters.tag])
       if (filters.dateFrom) q = q.gte('start_time', new Date(`${filters.dateFrom}T00:00:00`).toISOString())
       if (filters.dateTo) {

@@ -23,12 +23,23 @@ onBeforeUnmount(() => clearTimeout(timer))
 function update(patch) {
   emit('update:modelValue', { ...props.modelValue, ...patch, page: 1 })
 }
+const selectedCategories = computed(() => props.modelValue.categories?.length
+  ? props.modelValue.categories
+  : props.modelValue.category ? [props.modelValue.category] : [])
+const categoryOptions = computed(() => [...new Set([...CATEGORIES, 'hackathon', ...selectedCategories.value])])
+function toggleCategory(category) {
+  const selected = selectedCategories.value
+  update({ category: '', categories: selected.includes(category)
+    ? selected.filter(value => value !== category)
+    : [...selected, category] })
+}
+function clearCategories() { update({ category: '', categories: [] }) }
 const activeCount = computed(() => {
   const f = props.modelValue
-  return [f.category, f.tag, f.dateFrom, f.dateTo, f.availableOnly, f.sort !== 'soonest'].filter(Boolean).length
+  return [f.tag, f.dateFrom, f.dateTo, f.availableOnly, f.sort !== 'soonest'].filter(Boolean).length
 })
 function reset() {
-  update({ category: '', tag: '', dateFrom: '', dateTo: '', availableOnly: false, sort: 'soonest' })
+  update({ category: '', categories: [], tag: '', dateFrom: '', dateTo: '', availableOnly: false, sort: 'soonest' })
 }
 </script>
 
@@ -45,25 +56,23 @@ function reset() {
         Filters <span v-if="activeCount" class="badge rounded-pill text-bg-primary">{{ activeCount }}</span>
       </button>
     </div>
+    <div class="category-options" role="group" aria-label="Filter by category. Select one or more.">
+      <button type="button" class="category-option" :class="{ 'is-selected': !selectedCategories.length }" :aria-pressed="!selectedCategories.length" @click="clearCategories">All</button>
+      <button v-for="category in categoryOptions" :key="category" type="button" class="category-option" :class="{ 'is-selected': selectedCategories.includes(category) }" :aria-pressed="selectedCategories.includes(category)" @click="toggleCategory(category)">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</button>
+    </div>
+    <p v-if="selectedCategories.length > 1" class="category-hint">Showing events matching any of your selected categories.</p>
     <Transition name="filter-panel">
       <div v-if="expanded" id="event-filter-panel" class="filter-panel">
         <div class="row g-3">
-          <div class="col-12 col-sm-6 col-lg-3">
-            <label for="category" class="form-label small text-secondary">Category</label>
-            <select id="category" :value="modelValue.category" class="form-select" @change="update({ category: $event.target.value })">
-              <option value="">All categories</option>
-              <option v-for="c in CATEGORIES" :key="c" :value="c">{{ c.charAt(0).toUpperCase() + c.slice(1) }}</option>
-            </select>
-          </div>
-          <div class="col-6 col-lg-3">
+          <div class="col-12 col-md-6 col-lg-4">
             <label for="dateFrom" class="form-label small text-secondary">From date</label>
             <input id="dateFrom" :value="modelValue.dateFrom" type="date" class="form-control" @change="update({ dateFrom: $event.target.value })" />
           </div>
-          <div class="col-6 col-lg-3">
+          <div class="col-12 col-md-6 col-lg-4">
             <label for="dateTo" class="form-label small text-secondary">To date</label>
             <input id="dateTo" :value="modelValue.dateTo" type="date" class="form-control" @change="update({ dateTo: $event.target.value })" />
           </div>
-          <div class="col-12 col-sm-6 col-lg-3">
+          <div class="col-12 col-md-6 col-lg-4">
             <label for="sort" class="form-label small text-secondary">Sort by</label>
             <select id="sort" :value="modelValue.sort" class="form-select" @change="update({ sort: $event.target.value })">
               <option value="soonest">Soonest</option>
@@ -84,6 +93,14 @@ function reset() {
 </template>
 
 <style scoped>
+.category-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding: 3px; }
+.category-option { flex-shrink: 0; min-height: 44px; padding: 8px 18px; border: 1px solid #dce2eb; border-radius: 999px; background: #fff; color: #647083; font-size: .875rem; font-weight: 550; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+.category-option:hover { background: #edf2fa; border-color: #a6b6ce; }
+.category-option.is-selected { background: #25364e; border-color: #25364e; color: white; }
+.category-option:focus-visible { outline: 3px solid #8eafdf; outline-offset: 2px; }
+.category-hint { margin: 8px 3px 0; font-size: .8rem; color: #737b88; }
+@media (max-width: 767px) { .category-options { flex-wrap: nowrap; overflow-x: auto; } }
+@media (prefers-reduced-motion: reduce) { .category-option { transition: none; } }
 .search-toolbar { display: flex; gap: 12px; }
 .search-field { position: relative; flex: 1; min-width: 0; }
 .search-field svg { position: absolute; left: 20px; top: 20px; width: 22px; height: 22px; color: #7c8390; pointer-events: none; }

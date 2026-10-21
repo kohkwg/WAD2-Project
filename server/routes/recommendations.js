@@ -45,12 +45,18 @@ router.post("/interactions", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "eventId and type (rsvp|attend) required" });
     }
 
-    const { data: event } = await supabase
-      .from("events").select("tags").eq("id", eventId).single();
-    const { data: profile } = await supabase
+    const { data: event, error: eventError } = await supabase
+      .from("events").select("category").eq("id", eventId).single();
+    if (eventError) throw eventError;
+    const { data: profile, error: profileError } = await supabase
       .from("profiles").select("interest_weights").eq("id", req.user.id).maybeSingle();
+    if (profileError) throw profileError;
 
-    const next = bumpInterestWeights(profile?.interest_weights, event?.tags, type);
+    const next = bumpInterestWeights(
+      profile?.interest_weights,
+      [event?.category?.toLowerCase()].filter(Boolean),
+      type
+    );
 
     const { error } = await supabase
       .from("profiles")

@@ -36,9 +36,12 @@ function haversineKm(lat1, lng1, lat2, lng2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-function interestScore(tags, weights) {
+function interestScore(tags, weights, category) {
   // sum matched weights, then saturate so 1 match ~0.63, 2 matches ~0.86 (weights = 1)
-  const matched = (tags || []).filter((t) => weights[t] > 0);
+  const all = [...(tags || []), category]
+    .filter(Boolean)
+    .map((t) => String(t).toLowerCase());
+  const matched = [...new Set(all)].filter((t) => weights[t] > 0);
   const sum = matched.reduce((acc, t) => acc + weights[t], 0);
   return { score: 1 - Math.exp(-sum), matched };
 }
@@ -84,7 +87,7 @@ function scoreEvents(events, profile, opts = {}) {
   Object.keys(w).forEach((k) => (w[k] /= total));
 
   return candidates.map((e) => {
-    const { score: interest, matched } = interestScore(e.tags, weights);
+    const { score: interest, matched } = interestScore(e.tags, weights, e.category);
     const recency = recencyScore(e.start_time, now);
     const popularity = Math.log1p(e.confirmed_count || 0) / Math.log1p(maxPop);
     const spots = spotsScore(e.spots_left);

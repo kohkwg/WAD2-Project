@@ -1,12 +1,20 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { useRouter } from 'vue-router'
 import { useEvents, useRecommendations } from '@/composables/useEvents'
 import EventCard from '@/components/EventCard.vue'
 import EventFilters from '@/components/EventFilters.vue'
+import PickedForYou from '@/components/PickedForYou.vue'
 
-const defaults = () => ({ search: '', category: '', tag: '', dateFrom: '', dateTo: '', availableOnly: false, sort: 'soonest', page: 1 })
+const defaults = () => ({ search: '', category: '', categories: [], tag: '', dateFrom: '', dateTo: '', availableOnly: false, sort: 'soonest', page: 1 })
 const filters = ref(defaults())
+const router = useRouter()
+// Gregory owns the registration flows. Navigate to his page until a parent
+// integration supplies them; no RSVP or waitlist mutation happens here.
+function openEventAction(event, action) {
+  router.push({ path: `/events/${event.id}`, hash: `#${action}` })
+}
 const { events, total, loading, error, fetchEvents, PAGE_SIZE } = useEvents()
 const { recommended, loading: recLoading, error: recError, fetchRecommendations } = useRecommendations()
 const loggedIn = ref(false)
@@ -25,8 +33,11 @@ onBeforeUnmount(() => navbarResizeObserver?.disconnect())
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)))
 const filtersActive = computed(() => {
   const f = filters.value
-  return !!(f.search || f.category || f.tag || f.dateFrom || f.dateTo || f.availableOnly || f.sort !== 'soonest')
+  return !!(f.search || f.category || f.categories?.length || f.tag || f.dateFrom || f.dateTo || f.availableOnly || f.sort !== 'soonest')
 })
+const discoveryPicks = computed(() => loggedIn.value ? recommended.value
+  : [...events.value].sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
+    .slice(0, 6).map(event => ({ ...event, reason: 'Upcoming event' })))
 const dateGroups = computed(() => {
   const groups = new Map()
   for (const event of events.value) {
@@ -80,6 +91,16 @@ function goToPage(page) {
       </header>
 
       <EventFilters v-model="filters" class="mb-4" />
+      <PickedForYou
+        v-if="!filtersActive"
+        :events="discoveryPicks"
+        :loading="loggedIn ? recLoading : loading"
+        :error="loggedIn ? recError : error"
+        :personalized="loggedIn"
+        @retry="loggedIn ? fetchRecommendations(6) : fetchEvents(filters)"
+        @rsvp="openEventAction($event, 'rsvp')"
+        @waitlist="openEventAction($event, 'waitlist')"
+      />
       <section aria-label="Upcoming events" :aria-busy="loading">
         <div v-if="loading" class="text-center loading-state" role="status">
           <div class="spinner-border text-primary" aria-hidden="true"></div>
@@ -116,15 +137,6 @@ function goToPage(page) {
         </nav>
       </section>
 
-      <section v-if="loggedIn && !filtersActive" class="recommendations" aria-labelledby="for-you">
-        <h2 id="for-you" class="h5 fw-bold mb-3">For you</h2>
-        <div v-if="recLoading" class="text-secondary" role="status">Finding recommendations…</div>
-        <div v-else-if="recError" class="text-secondary">{{ recError }}</div>
-        <p v-else-if="!recommended.length" class="text-secondary">No recommendations yet. Add interests in your <RouterLink to="/profile">profile</RouterLink> to get personalised picks.</p>
-        <div v-else class="recommended-events">
-          <EventCard v-for="event in recommended" :key="event.id" :event="event" show-reason />
-        </div>
-      </section>
     </main>
   </div>
 </template>
@@ -149,8 +161,6 @@ h1 { font-size: 2rem; letter-spacing: -.04em; }
 .loading-state, .empty-state { padding: 70px 24px; }
 .empty-state { background: white; border: 1px solid #e4e6eb; border-radius: 20px; }
 .empty-icon { font-size: 2.6rem; color: #8194b6; margin-bottom: 12px; }
-.recommendations { margin-top: 56px; padding-top: 32px; border-top: 1px solid #e0e4eb; }
-.recommended-events { display: grid; gap: 16px; }
 @media (max-width: 767px) {
   .discover-content { padding-top: 28px; }
   h1 { font-size: 1.65rem; }

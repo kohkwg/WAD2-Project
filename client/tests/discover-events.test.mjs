@@ -105,3 +105,85 @@ test('a database error clears previous results and is exposed for the retry stat
   assert.equal(state.total.value, 0)
   assert.equal(state.loading.value, false)
 })
+
+test('attendee photos are joined only from confirmed registrations visible to the current user', async () => {
+  reset((table, calls) => {
+    if (table === 'events_with_counts') return { data: [event], count: 1 }
+    if (table === 'venues') return { data: [] }
+    const isAttendeeQuery = calls.some(c => c[0] === 'eq' && c[1] === 'status' && c[2] === 'confirmed')
+    return { data: isAttendeeQuery
+      ? [{ id: 'registration-1', event_id: event.id, user_id: 'person-1', profile: { id: 'person-1', display_name: 'Alex Tan', avatar_key: 'avatars/person-1/photo.jpg' } }]
+      : [{ event_id: event.id, status: 'pending' }] }
+  })
+  const state = useEvents()
+  await state.fetchEvents()
+  assert.equal(state.error.value, '')
+  assert.deepEqual(state.events.value[0].attendees, [{ id: 'person-1', display_name: 'Alex Tan', avatar_key: 'avatars/person-1/photo.jpg' }])
+  assert.equal(state.events.value[0].registration_status, 'pending')
+})
+
+test('unavailable attendee profiles do not prevent browsing', async () => {
+  reset((table, calls) => {
+    if (table === 'events_with_counts') return { data: [event], count: 1 }
+    if (calls.some(c => c[0] === 'eq' && c[1] === 'status')) return { data: null, error: { message: 'Attendee profiles unavailable' } }
+    return { data: [] }
+  })
+  const state = useEvents()
+  await state.fetchEvents()
+  assert.equal(state.error.value, '')
+  assert.deepEqual(state.events.value[0].attendees, [])
+})
+
+test('attendee loading continues across batches rather than silently truncating the list', async () => {
+  const people = Array.from({ length: 201 }, (_, i) => ({ id: `registration-${i}`, event_id: event.id, user_id: `person-${i}`, profile: { id: `person-${i}`, display_name: `Person ${i}` } }))
+  reset((table, calls) => {
+    if (table === 'events_with_counts') return { data: [event], count: 1 }
+    const range = calls.find(c => c[0] === 'range')
+    return { data: table === 'registrations' && range ? people.slice(range[1], range[2] + 1) : [] }
+  })
+  const state = useEvents()
+  await state.fetchEvents()
+  assert.equal(state.error.value, '')
+  assert.equal(state.events.value[0].attendees.length, 201)
+})
+
+test('multiple category badges query any selected category alongside existing filters', async () => {
+  reset(() => ({ data: [], count: 0 }), false)
+  const state = useEvents()
+  await state.fetchEvents({ categories: ['sports', 'hackathon', 'sports'], category: 'music', search: 'Meetup', availableOnly: true, sort: 'popular' })
+  assert.equal(state.error.value, '')
+  const calls = requests.find(r => r.table === 'events_with_counts').calls
+  assert.deepEqual(calls.find(c => c[0] === 'in' && c[1] === 'category'), ['in', 'category', ['sports', 'hackathon']])
+  assert.ok(!calls.some(c => c[0] === 'eq' && c[1] === 'category'))
+  assert.ok(calls.some(c => c[0] === 'or' && c[1].includes('title.ilike.%Meetup%')))
+  assert.ok(calls.some(c => c[0] === 'or' && c[1] === 'spots_left.gt.0,capacity.is.null'))
+  assert.ok(calls.some(c => c[0] === 'order' && c[1] === 'confirmed_count'))
+})
+
+test('All categories omits the category constraint', async () => {
+  reset(() => ({ data: [], count: 0 }), false)
+  const state = useEvents()
+  await state.fetchEvents({ category: '', categories: [] })
+  const calls = requests.find(r => r.table === 'events_with_counts').calls
+  assert.ok(!calls.some(c => ['eq', 'in'].includes(c[0]) && c[1] === 'category'))
+})
+
+test('venue lookup supplies both the location name and street address', async () => {
+  reset(table => table === 'events_with_counts' ? { data: [event], count: 1 }
+    : { data: [{ id: event.venue_id, name: 'Sports Hall', address: '81 Victoria Street' }] }, false)
+  const state = useEvents()
+  await state.fetchEvents()
+  assert.equal(state.events.value[0].venue_name, 'Sports Hall')
+  assert.equal(state.events.value[0].venue_address, '81 Victoria Street')
+})
+
+test('existing event locations are retained if the optional venue lookup is unavailable', async () => {
+  reset(table => table === 'events_with_counts'
+    ? { data: [{ ...event, venue_name: 'Sports Hall', venue_address: '81 Victoria Street' }], count: 1 }
+    : { data: null, error: { message: 'Venue lookup unavailable' } }, false)
+  const state = useEvents()
+  await state.fetchEvents()
+  assert.equal(state.error.value, '')
+  assert.equal(state.events.value[0].venue_name, 'Sports Hall')
+  assert.equal(state.events.value[0].venue_address, '81 Victoria Street')
+})

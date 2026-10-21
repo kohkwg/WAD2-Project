@@ -6,5 +6,6 @@ export const CATEGORIES = [
 
 export const INTEREST_OPTIONS = [
   'music', 'sports', 'tech', 'arts', 'food', 'networking', 'academic',
-  'volunteering', 'social', 'outdoor', 'gaming', 'wellness',
+  'volunteering', 'social', 'hackathon', 'career',
+  'outdoor', 'gaming', 'wellness',
 ]

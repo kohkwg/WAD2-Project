@@ -1,6 +1,6 @@
 // Run from the server folder: node tests/recommendation.test.js
 const assert = require("node:assert");
-const { recommend, bumpInterestWeights } = require("../services/recommendation");
+const { recommend, scoreEvents, bumpInterestWeights } = require("../services/recommendation");
 
 const inDays = (d) => new Date(Date.now() + d * 86400000).toISOString();
 
@@ -37,5 +37,16 @@ const w = bumpInterestWeights({ music: 1 }, ["music", "tech"], "rsvp");
 assert.strictEqual(w.music, 1.5);
 assert.strictEqual(w.tech, 0.5);
 assert.strictEqual(bumpInterestWeights({ music: 4.9 }, ["music"], "attend").music, 5); // capped
+
+// 6. Category-only events can match interests without a tags column.
+const categoryOnly = { id: "category-only", title: "Futsal", category: "Sports", start_time: inDays(2), confirmed_count: 0, spots_left: 20 };
+const matched = scoreEvents([categoryOnly], { interest_weights: { sports: 2 } })[0];
+assert.strictEqual(matched.reason, "Matches your interests: sports");
+const duplicated = scoreEvents([{ ...categoryOnly, tags: ["Sports", "SPORTS"] }], { interest_weights: { sports: 2 } })[0];
+assert(Math.abs(matched.score - duplicated.score) < 0.00001, "duplicate category/tags must not count twice");
+const unrelated = scoreEvents([categoryOnly], { interest_weights: { music: 2 } })[0];
+assert(matched.score > unrelated.score, "matching categories should receive a higher score");
+const noCategory = scoreEvents([{ ...categoryOnly, category: null, tags: null }], { interest_weights: { sports: 2 } })[0];
+assert(Number.isFinite(noCategory.score), "events with no category or tags must still score safely");
 
 console.log("All recommendation tests passed");
