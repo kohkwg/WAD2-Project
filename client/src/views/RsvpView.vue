@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import EventSummary from '../components/EventSummary.vue'
 import ClashWarning from '../components/ClashWarning.vue'
+import VenueMap from '../components/VenueMap.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import {
   getEvent,
@@ -123,7 +124,8 @@ async function submitRsvp() {
     <div class="col-lg-7 order-2 order-lg-1">
       <!-- After submitting -->
       <!-- Left column shows ONE of: result (just submitted) → already RSVP'd → the form -->
-      <div v-if="result" class="card card-body shadow-sm">
+      <!-- h-100 = fill the column's full height, so this card matches the event card beside it -->
+      <div v-if="result" class="card card-body shadow-sm h-100">
         <h2 class="h4">RSVP sent</h2>
         <p class="mb-2">Status: <RsvpStatusBadge :status="result.status" /></p>
         <!-- Message depends on the status we got back; v-else covers waitlisted -->
@@ -140,7 +142,7 @@ async function submitRsvp() {
       </div>
 
       <!-- Already RSVP'd before -->
-      <div v-else-if="existingRsvp" class="card card-body shadow-sm">
+      <div v-else-if="existingRsvp" class="card card-body shadow-sm h-100">
         <h2 class="h4">You already RSVP'd</h2>
         <p>Status: <RsvpStatusBadge :status="existingRsvp.status" /></p>
         <RouterLink to="/my-rsvps" class="btn btn-primary align-self-start"
@@ -150,7 +152,12 @@ async function submitRsvp() {
 
       <!-- The RSVP form -->
       <!-- .prevent stops the page reloading; novalidate turns off browser pop-ups so our formErrors show instead -->
-      <form v-else class="card card-body shadow-sm" @submit.prevent="submitRsvp" novalidate>
+      <form
+        v-else
+        class="card card-body shadow-sm h-100"
+        @submit.prevent="submitRsvp"
+        novalidate
+      >
         <h2 class="h4 mb-1">RSVP</h2>
         <p class="form-text mt-0">
           Your details are filled in from your profile. Change them if needed.
@@ -236,7 +243,15 @@ async function submitRsvp() {
 
     <!-- Right: event details (shown first on phones) -->
     <div class="col-lg-5 order-1 order-lg-2">
-      <EventSummary :event="event">
+      <!-- class="h-100" passes through to EventSummary's outer card, so both cards stretch equally -->
+      <EventSummary :event="event" class="h-100">
+        <!-- Read-only map (no draggable) so participants can see where the event is -->
+        <VenueMap
+          v-if="event.venue.lat"
+          :lat="event.venue.lat"
+          :lng="event.venue.lng"
+          class="my-3"
+        />
         <!-- Everything inside <EventSummary> goes into its <slot> at the bottom of the card -->
         <hr />
         <p v-if="event.spotsLeft > 0" class="mb-0 text-success fw-semibold">
