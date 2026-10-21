@@ -6,6 +6,7 @@ Start with the current guides; iteration records describe earlier checkpoints.
 | --- | --- |
 | [Project README](../README.md) | Setup, status and detailed AI authorship disclosure |
 | [Branch handoff](handoff.md) | Merge preparation, changed areas, ownership and remaining work |
+| [AI tools and agent merge guide](ai-merge-guide.md) | Historical setup and merge-readiness checklist; current guides take precedence |
 | [Feature 4](feature4.md) | Behaviour, component/data flow, async API and backend mapping |
 | [Teammate assumptions](iteration2-teammate-handoff.md) | Current boundaries and integration acceptance |
 | [Verification](testing.md) | Repeatable commands, coverage and latest results |
