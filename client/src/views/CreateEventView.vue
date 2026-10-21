@@ -3,6 +3,7 @@ import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import StepIndicator from '../components/StepIndicator.vue'
 import AddressSearch from '../components/AddressSearch.vue'
+import VenueMap from '../components/VenueMap.vue'
 import EventSummary from '../components/EventSummary.vue'
 import { createEvent } from '../utils/api.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
@@ -125,6 +126,11 @@ function previousStep() {
 
 function setVenue(place) {
   form.value.venue = place
+}
+
+function moveVenuePin(position) {
+  form.value.venue.lat = position.lat
+  form.value.venue.lng = position.lng
 }
 
 function setBackupVenue(place) {
@@ -294,6 +300,10 @@ async function publish() {
             <div v-if="form.venue.lat" class="small text-secondary">
               Map position: {{ form.venue.lat.toFixed(4) }}, {{ form.venue.lng.toFixed(4) }}
             </div>
+              <template v-if="form.venue.lat">
+                <VenueMap :lat="form.venue.lat" :lng="form.venue.lng" draggable class="my-2" @move="moveVenuePin" />
+                <div class="form-text mb-2">Drag the pin or click the map to mark the exact spot.</div>
+              </template>
             <button type="button" class="btn btn-link btn-sm p-0" @click="form.venue = null">
               Change venue
             </button>

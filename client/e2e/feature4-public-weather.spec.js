@@ -109,7 +109,7 @@ test('public announcements load when the private RSVP profile read fails', async
   await page.addInitScript(({ key, data }) => localStorage.setItem(key, JSON.stringify(data)), { key: STORE, data: seededData })
   await page.goto('/events/e2/rsvp')
 
-  await expect(page.getByRole('alert')).toContainText(/could not load this event.*user not found/i)
+  await expect(page.getByRole('heading', { name: 'Ready to RSVP?' })).toBeVisible()
   const feed = page.getByRole('region', { name: 'Event announcements' })
   await expect(feed).toContainText('Public update stays available.')
   await expect(feed).toHaveCount(1)

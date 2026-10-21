@@ -6,11 +6,14 @@ import OrganiserEventsView from '../views/OrganiserEventsView.vue'
 import CreateEventView from '../views/CreateEventView.vue'
 import ManageRsvpsView from '../views/ManageRsvpsView.vue'
 import ManageEventView from '../views/ManageEventView.vue'
+import LoginView from '../views/LoginView.vue'
+import { USING_SUPABASE, getCurrentUser } from '../utils/api.js'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', redirect: '/events' },
+    { path: '/login', component: LoginView, meta: { title: 'Sign in' } },
     { path: '/events', component: EventsPlaceholderView, meta: { title: 'Events' } },
     { path: '/events/:id/rsvp', component: RsvpView, meta: { title: 'Event RSVP' } },
     { path: '/my-rsvps', component: MyRsvpsView, meta: { title: 'My RSVPs' } },
@@ -22,6 +25,15 @@ const router = createRouter({
     // Any URL not listed above (e.g. a typo) goes back to /events
     { path: '/:pathMatch(.*)*', redirect: '/events' },
   ],
+})
+
+router.beforeEach(async (to) => {
+  if (!USING_SUPABASE) return to.path === '/login' ? '/events' : true
+  const user = await getCurrentUser()
+  if (to.path === '/login') return user ? '/events' : true
+  if (to.path === '/events' || to.path.startsWith('/events/')) return true
+  if (!user) return { path: '/login', query: { redirect: to.fullPath } }
+  return true
 })
 
 export default router

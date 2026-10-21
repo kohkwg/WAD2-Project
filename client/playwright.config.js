@@ -19,6 +19,7 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: 'node node_modules/vite/bin/vite.js --host 127.0.0.1 --strictPort',
+    env: { VITE_USE_MOCK: 'true', VITE_FEATURE4_TEST_SEED: 'true' },
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: !process.env.CI,
   },

@@ -9,6 +9,7 @@ import {
   getRsvpsForEvent,
   approveRsvp,
   rejectRsvp,
+  removeRsvp,
   setMember,
   expireOffersNow,
   CURRENT_ORGANISER_ID,
@@ -89,7 +90,7 @@ onUnmounted(() => {
 })
 
 // TODO (Timothy - row-level security): the database should also block other organisers
-const isMyEvent = computed(() => event.value && event.value.organiserId === CURRENT_ORGANISER_ID)
+const isMyEvent = computed(() => event.value && (event.value.isMine || event.value.organiserId === CURRENT_ORGANISER_ID))
 
 // ---------- Split RSVPs into the tabs ----------
 
@@ -163,6 +164,30 @@ async function reject(rsvpId) {
     if (!isCurrentEvent(id, version)) return
     if (!(await loadData(id)) || !isCurrentEvent(id, version)) return
     statusMessage.value = 'RSVP rejected.'
+  } catch (error) {
+    if (isCurrentEvent(id, version)) errorMessage.value = error.message
+  } finally {
+    if (actionRequest === action && actionEventId === id && routeVersion === version) {
+      busyId.value = null
+      actionEventId = null
+    }
+  }
+}
+
+async function remove(rsvpId) {
+  if (busyId.value) return
+  const id = eventId.value
+  const version = routeVersion
+  const action = ++actionRequest
+  busyId.value = rsvpId
+  actionEventId = id
+  errorMessage.value = ''
+  statusMessage.value = ''
+  try {
+    await removeRsvp(rsvpId)
+    if (!isCurrentEvent(id, version)) return
+    if (!(await loadData(id)) || !isCurrentEvent(id, version)) return
+    statusMessage.value = 'Attendee removed. The next person on the waitlist has been offered the spot.'
   } catch (error) {
     if (isCurrentEvent(id, version)) errorMessage.value = error.message
   } finally {
@@ -328,8 +353,10 @@ async function demoExpireOffers() {
         :rsvps="confirmed"
         :questions="event.questions"
         :show-actions="false"
+        :show-remove="true"
         :busy-id="busyId"
         empty-text="Nobody is confirmed yet."
+        @remove="remove"
         @toggle-member="toggleMember"
       />
 

@@ -16,7 +16,8 @@ Start with the current guides; iteration records describe earlier checkpoints.
 | [Earlier review](reviews/2026-10-16-iteration2-review.md) | Pre-fix findings and subsequent disposition |
 | [Agent guide](../AGENTS.md) | Portable repository working agreements |
 
-Feature 4 currently uses browser-local persistence and demo identities. Real
+Feature 4 remains browser-local; event/RSVP/auth use Supabase when the browser
+key is configured, otherwise the demo backend. Real
 weather HTTP reads are implemented; hosted auth/database integration remains
 pending. Imported Supabase source is not deployment evidence. The handoff tracks
 remaining acceptance without claiming unfinished teammate features are complete.

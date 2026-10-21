@@ -65,6 +65,29 @@ test('adds Feature 4 storage without replacing prior events or RSVP records', as
   assert.equal(db().events.length, before.events.length)
 })
 
+test('deleting an event removes its RSVPs and Feature 4 records while preserving another event', async () => {
+  seed()
+  await api.createTask('e1', { title: 'Prepare room' })
+  await api.createTask('e2', { title: 'Keep this task' })
+  await api.createAnnouncement('e1', 'Cancelled event')
+  await api.saveBudgetLimit('e1', 10000)
+  const withArea = db()
+  withArea.feature4.forecastAreas.e1 = 'City'
+  stored.set(KEY, JSON.stringify(withArea))
+  const otherBefore = db().events.find((event) => event.id === 'e2')
+  await api.deleteEvent('e1')
+  const saved = db()
+  assert.equal(saved.events.some((event) => event.id === 'e1'), false)
+  assert.equal(saved.rsvps.some((rsvp) => rsvp.eventId === 'e1'), false)
+  assert.equal(saved.feature4.tasks.some((task) => task.eventId === 'e1'), false)
+  assert.equal(saved.feature4.announcements.some((post) => post.eventId === 'e1'), false)
+  assert.equal(saved.feature4.budgets.e1, undefined)
+  assert.equal(saved.feature4.forecastAreas.e1, undefined)
+  assert.deepEqual(saved.events.find((event) => event.id === 'e2'), otherBefore)
+  assert.equal(saved.feature4.tasks.filter((task) => task.eventId === 'e2').length, 1)
+  await assert.rejects(api.getEvent('e1'), /not found/i)
+})
+
 test('tasks validate, retain plain text, update, order atomically, isolate events, and delete', async () => {
   seed()
   await assert.rejects(api.createTask('e1', { title: '  ' }), /title/i)

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { getOrganiserEvents, CURRENT_ORGANISER_ID } from '../utils/api.js'
+import { getOrganiserEvents, deleteEvent } from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
 
 // The organiser's list of events. (This may later merge into Denzel's organiser dashboard.)
@@ -11,6 +11,9 @@ const route = useRoute()
 const events = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
+const statusMessage = ref('')
+const confirmDeleteId = ref(null)
+const busyId = ref(null)
 
 // After publishing, Create Event sends us here as /organiser/events?created=<id>
 const justCreatedId = computed(() => route.query.created)
@@ -19,7 +22,7 @@ async function loadEvents() {
   loading.value = true
   errorMessage.value = ''
   try {
-    events.value = await getOrganiserEvents(CURRENT_ORGANISER_ID)
+    events.value = await getOrganiserEvents()
   } catch (error) {
     errorMessage.value = 'Could not load your events: ' + error.message
   } finally {
@@ -27,6 +30,23 @@ async function loadEvents() {
   }
 }
 onMounted(loadEvents)
+
+async function removeEvent(eventId) {
+  if (busyId.value) return
+  busyId.value = eventId
+  errorMessage.value = ''
+  statusMessage.value = ''
+  try {
+    await deleteEvent(eventId)
+    confirmDeleteId.value = null
+    events.value = events.value.filter((event) => event.id !== eventId)
+    statusMessage.value = 'Event deleted, including its RSVPs and organiser records.'
+  } catch (error) {
+    errorMessage.value = error.message
+  } finally {
+    busyId.value = null
+  }
+}
 
 function fillPercent(event) {
   return Math.min(100, Math.round(((event.confirmedCount + event.offeredCount) / event.capacity) * 100))
@@ -42,6 +62,8 @@ function fillPercent(event) {
   <div v-if="justCreatedId" class="alert alert-success">
     Event published. Participants can now find it and RSVP.
   </div>
+  <div v-if="statusMessage" class="alert alert-success" role="status">{{ statusMessage }}</div>
+  <div v-if="errorMessage && events.length" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
 
   <div v-if="loading" class="text-center my-5" role="status" aria-live="polite">
     <div class="spinner-border text-primary" aria-hidden="true"></div>
@@ -91,6 +113,13 @@ function fillPercent(event) {
           <RouterLink :to="'/events/' + event.id + '/rsvp'" class="btn btn-link btn-sm">
             View RSVP page
           </RouterLink>
+          <div class="ms-auto">
+            <template v-if="confirmDeleteId === event.id">
+              <button type="button" class="btn btn-danger btn-sm me-1" :disabled="busyId === event.id" @click="removeEvent(event.id)">Yes, delete event</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="busyId === event.id" @click="confirmDeleteId = null">Keep event</button>
+            </template>
+            <button v-else type="button" class="btn btn-outline-danger btn-sm" @click="confirmDeleteId = event.id">Delete event</button>
+          </div>
         </div>
       </div>
     </div>
