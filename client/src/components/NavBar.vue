@@ -50,6 +50,9 @@ function resetDemo() {
             <RouterLink class="nav-link" active-class="active" to="/events">Events</RouterLink>
           </li>
           <li class="nav-item">
+            <RouterLink class="nav-link" active-class="active" to="/discover">Discover</RouterLink>
+          </li>
+          <li class="nav-item">
             <RouterLink class="nav-link" active-class="active" to="/my-rsvps">My RSVPs</RouterLink>
           </li>
           <li class="nav-item ms-lg-4">
