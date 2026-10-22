@@ -38,6 +38,13 @@ const router = createRouter({
       meta: { title: 'Attendance', requiresAuth: true },
     },
 
+    // Feature 6: floor plan editor (Vivienne)
+    {
+      path: '/editor',
+      component: () => import('@/editor.vue'),
+      meta: { title: 'Floor plan editor' },
+    },
+
     { path: '/:pathMatch(.*)*', redirect: '/login' },
   ],
 })
