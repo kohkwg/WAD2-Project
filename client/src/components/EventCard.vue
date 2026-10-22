@@ -8,7 +8,9 @@ const props = defineProps({
 })
 const timeLabel = computed(() => new Date(props.event.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))
 const isFull = computed(() => props.event.spots_left != null && Number(props.event.spots_left) === 0)
-const categoryLabel = computed(() => (props.event.category || 'Event').replace(/[_-]/g, ' '))
+// Events are tagged rather than categorised, so fall back to the first tag
+const primaryTag = computed(() => props.event.category || props.event.tags?.[0] || '')
+const categoryLabel = computed(() => (primaryTag.value || 'Event').replace(/[_-]/g, ' '))
 const savedLocation = computed(() => [...new Set([props.event.venue_name, props.event.venue_address]
   .filter(value => typeof value === 'string' && value.trim())
   .map(value => value.trim()))].join(' · '))
@@ -23,7 +25,7 @@ const demoLocations = {
   networking: 'Student Lounge · 10 Campus Walk',
 }
 const locationLabel = computed(() => savedLocation.value
-  || demoLocations[(props.event.category || '').toLowerCase()]
+  || demoLocations[primaryTag.value.toLowerCase()]
   || 'Campus Activity Centre · 1 University Walk')
 const attendees = computed(() => props.event.attendees || [])
 const remainingAttendees = computed(() => Math.max(0, Number(props.event.confirmed_count || 0) - attendees.value.length))
@@ -41,7 +43,7 @@ function initials(attendee) {
 }
 const coverStyle = computed(() => {
   let hash = 0
-  for (const c of props.event.category || 'event') hash = (hash * 31 + c.charCodeAt(0)) >>> 0
+  for (const c of primaryTag.value || 'event') hash = (hash * 31 + c.charCodeAt(0)) >>> 0
   const hue = hash % 360
   return { background: `radial-gradient(circle at 85% 15%, hsl(${(hue + 45) % 360} 80% 90%), transparent 65%), linear-gradient(140deg, hsl(${hue} 65% 86%), hsl(${(hue + 30) % 360} 55% 68%))`, color: `hsl(${hue} 40% 25%)` }
 })
@@ -71,14 +73,14 @@ const coverStyle = computed(() => {
         <span v-if="isFull" class="badge full-badge">Full</span>
       </div>
       <div class="event-actions">
-        <RouterLink :to="`/events/${event.id}`" class="btn btn-outline-secondary btn-sm" :aria-label="`View ${event.title}`">View event</RouterLink>
-        <RouterLink :to="{ path: `/events/${event.id}`, hash: '#rsvp' }" class="btn btn-primary btn-sm" :aria-label="`RSVP for ${event.title}`">RSVP</RouterLink>
+        <RouterLink :to="`/events/${event.id}/rsvp`" class="btn btn-outline-secondary btn-sm" :aria-label="`View ${event.title}`">View event</RouterLink>
+        <RouterLink :to="{ path: `/events/${event.id}/rsvp`, hash: '#rsvp' }" class="btn btn-primary btn-sm" :aria-label="`RSVP for ${event.title}`">RSVP</RouterLink>
       </div>
     </div>
     <img v-if="event.image_url" :src="event.image_url" :alt="`Cover for ${event.title}`" class="event-cover event-cover-image" loading="lazy" />
-    <div v-else class="event-cover" :style="coverStyle" role="img" :aria-label="`${event.category || 'Event'} category placeholder`">
+    <div v-else class="event-cover" :style="coverStyle" role="img" :aria-label="`${categoryLabel} category placeholder`">
       <svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><circle cx="60" cy="60" r="42" /><circle cx="60" cy="60" r="28" /><path d="M18 60h84M60 18v84M30 30l60 60M90 30 30 90" /></svg>
-      <span>{{ event.category || 'Event' }}</span>
+      <span>{{ categoryLabel }}</span>
     </div>
   </article>
 </template>

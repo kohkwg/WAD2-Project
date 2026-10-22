@@ -25,8 +25,8 @@ test('card shows category, venue pin, accessible attendee photos, and distinct e
   assert.match(html, /Sports Hall/)
   assert.match(html, /src="https:\/\/example.com\/alex.jpg"/)
   assert.match(html, /alt="Alex Tan"/)
-  assert.match(html, /href="\/events\/event-1"/)
-  assert.match(html, /href="\/events\/event-1#rsvp"/)
+  assert.match(html, /href="\/events\/event-1\/rsvp"/)
+  assert.match(html, /href="\/events\/event-1\/rsvp#rsvp"/)
   assert.match(html, /3 going/)
 })
 
