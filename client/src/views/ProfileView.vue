@@ -25,7 +25,7 @@ onMounted(async () => {
     displayName.value = data.display_name || ''
     postalCode.value = data.postal_code || ''
     existingWeights.value = data.interest_weights || {}
-    selected.value = Object.keys(existingWeights.value)
+    selected.value = Object.keys(existingWeights.value).filter((i) => INTEREST_OPTIONS.includes(i))
   }
   loading.value = false
 })
@@ -44,13 +44,14 @@ async function save() {
     const weights = {}
     for (const i of selected.value) weights[i] = existingWeights.value[i] || 1
 
-    const { error: err } = await supabase.from('profiles').upsert({
-      id: userId.value,
+    // update, not upsert: the sign-up trigger creates the row, and RLS only lets a user
+    // update their own profile (there is no INSERT policy)
+    const { error: err } = await supabase.from('profiles').update({
       display_name: displayName.value.trim(),
       postal_code: postalCode.value.trim() || null,
       lat, lng,
       interest_weights: weights,
-    })
+    }).eq('id', userId.value)
     if (err) throw err
 
     existingWeights.value = weights

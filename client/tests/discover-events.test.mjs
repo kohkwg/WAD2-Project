@@ -47,7 +47,7 @@ test('searches title, description and resolved venue IDs; retains all filters an
   assert.equal(state.total.value, 31)
   const calls = requests.find(r => r.table === 'events_with_counts').calls
   assert.ok(calls.some(c => c[0] === 'or' && c[1] === 'title.ilike.%Sports%,description.ilike.%Sports%,venue_id.in.(venue-1)'))
-  assert.ok(calls.some(c => c[0] === 'eq' && c[1] === 'category' && c[2] === 'sports'))
+  assert.ok(calls.some(c => c[0] === 'contains' && c[1] === 'tags' && c[2][0] === 'sports'))
   assert.ok(calls.some(c => c[0] === 'gte' && c[1] === 'start_time'))
   assert.ok(calls.some(c => c[0] === 'lte' && c[1] === 'start_time'))
   assert.ok(calls.some(c => c[0] === 'or' && c[1] === 'spots_left.gt.0,capacity.is.null'))
@@ -153,8 +153,8 @@ test('multiple category badges query any selected category alongside existing fi
   await state.fetchEvents({ categories: ['sports', 'hackathon', 'sports'], category: 'music', search: 'Meetup', availableOnly: true, sort: 'popular' })
   assert.equal(state.error.value, '')
   const calls = requests.find(r => r.table === 'events_with_counts').calls
-  assert.deepEqual(calls.find(c => c[0] === 'in' && c[1] === 'category'), ['in', 'category', ['sports', 'hackathon']])
-  assert.ok(!calls.some(c => c[0] === 'eq' && c[1] === 'category'))
+  assert.deepEqual(calls.find(c => c[0] === 'overlaps' && c[1] === 'tags'), ['overlaps', 'tags', ['sports', 'hackathon']])
+  assert.ok(!calls.some(c => c[0] === 'contains' && c[1] === 'tags'))
   assert.ok(calls.some(c => c[0] === 'or' && c[1].includes('title.ilike.%Meetup%')))
   assert.ok(calls.some(c => c[0] === 'or' && c[1] === 'spots_left.gt.0,capacity.is.null'))
   assert.ok(calls.some(c => c[0] === 'order' && c[1] === 'confirmed_count'))
@@ -165,7 +165,7 @@ test('All categories omits the category constraint', async () => {
   const state = useEvents()
   await state.fetchEvents({ category: '', categories: [] })
   const calls = requests.find(r => r.table === 'events_with_counts').calls
-  assert.ok(!calls.some(c => ['eq', 'in'].includes(c[0]) && c[1] === 'category'))
+  assert.ok(!calls.some(c => ['contains', 'overlaps'].includes(c[0]) && c[1] === 'tags'))
 })
 
 test('venue lookup supplies both the location name and street address', async () => {

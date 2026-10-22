@@ -26,7 +26,7 @@ function update(patch) {
 const selectedCategories = computed(() => props.modelValue.categories?.length
   ? props.modelValue.categories
   : props.modelValue.category ? [props.modelValue.category] : [])
-const categoryOptions = computed(() => [...new Set([...CATEGORIES, 'hackathon', ...selectedCategories.value])])
+const categoryOptions = computed(() => [...new Set([...CATEGORIES, ...selectedCategories.value])])
 function toggleCategory(category) {
   const selected = selectedCategories.value
   update({ category: '', categories: selected.includes(category)

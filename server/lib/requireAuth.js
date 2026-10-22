@@ -11,6 +11,7 @@ async function requireAuth(req, res, next) {
   if (error || !data?.user) return res.status(401).json({ error: "Invalid token" });
 
   req.user = data.user;
+  req.accessToken = token; // routes query as this user (see userSupabase.js)
   next();
 }
 

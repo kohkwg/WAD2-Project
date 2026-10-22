@@ -90,8 +90,9 @@ export function useEvents() {
         if (matchingVenueIds.length) terms.push(`venue_id.in.(${matchingVenueIds.join(',')})`)
         q = q.or(terms.join(','))
       }
-      if (filters.categories?.length) q = q.in('category', [...new Set(filters.categories)])
-      else if (filters.category) q = q.eq('category', filters.category)
+      // Category badges match event tags (event creation stores tags, not a category)
+      if (filters.categories?.length) q = q.overlaps('tags', [...new Set(filters.categories)])
+      else if (filters.category) q = q.contains('tags', [filters.category])
       if (filters.tag) q = q.contains('tags', [filters.tag])
       if (filters.dateFrom) q = q.gte('start_time', new Date(`${filters.dateFrom}T00:00:00`).toISOString())
       if (filters.dateTo) {
