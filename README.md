@@ -154,3 +154,20 @@ then added a privacy migration that hides organiser-only availability counts
 from public callers. The five migrations and Edge Function were applied to the
 hosted Bookerz development project. Local and database contract tests passed;
 signed-in owner and other-user browser checks remain pending.
+
+On 22 October 2026, Huxley used Claude Code (Opus, with Claude Haiku subagents for
+per-file conflict resolution) to create `dev2` from `main`, merge `huxley`, `vivi`
+and `aish` into it (PRs #3–#5), and merge `dev2` into `dev` (PR #6). Huxley confirmed
+every routing and access decision. Claude Code ran builds, tests, Graphify reviews
+and a signed-in browser test against the development project with two test
+accounts (Huxley signed in; the agent never typed a password). Its throwaway
+`[TEST]` events were deleted afterwards. It then fixed four integration bugs in
+`de3978e`: the check-in dashboard count, the check-in Back links, the station's
+check-in method, and the RSVP page's count refresh. It also wrote
+`docs/dev2-merge-log.md` and `docs/merge-session-2026-10-22.md`. Teammates'
+business logic was not rewritten; their open issues are listed in the session
+record. [vue-konva](https://github.com/konvajs/vue-konva) (MIT),
+[qrcode](https://github.com/soldair/node-qrcode) (MIT),
+[html5-qrcode](https://github.com/mebjas/html5-qrcode) (Apache-2.0) and
+[Papa Parse](https://github.com/mholt/PapaParse) (MIT) arrived with the merged
+features. Carry these attributions into presentation materials.
