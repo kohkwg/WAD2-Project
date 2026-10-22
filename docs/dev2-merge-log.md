@@ -8,7 +8,9 @@ denzel + gregory on `dev`, then merge huxley, aishani and vivienne.
 
 **Status:** `dev2` was merged into `dev` on 22 October 2026, after Denzel finished
 his merge at `5962570`. All six features are now on `dev`. See
-[Merged into dev](#merged-into-dev-22-october-2026) for the decisions.
+[Merged into dev](#merged-into-dev-22-october-2026) for the decisions, and the
+[merge session record](merge-session-2026-10-22.md) for the live test, the fixes in
+`de3978e` and the open issues by owner.
 
 ## What's on dev2
 
