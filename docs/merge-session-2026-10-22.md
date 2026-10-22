@@ -81,16 +81,64 @@ The two Playwright failures (`feature4-interactions.spec.js:105` keyboard task m
 
 `playwright.config.js` forces `VITE_USE_MOCK=true`, so the e2e suite never exercises live mode.
 
+## Follow-up: Feature 1 and RSVP rules fixed live (same evening)
+
+Huxley connected the Supabase MCP to the Bookerz project. That allowed reading the live schema and advisors, applying migrations and checking rows directly. Huxley approved the full Feature 1 plan, the database interest list and all three RSVP rules.
+
+**Why Profile save failed** (two separate causes):
+1. It wrote `postal_code`, `lat`, `lng` and `interest_weights`, none of which existed on `profiles`.
+2. It used `upsert`, and `profiles` has no INSERT policy (rows come from the sign-up trigger; users may only UPDATE their own row).
+
+*Correction:* the earlier "blank name" finding was wrong. The name loads; the page-text reader used in the test does not show input values.
+
+**Other things found in the live schema:**
+- `events_with_counts` existed only on the hosted project, as a SECURITY DEFINER view. The Supabase security advisor flagged it as an **ERROR**: it ignored RLS, so anyone could read draft events and counts.
+- Every event's `category` is NULL. Gregory's creation stores tags in `event_interests`. So the category filter never matched, and "For you" never scored interests or distance (the view had no tags or coordinates).
+- Five of the 14 Profile interests (`networking`, `academic`, `social`, `hackathon`, `outdoor`) can never match an event tag. Tags use the 10 slugs in `public.interests`.
+
+| Migration (applied to Bookerz and in the repo) | Change |
+|---|---|
+| `20261022100100_feature1_discovery_contract` | `profiles` gains `postal_code`, `lat`, `lng`, `interest_weights` (jsonb), with checks and column grants. `events_with_counts` is rebuilt as a **security_invoker** view: published events only, counts from `event_availability()`, plus `tags` and the active venue's `lat`/`lng`. The advisor ERROR is gone |
+| `20261022100141_rsvp_rules` (Gregory's functions, live bodies with marked changes) | `register_for_event`: organisers and helpers can't RSVP to their own event. `cancel_registration`: no cancelling after check-in. `_promote_waitlist`: offers expire at `least(now() + 24h, starts_at)`, and no offers once the event has started |
+
+**Code changes:**
+- **Profile:** `update` instead of `upsert`; interest options are the 10 database slugs.
+- **Discover:** filters on `tags` (`overlaps` / `contains`) instead of `category`; `EventCard` shows the first tag; event links open `/events/:id/rsvp`.
+- **`/api/recommendations`:** queries as the signed-in user (`server/lib/userSupabase.js`, the user's JWT + publishable key), so RLS applies (Project Info H2). It reads `registrations` instead of `rsvps`. The interaction endpoint bumps the event's `tags` and uses `update`.
+- **Tests:** Aishani's tests are updated to the new contract.
+
+**Verified live** (test1 organiser, test2 participant; a `[TEST]` event deleted afterwards):
+
+| Check | Result |
+|---|---|
+| Profile | Name loads; save stores postal code 178902 → (1.2974, 103.8496) and `{"tech":1,"music":1}`; reload shows them |
+| "For you" | 200 under the user's JWT. Reasons are now "Matches your interests: tech / music" and "Near you (0.2 km away)" |
+| Tag filter | "Gaming" shows only Board Games Meetup |
+| Signed-out view | 7 published events with counts, tags and coordinates |
+| Rule 1 | test1 RSVPing to own event → "Organisers and helpers can't RSVP to their own event"; no row created |
+| Rule 2 | Checked-in test2 cancelling → "You have already checked in, so this RSVP can't be cancelled"; still confirmed |
+| Rule 3 | Rolled-back transaction with a temporary third user: the promoted offer expired exactly at the event start, not 24 h later. Nothing left behind |
+
+**Tests:**
+
+| Check | Result |
+|---|---|
+| Build | passes |
+| `test:unit` | 51/51 |
+| Feature 1 client / server | 31/31, 14/14 |
+| Playwright | 49/51 (same two pre-existing failures) |
+
+**Environment note:** VS Code's Live Preview was listening on `127.0.0.1:3000` and `:3001`, so `server.js` (hard-coded to 3000) could not start. The live check ran Express on 3999 through a local wrapper with `VITE_API_URL=http://127.0.0.1:3999`. A `PORT` env variable in `server.js` would avoid this (Timothy).
+
 ## Open issues, by owner
 
 | Owner | Issue |
 |---|---|
-| Aishani / Timothy | Feature 1 schema mismatch (see Evaluation). Profile shows a blank name and **Save will fail**. "For you" can't exclude events already RSVP'd to. `events_with_counts` needs a migration in the repo |
-| Aishani / Timothy | `/api/recommendations` reads data with the service-role key (Tim's Project Info H2; `docs/dev-merge.md` rule) |
-| Aishani | `lib/supabase.js` duplicates `utils/supabase.js` and crashes `/discover` and `/profile` in demo mode. `EventDetailsDialog` and `RecommendationCard` are not mounted |
-| Gregory | Business rules: a 24 h offer can outlive the event; a checked-in attendee can still cancel; organisers can join their own event's waitlist. `waitlistScore.spec.js` needs Vitest (never runs) |
+| Timothy | Review migrations `20261022100100` and `20261022100141`. Remaining advisor WARNs: SECURITY DEFINER RPCs executable by `anon` (most check `auth.uid()` inside, but revoke where sign-in is required); leaked-password protection is off. `server.js` port is hard-coded |
+| Aishani | `lib/supabase.js` duplicates `utils/supabase.js` and crashes `/discover` and `/profile` in demo mode. `EventDetailsDialog` and `RecommendationCard` are not mounted. Discover sends ~8 `/api/recommendations` requests per page load. `image_url` cover images are not wired to R2 |
+| Gregory | Review the three rules in `20261022100141_rsvp_rules.sql`. UI follow-ups: hide "Cancel RSVP" once checked in (the confirm prompt stays open after the refusal), and hide the RSVP form for the event's own team. Demo (mock) mode does not enforce the new rules. `waitlistScore.spec.js` needs Vitest (never runs) |
 | Denzel | `feature4-interactions.spec.js:105` fails; two Feature 4 e2e cases are flaky |
-| Huxley | JsBarcode on the ticket; manual name/email search at the station; "attend" interaction to recommendations after check-in (waits on the Feature 1 schema); `AttendanceDashboardView` cohesion is low in the graph (0.14 earlier) |
+| Huxley | JsBarcode on the ticket; manual name/email search at the station; "attend" interaction to recommendations after check-in (now unblocked: `POST /api/recommendations/interactions { eventId, type: "attend" }`); check-in E2E test; `AttendanceDashboardView` cohesion is low in the graph (0.14 earlier) |
 | Timothy | Event creation leaves venue rows behind after event deletion. `R2_PUBLIC_URL` / `VITE_R2_PUBLIC_URL` are missing from `.env.example` |
 | Vivienne | `/editor` saves nothing to `floor_plans` yet. Vue "extraneous dragend listener" console warnings |
 
@@ -108,6 +156,7 @@ Claude Code (Opus) did the following under Huxley's direction:
 - regenerated lockfiles;
 - ran builds, tests, the graphify reviews and the live browser test;
 - wrote the four fixes above;
+- in the follow-up, applied the two migrations through the Supabase MCP and made the Feature 1 / RSVP code changes. Huxley explicitly approved each plan;
 - wrote this documentation.
 
-The dashboard fix changed a block marked as Huxley's core logic. It is a minimal bug fix explained in the code comment, and Huxley owns it. Teammates' business logic was not rewritten; their issues are listed above for them. Summarised in the [README disclosure](../README.md#ai-assistance-disclosure).
+The dashboard fix changed a block marked as Huxley's core logic. It is a minimal bug fix explained in the code comment, and Huxley owns it. The follow-up changed Aishani's and Gregory's code and SQL at Huxley's request. Their ranking and waitlist-scoring algorithms were not rewritten, only the schema contract, data access and three agreed rules. They should review these changes. Summarised in the [README disclosure](../README.md#ai-assistance-disclosure).
