@@ -108,7 +108,7 @@ onMounted(async () => {
 
 <template>
   <main class="container py-4" style="max-width: 480px">
-    <RouterLink to="/login" class="small d-block mb-3">&larr; Back</RouterLink>
+    <RouterLink to="/my-rsvps" class="small d-block mb-3">&larr; My RSVPs</RouterLink>
     <h1 class="h4 mb-1">Check in</h1>
     <p class="text-body-secondary small mb-4">{{ event?.title ?? '' }}</p>
 

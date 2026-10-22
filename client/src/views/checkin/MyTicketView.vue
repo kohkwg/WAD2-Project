@@ -58,7 +58,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
 
 <template>
   <main class="container py-4 text-center" style="max-width: 480px">
-    <RouterLink to="/login" class="small d-block text-start mb-3">&larr; Back</RouterLink>
+    <RouterLink to="/my-rsvps" class="small d-block text-start mb-3">&larr; My RSVPs</RouterLink>
 
     <div v-if="loading" class="py-5">
       <div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>

@@ -48,8 +48,14 @@ const METHOD_LABELS = { personal_qr: 'Staff scan', scan_in_qr: 'Self scan', barc
 // Not handled yet (say so if asked): undo/delete of a check-in, and a
 // registration being confirmed while the page is open (confirmed count is
 // loaded once). Both could be added with more Realtime listeners.
+//
+// Fix (22 Oct, found in the signed-in test): a check-in row stays when the
+// person later cancels. So names are loaded for EVERY registration, but the
+// headline count only includes check-ins whose registration is still confirmed.
+// Others stay in the feed with a "no longer confirmed" note.
 // ============================================================================
 const namesByRegistration = new Map()
+const confirmedIds = new Set()
 const seenIds = new Set()
 let channel = null
 
@@ -58,6 +64,8 @@ function addArrival(row) {
   seenIds.add(row.id)
   arrivals.value.unshift({ ...row, name: namesByRegistration.get(row.registration_id) ?? 'Participant' })
 }
+
+const isConfirmed = (a) => confirmedIds.has(a.registration_id)
 
 // Resolves once the subscription is live (or after 10 s, so a Realtime outage
 // doesn't stop the page loading; the badge then shows Offline/Connecting).
@@ -86,9 +94,8 @@ async function loadInitial() {
     supabase
       .from('registrations')
       // registrations links to profiles twice (user_id and decided_by), so name the one we want
-      .select('id, profiles!registrations_user_id_fkey(display_name)')
-      .eq('event_id', eventId)
-      .eq('status', 'confirmed'),
+      .select('id, status, profiles!registrations_user_id_fkey(display_name)')
+      .eq('event_id', eventId),
     supabase
       .from('check_ins')
       .select('*')
@@ -98,12 +105,15 @@ async function loadInitial() {
   if (regs.error) throw regs.error
   if (checkIns.error) throw checkIns.error
 
-  confirmedCount.value = regs.data.length
-  for (const r of regs.data) namesByRegistration.set(r.id, r.profiles?.display_name || 'Participant')
+  for (const r of regs.data) {
+    namesByRegistration.set(r.id, r.profiles?.display_name || 'Participant')
+    if (r.status === 'confirmed') confirmedIds.add(r.id)
+  }
+  confirmedCount.value = confirmedIds.size
   for (const row of checkIns.data) addArrival(row)
 }
 
-const checkedInCount = computed(() => arrivals.value.length)
+const checkedInCount = computed(() => arrivals.value.filter(isConfirmed).length)
 const percent = computed(() =>
   confirmedCount.value ? Math.round((checkedInCount.value / confirmedCount.value) * 100) : 0,
 )
@@ -125,7 +135,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
 
 <template>
   <main class="container py-4" style="max-width: 720px">
-    <RouterLink to="/login" class="small d-block mb-3">&larr; Back</RouterLink>
+    <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
 
     <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
       <div>
@@ -179,7 +189,10 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
       <p v-if="!arrivals.length" class="small text-body-secondary">No one has checked in yet.</p>
       <ul class="list-group mb-4" aria-live="polite">
         <li v-for="a in arrivals" :key="a.id" class="list-group-item d-flex justify-content-between align-items-center">
-          <span>{{ a.name }}</span>
+          <span>
+            {{ a.name }}
+            <span v-if="!isConfirmed(a)" class="small text-body-secondary">(no longer confirmed)</span>
+          </span>
           <span class="small text-body-secondary text-nowrap">
             {{ METHOD_LABELS[a.method] ?? a.method }} · {{ formatTime(a.checked_in_at) }}
           </span>

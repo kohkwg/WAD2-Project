@@ -26,8 +26,9 @@ export const getEvent = (eventId) =>
 
 // Staff scans a participant's personal QR (the QR holds registrations.qr_token).
 // Returns the check_ins row (new, or the existing one if they were already in).
-export const staffCheckIn = (eventId, code) =>
-  call(supabase.rpc('staff_check_in', { p_event_id: eventId, p_code: code, p_method: 'personal_qr' }))
+// method: 'personal_qr' for a camera scan, 'manual' for a typed code (shown in the CSV export)
+export const staffCheckIn = (eventId, code, method = 'personal_qr') =>
+  call(supabase.rpc('staff_check_in', { p_event_id: eventId, p_code: code, p_method: method }))
 
 // Participant scans the venue QR. Returns the check_ins row (new or existing).
 export const selfCheckIn = (eventId, secret, deviceId, lat, lng) =>

@@ -32,12 +32,12 @@ const typedCode = ref('')
 //   4. look up their display name so staff can match the face to the ticket
 //   5. add it to the "recent scans" list (kept to the last 20)
 // ============================================================================
-async function onScan(code) {
+async function onScan(code, method = 'personal_qr') {
   if (busy.value) return
   busy.value = true
   try {
     const sentAt = Date.now()
-    const row = await staffCheckIn(eventId, code.trim())
+    const row = await staffCheckIn(eventId, code.trim(), method)
 
     const { data: profile } = await supabase.from('profiles').select('display_name').eq('id', row.user_id).single()
     const name = profile?.display_name || 'Participant'
@@ -57,7 +57,7 @@ async function onScan(code) {
 
 // Dev/testing: paste a qr_token when you're on a laptop with no second phone
 function submitTyped() {
-  if (typedCode.value.trim()) onScan(typedCode.value)
+  if (typedCode.value.trim()) onScan(typedCode.value, 'manual')
   typedCode.value = ''
 }
 
@@ -72,7 +72,7 @@ onMounted(() =>
 
 <template>
   <main class="container py-4" style="max-width: 560px">
-    <RouterLink to="/login" class="small d-block mb-3">&larr; Back</RouterLink>
+    <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
     <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
       <div>
         <h1 class="h4 mb-1">Check-in station</h1>
