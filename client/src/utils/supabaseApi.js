@@ -217,85 +217,48 @@ export async function getOrganiserEvents() {
   return toEventsWithCounts(rows)
 }
 
-// Venues are their own table, so save the venue first and link the event to its id
-async function insertVenue(venue, isIndoor) {
-  const row = check(
-    await supabase
-      .from('venues')
-      .insert({
-        name: venue.name,
-        address: venue.address,
-        postal_code: venue.postal || null,
-        latitude: venue.lat,
-        longitude: venue.lng,
-        is_indoor: isIndoor,
-      })
-      .select('id')
-      .single(),
-  )
-  return row.id
-}
+// eventData is the Create Event form plus a requestId kept stable for retries.
+// The RPC commits venue rows, event, tags, questions, and its idempotency record together.
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-// eventData is the Create Event form: { title, description, tags, startTime, endTime,
-// capacity, venue, isOutdoor, backupVenue, requiresApproval, questions }
-export async function createEvent(eventData) {
-  const venueId = await insertVenue(eventData.venue, !eventData.isOutdoor)
-  const backupVenueId = eventData.backupVenue ? await insertVenue(eventData.backupVenue, true) : null
-
-  // organiser_id is filled in by the database with the signed-in user (auth.uid()),
-  // and a trigger adds them to the event's team as its organiser.
-  const event = check(
-    await supabase
-      .from('events')
-      .insert({
-        title: eventData.title,
-        description: eventData.description,
-        starts_at: eventData.startTime,
-        ends_at: eventData.endTime,
-        capacity: eventData.capacity,
-        requires_approval: eventData.requiresApproval,
-        venue_id: venueId,
-        backup_venue_id: backupVenueId,
-        status: 'published',
-      })
-      .select('id')
-      .single(),
-  )
-
-  // Tags and questions are separate tables. If saving them fails, delete the half-made event
-  // so the organiser can simply try again.
-  try {
-    if (eventData.tags.length > 0) {
-      // Tags are stored as interest ids, so look the ids up from the slugs ('music' → 3)
-      const interests = check(
-        await supabase.from('interests').select('id').in('slug', eventData.tags),
-      )
-      check(
-        await supabase
-          .from('event_interests')
-          .insert(interests.map((i) => ({ event_id: event.id, interest_id: i.id }))),
-      )
-    }
-
-    if (eventData.questions.length > 0) {
-      check(
-        await supabase.from('event_questions').insert(
-          eventData.questions.map((q, index) => ({
-            event_id: event.id,
-            prompt: q.text,
-            type: q.type === 'yesno' ? 'yes_no' : 'short_text',
-            required: q.required,
-            position: index,
-          })),
-        ),
-      )
-    }
-  } catch (error) {
-    await supabase.from('events').delete().eq('id', event.id)
-    throw error
+export async function createEventWith(client, eventData) {
+  if (!UUID_PATTERN.test(eventData.requestId || '')) {
+    throw new Error('A valid request ID is required to publish this event.')
   }
 
-  return event
+  const venuePayload = (venue) => venue && ({
+    name: venue.name,
+    address: venue.address,
+    postal: venue.postal || null,
+    lat: venue.lat,
+    lng: venue.lng,
+  })
+  const payload = {
+    title: eventData.title,
+    description: eventData.description,
+    startTime: eventData.startTime,
+    endTime: eventData.endTime,
+    capacity: eventData.capacity,
+    requiresApproval: eventData.requiresApproval,
+    isOutdoor: eventData.isOutdoor,
+    venue: venuePayload(eventData.venue),
+    backupVenue: venuePayload(eventData.backupVenue),
+    tags: eventData.tags,
+    questions: eventData.questions.map(({ text, type, required }) => ({ text, type, required })),
+  }
+  const id = check(
+    await client.rpc('create_event_with_details', {
+      p_request_id: eventData.requestId,
+      p_event: payload,
+    }),
+  )
+  if (typeof id !== 'string' || !id) throw new Error('Event creation returned no event ID.')
+  return { id }
+}
+
+export async function createEvent(eventData) {
+  await requireUserId()
+  return createEventWith(supabase, eventData)
 }
 
 // Deleting the event also deletes its RSVPs, questions and tags (on delete cascade in the database)
@@ -352,25 +315,56 @@ export async function getMyRsvps() {
 
 // The SQL function register_for_event decides confirmed / pending / waitlisted,
 // checks required questions, and refuses a second RSVP to the same event.
-export async function createRsvp({ eventId, name, answers }) {
-  const myId = await requireUserId()
-
+export async function createRsvpWith(client, myId, { eventId, name, answers }) {
   // { q1: 'yes', q2: '' } → [{ question_id: 'q1', answer: 'yes' }], leaving out blanks
   const answerList = Object.entries(answers)
     .filter(([, answer]) => String(answer).trim() !== '')
     .map(([questionId, answer]) => ({ question_id: questionId, answer }))
 
-  const registration = check(
-    await supabase.rpc('register_for_event', { p_event_id: eventId, p_answers: answerList }),
-  )
+  let registration
+  try {
+    registration = check(
+      await client.rpc('register_for_event', { p_event_id: eventId, p_answers: answerList }),
+    )
+  } catch (error) {
+    // register_for_event rejects a duplicate active RSVP. If the original call committed but
+    // its response was lost, return that row so a user retry observes success.
+    if (!error.message?.includes('You already have an RSVP for this event')) throw error
+    const existing = check(
+      await client
+        .from('registrations')
+        .select('*, registration_answers(question_id, answer)')
+        .eq('event_id', eventId)
+        .eq('user_id', myId)
+        .in('status', ['pending', 'confirmed', 'waitlisted', 'offered'])
+        .maybeSingle(),
+    )
+    if (!existing) throw error
+    const persistedAnswers = new Map(
+      (existing.registration_answers || []).map((answer) => [answer.question_id, answer.answer]),
+    )
+    const answersMatch =
+      persistedAnswers.size === answerList.length &&
+      answerList.every(
+        ({ question_id, answer }) =>
+          persistedAnswers.has(question_id) &&
+          JSON.stringify(persistedAnswers.get(question_id)) === JSON.stringify(answer),
+      )
+    if (!answersMatch) throw error
+    registration = existing
+  }
 
   // The organiser sees the name on the profile, so save it there if they typed a new one.
   // (Email can't be changed here: it's their login.)
   if (name) {
-    check(await supabase.from('profiles').update({ display_name: name }).eq('id', myId))
+    check(await client.from('profiles').update({ display_name: name }).eq('id', myId))
   }
 
   return toRsvp(registration)
+}
+
+export async function createRsvp(rsvpData) {
+  return createRsvpWith(supabase, await requireUserId(), rsvpData)
 }
 
 export async function cancelRsvp(rsvpId) {
@@ -464,17 +458,9 @@ export async function setMember(organiserId, userId, makeMember) {
   }
 }
 
-// DEMO ONLY: expire this event's open offers now instead of waiting 24 hours.
-// (In real use, a scheduled job in the database expires them every 5 minutes.)
-// A database trigger then offers each freed spot to the next person on the waitlist.
-export async function expireOffersNow(eventId) {
-  check(
-    await supabase
-      .from('registrations')
-      .update({ status: 'expired' })
-      .eq('event_id', eventId)
-      .eq('status', 'offered'),
-  )
+// This simulation is available only through mockApi. Never turn it into a live write.
+export async function expireOffersNow() {
+  throw new Error('Offer expiry simulation is only available in demo mode.')
 }
 
 // Only the mock has demo data to reset

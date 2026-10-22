@@ -29,6 +29,12 @@ const retryVersions = { tasks: 0, announcements: 0, budget: 0, weather: 0 }
 const isOwner = computed(() => workspace.value?.event.isMine || workspace.value?.event.organiserId === api.CURRENT_ORGANISER_ID)
 let epoch = 0
 let weatherRequest = 0
+const createRequestIds = new WeakMap()
+
+function createRequestId(action) {
+  if (!createRequestIds.has(action)) createRequestIds.set(action, crypto.randomUUID())
+  return createRequestIds.get(action)
+}
 
 watch(() => route.query.tab, tab => {
   if (!tabs.includes(tab)) router.replace({ path: route.path, query: { ...route.query, tab: 'tasks' }, hash: route.hash })
@@ -66,7 +72,8 @@ function cancelDestructiveAction(tool) {
   successes[tool] = ''
 }
 function saveTask(action, mode) {
-  mutate('tasks', action, id => mode === 'create' ? api.createTask(id, action.input) : mode === 'update' ? api.updateTask(id, action.id, action.input) : api.deleteTask(id, action.id), result => {
+  const input = mode === 'create' && api.USING_SUPABASE ? { ...action.input, requestId: createRequestId(action) } : action.input
+  mutate('tasks', action, id => mode === 'create' ? api.createTask(id, input) : mode === 'update' ? api.updateTask(id, action.id, action.input) : api.deleteTask(id, action.id), result => {
     workspace.value.tasks = mode === 'delete' ? workspace.value.tasks.filter(task => task.id !== action.id) : mode === 'create' ? [...workspace.value.tasks, result] : workspace.value.tasks.map(task => task.id === result.id ? result : task)
     // deleteTask reindexes the saved columns; keep the visible snapshot identical.
     if (mode === 'delete') {
@@ -80,12 +87,16 @@ function saveTask(action, mode) {
 }
 function saveBoard(action) { mutate('tasks', action, id => api.saveTaskBoard(id, action.input), tasks => { workspace.value.tasks = tasks }, 'Task board saved.') }
 function saveAnnouncement(action, mode) {
-  mutate('announcements', action, id => mode === 'create' ? api.createAnnouncement(id, action.body) : mode === 'update' ? api.updateAnnouncement(id, action.id, action.body) : api.deleteAnnouncement(id, action.id), result => {
+  const requestId = mode === 'create' && api.USING_SUPABASE ? createRequestId(action) : null
+  mutate('announcements', action, id => mode === 'create' ? api.createAnnouncement(id, action.body, requestId) : mode === 'update' ? api.updateAnnouncement(id, action.id, action.body) : api.deleteAnnouncement(id, action.id), result => {
     workspace.value.announcements = mode === 'delete' ? workspace.value.announcements.filter(post => post.id !== action.id) : mode === 'create' ? [result, ...workspace.value.announcements] : workspace.value.announcements.map(post => post.id === result.id ? result : post)
   }, mode === 'delete' ? 'Announcement deleted.' : 'Announcement saved.')
 }
 function saveLimit(action) { mutate('budget', action, id => api.saveBudgetLimit(id, action.input), () => { workspace.value.budget.limitCents = action.input }, 'Budget limit saved.') }
-function saveItem(action) { mutate('budget', action, id => api.saveBudgetItem(id, action.input), item => { workspace.value.budget.items = action.input.id ? workspace.value.budget.items.map(row => row.id === item.id ? item : row) : [...workspace.value.budget.items, item] }, 'Expense saved.') }
+function saveItem(action) {
+  const input = action.input.id || !api.USING_SUPABASE ? action.input : { ...action.input, requestId: createRequestId(action) }
+  mutate('budget', action, id => api.saveBudgetItem(id, input), item => { workspace.value.budget.items = action.input.id ? workspace.value.budget.items.map(row => row.id === item.id ? item : row) : [...workspace.value.budget.items, item] }, 'Expense saved.')
+}
 function deleteItem(action) { mutate('budget', action, id => api.deleteBudgetItem(id, action.id), () => { workspace.value.budget.items = workspace.value.budget.items.filter(item => item.id !== action.id) }, 'Expense deleted.') }
 async function refreshWeather() {
   const ticket = ++weatherRequest
@@ -118,11 +129,11 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
   <div v-else-if="workspace && !isOwner" class="alert alert-danger mt-3" role="alert">Only this event’s organiser can manage its tasks, announcements, budget, and weather plan.</div>
   <template v-else-if="workspace">
     <header class="workspace-header mt-3">
-      <div class="d-flex flex-wrap align-items-center gap-2 mb-2"><h1 class="mb-0">{{ workspace.event.title }}</h1><span class="badge text-bg-light border">Demo workspace</span></div>
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-2"><h1 class="mb-0">{{ workspace.event.title }}</h1><span class="badge text-bg-light border">{{ api.USING_SUPABASE ? 'Live workspace' : 'Demo workspace' }}</span></div>
       <p class="text-secondary mb-1">{{ formatEventTime(workspace.event) }}</p>
       <p class="workspace-venue"><span>Active venue</span><strong>{{ workspace.event.venue?.name }}</strong><span v-if="workspace.event.usingBackup" class="badge text-bg-success ms-2">Backup active</span></p>
       <details class="workspace-address mb-2"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
-      <div class="workspace-meta"><span>Saved in this browser</span><RouterLink :to="'/events/' + workspace.event.id + '/rsvp'">View public event page</RouterLink></div>
+      <div class="workspace-meta"><span>{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span><RouterLink :to="'/events/' + workspace.event.id + '/rsvp'">View public event page</RouterLink></div>
     </header>
     <nav class="nav event-tool-nav mb-4" aria-label="Event tools"><RouterLink v-for="tab in tabs" :key="tab" :to="{ path: route.path, query: { ...route.query, tab } }" class="nav-link" :class="{ active: activeTab === tab }" :aria-current="activeTab === tab ? 'page' : undefined">{{ tab[0].toUpperCase() + tab.slice(1) }}</RouterLink></nav>
     <div v-if="errors[activeTab]" class="alert alert-danger" role="alert">{{ errors[activeTab] }} <button v-if="retries[activeTab]" type="button" class="btn btn-sm btn-outline-danger" :disabled="pending[activeTab]" @click="retries[activeTab]()">Retry save</button></div>

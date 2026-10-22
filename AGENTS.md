@@ -2,9 +2,10 @@
 
 ## Start and scope
 
-Read [docs/README.md](docs/README.md), [Feature 4](docs/feature4.md) and the
-[branch handoff](docs/handoff.md) before editing. They describe observed demo
-behaviour, assumptions and integration gaps. The original assessment PDFs and
+Read [docs/README.md](docs/README.md), the
+[`dev` merge guide](docs/dev-merge.md), [Feature 4](docs/feature4.md) and
+[verification](docs/testing.md) before editing. They describe the merged branch,
+observed demo behaviour, assumptions and integration gaps. The original assessment PDFs and
 local reference notes are not distributed with application code.
 
 This is Bookedz, the SMU IS216 Web Application Development 2 group project.
@@ -22,18 +23,22 @@ public README's detailed AI authorship disclosure and library attribution curren
 
 - `client/`: Vue 3 Composition API, JavaScript ES modules, Vue Router, Bootstrap 5,
   Axios and Vite. Keep templates and the established CSS/theme.
-- `client/src/utils/api.js`: asynchronous localStorage demo data boundary, including
-  Feature 4. Preserve callers' observable success/error behaviour in future adapters.
+- `client/src/utils/api.js`: asynchronous boundary selecting localStorage demo or
+  browser Supabase for event/RSVP/auth and Feature 4 calls. Preserve callers'
+  observable success/error behaviour in both adapters.
 - `client/src/components/event-operations/`: focused task/post/budget/weather tools.
 - `client/e2e/`: isolated Playwright tests. `client/src/utils/__tests__/feature4*.test.js`
   are Node built-in tests. The separate waitlist Vitest spec is unconfigured.
-- `server/`: Express 5/CommonJS, health-only. `supabase/` is imported integration
-  source, not proof of deployed schema, auth or cloud persistence.
+- `server/`: Express 5/CommonJS, health-only; `test:crud` is a separate manual
+  check. `supabase/` contains the imported initial SQL and five later migrations
+  deployed to the Bookerz development project on 22 October 2026, plus the
+  deployed `venue-switch` Edge Function. Verify hosted history before later SQL edits.
 
-Keep demo and production claims explicit. Feature 4's live direction is user-scoped
-browser Supabase SDK/RPC through the async interface; do not add parallel Express
-CRUD, administrative-key workarounds or silent demo fallbacks. Agree access,
-settings, atomicity, money limits and switch contracts with Timothy before activation.
+Keep demo and live claims explicit. Feature 4 uses user-scoped browser Supabase
+SDK/RPC through the async interface; its one-way venue switch uses a server-side
+NEA check and a service-role-only transaction. Do not add parallel Express CRUD,
+administrative keys in the browser or silent demo fallbacks. Signed-in owner and
+other-user hosted write flows remain to be verified before release.
 
 ## Working agreements
 

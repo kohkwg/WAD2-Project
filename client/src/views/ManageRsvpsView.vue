@@ -12,6 +12,7 @@ import {
   removeRsvp,
   setMember,
   expireOffersNow,
+  USING_SUPABASE,
   CURRENT_ORGANISER_ID,
   CLOSED_STATUSES,
 } from '../utils/api.js'
@@ -368,7 +369,7 @@ async function demoExpireOffers() {
           :busy-id="busyId"
           @toggle-member="toggleMember"
         />
-        <div v-if="offers.length > 0" class="border-top pt-3 mt-2">
+        <div v-if="offers.length > 0 && !USING_SUPABASE" class="border-top pt-3 mt-2">
           <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="busyId !== null" @click="demoExpireOffers">
             Demo: pretend 24 hours have passed
           </button>

@@ -5,7 +5,7 @@ import StepIndicator from '../components/StepIndicator.vue'
 import AddressSearch from '../components/AddressSearch.vue'
 import VenueMap from '../components/VenueMap.vue'
 import EventSummary from '../components/EventSummary.vue'
-import { createEvent } from '../utils/api.js'
+import { createEvent, USING_SUPABASE } from '../utils/api.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
 
 // Multi-step form (progressive disclosure): one small chunk at a time instead of one long page.
@@ -17,6 +17,8 @@ const step = ref(1)
 const showErrors = ref(false) // only show errors after they press Next
 const publishing = ref(false)
 const errorMessage = ref('')
+let createAttempt = null
+let createdEventId = null
 
 // Everything the organiser fills in, across all steps
 const form = ref({
@@ -59,6 +61,7 @@ const stepErrors = computed(() => {
 
 function errorsForStep(f, stepNumber, now = new Date()) {
   const errors = []
+  const hasCoordinates = (place) => Number.isFinite(place?.lat) && Number.isFinite(place?.lng)
 
   if (stepNumber === 1) {
     if (f.title.trim() === '') errors.push('Give your event a title.')
@@ -79,8 +82,14 @@ function errorsForStep(f, stepNumber, now = new Date()) {
 
   if (stepNumber === 2) {
     if (!f.venue) errors.push('Choose the venue from the address search.')
+    if (USING_SUPABASE && f.venue && !hasCoordinates(f.venue)) {
+      errors.push('Choose a venue result with map coordinates for live events.')
+    }
     if (f.isOutdoor && !f.backupVenue) {
       errors.push('Outdoor events need a backup venue in case of rain.')
+    }
+    if (USING_SUPABASE && f.backupVenue && !hasCoordinates(f.backupVenue)) {
+      errors.push('Choose a backup venue result with map coordinates for live events.')
     }
   }
 
@@ -164,21 +173,38 @@ async function publish() {
     await focusStep()
     return
   }
+  if (createdEventId) {
+    await router.push('/organiser/events?created=' + createdEventId)
+    return
+  }
   publishing.value = true
   errorMessage.value = ''
   try {
     const f = form.value
-    const created = await createEvent({
+    const eventData = {
       ...f,
       title: f.title.trim(),
       description: f.description.trim(),
       startTime: new Date(f.startTime).toISOString(), // store one standard date format
       endTime: new Date(f.endTime).toISOString(),
       backupVenue: f.isOutdoor ? f.backupVenue : null,
-    })
-    router.push('/organiser/events?created=' + created.id)
+    }
+    if (USING_SUPABASE) {
+      const fingerprint = JSON.stringify(eventData)
+      if (!createAttempt || createAttempt.fingerprint !== fingerprint) {
+        createAttempt = { fingerprint, requestId: crypto.randomUUID() }
+      }
+      eventData.requestId = createAttempt.requestId
+    }
+    const created = await createEvent(eventData)
+    createdEventId = created.id
+    createAttempt = null
+    const navigationFailure = await router.push('/organiser/events?created=' + created.id)
+    if (navigationFailure) errorMessage.value = 'Event was created, but could not open its organiser page. Press Publish to continue.'
   } catch (error) {
-    errorMessage.value = 'Could not publish the event: ' + error.message
+    errorMessage.value = createdEventId
+      ? 'Event was created, but could not open its organiser page: ' + error.message
+      : 'Could not publish the event: ' + error.message
   } finally {
     publishing.value = false
   }

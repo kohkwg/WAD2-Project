@@ -5,11 +5,14 @@
 //   supabaseApi.js  the real Supabase database
 // If client/.env has the Supabase keys we use Supabase; otherwise the mock
 // (or set VITE_USE_MOCK=true to use the mock anyway).
-// Feature 4 live writes remain disabled until the shared database contract is approved.
+// Feature 4 uses its own live adapter; venue switching is authorized by the
+// deployed server-side NEA verifier and fails closed when eligibility is unknown.
 
 
 import * as mockApi from './mockApi.js'
 import * as supabaseApi from './supabaseApi.js'
+import * as supabaseFeature4Api from './supabaseFeature4Api.js'
+import * as supabaseFeature4Weather from './supabaseFeature4Weather.js'
 import { isSupabaseConfigured } from './supabase.js'
 
 // VITE_USE_MOCK=true in client/.env forces the mock even when the keys are there (handy for demos)
@@ -18,6 +21,8 @@ export const CURRENT_USER_ID = 'u1'
 export const CURRENT_ORGANISER_ID = 'org1'
 
 const backend = USING_SUPABASE ? supabaseApi : mockApi
+const operationsBackend = USING_SUPABASE ? supabaseFeature4Api : mockApi
+const weatherBackend = USING_SUPABASE ? supabaseFeature4Weather : mockApi
 
 // The RSVP rules live in helpers.js; re-exported so pages can keep importing them from here
 export { OFFER_HOURS, ACTIVE_STATUSES, JOINED_STATUSES, CLOSED_STATUSES } from './helpers.js'
@@ -58,25 +63,20 @@ export const expireOffersNow = (eventId) => backend.expireOffersNow(eventId) // 
 // ---------- Mock only ----------
 export const resetDemoData = () => backend.resetDemoData()
 
-// Feature 4 retains its offline contract while the live schema is reconciled with it.
-async function feature4(method, ...args) {
-  if (USING_SUPABASE) throw new Error('Live organiser operations are awaiting the agreed Supabase contract.')
-  return mockApi[method](...args)
-}
-export const getEventOperations = (eventId) => feature4('getEventOperations', eventId)
-export const createTask = (eventId, input) => feature4('createTask', eventId, input)
-export const updateTask = (eventId, id, input) => feature4('updateTask', eventId, id, input)
-export const deleteTask = (eventId, id) => feature4('deleteTask', eventId, id)
-export const saveTaskBoard = (eventId, columns) => feature4('saveTaskBoard', eventId, columns)
-export const getAnnouncements = (eventId) => backend.getAnnouncements(eventId)
-export const createAnnouncement = (eventId, body) => feature4('createAnnouncement', eventId, body)
-export const updateAnnouncement = (eventId, id, body) => feature4('updateAnnouncement', eventId, id, body)
-export const deleteAnnouncement = (eventId, id) => feature4('deleteAnnouncement', eventId, id)
-export const saveBudgetLimit = (eventId, cents) => feature4('saveBudgetLimit', eventId, cents)
-export const saveBudgetItem = (eventId, input) => feature4('saveBudgetItem', eventId, input)
-export const deleteBudgetItem = (eventId, id) => feature4('deleteBudgetItem', eventId, id)
-export const getForecastAreas = () => feature4('getForecastAreas')
-export const getEventWeather = (eventId) => feature4('getEventWeather', eventId)
-export const setForecastArea = (eventId, name) => feature4('setForecastArea', eventId, name)
-export const getEventForecast = (eventId) => feature4('getEventForecast', eventId)
-export const confirmBackupVenueSwitch = (eventId) => feature4('confirmBackupVenueSwitch', eventId)
+export const getEventOperations = (eventId) => operationsBackend.getEventOperations(eventId)
+export const createTask = (eventId, input) => operationsBackend.createTask(eventId, input)
+export const updateTask = (eventId, id, input) => operationsBackend.updateTask(eventId, id, input)
+export const deleteTask = (eventId, id) => operationsBackend.deleteTask(eventId, id)
+export const saveTaskBoard = (eventId, columns) => operationsBackend.saveTaskBoard(eventId, columns)
+export const getAnnouncements = (eventId) => operationsBackend.getAnnouncements(eventId)
+export const createAnnouncement = (eventId, body, requestId) => operationsBackend.createAnnouncement(eventId, body, requestId)
+export const updateAnnouncement = (eventId, id, body) => operationsBackend.updateAnnouncement(eventId, id, body)
+export const deleteAnnouncement = (eventId, id) => operationsBackend.deleteAnnouncement(eventId, id)
+export const saveBudgetLimit = (eventId, cents) => operationsBackend.saveBudgetLimit(eventId, cents)
+export const saveBudgetItem = (eventId, input) => operationsBackend.saveBudgetItem(eventId, input)
+export const deleteBudgetItem = (eventId, id) => operationsBackend.deleteBudgetItem(eventId, id)
+export const getForecastAreas = () => weatherBackend.getForecastAreas()
+export const getEventWeather = (eventId) => weatherBackend.getEventWeather(eventId)
+export const setForecastArea = (eventId, name) => operationsBackend.setForecastArea(eventId, name)
+export const getEventForecast = (eventId) => weatherBackend.getEventForecast(eventId)
+export const confirmBackupVenueSwitch = (eventId) => weatherBackend.confirmBackupVenueSwitch(eventId)

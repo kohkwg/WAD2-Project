@@ -3,8 +3,10 @@
 Vue 3/Vite/Bootstrap frontend and optional Express health scaffold for SMU IS216.
 Feature 4 provides organiser tasks, public announcements, SGD budgets and a
 weather-assisted backup switch. Event/RSVP/auth use Supabase when the client
-environment is configured; Feature 4 live writes remain disabled pending
-Timothy’s backend contracts. Without client credentials, the app uses demo data.
+environment is configured. The live Feature 4 migrations and server-authorized
+NEA switch function are deployed on the Bookerz development project. Signed-in
+owner and other-user browser checks remain to be completed. Without client
+credentials, the app uses demo data.
 
 ## Run locally
 
@@ -40,20 +42,19 @@ pnpm --dir client exec playwright install chromium
 pnpm --dir client test:e2e
 ```
 
-Latest merge checks, 21 October 2026: **28 Node tests, 51 Chromium tests
-and the production build passed**. A read-only live browser check loaded
-public events; sign-in and hosted writes remain unverified.
+Latest full merge checks, 22 October 2026: **seven Node test files, five NEA
+rule cases, 51 Chromium tests and the production build passed**. Two development accounts signed in
+through the merged app. A 22 October hosted data check found six published
+events, three per test account; it was not a fresh frontend regression run.
 Browser tests isolate localStorage and control weather/time. The waitlist Vitest
-spec is unconfigured/excluded; neither package has a lint script. Hosted behaviour
-and live external-service availability remain unverified.
+spec is unconfigured/excluded; neither package has a lint script. Anonymous hosted
+reads and Edge Function JWT rejection were checked; signed-in Feature 4 workflows
+and a successful rainy switch remain unverified.
 
-- [Feature 4 guide](docs/feature4.md): behaviour, architecture and API/backend contracts.
-- [Verification](docs/testing.md): coverage, results and host-specific pnpm workaround.
-- [Branch handoff](docs/handoff.md): progress, merge coordination and remaining integration.
-- [Review fixes](docs/review-fixes.md): implemented behaviour and integration notes.
-- [Final review](docs/reviews/2026-10-17-final-review.md): independent assessment and limits.
-- [Teammate handoff](docs/iteration2-teammate-handoff.md): ownership and integration decisions.
-- [Iteration 1](docs/feature4-iteration1.md) / [iteration 2](docs/iteration2-implementation.md): concise history.
+- [`dev` merge and integration](docs/dev-merge.md): three-branch history, current
+  flows, decisions, hosted-data checkpoint and remaining contracts.
+- [Feature 4 guide](docs/feature4.md): detailed behaviour and API/backend mapping.
+- [Verification](docs/testing.md): commands, recorded results and limits.
 
 Portable agent/technical handoffs are included in `AGENTS.md` and `docs/`.
 Original course resources, private planning/host notes, generated graphs and
@@ -129,8 +130,27 @@ retention, public/auth routing, effective-venue mapping, event-deletion cascade,
 frontend reconciliation, test fixture and regression changes, and updated these
 handoffs. Gregory’s event/RSVP adapter and Leaflet map remain Gregory’s original
 contribution; Timothy’s SQL and server script remain Timothy’s contribution.
-Live Feature 4 and the prepared public-announcement SQL migration still require
-Timothy’s backend review.
+The live Feature 4 adapter and SQL migrations were subsequently deployed to the
+development project. The venue switch uses a trusted NEA forecast verifier.
 [Leaflet](https://github.com/Leaflet/Leaflet) (BSD-2-Clause) powers the map;
 [Supabase JavaScript](https://github.com/supabase/supabase-js) (MIT) powers the
 browser data adapter. Carry these attributions into presentation materials.
+
+On 22 October 2026, Codex used the authorised server-only development key to
+create and verify two test accounts, then backed up and replaced 36 duplicate
+or obsolete hosted events with six distinct events split evenly between them.
+The database changes were manual development-data maintenance, not an app feature
+or migration. Codex also consolidated the merge, review and iteration handoffs
+into the current guides under `docs/`. No passwords, privileged keys or private
+event backup are included in this repository. The earlier guide versions remain
+in Git history.
+
+On 22 October 2026, Codex and GPT-6 Luna subagents prepared the live Feature 4
+browser adapter, owner-scoped SQL contract, retry reconciliation and tests.
+Codex later added a server-authorized NEA forecast check, one-way atomic venue
+switch, atomic live event creation and RSVP retry handling with further Luna
+subagents and independent review. Codex integrated and reviewed their work,
+then added a privacy migration that hides organiser-only availability counts
+from public callers. The five migrations and Edge Function were applied to the
+hosted Bookerz development project. Local and database contract tests passed;
+signed-in owner and other-user browser checks remain pending.

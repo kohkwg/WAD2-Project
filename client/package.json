@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:unit": "NODE_ENV=test node --test src/utils/__tests__/feature4*.test.js",
+    "test:unit": "NODE_ENV=test node --test src/utils/__tests__/feature4*.test.js src/utils/__tests__/supabaseApi.test.js src/utils/__tests__/supabaseFeature4*.test.js",
     "test:e2e": "playwright test"
   },
   "dependencies": {

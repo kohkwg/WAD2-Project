@@ -1,6 +1,6 @@
 # Feature 4: organiser operations
 
-Current guide after the Gregory merge review, 21 October 2026. Denzel owns tasks,
+Current guide after the three-branch integration, 22 October 2026. Denzel owns tasks,
 announcements, budget tracking and weather-assisted venue switching. The app uses
 Vue 3 Composition API, JavaScript, Bootstrap 5 and an asynchronous localStorage
 demo layer. Weather uses real public HTTP reads; tests substitute controlled data.
@@ -23,7 +23,13 @@ The ordinary demo uses Gregory’s event list. Browser and Node tests add
 `e-weather-demo` only inside their isolated test environment. **Reset demo data** asks for
 confirmation, deletes all local event/RSVP/Feature 4 edits and reseeds on reload.
 The demo event ages with saved storage; switch availability depends on current
-weather and the event falling inside the forecast window.
+weather and the event falling inside the forecast window. If `client/.env`
+contains a Supabase URL/key, set `VITE_USE_MOCK=true` there and restart Vite
+to exercise this demo. The configured live mode has a Feature 4 adapter,
+hosted SQL migrations and an authenticated NEA venue-switch function. Signed-in
+owner and other-user browser flows still need verification. The live switch requires original-venue
+coordinates and a fresh rainy NEA forecast; a manually selected display area
+cannot authorize it.
 
 ```sh
 pnpm --dir client build
@@ -35,11 +41,10 @@ pnpm --dir client test:e2e
 Chromium installation is a one-time setup. Playwright starts/reuses Vite on
 `127.0.0.1:5173`. Express is optional and exposes only `/health`. No credentials,
 local database, Docker, R2 emulator or weather scheduler are needed for the demo.
-See [verification](testing.md) for current results, coverage and limitations; see the
-[final review](reviews/2026-10-17-final-review.md) for fix acceptance and remaining
-integration work.
+See [verification](testing.md) for recorded results and limits, and the
+[`dev` merge guide](dev-merge.md) for branch decisions and remaining integration.
 
-## Behaviour
+## Demo behaviour
 
 | Tool | Current behaviour |
 | --- | --- |
@@ -52,7 +57,7 @@ integration work.
 Budget categories are Food & drink, Venue, Equipment, Marketing and Other. Totals
 show planned, actual and remaining funds. Unset limit differs from zero and has
 no percentage warning. Display/edit preserves exact cents throughout the demo's
-safe-integer range; the future database has a smaller range to reconcile.
+safe-integer range; the live database has a smaller range.
 
 Each Weather entry/Refresh uses `getEventWeather(eventId)` to derive forecast and
 areas from one HTTP response. Confirmation still reads fresh eligibility; the
@@ -115,15 +120,21 @@ Preserve async success/failure, exact money and public/private separation in a l
 
 ## Live integration handoff
 
-Timothy’s `tim` branch contains the same imported initial SQL and a CRUD
-script, not an additional Feature 4 contract. The browser publishable key
-connects to the supplied project; the local server secret key was rejected
-by Supabase, so no test accounts were created.
-The agreed direction uses the existing browser Supabase client with real user
-auth/RLS. Live Feature 4 stays unavailable until Timothy approves its contracts;
-the venue switch remains disabled. Feature 4 needs no parallel
-Express CRUD layer. Keep privileged keys server-side and failed live writes
-visible; do not silently substitute demo writes.
+Timothy’s `tim` branch contains the same initial SQL that was selectively
+copied onto `denzel` earlier, plus a server scaffold and CRUD script. It does
+not provide an additional Feature 4 contract. The browser publishable key
+connects to the supplied project. The server-only key was later repaired;
+two confirmed development accounts were created and browser sign-in was
+verified. Their credentials are not kept in this repository.
+The live implementation uses the existing browser Supabase client with real
+user auth/RLS. `client/src/utils/supabaseFeature4Api.js` maps tasks, public and
+manual announcements, budget and saved forecast area to SQL;
+`supabaseFeature4Weather.js` reads public weather for the owner and invokes the
+authenticated `supabase/functions/venue-switch` function on confirmation. The
+`20261022055905_feature4_operations.sql` and
+`20261022055913_trusted_nea_venue_switch.sql` migrations are applied to the hosted
+development project. There is no parallel Express CRUD layer, privileged browser
+key or silent demo fallback.
 
 | Frontend | Imported SQL mapping |
 | --- | --- |
@@ -131,38 +142,48 @@ visible; do not silently substitute demo writes.
 | Expenses | `kind='expense'`; name → `description`; planned/actual cents ↔ decimal SGD `estimated_amount`/`actual_amount` (`numeric(12,2)`); nullable actual reads as zero |
 | Manual posts | `title='Event update'`, `body`, `audience='everyone'`, `is_automatic=false` |
 | Effective venue | Derive from original `venue_id`, `backup_venue_id` and `using_backup`; retain the primary venue |
-| Switch RPC | `switch_event_venue(p_event_id, p_use_backup=true, p_message=null)` returns an announcement row; refetch event for the UI contract |
+| Switch RPC | The imported browser-callable switch stays blocked. The server-only `commit_trusted_venue_switch` RPC saves the one-way switch, immutable public post and retry record in one transaction after the Edge Function verifies NEA weather. |
 
-Before activation, confirm deployed migrations, real auth sessions/test records
-and these gaps with Timothy:
+The Feature 4 migration makes the event owner the sole private Feature 4 editor,
+adds `event_operation_settings` for the optional positive budget limit and
+forecast area, records manual post edit times and prevents automatic post edits.
+It adds owner-checked, atomic RPCs for complete board saves, task creation and
+deletion, budget limit changes and forecast-area changes. The existing
+`20261022055852_public_announcements.sql` must precede it so `everyone` posts
+on published events are readable before login. Money is converted through exact
+integer cents and capped at the SQL `numeric(12,2)` amount range.
 
-- Public anonymous/pre-RSVP announcement reads and owner-only private tools versus
-  imported helper/co-organiser permissions.
-- The follow-up `20261021000000_public_announcements.sql` migration grants anonymous
-  read access to `everyone` posts for published events. It is prepared for
-  Timothy's review and has not been deployed or verified against cloud RLS.
-- Authoritative positive overall budget limit; exact decimal mapping and the
-  database's smaller amount range (maximum SGD 9,999,999,999.99 per amount).
-- Immutable automatic posts, manual edited timestamps, atomic board saves and a
-  persisted manual forecast-area preference.
-- Authoritative one-way weather-switch eligibility. The imported RPC permits
-  reversal and does not check current rain, forecast validity or event timing.
-- Reconciliation after uncertain/committed writes. Already-at-target currently
-  raises an error; read the event/history before retrying. A failed post-commit
-  refresh must not create another automatic post or imply rollback.
+The migrations and Edge Function are deployed; hosted role checks and signed-in
+browser flows remain to be completed. Browser and Node tests use mocks and do
+not prove the hosted schema. The remaining checks are:
+
+- Agree whether the owner-only contract is final; it intentionally excludes
+  co-organisers and helpers from these private tools.
+- Check the new settings and task RPCs under concurrent writes and after an
+  uncertain response, including exact monetary limits and row-level denial.
+- Check the deployed `venue-switch` Edge Function under signed-in accounts. It
+  fetches the NEA two-hour forecast itself, derives the area from the persisted
+  original venue coordinates and rejects stale, unknown or dry
+  conditions. The database transaction rechecks owner, timing and one-way state.
+- Test the deployed `20261022060014_atomic_event_creation.sql` with Gregory's live
+  creation/RSVP flow. Its create RPC commits venues, event, tags and questions
+  together and reconciles retries with a stable request ID.
 
 Verify grants/RLS, denied access, expired sessions, concurrent writes and response
 loss against approved development records. Coordinate stable venue/plan identity
 with Gregory/Vivienne and public feed placement with Aishani. Ownership and
-remaining teammate defects are in the [handoff](iteration2-teammate-handoff.md).
+remaining teammate integration work is in the [`dev` merge guide](dev-merge.md).
 
 ## History and attribution
 
-[Iteration 1](feature4-iteration1.md) delivered the demo.
-[Iteration 2](iteration2-implementation.md) fixed ordering/refresh and refined the
-shared Bootstrap presentation. The [branch handoff](handoff.md) records the later
-review fixes, teammate coordination and remaining live work. The public [AI disclosure](../README.md#ai-assistance-disclosure)
-identifies AI-authored implementation, tests and documentation.
+Iteration 1 delivered the demo. Iteration 2 fixed ordering/refresh and refined
+the shared Bootstrap presentation; the 17 October review pass fixed retry,
+focus, public-feed, weather-read and shared frontend issues. The
+[`dev` merge guide](dev-merge.md) records the later branch resolution, teammate
+coordination and remaining live work. Historical checkpoint and review files
+remain recoverable in Git history. The public
+[AI disclosure](../README.md#ai-assistance-disclosure) identifies AI-authored
+implementation, tests and documentation.
 [SortableJS](https://github.com/SortableJS/Sortable) (MIT) powers dragging;
 [Playwright](https://github.com/microsoft/playwright) (Apache-2.0) powers browser
 tests. Preserve attribution in code and presentation materials.
