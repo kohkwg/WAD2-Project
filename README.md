@@ -171,3 +171,15 @@ record. [vue-konva](https://github.com/konvajs/vue-konva) (MIT),
 [html5-qrcode](https://github.com/mebjas/html5-qrcode) (Apache-2.0) and
 [Papa Parse](https://github.com/mholt/PapaParse) (MIT) arrived with the merged
 features. Carry these attributions into presentation materials.
+
+Later on 22 October 2026, with Huxley's explicit approval of each plan, Claude Code
+used the Supabase MCP to apply two migrations to the Bookerz development project:
+`20261022100100_feature1_discovery_contract` (profile fields for Feature 1 and a
+row-level-security-respecting `events_with_counts` view, replacing a hand-made
+security-definer view) and `20261022100141_rsvp_rules` (organisers can't RSVP to
+their own event, no cancelling after check-in, offers capped at the event start).
+It also changed Feature 1's Profile save, Discover filters, event-card links and
+`/api/recommendations` (now queried with the user's JWT instead of the
+service-role key), and updated the affected tests. Aishani's ranking and Gregory's
+waitlist-scoring algorithms were not rewritten. Aishani, Gregory and Timothy should
+review these changes. Details: `docs/merge-session-2026-10-22.md`.
