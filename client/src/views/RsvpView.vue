@@ -136,6 +136,11 @@ async function submitRsvp() {
       answers: answers.value,
     })
     if (ticket === loadRequest) result.value = savedRsvp
+    // Refresh "spots left" / waitlist count; a failed refresh must not hide the saved RSVP
+    try {
+      const refreshed = await getEvent(eventId.value)
+      if (ticket === loadRequest) event.value = refreshed
+    } catch { /* keep the old counts */ }
   } catch (error) {
     if (ticket === loadRequest) errorMessage.value = error.message
   } finally {
