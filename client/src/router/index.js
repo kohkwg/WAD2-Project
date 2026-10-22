@@ -1,12 +1,14 @@
-// BOILERPLATE: minimal router for Feature 3 while we work off main.
+// BOILERPLATE: shared router. Each feature keeps its routes in its own block below.
 // When Denzel's shell is merged, copy these route entries into his router.
 import { createRouter, createWebHistory } from 'vue-router'
 import { supabase } from '@/utils/supabase'
+import { feature1Routes } from './feature1Routes'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: '/login' },
+    // Feature 1: discovery + profile (Aishani). '/' is the Discover page.
+    ...feature1Routes,
     { path: '/login', component: () => import('@/views/DevLoginView.vue'), meta: { title: 'Sign in' } },
 
     // Feature 3: participant
@@ -45,7 +47,7 @@ const router = createRouter({
       meta: { title: 'Floor plan editor' },
     },
 
-    { path: '/:pathMatch(.*)*', redirect: '/login' },
+    { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
 
