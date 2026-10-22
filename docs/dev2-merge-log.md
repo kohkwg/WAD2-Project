@@ -75,7 +75,9 @@ and Timothy's "Project Info" schema review:
    `client/src/utils/supabase.js` (F3, router) are identical. That causes a "Multiple
    GoTrueClient instances" console warning.
 4. **Medium: `/events/:id` doesn't exist.** Discover and Picked-for-you link to it.
-   `dev` only has `/events/:id/rsvp`.
+   `dev` only has `/events/:id/rsvp`. Once merged into `dev`, the simplest fix is to point
+   those links at Gregory's **`/events/:id/rsvp`** instead of adding a new route
+   (`client/src/views/DiscoverView.vue:16`, `client/src/components/PickedForYou.vue:27`).
 5. **Low (Huxley):** after a check-in, F3 should call
    `POST /api/recommendations/interactions { eventId, type: "attend" }` (the proposal says
    attending raises interest weights). Waits on issue 1.
@@ -129,6 +131,14 @@ and Timothy's "Project Info" schema review:
 - Check-in pages only work with real Supabase keys (they use the RPCs). In mock mode,
   My Ticket renders nothing.
 - No e2e test covers check-in, Discover or the editor yet.
+- **Two RSVP flows (Aishani / Gregory: pick one).** aish's
+  `client/src/components/EventDetailsDialog.vue` RSVPs directly with
+  `supabase.rpc('register_for_event', …)` and its own question form. Gregory's
+  `RsvpView` on `dev` does the same through `createRsvp()` in `utils/supabaseApi.js`.
+  Both match the schema (`register_for_event(p_event_id, p_answers)` and the
+  `event_questions` columns), so neither is broken. After the merge, though, users
+  would see two different RSVP screens. Suggestion: RSVP belongs to Feature 2, so the
+  dialog's RSVP button should send users to `/events/:id/rsvp` (which also fixes issue 4).
 
 ## AI use
 - AI tool: Claude Code (Claude Opus as the main agent, Claude Haiku subagents for
