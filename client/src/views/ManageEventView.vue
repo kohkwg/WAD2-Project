@@ -134,6 +134,8 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
       <p class="workspace-venue"><span>Active venue</span><strong>{{ workspace.event.venue?.name }}</strong><span v-if="workspace.event.usingBackup" class="badge text-bg-success ms-2">Backup active</span></p>
       <details class="workspace-address mb-2"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
       <div class="workspace-meta"><span>{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span><RouterLink :to="'/events/' + workspace.event.id + '/rsvp'">View public event page</RouterLink></div>
+      <!-- Feature 3: check-in tools (live Supabase only) -->
+      <div v-if="api.USING_SUPABASE" class="workspace-meta"><span>Check-in</span><RouterLink :to="'/organiser/events/' + workspace.event.id + '/check-in'">Station</RouterLink><RouterLink :to="'/organiser/events/' + workspace.event.id + '/venue-qr'">Venue QR</RouterLink><RouterLink :to="'/organiser/events/' + workspace.event.id + '/attendance'">Attendance</RouterLink></div>
     </header>
     <nav class="nav event-tool-nav mb-4" aria-label="Event tools"><RouterLink v-for="tab in tabs" :key="tab" :to="{ path: route.path, query: { ...route.query, tab } }" class="nav-link" :class="{ active: activeTab === tab }" :aria-current="activeTab === tab ? 'page' : undefined">{{ tab[0].toUpperCase() + tab.slice(1) }}</RouterLink></nav>
     <div v-if="errors[activeTab]" class="alert alert-danger" role="alert">{{ errors[activeTab] }} <button v-if="retries[activeTab]" type="button" class="btn btn-sm btn-outline-danger" :disabled="pending[activeTab]" @click="retries[activeTab]()">Retry save</button></div>
