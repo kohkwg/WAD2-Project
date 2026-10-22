@@ -9,6 +9,7 @@ import {
   respondToOffer,
   CURRENT_USER_ID,
   CLOSED_STATUSES,
+  USING_SUPABASE,
 } from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
 
@@ -203,6 +204,12 @@ async function cancel(rsvpId) {
             {{ formatEventTime(rsvp.event) }} · {{ rsvp.event.venue.name }}
           </p>
           <RsvpStatusBadge :status="rsvp.status" />
+          <!-- Feature 3: personal QR ticket for check-in (live Supabase only) -->
+          <RouterLink
+            v-if="USING_SUPABASE && rsvp.status === 'confirmed'"
+            :to="`/events/${rsvp.event.id}/ticket`"
+            class="btn btn-outline-primary btn-sm ms-2"
+          >My ticket</RouterLink>
           <p v-if="rsvp.status === 'waitlisted'" class="small mb-0 mt-2">
             If a spot opens up, you'll see a banner here and have 24 hours to confirm.
           </p>
