@@ -32,6 +32,8 @@ coverage
 # Playwright test output
 /client/playwright-report/
 /client/test-results/
+# Saved sign-in sessions for the live e2e suite (contain auth tokens)
+/client/e2e-live/.auth/
 
 # nyc test coverage
 .nyc_output

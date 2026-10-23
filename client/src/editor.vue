@@ -1,17 +1,35 @@
 <script setup>
-import { computed, ref } from 'vue'
+// Feature 6 (Vivienne): floor plan editor + read-only viewer for one event.
+// Organisers drag boxes (zones) and labelled people markers, then Save; the layout
+// is stored in public.floor_plans (see utils/floorPlan.js). Everyone else, and the
+// public event page (read-only prop), sees the saved plan without editing controls.
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
+import { canEditFloorPlan, getFloorPlan, saveFloorPlan } from '@/utils/floorPlan'
 
-const permissionMode = ref('with')
-const isLocked = ref(false)
-
-const canEdit = computed(() => {
-    return permissionMode.value === 'with' && !isLocked.value
+const props = defineProps({
+    // Viewer mode for the public event page: never editable, hidden when no plan exists
+    eventId: { type: String, default: '' },
+    readOnly: { type: Boolean, default: false },
 })
 
+const route = useRoute()
+const eventId = computed(() => props.eventId || String(route.params.eventId || ''))
+
+const loading = ref(true)
+const loadError = ref('')
+const isOrganiser = ref(false)
+const planId = ref(null)
+const saving = ref(false)
+const saveMessage = ref('') // 'Saved.' or an error
+const dirty = ref(false)
+
+// Real roles: only the event's organisers edit (RLS enforces it on save too)
+const canEdit = computed(() => !props.readOnly && isOrganiser.value)
+
 const editorStatus = computed(() => {
-    if (isLocked.value) return 'Locked: Nobody can edit'
-    if (permissionMode.value === 'with') return 'With Perms: Editing enabled'
-    return 'No Perms: View Only'
+    if (canEdit.value) return dirty.value ? 'Unsaved changes' : 'All changes saved'
+    return 'View only'
 })
 
 const stageConfig = {
@@ -31,88 +49,71 @@ const personColours = ['#111827', '#0f766e', '#7c3aed', '#be123c', '#1d4ed8', '#
 const nextBoxNumber = ref(1)
 const nextPersonNumber = ref(1)
 
-const floorObjects = ref([
-    {
-        id: 'stage',
-        type: 'rect',
-        label: 'Stage',
-        x: 80,
-        y: 70,
-        width: 220,
-        height: 90,
-        fill: '#2f80ed',
-    },
-    {
-        id: 'booth-a',
-        type: 'rect',
-        label: 'Booth A',
-        x: 390,
-        y: 90,
-        width: 120,
-        height: 80,
-        fill: '#27ae60',
-    },
-    {
-        id: 'booth-b',
-        type: 'rect',
-        label: 'Booth B',
-        x: 560,
-        y: 90,
-        width: 120,
-        height: 80,
-        fill: '#f2994a',
-    },
-    {
-        id: 'entrance',
-        type: 'rect',
-        label: 'Entrance',
-        x: 370,
-        y: 440,
-        width: 160,
-        height: 60,
-        fill: '#9b51e0',
-    },
-    {
-        id: 'helper',
-        type: 'rect',
-        label: 'Helper Desk',
-        x: 90,
-        y: 320,
-        width: 150,
-        height: 70,
-        fill: '#eb5757',
-    }
-])
+// New plans start empty; organisers add boxes (zones) and labelled people markers
+const floorObjects = ref([])
+const people = ref([])
 
-const people = ref([
-    {
-        id: 'organiser-vivienne',
-        name: 'Vivienne',
-        role: 'Organiser',
-        x: 720,
-        y: 90,
-        radius: 22,
-        fill: '#111827',
-    },
-    {
-        id: 'helper-jay',
-        name: 'Jay',
-        role: 'Helper',
-        x: 300,
-        y: 270,
-        radius: 20,
-        fill: '#0f766e',
-    },
-    {
-        id: 'helper-maya',
-        name: 'Maya',
-        role: 'Helper',
-        x: 650,
-        y: 340,
-        radius: 20,
-        fill: '#7c3aed',
-    },
-])
+async function load() {
+    loading.value = true
+    loadError.value = ''
+    try {
+        const [plan, organiser] = await Promise.all([
+            getFloorPlan(eventId.value),
+            props.readOnly ? Promise.resolve(false) : canEditFloorPlan(eventId.value),
+        ])
+        isOrganiser.value = Boolean(organiser)
+        if (plan) {
+            planId.value = plan.id
+            floorObjects.value = plan.layout?.objects ?? []
+            people.value = plan.layout?.people ?? []
+            nextBoxNumber.value = floorObjects.value.length + 1
+            nextPersonNumber.value = people.value.length + 1
+        }
+    } catch (e) {
+        loadError.value = e.message || 'Could not load the floor plan.'
+    } finally {
+        loading.value = false
+        await nextTick()
+        dirty.value = false
+    }
+}
+
+// Any edit after loading (move, add, rename, remove) marks the plan unsaved
+watch([floorObjects, people], () => {
+    if (!loading.value) {
+        dirty.value = true
+        saveMessage.value = ''
+    }
+}, { deep: true })
+
+async function save() {
+    if (!canEdit.value || saving.value) return
+    saving.value = true
+    saveMessage.value = ''
+    try {
+        const row = await saveFloorPlan(eventId.value, {
+            id: planId.value,
+            width: stageConfig.width,
+            height: stageConfig.height,
+            objects: floorObjects.value,
+            people: people.value,
+        })
+        planId.value = row.id
+        dirty.value = false
+        saveMessage.value = 'Saved.'
+    } catch (e) {
+        saveMessage.value = e.message || 'Could not save the floor plan.'
+    } finally {
+        saving.value = false
+    }
+}
+
+function removeItem(list, item) {
+    if (!canEdit.value) return
+    list.splice(list.indexOf(item), 1)
+}
+
+onMounted(load)
 
 function updatePosition(item, event) {
     item.x = event.target.x()
@@ -212,49 +213,41 @@ function keepPersonInsideFloor(person, position) {
     }
 }
 
-function toggleLock() {
-    isLocked.value = !isLocked.value
-}
-
-function resetDemo() {
-    permissionMode.value = 'with'
-    isLocked.value = false
-}
 </script>
 
 <template>
-    <main class="container py-4">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <div>
-                <h1 class="h3 mb-1">Floor Plan Editor Skeleton</h1>
-                <p class="text-muted mb-0">{{ editorStatus }}</p>
-            </div>
-
-            <div class="d-flex gap-2">
-                <div class="btn-group">
-                    <button class="btn" :class="permissionMode === 'with' ? 'btn-primary' : 'btn-outline-primary'"
-                        :disabled="isLocked" @click="permissionMode = 'with'">
-                        With perms
-                    </button>
-
-                    <button class="btn" :class="permissionMode === 'none' ? 'btn-primary' : 'btn-outline-primary'"
-                        :disabled="isLocked" @click="permissionMode = 'none'">
-                        No perms
-                    </button>
+    <!-- Viewer mode renders nothing until a plan exists, so event pages without one stay clean -->
+    <div v-if="!readOnly || (!loading && !loadError && planId)" :class="readOnly ? 'floor-plan-viewer' : 'container py-4'">
+        <template v-if="!readOnly">
+            <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div>
+                    <h1 class="h3 mb-1">Floor plan</h1>
+                    <p class="text-muted mb-0" role="status">{{ loading ? 'Loading…' : editorStatus }}</p>
                 </div>
 
-                <button class="btn" :class="isLocked ? 'btn-danger' : 'btn-outline-danger'" @click="toggleLock">
-                    {{ isLocked ? 'Unlock' : 'Lock' }}
-                </button>
-
-                <button class="btn btn-outline-secondary" @click="resetDemo">
-                    Reset
-                </button>
-
+                <div v-if="canEdit" class="d-flex align-items-center gap-2">
+                    <span v-if="saveMessage" class="small" :class="saveMessage === 'Saved.' ? 'text-success' : 'text-danger'" role="status">{{ saveMessage }}</span>
+                    <button class="btn btn-primary" type="button" :disabled="saving || !dirty" @click="save">
+                        <span v-if="saving" class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                        Save floor plan
+                    </button>
+                </div>
             </div>
-        </div>
+        </template>
+        <h2 v-else class="h5 mb-2">Floor plan</h2>
 
-        <section class="edit-panel mb-3">
+        <div v-if="loading && !readOnly" class="py-5 text-center">
+            <div class="spinner-border" role="status"><span class="visually-hidden">Loading floor plan…</span></div>
+        </div>
+        <div v-else-if="loadError" class="alert alert-danger" role="alert">{{ loadError }}</div>
+
+        <template v-else>
+        <p v-if="canEdit && !floorObjects.length && !people.length" class="text-muted small">
+            No floor plan yet. Add boxes for areas (stage, booths, entrance) and people for helper spots, drag them into place, then save.
+        </p>
+
+        <section v-if="canEdit" class="edit-panel mb-3">
             <div>
                 <div class="edit-heading">
                     <h2 class="h6 mb-0">Boxes</h2>
@@ -282,8 +275,15 @@ function resetDemo() {
                             v-model="item.label"
                             class="form-control form-control-sm"
                             maxlength="24"
+                            :aria-label="`Box name: ${item.label}`"
                             :disabled="!canEdit"
                         >
+                        <button
+                            class="btn btn-sm btn-outline-danger"
+                            type="button"
+                            :aria-label="`Remove ${item.label}`"
+                            @click.prevent="removeItem(floorObjects, item)"
+                        >&times;</button>
                     </label>
                 </div>
             </div>
@@ -320,11 +320,18 @@ function resetDemo() {
                         <select
                             v-model="person.role"
                             class="form-select form-select-sm"
+                            :aria-label="`Role for ${person.name}`"
                             :disabled="!canEdit"
                         >
                             <option>Organiser</option>
                             <option>Helper</option>
                         </select>
+                        <button
+                            class="btn btn-sm btn-outline-danger"
+                            type="button"
+                            :aria-label="`Remove ${person.name}`"
+                            @click="removeItem(people, person)"
+                        >&times;</button>
                     </div>
                 </div>
             </div>
@@ -454,7 +461,8 @@ function resetDemo() {
                 </v-stage>
             </div>
         </section>
-    </main>
+        </template>
+    </div>
 </template>
 
 <style scoped>
@@ -465,6 +473,10 @@ function resetDemo() {
     border: 1px solid #dee2e6;
     border-radius: 8px;
     background: #f6f7f9;
+}
+
+.floor-plan-viewer {
+    margin-top: 1.5rem;
 }
 
 .edit-panel {

@@ -89,7 +89,7 @@ onUnmounted(() => clearInterval(timer))
 </script>
 
 <template>
-  <main class="container py-4 text-center" style="max-width: 640px">
+  <div class="container py-4 text-center" style="max-width: 640px">
     <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block text-start mb-3">&larr; Manage event</RouterLink>
 
     <div v-if="error && !secret" class="alert alert-danger" role="alert">{{ error }}</div>
@@ -125,5 +125,5 @@ onUnmounted(() => clearInterval(timer))
     <div v-else class="py-5">
       <div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>
     </div>
-  </main>
+  </div>
 </template>

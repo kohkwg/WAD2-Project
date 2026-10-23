@@ -3,11 +3,13 @@
 // `decoded` with the QR text, and always turns the camera off when unmounted.
 // The camera only works on https or localhost.
 import { onMounted, onBeforeUnmount, ref, useId } from 'vue'
-import { Html5Qrcode } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 
 const props = defineProps({
   // ignore the same code for this long, because the library fires ~10x per second
   cooldownMs: { type: Number, default: 3000 },
+  // html5-qrcode format names; the staff station adds 'CODE_128' for ticket barcodes
+  formats: { type: Array, default: () => ['QR_CODE'] },
 })
 const emit = defineEmits(['decoded'])
 
@@ -18,20 +20,31 @@ let scanner = null
 let lastText = ''
 let lastAt = 0
 
-function onSuccess(text) {
+// emits (text, formatName), e.g. ('2C3980B894', 'CODE_128')
+function onSuccess(text, result) {
   const now = Date.now()
   if (text === lastText && now - lastAt < props.cooldownMs) return
   lastText = text
   lastAt = now
-  emit('decoded', text)
+  emit('decoded', text, result?.result?.format?.formatName ?? 'QR_CODE')
+}
+
+// Square box for QR codes; a wide, short box when 1D barcodes are allowed too
+function scanBox(w, h) {
+  if (props.formats.includes('CODE_128')) return { width: Math.floor(w * 0.9), height: Math.floor(h * 0.5) }
+  const s = Math.floor(Math.min(w, h) * 0.7)
+  return { width: s, height: s }
 }
 
 onMounted(async () => {
-  scanner = new Html5Qrcode(elementId)
+  scanner = new Html5Qrcode(elementId, {
+    formatsToSupport: props.formats.map((f) => Html5QrcodeSupportedFormats[f]),
+    verbose: false,
+  })
   try {
     await scanner.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: (w, h) => { const s = Math.floor(Math.min(w, h) * 0.7); return { width: s, height: s } } },
+      { fps: 10, qrbox: scanBox },
       onSuccess,
       () => {}, // "no QR in this frame", fires constantly, ignore
     )

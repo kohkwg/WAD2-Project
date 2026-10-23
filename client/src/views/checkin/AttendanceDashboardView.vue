@@ -134,7 +134,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
 </script>
 
 <template>
-  <main class="container py-4" style="max-width: 720px">
+  <div class="container py-4" style="max-width: 720px">
     <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
 
     <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
@@ -201,5 +201,5 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
 
       <AttendanceCsv :event-id="eventId" :event-title="event?.title ?? 'event'" />
     </template>
-  </main>
+  </div>
 </template>

@@ -5,6 +5,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import QrCode from '@/components/checkin/QrCode.vue'
+import Barcode from '@/components/checkin/Barcode.vue'
 import { supabase } from '@/utils/supabase'
 import { formatTime, getEvent } from '@/utils/checkin'
 
@@ -14,9 +15,38 @@ const eventId = route.params.eventId
 const loading = ref(true)
 const error = ref('')
 const event = ref(null)
-const registration = ref(null) // { id, status, qr_token }
+const registration = ref(null) // { id, status, qr_token, ticket_code }
 const checkIn = ref(null) // check_ins row once they're in
 let channel = null
+let poll = null
+
+// Live: when staff scan this ticket, show the confirmation without a refresh.
+// Subscribe BEFORE reading check_ins and wait for SUBSCRIBED (same pattern as the
+// attendance dashboard), so a check-in during the load isn't missed. Gives up
+// waiting after 10 s so a Realtime outage doesn't block the page.
+function subscribe(regId) {
+  return new Promise((resolve) => {
+    const giveUp = setTimeout(resolve, 10_000)
+    channel = supabase
+      .channel(`ticket-${regId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'check_ins', filter: `registration_id=eq.${regId}` },
+        (payload) => (checkIn.value = payload.new),
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          clearTimeout(giveUp)
+          resolve()
+        }
+      })
+  })
+}
+
+async function loadCheckIn(regId) {
+  const { data } = await supabase.from('check_ins').select('*').eq('registration_id', regId).maybeSingle()
+  if (data) checkIn.value = data
+}
 
 onMounted(async () => {
   try {
@@ -26,7 +56,7 @@ onMounted(async () => {
     // RLS only returns the signed-in user's own registration here
     const { data: reg, error: regErr } = await supabase
       .from('registrations')
-      .select('id, status, qr_token')
+      .select('id, status, qr_token, ticket_code')
       .eq('event_id', eventId)
       .eq('user_id', auth.user.id)
       .maybeSingle()
@@ -34,18 +64,10 @@ onMounted(async () => {
     registration.value = reg
     if (!reg) return
 
-    const { data: ci } = await supabase.from('check_ins').select('*').eq('registration_id', reg.id).maybeSingle()
-    checkIn.value = ci
-
-    // Live: when staff scan this ticket, show the confirmation without a refresh
-    channel = supabase
-      .channel(`ticket-${reg.id}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'check_ins', filter: `registration_id=eq.${reg.id}` },
-        (payload) => (checkIn.value = payload.new),
-      )
-      .subscribe()
+    await subscribe(reg.id)
+    await loadCheckIn(reg.id)
+    // Fallback if Realtime is slow to start or drops: re-check every 5 s until checked in
+    poll = setInterval(() => (checkIn.value ? clearInterval(poll) : loadCheckIn(reg.id)), 5_000)
   } catch (e) {
     error.value = e.message ?? 'Could not load your ticket.'
   } finally {
@@ -53,11 +75,14 @@ onMounted(async () => {
   }
 })
 
-onUnmounted(() => channel && supabase.removeChannel(channel))
+onUnmounted(() => {
+  clearInterval(poll)
+  if (channel) supabase.removeChannel(channel)
+})
 </script>
 
 <template>
-  <main class="container py-4 text-center" style="max-width: 480px">
+  <div class="container py-4 text-center" style="max-width: 480px">
     <RouterLink to="/my-rsvps" class="small d-block text-start mb-3">&larr; My RSVPs</RouterLink>
 
     <div v-if="loading" class="py-5">
@@ -84,12 +109,18 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
         </div>
         <div class="card card-body align-items-center" :class="{ 'opacity-50': checkIn }">
           <QrCode :value="registration.qr_token" :size="280" label="Your personal check-in QR code" />
-          <p class="small text-body-secondary mt-3 mb-0">Show this to staff at the entrance.</p>
+          <Barcode
+            v-if="registration.ticket_code"
+            :value="registration.ticket_code"
+            :label="`Your ticket barcode, code ${registration.ticket_code}`"
+            class="mt-2"
+          />
+          <p class="small text-body-secondary mt-3 mb-0">Show this to staff at the entrance. They can scan the QR or the barcode, or type the code.</p>
         </div>
         <RouterLink :to="`/events/${eventId}/check-in`" class="btn btn-link mt-3">
           Or scan the venue QR yourself
         </RouterLink>
       </template>
     </template>
-  </main>
+  </div>
 </template>
