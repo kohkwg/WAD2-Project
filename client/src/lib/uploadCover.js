@@ -5,6 +5,7 @@ export async function uploadCover(file) {
   const { data } = await api.post('/api/uploads/cover', {
     filename: file.name,
     contentType: file.type,
+    size: file.size,
   })
   const res = await fetch(data.uploadUrl, {
     method: 'PUT',

@@ -13,7 +13,7 @@ export async function openAs(browser, role) {
 export const db = (page, fn, arg) => page.evaluate(fn, arg)
 
 // Organiser creates a published [TEST] event (starts in 1 h, at SMU SCIS) and returns its id
-export async function createTestEvent(page, { title, tag }) {
+export async function createTestEvent(page, { title, tag, coverFile }) {
   await page.goto('/organiser/events/new')
   const { start, end } = await page.evaluate(() => {
     const p = (n) => String(n).padStart(2, '0')
@@ -23,6 +23,10 @@ export async function createTestEvent(page, { title, tag }) {
   })
   await page.getByPlaceholder('e.g. Acoustic Night at the Campus Green').fill(title)
   await page.getByPlaceholder('What will happen? What should people bring?').fill('Live e2e test event. Deleted automatically.')
+  if (coverFile) {
+    await page.getByLabel('Cover image (optional)').setInputFiles(coverFile)
+    await expect(page.getByRole('img', { name: 'Event cover preview' })).toBeVisible()
+  }
   await page.getByLabel('Starts').fill(start)
   await page.getByLabel('Ends').fill(end)
   await page.getByLabel('Capacity').fill('5')

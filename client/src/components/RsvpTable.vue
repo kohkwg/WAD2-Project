@@ -47,19 +47,19 @@ function formatAnswer(question, answer) {
       </thead>
       <tbody>
         <tr v-for="rsvp in rsvps" :key="rsvp.id">
-          <td>
+          <td data-label="Name">
             <div class="fw-semibold">{{ rsvp.user.name }}</div>
             <div class="small text-secondary">{{ rsvp.user.email }}</div>
           </td>
 
-          <td v-if="questions.length > 0" class="small">
+          <td v-if="questions.length > 0" data-label="Answers" class="small">
             <div v-for="question in questions" :key="question.id">
               <span class="text-secondary">{{ question.text }}</span>
               {{ formatAnswer(question, rsvp.answers[question.id]) }}
             </div>
           </td>
 
-          <td>
+          <td data-label="Member">
             <!-- form-switch = Bootstrap's on/off toggle look for a checkbox -->
             <div class="form-check form-switch">
               <input
@@ -77,12 +77,12 @@ function formatAnswer(question, answer) {
             </div>
           </td>
 
-          <td class="small text-secondary">{{ formatShortDateTime(rsvp.createdAt) }}</td>
+          <td data-label="RSVP'd" class="small text-secondary">{{ formatShortDateTime(rsvp.createdAt) }}</td>
 
-          <td v-if="showActions" class="text-end text-nowrap">
+          <td v-if="showActions" data-label="Decision" class="text-end text-nowrap">
             <button
               type="button"
-              class="btn btn-success btn-sm me-2"
+              class="btn event-cta btn-sm me-2"
               :disabled="busyId === rsvp.id"
               @click="emit('approve', rsvp.id)"
             >
@@ -98,7 +98,7 @@ function formatAnswer(question, answer) {
             </button>
           </td>
 
-          <td v-if="showRemove" class="text-end text-nowrap">
+          <td v-if="showRemove" data-label="Remove" class="text-end text-nowrap">
             <template v-if="confirmRemoveId === rsvp.id">
               <span class="small me-2">Remove them?</span>
               <button
@@ -132,3 +132,30 @@ function formatAnswer(question, answer) {
     </table>
   </div>
 </template>
+
+<style scoped>
+.table { --bs-table-bg: transparent; --bs-table-striped-bg: var(--bookedz-glass-solid); margin-bottom: 0; }
+.table thead th { padding-top: .8rem; padding-bottom: .8rem; color: var(--bookedz-muted); font-size: .82rem; font-weight: 700; white-space: nowrap; }
+.table td { padding-top: .8rem; padding-bottom: .8rem; }
+.table-responsive { border: 1px solid var(--bookedz-border); border-radius: 12px; }
+.table .btn { white-space: nowrap; }
+@media (max-width: 767.98px) {
+  .table-responsive { overflow: visible; border: 0; border-radius: 0; }
+  .table,.table tbody { display: block; width: 100%; }
+  .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+  .table tbody { display: grid; gap: .75rem; }
+  .table tr { display: grid; gap: 0; padding: .6rem .85rem; border: 1px solid var(--bookedz-border); border-radius: 15px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
+  .table td { display: grid; grid-template-columns: minmax(85px, 30%) minmax(0, 1fr); align-items: center; gap: .6rem; padding: .55rem 0; border-bottom: 1px solid var(--bookedz-border); text-align: left !important; white-space: normal; }
+  .table td:last-child { border-bottom: 0; }
+  .table td::before { content: attr(data-label); color: var(--bookedz-muted); font-size: .74rem; font-weight: 700; }
+  .table td[data-label="Name"] { display: block; padding-top: .25rem; }
+  .table td[data-label="Name"]::before { content: none; }
+  .table td[data-label="Name"] .fw-semibold { font-size: 1rem; color: var(--bookedz-ink); }
+  .table td[data-label="Name"] .small { overflow-wrap: anywhere; }
+  .table td[data-label="Answers"] > div + div { margin-top: .35rem; }
+  .table td[data-label="Decision"],.table td[data-label="Remove"] { display: block; padding-top: .7rem; }
+  .table td[data-label="Decision"]::before,.table td[data-label="Remove"]::before { display: block; margin-bottom: .5rem; }
+  .table td[data-label="Decision"] .btn + .btn { margin-left: .4rem; }
+  .table td[data-label="Remove"] .btn { margin: .2rem .25rem .2rem 0; }
+}
+</style>

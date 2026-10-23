@@ -62,11 +62,16 @@ async function submit() {
 </script>
 
 <template>
-  <div class="col-md-6 col-lg-5 mx-auto">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
+  <section class="auth-wrap">
+    <div class="auth-intro">
+      <p class="auth-kicker">Your next good day starts here</p>
+      <h1 class="auth-title">Find your people.<br />Make a plan.</h1>
+      <p class="auth-copy">Sign in to keep your event plans close, or create an account to join in.</p>
+    </div>
+    <div class="card auth-card">
+      <div class="card-body p-4 p-md-5">
         <!-- Two tabs switch the form between Sign in and Create account (mode) -->
-        <ul class="nav nav-pills nav-fill mb-4">
+        <ul class="nav nav-pills nav-fill auth-tabs mb-4">
           <li class="nav-item">
             <button
               type="button"
@@ -130,5 +135,22 @@ async function submit() {
         </form>
       </div>
     </div>
-  </div>
+  </section>
 </template>
+
+<style scoped>
+.auth-wrap { max-width: 920px; margin: clamp(1.5rem, 6vh, 4rem) auto; display: grid; grid-template-columns: 1fr minmax(300px, 420px); gap: clamp(2rem, 7vw, 5.5rem); align-items: center; }
+.auth-intro { max-width: 430px; }
+.auth-kicker { margin: 0 0 .9rem; color: var(--bookedz-ink-soft, #62676b); font-size: .9rem; }
+.auth-title { color: var(--bookedz-ink, #292d32); font-family: var(--bookedz-heading); font-size: clamp(2.5rem, 5vw, 4.2rem); line-height: 1.02; letter-spacing: -.045em; }
+.auth-copy { max-width: 34ch; margin: 1.25rem 0 0; color: var(--bookedz-ink-soft, #62676b); font-size: 1.05rem; line-height: 1.6; }
+.auth-card { border: 1px solid var(--bookedz-border, #e5ded2); border-radius: 24px; background: #fffdf9; box-shadow: 0 18px 50px rgba(41, 45, 50, .08); }
+.auth-tabs { padding: .3rem; border-radius: 14px; background: #f4efe7; }
+.auth-tabs .nav-link { border-radius: 11px; color: #565b60; }
+.auth-tabs .nav-link.active { color: #fff; background: var(--bookedz-primary-dark, #aa3e2c); }
+:deep(.form-control) { min-height: 46px; border-color: var(--bookedz-border, #e5ded2); border-radius: 12px; }
+:deep(.form-control:focus) { border-color: var(--bookedz-primary, #e9725c); box-shadow: 0 0 0 .2rem rgba(233, 114, 92, .18); }
+:deep(.btn-primary) { min-height: 46px; border-color: var(--bookedz-primary-dark, #aa3e2c); border-radius: 12px; background: var(--bookedz-primary-dark, #aa3e2c); }
+:deep(:focus-visible) { outline: 3px solid #292d32; outline-offset: 3px; }
+@media (max-width: 700px) { .auth-wrap { max-width: 480px; grid-template-columns: 1fr; gap: 1.5rem; margin: 1.25rem auto; } .auth-title { font-size: clamp(2.3rem, 12vw, 3.2rem); } .auth-copy { margin-top: .8rem; } }
+</style>

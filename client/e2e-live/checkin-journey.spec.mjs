@@ -67,8 +67,14 @@ test('organiser creates a [TEST] event', async () => {
 test('organiser cannot RSVP to their own event', async () => {
   const { page } = organiser
   await page.goto(`/events/${eventId}/rsvp`)
-  await page.getByRole('button', { name: 'RSVP', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'RSVP', exact: true })).toHaveCount(0)
   await expect(page.locator('main')).toContainText("Organisers and helpers can't RSVP to their own event")
+  const refused = await db(page, async id => {
+    const { supabase } = await import('/src/utils/supabase.js')
+    const { error } = await supabase.rpc('register_for_event', {p_event_id:id,p_answers:[]})
+    return error?.message
+  }, eventId)
+  expect(refused).toContain("Organisers and helpers can't RSVP")
 })
 
 test('participant RSVPs and gets a ticket with QR and barcode', async () => {
@@ -146,7 +152,12 @@ test('a checked-in participant cannot cancel', async () => {
   const { page } = participant
   await page.goto('/my-rsvps')
   const card = page.locator('.card', { hasText: TITLE })
-  await card.getByRole('button', { name: 'Cancel RSVP' }).click()
-  await card.getByRole('button', { name: 'Yes, cancel' }).click()
-  await expect(page.locator('main')).toContainText("You have already checked in, so this RSVP can't be cancelled")
+  await expect(card.getByRole('button', { name: 'Cancel RSVP' })).toHaveCount(0)
+  await expect(card).toContainText('Checked in')
+  const refused = await db(page, async id => {
+    const { supabase } = await import('/src/utils/supabase.js')
+    const {error} = await supabase.rpc('cancel_registration', {p_event_id:id})
+    return error?.message
+  }, eventId)
+  expect(refused).toContain("You have already checked in")
 })

@@ -89,3 +89,7 @@ defineExpose({ reload: load })
     </ul>
   </div>
 </template>
+
+<style scoped>
+:deep(.form-control){min-height:44px;border-color:var(--bookedz-border,#e5ded2);border-radius:12px}:deep(.list-group){border:1px solid var(--bookedz-border,#e5ded2);border-radius:14px;overflow:hidden}:deep(.list-group-item){border-color:var(--bookedz-border,#e5ded2);gap:.75rem;padding:.75rem}:deep(.btn){border-radius:10px;min-height:40px}
+</style>

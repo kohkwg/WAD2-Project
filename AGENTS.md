@@ -1,89 +1,74 @@
 # Agent guide
 
-## Start and scope
+## Read first
 
-Read [docs/README.md](docs/README.md), the
-[`dev` merge guide](docs/dev-merge.md), [Feature 4](docs/feature4.md) and
-[verification](docs/testing.md) before editing. They describe the merged branch,
-observed demo behaviour, assumptions and integration gaps. The original assessment PDFs and
-local reference notes are not distributed with application code.
+Read [README](README.md), [decisions](decisions.md), [status/timeline](status.md)
+and [testing](docs/testing.md) before editing. These replace the dated handoffs
+and merge/Feature 4 reports. Original supplied resources remain unchanged/local
+under `docs/resources/`; normal clones do not require Restricted PDFs, private
+notes, generated graphs or installed skills to build/test.
 
-This is Bookedz, the SMU IS216 Web Application Development 2 group project.
-Denzel owns Feature 4: organiser tasks, announcements, budgets and weather backup
-venue switching. Respect teammates' areas: Aishani (discovery/profile), Gregory
-(event creation/RSVP/waitlist), Huxley (attendance/shared UI), Timothy (backend/auth/
-database/infrastructure), Vivienne (venues/floor plans/programme).
+Bookedz is the SMU IS216 WAD2 group project. Respect ownership: Aishani (F1
+Discover/profile), Gregory (F2 creation/RSVP/waitlist), Huxley (F3 attendance/shared
+UI), Denzel (F4 organiser operations/weather), Timothy (F5 backend/auth/database/
+infrastructure), Vivienne (F6 venues/floor plans/programme).
 
-Denzel reported updated course permission for full agentic coding on 16 October
-2026, then authorised fixes to all reviewed P2/P3 frontend findings on 17 October.
-This is user-reported guidance, not independent faculty verification. Keep the
-public README's detailed AI authorship disclosure and library attribution current.
+Denzel reported permission for full agentic coding on 16 October and authorised
+reviewed frontend fixes on 17 October. This is user-reported, not independent
+faculty verification. Preserve README's detailed AI authorship/library disclosure;
+teammates retain their contributions. Dated approvals in decisions.md are not
+blanket permission for later Git/cloud mutations.
 
-## Repository and contracts
+## Contracts
 
-- `client/`: Vue 3 Composition API, JavaScript ES modules, Vue Router, Bootstrap 5,
-  Axios and Vite. Keep templates and the established CSS/theme.
-- `client/src/utils/api.js`: asynchronous boundary selecting localStorage demo or
-  browser Supabase for event/RSVP/auth and Feature 4 calls. Preserve callers'
-  observable success/error behaviour in both adapters.
-- `client/src/components/event-operations/`: focused task/post/budget/weather tools.
-- `client/e2e/`: isolated Playwright tests. `client/src/utils/__tests__/feature4*.test.js`
-  are Node built-in tests. The separate waitlist Vitest spec is unconfigured.
-- `server/`: Express 5/CommonJS, health-only; `test:crud` is a separate manual
-  check. `supabase/` contains the imported initial SQL and five later migrations
-  deployed to the Bookerz development project on 22 October 2026, plus the
-  deployed `venue-switch` Edge Function. Verify hosted history before later SQL edits.
-
-Keep demo and live claims explicit. Feature 4 uses user-scoped browser Supabase
-SDK/RPC through the async interface; its one-way venue switch uses a server-side
-NEA check and a service-role-only transaction. Do not add parallel Express CRUD,
-administrative keys in the browser or silent demo fallbacks. Signed-in owner and
-other-user hosted write flows remain to be verified before release.
-
-## Working agreements
-
-- Run `git status --short` before edits; preserve existing/untracked work. Do not
-  reset, clean or overwrite other contributions.
-- Do not commit, push, create branches, merge, deploy or mutate hosted services
-  unless the user explicitly asks. A handoff-ready working tree is not a commit.
-- Use pnpm; preserve npm lockfiles. Do not upgrade dependencies or add libraries,
-  infrastructure, TypeScript, Tailwind, Pinia, JSX or SSR incidentally.
-- Keep secrets/personal data out of code, docs and logs. Only placeholders belong
-  in `.env.example`; privileged keys must never use browser `VITE_` names.
-- Preserve the imported initial SQL. Coordinate later migrations with its owner.
+- Keep Vue 3 Composition API, JavaScript templates/ES modules, Vue Router,
+  Bootstrap 5 and the established shell/theme. The shell supplies the only `main`.
+  Discover is public in demo/live; `/events` redirects there. Event-detail/RSVP
+  URLs remain `/events/:id/rsvp`; protected check-in routes still require auth.
+- Preserve `client/src/utils/api.js`'s async demo/live contracts. Share the guarded
+  browser Supabase client; user-scoped SDK/RPC retains RLS. No administrative
+  browser keys, parallel Feature 4 Express CRUD or silent live-to-demo fallback.
+- Feature 4 uses focused components, owner-only private tools, exact integer SGD
+  cents, public announcements and one-way NEA-authorised venue switching. The
+  trusted commit RPC is service-role-only; manual weather area is display-only.
+  Detailed adopted behaviour is in decisions.md; source owns exact API signatures.
+- F6 plan/programme writes use actual organiser roles, account-linked placements
+  remain team-only, and the current bucket supports public finished images.
+  Do not represent public R2 objects as private storage.
+- Express 5/CommonJS handles health, recommendations and signed image uploads;
+  server scripts load `.env`. Supabase migrations and the Edge Function are deployed
+  to Bookerz as recorded in status.md; verify hosted history before new SQL work.
 - Use props down/events up, stable IDs, computed display state and guarded async
-  lifecycle/route changes. Maintain keyboard access, focus and responsive reflow.
-- Update technical docs, assumptions, verification and disclosure when behaviour
-  changes. Attribute public libraries in code and presentation materials.
+  route/lifecycle work. Preserve drafts, retry/cancel semantics, keyboard access,
+  focus, reduced motion and responsive reflow.
 
-## Commands
+## Working agreements and checks
 
-Use Node 22 and run from the repository root:
-
-```sh
-pnpm --dir client install --frozen-lockfile --ignore-scripts
-pnpm --dir client dev
-pnpm --dir client build
-pnpm --dir client test:unit
-pnpm --dir client exec playwright install chromium
-pnpm --dir client test:e2e
-```
-
-Vite runs at `http://127.0.0.1:5173`; Playwright starts/reuses it and isolates storage.
-The optional server uses `pnpm --dir server install` then `pnpm --dir server dev`;
-check `http://127.0.0.1:3000/health`. Its scripts do not load `.env` automatically.
-There is no root runner or lint script. The server's `test:crud` command is a
-manual integration check requiring configured development services. See
-[verification](docs/testing.md) for limits; never claim the legacy Vitest spec passes.
-
-For frontend changes, run relevant regressions and the production build; exercise
-changed UI, keyboard, failure/retry and mobile flows. For docs, check paths,
-anchors and whitespace. Report actual outcomes and unavailable checks.
+- Run `git status --short` first. Preserve existing/untracked/concurrent work;
+  never reset, clean or overwrite another contribution.
+- Do not commit, push, create branches, merge, deploy or mutate hosted services
+  unless explicitly requested. Keep approved test data prefixed `[TEST]`, clean up
+  afterward, and leave existing events untouched. Humans sign in; no agent-typed
+  passwords. Session files remain ignored.
+- Use pnpm/Node 22; preserve npm lockfiles. No incidental dependency upgrades,
+  infrastructure, TypeScript, Tailwind, Pinia, JSX or SSR. Explicit library requests
+  such as the recorded motion integration do not waive other constraints.
+- No secrets/personal data in source/docs/logs. Only placeholders in environment
+  examples; privileged keys never use `VITE_`. Preserve initial SQL and coordinate
+  later migrations with Timothy/the user.
+- Follow docs/testing.md for commands, live login, host workarounds and limits.
+  Run only the necessary targeted checks after changes. Full suites and production
+  builds require explicit user instruction (24 October testing preference). Cover
+  375/575/768/1280px, console, labels, one main, keyboard/focus and failure/retry.
+  For docs check paths, anchors, whitespace and resource preservation. Report actual
+  results; Node now runs waitlist tests, and neither package has a lint script.
+- Update decisions for actual human decisions, status for dated delivery/evidence,
+  testing for changed commands, and README disclosure/attributions for AI/library
+  changes. Don't create another handoff or duplicate historical report by default.
 
 ## Optional local tools
 
-When a local `graphify-out/graph.json` and Graphify CLI exist, query the graph before
-source searching, verify facts in the located source, and run `graphify update .`
-after code changes. AST updates do not semantically refresh changed prose. Keep
-Restricted PDFs, generated graphs and installed agent skills local/ignored.
-Do not require those private files or tools for a normal clone to build or test.
+If Graphify CLI and `graphify-out/graph.json` exist, query before source search and
+verify graph facts in source. Run `graphify update .` after code changes; AST updates
+do not semantically refresh prose. Keep Restricted derivatives and tool installs
+local/ignored; do not upload them or make them a normal-clone requirement.

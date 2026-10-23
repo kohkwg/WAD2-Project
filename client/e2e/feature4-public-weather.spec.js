@@ -95,10 +95,10 @@ test('public list cards and loading/errors use clear status semantics', async ({
   await expect(page.getByText(/confirmed \+ .*offers out of .*seats/).first()).toBeVisible()
 
   await page.goto('/events')
-  await expect(page.getByRole('status')).toContainText(/loading events/i)
-  const eventCardHeading = page.getByRole('heading', { name: 'Intro to Vue Workshop', exact: true })
+  await expect(page.getByRole('status').filter({ hasText: /finding your next event/i })).toBeVisible()
+  const eventCardHeading = page.locator('.event-card').getByRole('heading', { name: 'Intro to Vue Workshop', exact: true })
   await expect(eventCardHeading).toBeVisible()
-  expect(await eventCardHeading.evaluate(node => node.tagName)).toBe('H2')
+  expect(await eventCardHeading.evaluate(node => node.tagName)).toBe('H3')
 })
 
 test('public announcements load when the private RSVP profile read fails', async ({ page }) => {

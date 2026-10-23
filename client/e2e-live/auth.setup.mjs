@@ -1,7 +1,7 @@
 // One-time sign-in for the live suite. Nobody types passwords into scripts: this
 // opens /login in a visible browser and waits for a person to sign in, then saves
 // the session to e2e-live/.auth/<role>.json (git-ignored). Skipped when a saved
-// session already exists. Run with --headed (see e2e-live/README.md).
+// session already exists. Run with --headed (see docs/testing.md#live-browser-tests).
 import { test as setup, expect } from '@playwright/test'
 import fs from 'node:fs'
 import { ACCOUNTS, authFile } from './accounts.mjs'

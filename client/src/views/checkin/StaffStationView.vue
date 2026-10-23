@@ -78,9 +78,9 @@ onMounted(() =>
 </script>
 
 <template>
-  <div class="container py-4" style="max-width: 560px">
+  <div class="container py-4 staff-page">
     <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
-    <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+    <header class="staff-heading d-flex justify-content-between align-items-start gap-2 mb-4">
       <div>
         <h1 class="h4 mb-1">Check-in station</h1>
         <p class="text-body-secondary small mb-0">{{ event?.title ?? '' }}</p>
@@ -88,9 +88,9 @@ onMounted(() =>
       <RouterLink :to="`/organiser/events/${eventId}/attendance`" class="btn btn-sm btn-outline-primary text-nowrap">
         Attendance
       </RouterLink>
-    </div>
+    </header>
 
-    <QrScanner :formats="['QR_CODE', 'CODE_128']" @decoded="onCameraScan" />
+    <section class="scanner-card mb-3" aria-label="Scan ticket"><h2 class="h5 mb-1">Scan a ticket</h2><p class="small text-body-secondary mb-3">Hold the QR code or barcode in the camera frame.</p><QrScanner :formats="['QR_CODE', 'CODE_128']" @decoded="onCameraScan" /></section>
 
     <div v-if="busy" class="alert alert-secondary mt-3 mb-0" role="status">
       <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Checking…
@@ -110,7 +110,7 @@ onMounted(() =>
       </template>
     </div>
 
-    <div class="card card-body mt-3">
+    <section class="manual-card mt-3">
       <h2 class="h6 mb-3">Manual check-in</h2>
       <AttendeeSearch :event-id="eventId" :busy="busy" @pick="async (id, done) => done(await onScan(id, 'manual'))" />
       <form class="mt-3" @submit.prevent="submitTyped">
@@ -120,11 +120,11 @@ onMounted(() =>
           <button class="btn btn-outline-primary" :disabled="busy">Check in</button>
         </div>
       </form>
-    </div>
+    </section>
 
-    <h2 class="h6 text-uppercase text-body-secondary mt-4">Recent scans</h2>
+    <h2 class="h5 attendance-section-title mt-4">Recent scans</h2>
     <p v-if="!recent.length" class="small text-body-secondary">Nothing scanned yet.</p>
-    <ul class="list-group">
+    <ul class="list-group attendance-list">
       <li v-for="r in recent" :key="r.at" class="list-group-item d-flex justify-content-between small">
         <span>{{ r.kind === 'error' ? r.message : r.name }}</span>
         <span
@@ -137,3 +137,8 @@ onMounted(() =>
     </ul>
   </div>
 </template>
+
+<style scoped>
+.staff-page{max-width:780px}.scanner-card,.manual-card{padding:1.25rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:22px;background:#fffdfa}.scanner-card{background:var(--bookedz-cream,#fff9ef)}.manual-card{margin-top:1.25rem!important}.staff-page .form-control,.staff-page .form-select{border-color:var(--bookedz-border,#e5ded2);border-radius:12px;min-height:44px}.staff-page .btn{min-height:42px;border-radius:12px}.staff-page .btn-primary{--bs-btn-bg:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-border-color:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-color:#fff;--bs-btn-hover-bg:#8f3022;--bs-btn-hover-border-color:#8f3022;--bs-btn-hover-color:#fff}.staff-page .btn-outline-primary{--bs-btn-color:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-border-color:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-hover-bg:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-hover-border-color:var(--bookedz-coral-dark,#aa3e2c)}.staff-page .alert{border-radius:14px}.staff-page :deep(.qr-scanner){border:5px solid #292d32;border-radius:16px!important;min-height:240px}.staff-page :deep(.qr-scanner video){object-fit:cover}.staff-page :deep(.qr-scanner canvas){max-width:100%}
+@media(max-width:575.98px){.scanner-card,.manual-card{padding:1rem;border-radius:18px}.staff-heading{align-items:flex-start}.staff-heading>.btn{font-size:.8rem;padding:.45rem .65rem}}
+</style>

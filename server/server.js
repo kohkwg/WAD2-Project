@@ -15,6 +15,12 @@ app.get("/health", (req, res) => {
 app.use("/api/recommendations", require("./routes/recommendations"));
 app.use("/api/uploads", require("./routes/uploads"));
 
-app.listen(3000, "127.0.0.1", () => {
-  console.log("Server running on http://127.0.0.1:3000");
-});
+if (require.main === module) {
+  const port = Number(process.env.PORT || 3000);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("PORT must be an integer from 1 to 65535");
+  app.listen(port, "127.0.0.1", () => {
+    console.log(`Server running on http://127.0.0.1:${port}`);
+  });
+}
+
+module.exports = app;

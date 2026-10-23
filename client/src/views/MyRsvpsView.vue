@@ -20,6 +20,15 @@ const statusMessage = ref('')
 const busyId = ref(null) // which RSVP is being saved
 const confirmCancelId = ref(null) // which RSVP is showing "Are you sure?"
 const showClosed = ref(false)
+const planCounts = computed(() => [
+  { label: 'Confirmed', value: rsvps.value.filter(r => r.status === 'confirmed').length },
+  { label: 'Awaiting approval', value: rsvps.value.filter(r => r.status === 'pending').length },
+  { label: 'Waitlisted', value: rsvps.value.filter(r => r.status === 'waitlisted').length },
+])
+function datePart(event, part) {
+  const date = new Date(event.startTime || event.start_time)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('en-SG', part === 'month' ? { month: 'short' } : { day: 'numeric' })
+}
 
 // `now` ticks every 30 seconds so the offer countdown moves
 const now = ref(Date.now())
@@ -139,7 +148,11 @@ async function cancel(rsvpId) {
     confirmCancelId.value = null
     statusMessage.value = 'RSVP cancelled.'
   } catch (error) {
-    if (mounted) errorMessage.value = error.message
+    if (mounted) {
+      errorMessage.value = error.message
+      confirmCancelId.value = null
+      try { await loadRsvps(true) } catch { /* retain the original cancellation error */ }
+    }
   } finally {
     if (mounted) busyId.value = null
   }
@@ -147,7 +160,13 @@ async function cancel(rsvpId) {
 </script>
 
 <template>
-  <h1 class="h3 mb-3">My RSVPs</h1>
+  <div class="my-rsvps-page">
+  <header class="rsvps-heading">
+    <div>
+      <h1 class="rsvps-title">My RSVPs</h1>
+      <p class="rsvps-lede">Confirmed plans, requests waiting for a reply, and offers to claim.</p>
+    </div>
+  </header>
 
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status">
@@ -156,7 +175,8 @@ async function cancel(rsvpId) {
   </div>
 
   <template v-else>
-    <div class="d-flex justify-content-end mb-3">
+    <dl class="plans-summary"><div v-for="count in planCounts" :key="count.label"><dt>{{ count.label }}</dt><dd>{{ count.value }}</dd></div></dl>
+    <div class="rsvps-toolbar">
       <button
         type="button"
         class="btn btn-outline-secondary btn-sm"
@@ -168,7 +188,7 @@ async function cancel(rsvpId) {
     </div>
     <div
       v-if="statusMessage"
-      class="alert alert-success d-flex justify-content-between align-items-center"
+      class="alert alert-success d-flex justify-content-between align-items-center" role="status" aria-live="polite"
     >
       <span>{{ statusMessage }}</span>
       <button
@@ -178,7 +198,7 @@ async function cancel(rsvpId) {
         @click="statusMessage = ''"
       ></button>
     </div>
-    <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+    <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
 
     <!-- 24-hour offers go on top so they're not missed -->
     <OfferBanner
@@ -191,24 +211,28 @@ async function cancel(rsvpId) {
       @decline="declineOffer"
     />
 
-    <div v-if="activeRsvps.length === 0 && offers.length === 0" class="card card-body text-center">
-      <p class="text-secondary mb-2">You haven't RSVP'd to anything yet.</p>
-      <RouterLink to="/events" class="btn btn-primary align-self-center">Find events</RouterLink>
+    <div v-if="activeRsvps.length === 0 && offers.length === 0" class="empty-rsvps">
+      <p class="empty-title">You haven't RSVP'd to anything yet.</p>
+      <p class="text-secondary mb-3">Your next plan is waiting to be found.</p>
+      <RouterLink to="/events" class="btn event-cta">Find events</RouterLink>
     </div>
 
-    <div v-for="rsvp in activeRsvps" :key="rsvp.id" class="card shadow-sm mb-3">
-      <div class="card-body d-flex flex-column flex-md-row justify-content-between gap-3">
-        <div>
-          <h2 class="h5 mb-1">{{ rsvp.event.title }}</h2>
+    <TransitionGroup name="rsvp-list" tag="div" class="rsvp-list">
+    <article v-for="rsvp in activeRsvps" :key="rsvp.id" class="card rsvp-card">
+      <div class="rsvp-card-main">
+        <div class="date-ticket" aria-hidden="true"><span>{{ datePart(rsvp.event, 'month') }}</span><strong>{{ datePart(rsvp.event, 'day') }}</strong></div>
+        <div class="rsvp-plan-copy">
+          <h2 class="rsvp-event-title">{{ rsvp.event.title }}</h2>
           <p class="small text-secondary mb-2">
             {{ formatEventTime(rsvp.event) }} · {{ rsvp.event.venue.name }}
           </p>
           <RsvpStatusBadge :status="rsvp.status" />
+          <span v-if="rsvp.checkedInAt" class="badge text-bg-success ms-2">Checked in</span>
           <!-- Feature 3: personal QR ticket for check-in (live Supabase only) -->
           <RouterLink
             v-if="USING_SUPABASE && rsvp.status === 'confirmed'"
             :to="`/events/${rsvp.event.id}/ticket`"
-            class="btn btn-outline-primary btn-sm ms-2"
+            class="btn event-cta ticket-action"
           >My ticket</RouterLink>
           <p v-if="rsvp.status === 'waitlisted'" class="small mb-0 mt-2">
             If a spot opens up, you'll see a banner here and have 24 hours to confirm.
@@ -219,7 +243,7 @@ async function cancel(rsvpId) {
         </div>
 
         <!-- Cancel with a second "are you sure?" step instead of a browser pop-up -->
-        <div class="text-md-end flex-shrink-0">
+        <div v-if="!rsvp.checkedInAt" class="text-md-end flex-shrink-0">
           <template v-if="confirmCancelId === rsvp.id">
             <p class="small mb-2">Cancel this RSVP?</p>
             <button
@@ -249,7 +273,9 @@ async function cancel(rsvpId) {
           </button>
         </div>
       </div>
-    </div>
+    </article>
+
+    </TransitionGroup>
 
     <!-- Older / closed RSVPs hidden until asked for -->
     <div v-if="closedRsvps.length > 0" class="mt-4">
@@ -270,8 +296,37 @@ async function cancel(rsvpId) {
         >
           <span>{{ rsvp.event.title }}</span>
           <RsvpStatusBadge :status="rsvp.status" />
+          <span v-if="rsvp.checkedInAt" class="badge text-bg-success ms-2">Checked in</span>
         </li>
       </ul>
     </div>
   </template>
+  </div>
 </template>
+
+<style scoped>
+.plans-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 0 0 20px; }
+.plans-summary > div { padding: 16px 20px; border: 1px solid var(--bookedz-border); border-radius: 18px; background: var(--bookedz-glass-solid); }
+.plans-summary dt { color: var(--bookedz-muted); font-size: .8rem; font-weight: 500; }.plans-summary dd { margin: 4px 0 0; font: 650 1.8rem/1 var(--bookedz-heading); font-variant-numeric: tabular-nums; }
+.date-ticket { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; width: 64px; min-height: 76px; border: 1px solid var(--bookedz-border); border-radius: 16px; background: var(--bookedz-glass-active); color: var(--bookedz-primary-dark); }
+.date-ticket span { font-size: .8rem; }.date-ticket strong { font: 650 1.9rem/1.2 var(--bookedz-heading); }
+.rsvp-plan-copy { min-width: 0; flex: 1; }.ticket-action { margin: 10px 0; }
+.rsvp-list-enter-active,.rsvp-list-leave-active,.rsvp-list-move { transition: opacity .25s ease, transform .3s ease; }.rsvp-list-enter-from,.rsvp-list-leave-to { opacity: 0; transform: translateY(12px); }
+@media(max-width:575px) { .plans-summary { gap: 8px; }.plans-summary > div { padding: 12px 10px; }.plans-summary dt { font-size: .75rem; }.date-ticket { width: 60px; min-height: 64px; flex-direction: row; gap: 6px; }.date-ticket strong { font-size: 1.3rem; } }
+@media(prefers-reduced-motion:reduce) { .rsvp-list-enter-active,.rsvp-list-leave-active,.rsvp-list-move { transition: none; } }
+.my-rsvps-page { max-width: 960px; margin: 0 auto; padding: 1.25rem 0 3rem; }
+.rsvps-heading { display: flex; justify-content: space-between; align-items: end; margin-bottom: 1.75rem; }
+.rsvps-kicker { margin: 0 0 .5rem; color: var(--bookedz-ink-soft, #62676b); font-size: .9rem; }
+.rsvps-title { margin: 0; color: var(--bookedz-ink, #292d32); font: 500 clamp(2.2rem, 5vw, 3.25rem)/1.05 var(--bookedz-heading); letter-spacing: -.04em; }
+.rsvps-lede { margin: .75rem 0 0; color: var(--bookedz-ink-soft, #62676b); }
+.rsvps-toolbar { display: flex; justify-content: end; margin-bottom: 1rem; }
+.rsvp-card { margin-bottom: .9rem; border: 1px solid var(--bookedz-border, #e5ded2); border-radius: 18px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
+.rsvp-card-main { display: flex; flex-direction: column; justify-content: space-between; gap: 1.25rem; padding: 1.25rem; }
+.rsvp-event-title { margin: 0 0 .4rem; color: var(--bookedz-ink, #292d32); font: 500 1.35rem/1.2 var(--bookedz-heading); }
+.empty-rsvps { padding: clamp(1.5rem, 6vw, 3rem); border: 1px dashed var(--bookedz-border); border-radius: 22px; background: var(--bookedz-glass-solid); text-align: center; }
+.empty-title { margin: 0 0 .5rem; color: var(--bookedz-ink, #292d32); font: 500 1.45rem var(--bookedz-heading); }
+:deep(.btn-primary) { border-color: var(--bookedz-primary-dark, #aa3e2c); background: var(--bookedz-primary-dark, #aa3e2c); }
+:deep(:focus-visible) { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
+@media (min-width: 768px) { .rsvp-card-main { flex-direction: row; align-items: center; padding: 1.35rem 1.5rem; } }
+@media (max-width: 575px) { .my-rsvps-page { padding-top: .5rem; } }
+</style>

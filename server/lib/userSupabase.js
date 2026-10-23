@@ -5,7 +5,7 @@ const { createClient } = require("@supabase/supabase-js");
 // verify the token in requireAuth.
 function supabaseForUser(accessToken) {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    ...(accessToken ? { global: { headers: { Authorization: `Bearer ${accessToken}` } } } : {}),
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

@@ -47,7 +47,12 @@ function date(value) { return new Date(value).toLocaleString('en-SG', { timeZone
   </section>
 </template>
 <style scoped>
-.announcement-editor { max-width: 48rem; }
-.announcement-entry { border-color: var(--bookedz-border) !important; }
-.post-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.announcement-editor { max-width: 56rem; padding: clamp(1rem, 2vw, 1.4rem); border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
+.announcement-editor .btn, .announcement-entry .btn { min-height: 44px; }
+.announcement-entry { padding: 1.1rem 1.15rem !important; margin-bottom: .75rem; border: 1px solid var(--bookedz-border) !important; border-radius: .95rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); transition: border-color .18s ease, transform .18s ease; }
+.announcement-entry:first-of-type { border-top: 1px solid var(--bookedz-border); }
+.announcement-entry:hover { border-color: var(--bookedz-control-border) !important; transform: translateY(-1px); }
+.post-body { margin-bottom: .65rem; color: var(--bookedz-ink); line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.announcement-entry time { color: var(--bookedz-muted); }
+@media (prefers-reduced-motion: reduce) { .announcement-entry { transition: none; } }
 </style>

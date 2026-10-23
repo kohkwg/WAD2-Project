@@ -89,16 +89,16 @@ onUnmounted(() => clearInterval(timer))
 </script>
 
 <template>
-  <div class="container py-4 text-center" style="max-width: 640px">
+  <div class="container py-4 venue-qr-page text-center">
     <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block text-start mb-3">&larr; Manage event</RouterLink>
 
     <div v-if="error && !secret" class="alert alert-danger" role="alert">{{ error }}</div>
 
     <template v-else-if="secret">
-      <h1 class="h3 mb-1">{{ event?.title }}</h1>
+      <span class="ticket-kicker">Entrance display</span><h1 class="h3 mb-1">{{ event?.title }}</h1>
       <p class="lead mb-4">Scan to check in</p>
 
-      <div class="card card-body align-items-center mx-auto" style="max-width: 460px">
+      <div class="venue-qr-stock align-items-center mx-auto">
         <QrCode :value="qrValue" :size="420" label="Venue check-in QR code" />
         <div class="w-100 mt-3">
           <div
@@ -127,3 +127,8 @@ onUnmounted(() => clearInterval(timer))
     </div>
   </div>
 </template>
+
+<style scoped>
+.venue-qr-page{max-width:760px}.venue-qr-page .ticket-kicker{margin-bottom:.5rem}.venue-qr-stock{display:flex;width:min(100%,520px);padding:1.5rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:24px;background:#fff;flex-direction:column;box-shadow:0 12px 34px rgba(41,45,50,.08)}.venue-qr-page :deep(.qr-code){width:min(420px,100%);padding:12px;border:1px solid #eee7dc;border-radius:12px;background:#fff}.venue-qr-page .progress{background:#eee7dc;border-radius:999px}.venue-qr-page .progress-bar{background:var(--bookedz-coral-dark,#aa3e2c);border-radius:999px}.venue-qr-page .alert{border-radius:14px}
+@media(max-width:575.98px){.venue-qr-stock{padding:1rem;border-radius:18px}}
+</style>

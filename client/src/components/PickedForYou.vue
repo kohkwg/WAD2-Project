@@ -8,6 +8,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   error: { type: String, default: '' },
   personalized: { type: Boolean, default: false },
+  fallback: { type: Boolean, default: false },
   collapsedCount: { type: Number, default: 3 },
 })
 const emit = defineEmits(['retry', 'rsvp', 'waitlist'])
@@ -33,7 +34,8 @@ const view = event => router.push(`/events/${event.id}/rsvp`)
       <h2 id="picked-for-you-title">Picked for you</h2>
       <button v-if="!loading && !error && canToggle" type="button" class="see-all" :aria-expanded="showAll" aria-controls="picked-for-you-cards" @click="showAll = !showAll">{{ showAll ? 'Show less' : 'See all' }}</button>
     </header>
-    <p v-if="!personalized" class="picks-note">Explore upcoming events. Personalised picks are available when you’re signed in.</p>
+    <p v-if="fallback" class="picks-note" role="status">Personalised picks couldn’t load. Here are upcoming events to explore instead.</p>
+    <p v-else-if="!personalized" class="picks-note">Explore upcoming events. Personalised picks are available when you’re signed in.</p>
     <div v-if="loading" class="picks-loading" role="status">
       <span class="visually-hidden">Finding recommendations</span>
       <div v-for="i in 3" :key="i" class="pick-skeleton" aria-hidden="true"></div>
@@ -58,19 +60,19 @@ const view = event => router.push(`/events/${event.id}/rsvp`)
 </template>
 
 <style scoped>
-.picked-for-you { margin: 28px 0 36px; }
+.picked-for-you { margin: 30px 0 42px; }
 .picks-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
-.picks-header h2 { margin: 0; font-size: 1.2rem; font-weight: 650; letter-spacing: -.025em; }
-.see-all { min-height: 44px; padding: 4px 16px; border: 1px solid #cfd4da; border-radius: 999px; background: white; color: #566275; font-size: .85rem; font-weight: 550; }
-.see-all:hover { color: #205aa7; text-decoration: underline; }
-.picks-note { margin: -4px 0 16px; color: #737b88; font-size: .85rem; }
-.picks-layout { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+.picks-header h2 { margin: 0; font-family: var(--bookedz-heading); font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 650; letter-spacing: -.035em; }
+.see-all { min-height: 44px; padding: 4px 16px; border: 1px solid var(--bookedz-border, #e5ded2); border-radius: 999px; background: var(--bookedz-surface, #fffdfa); color: var(--bookedz-ink, #292d32); font-size: .85rem; font-weight: 600; }
+.see-all:hover { border-color: var(--bookedz-primary-dark, #aa3e2c); color: var(--bookedz-primary-dark, #aa3e2c); text-decoration: underline; }
+.picks-note { margin: -4px 0 16px; color: var(--bookedz-muted, #63665e); font-size: .88rem; }
+.picks-layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(18rem, .7fr); gap: 16px; }
 .picks-layout--single { grid-template-columns: minmax(0, 1fr); }
-.picks-secondary { display: grid; gap: 12px; min-width: 0; }
-.more-picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
-.picks-message { border: 1px solid #e1e5eb; border-radius: 16px; background: white; padding: 22px; color: #737b88; font-size: .9rem; }
-.picks-loading { display: grid; grid-template-columns: 3fr 2fr; grid-template-rows: 108px 108px; gap: 16px; }
-.pick-skeleton { border-radius: 18px; background: linear-gradient(100deg, #e9edf3 30%, #f5f7fa 50%, #e9edf3 70%); background-size: 200% 100%; animation: shimmer 1.2s ease-in-out infinite; }
+.picks-secondary { display: grid; grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+.more-picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.picks-message { border: 1px solid var(--bookedz-border, #e5ded2); border-radius: 18px; background: var(--bookedz-surface, #fffdfa); padding: 22px; color: var(--bookedz-muted, #63665e); font-size: .9rem; }
+.picks-loading { display: grid; grid-template-columns: 1.3fr .7fr; grid-template-rows: 150px 150px; gap: 16px; }
+.pick-skeleton { border-radius: 20px; background: linear-gradient(100deg, #eee9dd 30%, #f9f4e9 50%, #eee9dd 70%); background-size: 200% 100%; animation: shimmer 1.2s ease-in-out infinite; }
 .pick-skeleton:first-of-type { grid-row: span 2; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @media (min-width: 768px) and (max-width: 991px) { .picks-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .more-picks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -84,4 +86,5 @@ const view = event => router.push(`/events/${event.id}/rsvp`)
   .pick-skeleton:not(:first-of-type) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .pick-skeleton { animation: none; } }
+.picked-for-you :deep(:focus-visible) { outline: 3px solid var(--bookedz-primary-dark, #aa3e2c); outline-offset: 3px; }
 </style>

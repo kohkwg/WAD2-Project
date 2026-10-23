@@ -82,3 +82,7 @@ onBeforeUnmount(async () => {
   min-height: 240px;
 }
 </style>
+
+<style scoped>
+.qr-scanner{background:#292d32!important;border:1px solid #292d32;min-height:240px}
+</style>

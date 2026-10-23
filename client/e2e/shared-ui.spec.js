@@ -28,7 +28,11 @@ test('shared shell exposes skip navigation and keeps development diagnostics out
   await page.goto('/events')
   await expect(page.getByRole('button', { name: 'Check Server', exact: true })).toHaveCount(0)
   await expect(page.getByText('Ready to build', { exact: true })).toHaveCount(0)
-  await page.keyboard.press('Tab')
+  await expect(page.getByRole('heading', { name: 'Discover events' })).toBeVisible()
+  // Navigation intentionally focuses main. The brand is the first navbar stop;
+  // Shift+Tab must reach the preceding skip link in the actual keyboard order.
+  await page.getByRole('link', { name: 'Bookedz', exact: true }).focus()
+  await page.keyboard.press('Shift+Tab')
   await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(page.getByRole('main')).toBeFocused()
@@ -36,9 +40,9 @@ test('shared shell exposes skip navigation and keeps development diagnostics out
   expect(healthRequests).toEqual([])
 })
 
-test('secondary text on the page canvas has normal-text contrast', async ({ page }) => {
-  await page.goto('/events')
-  const colors = await page.locator('main > p.text-secondary').evaluate(el => ({
+test('shared secondary event metadata has normal-text contrast', async ({ page }) => {
+  await page.goto('/my-rsvps')
+  const colors = await page.locator('main .card p.text-secondary').first().evaluate(el => ({
     text: getComputedStyle(el).color,
     background: getComputedStyle(document.body).backgroundColor,
   }))
@@ -55,7 +59,7 @@ test('secondary text on the page canvas has normal-text contrast', async ({ page
 
 test('demo reset requires confirmation and cancellation keeps saved work', async ({ page }) => {
   await page.goto('/events')
-  await expect(page.getByRole('link', { name: 'RSVP', exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: /^RSVP for / }).first()).toBeVisible()
   await page.evaluate(key => {
     const db = JSON.parse(localStorage.getItem(key))
     db.reviewMarker = 'keep saved work'
@@ -66,13 +70,13 @@ test('demo reset requires confirmation and cancellation keeps saved work', async
   expect(await page.evaluate(key => JSON.parse(localStorage.getItem(key)).reviewMarker, STORE)).toBe('keep saved work')
   page.once('dialog', dialog => dialog.accept())
   await page.getByRole('button', { name: 'Reset demo data', exact: true }).click()
-  await expect(page.getByRole('link', { name: 'RSVP', exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: /^RSVP for / }).first()).toBeVisible()
   await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key))?.reviewMarker ?? null, STORE)).toBeNull()
 })
 
 test('shared public summary has a page heading and announces description disclosure state', async ({ page }) => {
   await page.goto('/events')
-  await expect(page.getByRole('link', { name: 'RSVP', exact: true }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: /^RSVP for / }).first()).toBeVisible()
   await page.evaluate(key => {
     const db = JSON.parse(localStorage.getItem(key))
     db.events.find(event => event.id === 'e-weather-demo').description = 'A detailed public event description. '.repeat(12)

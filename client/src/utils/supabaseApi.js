@@ -110,6 +110,7 @@ function toEvent(row, counts, myId) {
     isMine: row.organiser_id === myId,
     title: row.title,
     description: row.description,
+    coverImageUrl: row.cover_image_url || '',
     tags: row.event_interests.map((link) => link.interests.slug),
     startTime: row.starts_at,
     endTime: row.ends_at,
@@ -185,6 +186,8 @@ export async function getEvent(eventId) {
   const row = check(await supabase.from('events').select(EVENT_COLUMNS).eq('id', eventId).maybeSingle())
   if (!row) throw new Error('Event not found')
   const [event] = await toEventsWithCounts([row])
+  const user = await getCurrentUser()
+  event.isOnTeam = user ? Boolean(check(await supabase.rpc('is_event_staff', { p_event_id: eventId }))) : false
   return event
 }
 
@@ -246,6 +249,7 @@ export async function createEventWith(client, eventData) {
     tags: eventData.tags,
     questions: eventData.questions.map(({ text, type, required }) => ({ text, type, required })),
   }
+  if (eventData.coverImageUrl) payload.coverImageUrl = eventData.coverImageUrl
   const id = check(
     await client.rpc('create_event_with_details', {
       p_request_id: eventData.requestId,
@@ -302,14 +306,14 @@ export async function getMyRsvps() {
   const rows = check(
     await supabase
       .from('registrations')
-      .select(`*, registration_answers(question_id, answer), event:events(${EVENT_COLUMNS})`)
+      .select(`*, registration_answers(question_id, answer), check_ins(checked_in_at), event:events(${EVENT_COLUMNS})`)
       .eq('user_id', myId),
   )
   const withEvent = rows.filter((row) => row.event) // skip events we can no longer see
   const events = await toEventsWithCounts(withEvent.map((row) => row.event))
 
   return withEvent
-    .map((row, i) => ({ ...toRsvp(row), event: events[i] }))
+    .map((row, i) => ({ ...toRsvp(row), checkedInAt: (Array.isArray(row.check_ins) ? row.check_ins[0] : row.check_ins)?.checked_in_at || null, event: events[i] }))
     .sort((a, b) => new Date(a.event.startTime) - new Date(b.event.startTime))
 }
 

@@ -82,7 +82,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="container py-4 text-center" style="max-width: 480px">
+  <div class="container py-4 ticket-page text-center">
     <RouterLink to="/my-rsvps" class="small d-block text-start mb-3">&larr; My RSVPs</RouterLink>
 
     <div v-if="loading" class="py-5">
@@ -92,10 +92,10 @@ onUnmounted(() => {
     <div v-else-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
 
     <template v-else>
-      <h1 class="h4 mb-1">{{ event?.title }}</h1>
+      <div class="ticket-heading"><span class="ticket-kicker">Your ticket</span><h1 class="h3 mb-1">{{ event?.title }}</h1>
       <p class="text-body-secondary small mb-4">
         {{ event && new Date(event.starts_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) }}
-      </p>
+      </p></div>
 
       <div v-if="!registration" class="alert alert-secondary">You haven't registered for this event.</div>
 
@@ -107,7 +107,7 @@ onUnmounted(() => {
         <div v-if="checkIn" class="alert alert-success" role="status">
           ✓ Checked in at {{ formatTime(checkIn.checked_in_at) }}
         </div>
-        <div class="card card-body align-items-center" :class="{ 'opacity-50': checkIn }">
+        <div class="ticket-stock align-items-center" :class="{ 'opacity-50': checkIn }">
           <QrCode :value="registration.qr_token" :size="280" label="Your personal check-in QR code" />
           <Barcode
             v-if="registration.ticket_code"
@@ -124,3 +124,8 @@ onUnmounted(() => {
     </template>
   </div>
 </template>
+
+<style scoped>
+.ticket-page{max-width:600px}.ticket-heading{padding:1.2rem 1.25rem;margin-bottom:1rem;border-radius:22px 22px 8px 8px;background:var(--bookedz-cream,#fff9ef);text-align:left}.ticket-kicker{display:block;margin-bottom:.55rem;color:#6b6056;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.ticket-stock{position:relative;display:flex;padding:1.5rem 1rem 1.25rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:8px 8px 22px 22px;background:#fff;flex-direction:column;box-shadow:0 10px 30px rgba(41,45,50,.07)}.ticket-stock:before,.ticket-stock:after{position:absolute;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--bookedz-cream,#fff9ef);content:''}.ticket-stock:before{left:-12px;border-right:1px solid var(--bookedz-border,#e5ded2)}.ticket-stock:after{right:-12px;border-left:1px solid var(--bookedz-border,#e5ded2)}.ticket-page :deep(.qr-code){width:min(280px,100%);padding:10px;border:1px solid #eee7dc;border-radius:12px;background:#fff}.ticket-page :deep(.barcode){width:min(360px,100%);padding:6px 10px}.ticket-page .btn-outline-primary{--bs-btn-color:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-border-color:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-hover-bg:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-hover-border-color:var(--bookedz-coral-dark,#aa3e2c)}.ticket-page .alert{border-radius:14px}
+@media(max-width:575.98px){.ticket-heading{padding:1rem;border-radius:18px 18px 8px 8px}.ticket-stock{padding:1rem .5rem;border-radius:8px 8px 18px 18px}}
+</style>
