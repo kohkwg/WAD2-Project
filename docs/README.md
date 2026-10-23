@@ -9,7 +9,8 @@ then brought Features 1, 3 and 6 onto `dev`, so all six features are now merged.
 | Guide | Use it for |
 | --- | --- |
 | [`dev` merge and integration](dev-merge.md) | Branch history, current app flows, Supabase status, decisions and remaining contracts |
-| [Merge session, 22 Oct](merge-session-2026-10-22.md) | Features 1, 3, 6 onto `dev`, signed-in live test, fixes and open issues by owner |
+| [Merge session, 22–23 Oct](merge-session-2026-10-22.md) | Features 1, 3, 6 onto `dev`, live tests, Feature 1 / RSVP-rule / check-in / floor-plan fixes, and open issues by owner |
+| [Live e2e suite](../client/e2e-live/README.md) | Real-Supabase Playwright tests: check-in journey and floor plan |
 | [`dev2` merge log](dev2-merge-log.md) | Conflict-by-conflict detail for huxley + vivi + aish and the `dev2` → `dev` merge |
 | [Feature 4](feature4.md) | Detailed organiser task, announcement, budget and weather behaviour/API |
 | [Verification](testing.md) | Repeatable commands, last observed results and test limits |
