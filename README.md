@@ -183,3 +183,31 @@ It also changed Feature 1's Profile save, Discover filters, event-card links and
 service-role key), and updated the affected tests. Aishani's ranking and Gregory's
 waitlist-scoring algorithms were not rewritten. Aishani, Gregory and Timothy should
 review these changes. Details: `docs/merge-session-2026-10-22.md`.
+
+On 23 October 2026, at Huxley's request, Claude Code completed Feature 3's remaining
+items:
+- the ticket barcode, using [JsBarcode](https://github.com/lindell/JsBarcode) (MIT);
+- the station's name/email search;
+- the attendance → interest-weight trigger (migration
+  `20261023044027_attendance_interest_signal`, applied through the Supabase MCP);
+- the live Playwright suite in `client/e2e-live/`.
+
+It also fixed a Realtime race on My Ticket, and nested `<main>` landmarks on eight pages.
+
+The attendance trigger connects Feature 3 to Aishani's recommendation weights. Huxley
+chose the design (a database trigger) and asked for it to be implemented. It is
+disclosed here as AI-written integration logic for Huxley to review and own. The live
+test signed in with sessions Huxley created by signing in; no password was typed by the
+agent.
+
+Also on 23 October 2026, at Huxley's request and with Huxley's choices of scope, Claude
+Code made Feature 6's floor plan save and display.
+- It added migration `20261023051511_floor_plan_public_view`, applied through the
+  Supabase MCP: participants can read the floor plan of events they can see.
+- It added `client/src/utils/floorPlan.js` and the live test
+  `client/e2e-live/floor-plan.spec.mjs`.
+- It changed Vivienne's `client/src/editor.vue` to load and save per event, with real
+  roles instead of demo buttons, a Save button and a read-only viewer.
+- It added the route, the Manage event link and the viewer on the event page.
+
+Vivienne's drawing code was kept; Vivienne should review these changes.
