@@ -1,6 +1,8 @@
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { api } from '@/lib/api'
+import { USING_SUPABASE, getEvents } from '@/utils/api'
+import { demoDiscoveryEvents } from '@/lib/discoveryState'
 
 const PAGE_SIZE = 12
 
@@ -25,15 +27,17 @@ async function confirmedAttendees(eventIds) {
   }
 }
 
-async function withEventDetails(rows) {
-  const venueIds = [...new Set(rows.map(e => e.venue_id).filter(Boolean))]
+const activeVenueId = event => event.using_backup ? event.backup_venue_id : event.venue_id
+
+async function withEventDetails(rows, includeAttendees = true) {
+  const venueIds = [...new Set(rows.map(activeVenueId).filter(Boolean))]
   const { data: sessionData } = await supabase.auth.getSession()
   const userId = sessionData.session?.user.id
   const [venues, attendees, registrations] = await Promise.all([
     venueIds.length
-      ? supabase.from('venues').select('id, name, address').in('id', venueIds)
+      ? supabase.from('venues').select('id, name, address, latitude, longitude').in('id', venueIds)
       : Promise.resolve({ data: [] }),
-    userId && rows.length
+    includeAttendees && userId && rows.length
       ? confirmedAttendees(rows.map(e => e.id))
       : Promise.resolve(new Map()),
     userId && rows.length
@@ -46,8 +50,10 @@ async function withEventDetails(rows) {
   const venueDetails = new Map((venues.data || []).map(v => [v.id, v]))
   const statuses = new Map((registrations.data || []).map(r => [r.event_id, r.status]))
   return rows.map(e => ({
-    ...e, venue_name: venueDetails.get(e.venue_id)?.name || e.venue_name || '',
-    venue_address: venueDetails.get(e.venue_id)?.address || e.venue_address || '',
+    ...e, venue_name: venueDetails.get(activeVenueId(e))?.name || e.venue_name || '',
+    venue_address: venueDetails.get(activeVenueId(e))?.address || e.venue_address || '',
+    lat: venueDetails.get(activeVenueId(e))?.latitude ?? (e.using_backup ? null : e.lat),
+    lng: venueDetails.get(activeVenueId(e))?.longitude ?? (e.using_backup ? null : e.lng),
     registration_status: statuses.get(e.id) || null,
     attendees: attendees.get(e.id) || e.attendees || [],
   }))
@@ -67,8 +73,17 @@ export function useEvents() {
     error.value = ''
     try {
       const page = filters.page || 1
-      const from = (page - 1) * PAGE_SIZE
-      const to = from + PAGE_SIZE - 1
+      const mapMode = filters.forMap === true
+      const from = mapMode ? 0 : (page - 1) * PAGE_SIZE
+      const to = from + (mapMode ? 200 : PAGE_SIZE) - 1
+
+      if (!USING_SUPABASE) {
+        const rows = demoDiscoveryEvents(await getEvents(), filters)
+        if (currentRequest !== requestId) return
+        events.value = mapMode ? rows : rows.slice(from, to + 1)
+        total.value = rows.length
+        return
+      }
 
       // The view has venue_id, but no venue_name. Resolve names separately so
       // this also works when PostgREST cannot infer a relationship on the view.
@@ -87,7 +102,7 @@ export function useEvents() {
 
       if (search) {
         const terms = [`title.ilike.%${search}%`, `description.ilike.%${search}%`]
-        if (matchingVenueIds.length) terms.push(`venue_id.in.(${matchingVenueIds.join(',')})`)
+        if (matchingVenueIds.length) terms.push(`and(using_backup.eq.false,venue_id.in.(${matchingVenueIds.join(',')})),and(using_backup.eq.true,backup_venue_id.in.(${matchingVenueIds.join(',')}))`)
         q = q.or(terms.join(','))
       }
       // Category badges match event tags (event creation stores tags, not a category)
@@ -107,8 +122,17 @@ export function useEvents() {
       const { data, count, error: err } = await q.range(from, to)
       if (err) throw err
 
-      const rows = data || []
-      const detailedRows = await withEventDetails(rows)
+      const rows = [...(data || [])]
+      // PostgREST caps pages. Fetch the full filtered map layer in bounded
+      // batches, without changing the directory's existing 12-row contract.
+      while (mapMode && rows.length < (count || 0) && rows.length) {
+        if (currentRequest !== requestId) return
+        const next = await q.range(rows.length, rows.length + 199)
+        if (next.error) throw next.error
+        if (!next.data?.length) break
+        rows.push(...next.data)
+      }
+      const detailedRows = await withEventDetails(rows, !mapMode)
       if (currentRequest !== requestId) return
       events.value = detailedRows
       total.value = count || 0
@@ -148,5 +172,11 @@ export function useRecommendations() {
     }
   }
 
-  return { recommended, loading, error, fetchRecommendations }
+  function clearRecommendations() {
+    requestId++
+    recommended.value = []
+    loading.value = false
+    error.value = ''
+  }
+  return { recommended, loading, error, fetchRecommendations, clearRecommendations }
 }

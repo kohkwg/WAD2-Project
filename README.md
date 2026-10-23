@@ -1,64 +1,51 @@
-# Bookedz — WAD2 project
+# Bookedz — IS216 WAD2
 
-Vue 3/Vite/Bootstrap frontend and optional Express health scaffold for SMU IS216.
-Feature 4 provides organiser tasks, public announcements, SGD budgets and a
-weather-assisted backup switch. Event/RSVP/auth use Supabase when the client
-environment is configured. The live Feature 4 migrations and server-authorized
-NEA switch function are deployed on the Bookerz development project. Signed-in
-owner and other-user browser checks remain to be completed. Without client
-credentials, the app uses demo data.
+Vue 3 / JavaScript / Bootstrap frontend, Supabase data/auth/Realtime and an Express
+recommendations/image-upload API. Discover is the public browsing entry point;
+organisers manage events, attendance and operations through the same shell.
+
+## Start here
+
+- [Decisions](decisions.md): Denzel's recorded approvals, team decisions and contracts.
+- [Status](status.md): project timeline, current feature ownership, verification and open limits.
+- [Testing and local operation](docs/testing.md): all commands, environments, live login and remote access.
+- [Design branch workflow](design-branches.md): baseline backups, branch replacement, feature work and PRs into dev.
+- [AGENTS.md](AGENTS.md): contributor rules; supplied materials stay local in `docs/resources/`.
+
+## Current frontend
+
+Discovery uses the latest illustrated Singapore island with real event markers,
+sparse independent motion and collapsible filters. The floating navbar, ticket-like
+event actions and participant/organiser screens share System/Light/Dark themes.
+Public event facts lead; RSVP actions sit beside them. Creation has a live preview;
+organiser tools and RSVP capacity/status visuals use actual event data.
+
+- [Design system](docs/design/design-system.md) and [review](docs/design/design-review.md)
+- [Implementation record](docs/design/implementation-plan.md) and [asset provenance](docs/design/assets.md)
+
+Latest refinements used targeted checks only. Full suites/production builds run
+only when explicitly requested; dated older counts are not fresh verification.
 
 ## Run locally
 
-Use Node 22 and pnpm from the repository root; there is no root package runner.
-The pnpm lockfile is authoritative; retain existing npm lockfiles.
+Use Node 22 and pnpm from the repository root; there is no root runner.
 
 ```sh
 pnpm --dir client install --frozen-lockfile --ignore-scripts
+pnpm --dir server install --frozen-lockfile --ignore-scripts
 pnpm --dir client dev
-```
-
-Open [My events](http://127.0.0.1:5173/organiser/events), then **Manage event**.
-No env credentials are needed for the demo. Optional server, in another terminal:
-
-```sh
-pnpm --dir server install
+# In another terminal for recommendations and image uploads:
 pnpm --dir server dev
 ```
 
-The server exposes [health](http://127.0.0.1:3000/health) only. Live integration
-uses team-supplied `.env.example` settings; keep server keys out of `VITE_` values.
-The server's `dev` and `start` scripts do not load `.env` or connect to cloud
-services. The separate `test:crud` script loads `.env` for manual integration
-checks. Imported `supabase/` configuration/migration is source, not deployment
-proof.
+Open [Discover](http://127.0.0.1:5173/discover). Use team-provided `.env.example`
+settings for live Supabase/R2. Without client keys, core demo flows use localStorage;
+`VITE_USE_MOCK=true` forces demo. No privileged key belongs in a browser variable.
+Server scripts load `server/.env`; Express health defaults to port 3000.
 
-## Verify and navigate
-
-```sh
-pnpm --dir client build
-pnpm --dir client test:unit
-pnpm --dir client exec playwright install chromium
-pnpm --dir client test:e2e
-```
-
-Latest full merge checks, 22 October 2026: **seven Node test files, five NEA
-rule cases, 51 Chromium tests and the production build passed**. Two development accounts signed in
-through the merged app. A 22 October hosted data check found six published
-events, three per test account; it was not a fresh frontend regression run.
-Browser tests isolate localStorage and control weather/time. The waitlist Vitest
-spec is unconfigured/excluded; neither package has a lint script. Anonymous hosted
-reads and Edge Function JWT rejection were checked; signed-in Feature 4 workflows
-and a successful rainy switch remain unverified.
-
-- [`dev` merge and integration](docs/dev-merge.md): three-branch history, current
-  flows, decisions, hosted-data checkpoint and remaining contracts.
-- [Feature 4 guide](docs/feature4.md): detailed behaviour and API/backend mapping.
-- [Verification](docs/testing.md): commands, recorded results and limits.
-
-Portable agent/technical handoffs are included in `AGENTS.md` and `docs/`.
-Original course resources, private planning/host notes, generated graphs and
-installed agent tooling remain local and ignored by Git.
+The detailed disclosure below is dated authorship history, not the current test or
+deployment status. Use the timeline for the latest verified checkpoint and remaining
+limits. Keep the disclosure and library credits in submission/presentation materials.
 
 ## AI assistance disclosure
 
@@ -164,7 +151,8 @@ accounts (Huxley signed in; the agent never typed a password). Its throwaway
 `[TEST]` events were deleted afterwards. It then fixed four integration bugs in
 `de3978e`: the check-in dashboard count, the check-in Back links, the station's
 check-in method, and the RSVP page's count refresh. It also wrote
-`docs/dev2-merge-log.md` and `docs/merge-session-2026-10-22.md`. Teammates'
+`docs/dev2-merge-log.md` and `docs/merge-session-2026-10-22.md` (historical
+logs now collated in [status](status.md)). Teammates'
 business logic was not rewritten; their open issues are listed in the session
 record. [vue-konva](https://github.com/konvajs/vue-konva) (MIT),
 [qrcode](https://github.com/soldair/node-qrcode) (MIT),
@@ -182,7 +170,7 @@ It also changed Feature 1's Profile save, Discover filters, event-card links and
 `/api/recommendations` (now queried with the user's JWT instead of the
 service-role key), and updated the affected tests. Aishani's ranking and Gregory's
 waitlist-scoring algorithms were not rewritten. Aishani, Gregory and Timothy should
-review these changes. Details: `docs/merge-session-2026-10-22.md`.
+review these changes. Details: [integration timeline](status.md#22-october--all-six-features-integrated).
 
 On 23 October 2026, at Huxley's request, Claude Code completed Feature 3's remaining
 items:
@@ -211,3 +199,118 @@ Code made Feature 6's floor plan save and display.
 - It added the route, the Manage event link and the viewer on the event page.
 
 Vivienne's drawing code was kept; Vivienne should review these changes.
+
+
+On 23 October 2026, at Denzel's request, Codex and parallel Codex agents diagnosed
+and fixed the discovery Supabase/demo boundary and repeated auth refreshes, RSVP
+action guards and demo rules, event cover upload/persistence, Express upload/port
+handling, and Feature 6 programme, venue-map, actual team placement and public
+finished-image flows. They added regressions, enabled the existing waitlist tests
+using Node's runner, and reviewed the changes independently. The user manually
+signed in for live tests; no passwords were typed by agents. With explicit user
+approval, Codex applied the cover/venue-cleanup migration to the development
+project after PostgreSQL verification. The user configured R2 CORS. Verification
+uses disposable test records/files and reports limits in
+[`status.md#23-october--fixes-and-live-verification`](status.md#23-october--fixes-and-live-verification). Existing ranking, drawing and
+waitlist-scoring algorithms retain their teammates' authorship. No new libraries
+were added; retain the existing library attributions above.
+
+In the subsequent navigation follow-up on 23 October, Codex removed the obsolete
+Events placeholder/tab at the user's request, consolidated browsing on Discover,
+preserved legacy `/events` links through a redirect and public access, and updated
+navigation regressions/documentation. The shared shell's structure/theme and
+event-detail/RSVP routes were retained.
+
+On 23 October 2026, at Denzel's explicit request, Codex added
+[Lenis](https://github.com/darkroomengineering/lenis) (MIT),
+[Motion for Vue](https://motion.dev/docs/vue) (`motion-v`, MIT) and
+[GSAP with ScrollTrigger](https://gsap.com/docs/v3/Plugins/ScrollTrigger/)
+([GSAP Standard License](https://gsap.com/standard-license/)) as dependencies for
+future frontend work. These libraries are installed but not activated: there are
+no new UI animations or scrolling changes. Codex updated the pnpm lockfile and
+tooling documentation. Carry these library attributions into presentation
+materials when used. See [frontend motion tools](decisions.md#frontend-motion).
+
+Later on 23 October, Denzel explicitly authorised the full frontend redesign based
+on the supplied Bookedz ideation spec. Codex and GPT-6 Luna agents at medium effort
+authored the new shared visual system, navigation/typography, participant and
+organiser layouts, attendance/ticket/venue workspaces, map-first SVG discovery,
+map data pagination/active-venue coordinates, marker clustering and previews,
+motion integration, design artifacts and regressions. Existing ranking, RSVP,
+waitlist, attendance, drawing and backend contributions retain their original
+authorship. The redesign needs team review and ownership before submission.
+[Natural Earth](https://www.naturalearthdata.com/) supplies the public-domain
+generalised Singapore coastline; the map illustration and brand vectors are
+AI-authored. [Bricolage Grotesque](https://github.com/google/fonts/tree/main/ofl/bricolagegrotesque)
+is self-hosted under the SIL Open Font License, included beside the font. The
+previously installed Lenis, Motion for Vue and GSAP/ScrollTrigger are now used;
+retain their licences/attributions above. See [design artifacts](docs/design/design-system.md)
+and [asset provenance](docs/design/assets.md). No new runtime packages, backend
+schema changes or hosted writes were added during the redesign.
+
+
+On 23 October 2026, at Denzel's request, Codex consolidated the project handoffs,
+merge/fix reports, local historical plans and duplicated package setup notes into
+the decision register, status timeline and testing guide. It preserved supplied
+resources and the detailed authorship/library record, updated contributor links,
+and did not change application behaviour or hosted services in this docs pass.
+
+
+On 24 October 2026, Denzel supplied a new immersive frontend brief. Codex and GPT-6
+Luna medium agents refined the hero, event imagery/cards, hosting navigation and
+organiser/create-event presentation while preserving existing business contracts.
+Codex used the built-in imagegen editor to remove baked pins, labels and counts
+from the supplied Singapore illustration, preserving the original. The optimised
+clean artwork initially served a decorative hero beside the independent live
+map. That intermediate arrangement is superseded by the shared illustrated map
+and latest replacement plate described below. Codex authored new SVG category art/cloud/boat accents, scoped motion,
+recommendation-failure presentation, focused tests and documentation. DM Sans is
+self-hosted under the SIL Open Font License, included beside the font. See
+[asset provenance](docs/design/assets.md) for the exact edit prompt and paths.
+This pass used targeted checks only; the production build/full suite await user
+instruction. Existing library credits and teammate authorship above still apply.
+
+
+Later on 24 October, at Denzel's correction, Codex replaced the interactive
+map's old SVG terrain with the supplied cleaned illustration itself. It retained
+live event markers/clusters and pan/zoom/previews, added documented approximate
+regional registration, and preserved exact venue information in event details.
+See [calibration and provenance](docs/design/assets.md#interactive-illustration-registration-later-24-october-correction).
+The former decorative-only split is superseded. Only targeted map checks ran.
+
+
+At Denzel's subsequent 24 October request, Codex adopted the replacement
+**Singapore Island Illustrated Map.png** across discovery. The built-in imagegen
+editor prepared its background for independent motion; Codex authored SVG Flyer,
+boat and seabird layers, pause/visibility handling, playful marker feedback and
+spring previews. Real event coordinates still drive approximate regional markers.
+The source, edited WebP, final prompt and animation limits are documented in
+[asset provenance](docs/design/assets.md#replacement-island-and-independent-animation-layers-24-october).
+No new library or teammate authorship changes are introduced.
+
+For Denzel's subsequent 24 October navigation/search refinement, Codex installed
+and applied UI/UX Pro Max, Hallmark and Vercel Web Interface Guidelines as local
+agent tools. Codex refined shared typography/colour tokens, frosted navigation,
+session-dependent links, integrated discovery search and image-edge feathering.
+A GPT-6 Luna medium read-only review helped identify a pending-search issue;
+Codex corrected it and added focused checks. No runtime library was added.
+[Design review and validation limits](docs/design/design-review.md) document the
+actual scope, Hallmark's remaining heuristics and unavailable browser renderer.
+
+
+During the later 24 October motion/workspace refinement, Codex implemented the
+system-aware theme preference, collapsible categories, view transitions, additional
+map layers, ticket-like CTAs and participant information hierarchy/status controls.
+GPT-6 Luna medium agents refined Create Event, the RSVP presentation, organiser
+operations and registration tables; Codex integrated and reviewed them, preserved
+existing business contracts and ran only focused checks. Documentation was updated
+to distinguish current behaviour from historical design/testing checkpoints.
+
+
+On 24 October, Denzel authorised committing/pushing the accumulated project
+progress to `origin/dev` and preparing a shared feature-design baseline. Codex
+authored `design-branches.md`, audited publication ignore rules/assets, and
+prepared backup-first, owner-scoped branch replacement instructions. This does
+not reset teammates' branches or create/merge their PRs; those steps remain with
+each owner and Denzel. Private source resources and local credentials/tools remain
+excluded; deployable art/fonts/licences and design documentation are included.

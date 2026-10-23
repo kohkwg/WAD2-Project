@@ -1,4 +1,4 @@
-// Development test accounts on the hosted project (see docs/dev-merge.md).
+// Development test accounts on the hosted project (see status.md).
 // Passwords are never stored here; sessions come from auth.setup.mjs.
 export const ACCOUNTS = {
   organiser: 'test1@example.com',

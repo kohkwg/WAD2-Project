@@ -126,3 +126,15 @@ test('RSVP retry does not report success when persisted answers differ from the 
 test('live mode refuses the demo-only offer expiry action', async () => {
   await assert.rejects(expireOffersNow('event-1'), /only available in demo mode/i)
 })
+
+test('event cover URL travels in the same atomic create RPC', async () => {
+  let payload
+  const client = {rpc: async (_name,args) => {payload=args.p_event;return {data:'event-cover-id',error:null}}}
+  await createEventWith(client, {
+    requestId:'d3edb13b-9022-4c2d-95fb-34774f34339e',
+    title:'Cover event',description:'',startTime:'2026-12-01T10:00:00Z',endTime:'2026-12-01T11:00:00Z',
+    capacity:5,tags:['arts'],questions:[],venue:null,backupVenue:null,
+    coverImageUrl:'https://example.com/covers/test.png',
+  })
+  assert.equal(payload.coverImageUrl,'https://example.com/covers/test.png')
+})

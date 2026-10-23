@@ -73,7 +73,7 @@ function cancelSwitch() { confirming.value = false; emit('cancel-action') }
           <h3 class="section-heading mt-4">Backup venue</h3>
           <template v-if="event.backupVenue"><p class="mb-1 fw-semibold">{{ event.backupVenue.name }}</p><p class="text-secondary venue-address">{{ event.backupVenue.address }}</p></template>
           <p v-else class="text-secondary">No backup venue configured.</p>
-          <template v-if="canSwitch"><p class="text-warning-emphasis">Rain is forecast for this event. You can move to the backup venue.</p><button type="button" class="btn btn-primary" @click="confirming = true">Switch to backup venue</button></template>
+          <Transition name="switch-ready"><div v-if="canSwitch" class="switch-ready"><p class="text-warning-emphasis">Rain is forecast for this event. You can move to the backup venue.</p><button type="button" class="btn btn-primary" @click="confirming = true">Switch to backup venue</button></div></Transition>
         </template>
       </div>
     </div>
@@ -89,9 +89,20 @@ function cancelSwitch() { confirming.value = false; emit('cancel-action') }
 <style scoped>
 .area-select { max-width: 24rem; }
 .weather-grid { display: grid; gap: 1rem; }
-.forecast-condition { font-size: 1.5rem; font-weight: 600; margin-bottom: .75rem; }
-.venue-address { overflow-wrap: anywhere; }
-.forecast-details { max-width: 48rem; color: var(--bookedz-muted); }
-.forecast-details summary { cursor: pointer; }
+.forecast-condition { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; color: var(--bookedz-primary-dark); margin-bottom: .75rem; }
+.venue-address { color: var(--bookedz-muted); overflow-wrap: anywhere; }
+.forecast-details { max-width: 56rem; padding: 1rem 1.2rem; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-glass-solid); color: var(--bookedz-muted); }
+.forecast-details summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; color: var(--bookedz-primary-dark); font-weight: 650; }
+.weather-grid .workspace-panel, section > .workspace-panel { padding: clamp(1rem, 2vw, 1.4rem); border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
+.weather-grid > .workspace-panel:first-child { border-inline-start: 4px solid var(--bookedz-primary-dark); }
+.weather-grid .section-heading { color: var(--bookedz-ink); font-weight: 700; }
+.area-select, :deep(.form-control), :deep(.form-select) { border-radius: .7rem; }
+.area-select:focus, :deep(.form-control:focus), :deep(.form-select:focus) { border-color: var(--bookedz-primary-dark); box-shadow: var(--bookedz-focus-glow); }
+.area-select + .btn, .switch-ready .btn, .tool-heading .btn { min-height: 44px; }
+.switch-ready { padding: .9rem; border: 1px solid var(--bookedz-border); border-radius: .85rem; background: var(--bookedz-glass-solid); }
+.switch-ready p { margin-bottom: .7rem; }
+.switch-ready-enter-active, .switch-ready-leave-active { transition: opacity .2s ease, transform .24s ease; }
+.switch-ready-enter-from, .switch-ready-leave-to { opacity: 0; transform: translateY(.35rem); }
 @media (min-width: 992px) { .weather-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+@media (prefers-reduced-motion: reduce) { .switch-ready-enter-active, .switch-ready-leave-active { transition: none; } }
 </style>

@@ -75,7 +75,7 @@ onBeforeUnmount(() => sortables.forEach(sortable => sortable.destroy()))
     <div class="row g-3" :aria-busy="pending">
       <div v-for="status in statuses" :key="status.id" class="col-12 col-xl-4">
         <div class="task-column rounded border p-3">
-          <h3 class="h6">{{ status.label }} <span class="badge text-bg-light">{{ columns[status.id].length }}</span></h3>
+          <h3 class="h6"><span>{{ status.label }}</span><span class="task-count">{{ columns[status.id].length }}</span></h3>
           <div :ref="element => lists[status.id] = element" class="task-list" :aria-label="status.label + ' tasks'">
             <article v-for="(task, index) in columns[status.id]" :key="task.id" :data-task-id="task.id" class="task-card card card-body mb-2">
               <div class="d-flex align-items-start gap-2"><span class="task-handle text-secondary" aria-hidden="true" title="Drag task">⠿</span><h4 class="h6 task-text">{{ task.title }}</h4></div>
@@ -110,10 +110,17 @@ onBeforeUnmount(() => sortables.forEach(sortable => sortable.destroy()))
 </template>
 
 <style scoped>
-.task-column { background: #eef2f7; height: 100%; border-color: var(--bookedz-border) !important; }
-.task-editor { max-width: 48rem; }
-.task-card { box-shadow: none; border-color: var(--bookedz-border); }
+.task-column { height: 100%; border-color: var(--bookedz-border) !important; border-radius: 1rem !important; background: var(--bookedz-glass-solid); }
+.task-editor { max-width: 54rem; }
+.task-card { box-shadow: none; border-color: var(--bookedz-border); border-radius: .85rem; background: var(--bookedz-surface); transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+.task-card:hover { border-color: var(--bookedz-control-border); box-shadow: var(--bookedz-glass-shadow); transform: translateY(-1px); }
 .task-list { min-height: 3rem; }
-.task-handle { cursor: grab; touch-action: none; font-size: 1.4rem; line-height: 1; padding: .1rem; }
-.task-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.task-handle { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; cursor: grab; touch-action: none; color: var(--bookedz-muted); font-size: 1.4rem; line-height: 1; }
+.task-text { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--bookedz-ink); }
+.task-editor { padding: clamp(1rem, 2vw, 1.4rem); border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
+.task-column > h3 { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: 1rem; color: var(--bookedz-ink); }
+.task-count { display: grid; min-width: 1.7rem; height: 1.7rem; place-items: center; padding: 0 .35rem; border-radius: 99px; background: var(--bookedz-glass-active); color: var(--bookedz-ink); font-size: .72rem; font-weight: 700; }
+.task-card h4 { line-height: 1.35; }
+.task-card .btn, .task-editor .btn { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) { .task-card { transition: none; } }
 </style>

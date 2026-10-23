@@ -15,11 +15,12 @@ async function compileComponent(name, replacements = [], inlineTemplate = true) 
   for (const [from, to] of replacements) source = source.replace(from, to)
   return `data:text/javascript;base64,${Buffer.from(source).toString('base64')}`
 }
-const cardUrl = await compileComponent('RecommendationCard')
+const artworkUrl = await compileComponent('EventArtwork')
+const cardUrl = await compileComponent('RecommendationCard', [["from './EventArtwork.vue'", `from '${artworkUrl}'`]])
 const picksUrl = await compileComponent('PickedForYou', [["from './RecommendationCard.vue'", `from '${cardUrl}'`]])
 const { default: Picks } = await import(picksUrl)
 const { default: Card } = await import(cardUrl)
-const { default: CardLogic } = await import(await compileComponent('RecommendationCard', [], false))
+const { default: CardLogic } = await import(await compileComponent('RecommendationCard', [["from './EventArtwork.vue'", `from '${artworkUrl}'`]], false))
 const { default: PicksLogic } = await import(await compileComponent('PickedForYou', [["from './RecommendationCard.vue'", `from '${cardUrl}'`]], false))
 async function render(component, props) {
   const router = createRouter({ history: createMemoryHistory(), routes: ['/', '/profile', '/events/:id', '/events/:id/rsvp'].map(path => ({ path, component: { render: () => null } })) })

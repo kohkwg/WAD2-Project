@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import StepIndicator from '../components/StepIndicator.vue'
 import AddressSearch from '../components/AddressSearch.vue'
 import VenueMap from '../components/VenueMap.vue'
 import EventSummary from '../components/EventSummary.vue'
+import { uploadCover } from '../lib/uploadCover.js'
 import { createEvent, USING_SUPABASE } from '../utils/api.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
 
@@ -14,15 +15,41 @@ const router = useRouter()
 
 const steps = ['Basics', 'Venue', 'RSVP questions', 'Review']
 const step = ref(1)
+const direction = ref(1)
 const showErrors = ref(false) // only show errors after they press Next
 const publishing = ref(false)
 const errorMessage = ref('')
 let createAttempt = null
 let createdEventId = null
+const uploadingCover = ref(false)
+const coverError = ref('')
+let active = true
+onBeforeUnmount(() => { active = false })
+async function chooseCover(event) {
+  const file = event.target.files?.[0]
+  if (!file || uploadingCover.value) return
+  coverError.value = ''
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+    coverError.value = 'Choose a JPEG, PNG or WebP image up to 10 MiB.'
+    event.target.value = ''
+    return
+  }
+  uploadingCover.value = true
+  try {
+    const url = await uploadCover(file)
+    if (active) form.value.coverImageUrl = url
+  } catch (failure) {
+    if (active) coverError.value = failure.message || 'Image upload failed. Please retry.'
+  } finally {
+    if (active) uploadingCover.value = false
+    event.target.value = ''
+  }
+}
 
 // Everything the organiser fills in, across all steps
 const form = ref({
   title: '',
+  coverImageUrl: '',
   description: '',
   tags: [],
   startTime: '', // from <input type="datetime-local">, e.g. "2026-10-20T19:00"
@@ -48,6 +75,12 @@ const suggestedTags = computed(() =>
     (tag) => !form.value.tags.includes(tag),
   ),
 )
+
+const previewDate = computed(() => {
+  if (!form.value.startTime) return 'Date and time to be set'
+  const date = new Date(form.value.startTime)
+  return Number.isNaN(date.getTime()) ? 'Date and time to be set' : new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+})
 
 function addTag(tag) {
   form.value.tags.push(tag)
@@ -121,12 +154,14 @@ function nextStep() {
     return
   }
   showErrors.value = false
+  direction.value = 1
   step.value++
   focusStep()
 }
 
 function previousStep() {
   showErrors.value = false
+  direction.value = -1
   step.value--
   focusStep()
 }
@@ -166,8 +201,10 @@ function removeQuestion(index) {
 // ---------- Step 4: publish ----------
 
 async function publish() {
+  if (publishing.value || uploadingCover.value) return
   const invalidStep = [1, 2].find((stepNumber) => errorsForStep(form.value, stepNumber).length > 0)
   if (invalidStep) {
+    direction.value = invalidStep < step.value ? -1 : 1
     step.value = invalidStep
     showErrors.value = true
     await focusStep()
@@ -212,12 +249,15 @@ async function publish() {
 </script>
 
 <template>
-  <div class="col-lg-9 mx-auto">
-    <h1 class="h3 mb-3">Create an event</h1>
+  <div class="create-event-page col-12 col-xl-11 mx-auto">
+    <header class="create-heading"><h1>Create an event</h1><p>Start with the essentials. You can review everything before it goes live.</p></header>
     <StepIndicator :steps="steps" :current="step" />
 
-    <div class="card shadow-sm">
+    <div class="creation-layout">
+    <div class="card shadow-sm creation-form-card">
       <div class="card-body p-4">
+        <Transition :name="direction > 0 ? 'step-forward' : 'step-back'" mode="out-in" @after-enter="focusStep">
+        <div :key="step" class="step-panel">
         <!-- ================= STEP 1: BASICS ================= -->
         <div v-if="step === 1" aria-labelledby="step-content-heading">
           <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">Basics</h2>
@@ -244,6 +284,18 @@ async function publish() {
             ></textarea>
           </div>
 
+          <div v-if="USING_SUPABASE" class="mb-3">
+            <label for="event-cover" class="form-label">Cover image (optional)</label>
+            <input id="event-cover" type="file" class="form-control" accept="image/jpeg,image/png,image/webp" :disabled="uploadingCover || publishing" aria-describedby="cover-help" @change="chooseCover" />
+            <p id="cover-help" class="form-text">Public event image. JPEG, PNG or WebP, up to 10 MiB.</p>
+            <p v-if="uploadingCover" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Uploading image…</p>
+            <p v-if="coverError" class="text-danger" role="alert">{{ coverError }}</p>
+            <figure v-if="form.coverImageUrl" class="cover-preview">
+              <img :src="form.coverImageUrl" alt="Event cover preview" />
+              <figcaption>Cover image preview</figcaption>
+              <button type="button" class="btn btn-outline-secondary btn-sm" @click="form.coverImageUrl = ''">Remove cover</button>
+            </figure>
+          </div>
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="start" class="form-label">Starts</label>
@@ -496,6 +548,8 @@ async function publish() {
           </EventSummary>
         </div>
 
+        </div>
+        </Transition>
         <!-- Errors for the current step -->
         <div v-if="showErrors && stepErrors.length > 0" class="alert alert-danger mt-4 mb-0" role="alert" aria-labelledby="validation-summary-heading">
           <h3 id="validation-summary-heading" class="h6">Fix these items before continuing</h3>
@@ -507,7 +561,7 @@ async function publish() {
       </div>
 
       <!-- Back / Next / Publish -->
-      <div class="card-footer bg-white d-flex justify-content-between">
+      <div class="card-footer d-flex justify-content-between creation-actions">
         <button
           type="button"
           class="btn btn-outline-secondary"
@@ -531,5 +585,67 @@ async function publish() {
         </button>
       </div>
     </div>
+    <aside class="event-preview" aria-label="Live event preview">
+      <div class="preview-heading"><span>Live preview</span><span class="preview-pulse" aria-hidden="true"></span></div>
+      <article class="preview-card">
+        <div class="preview-art" :class="{ 'has-cover': form.coverImageUrl }" :style="form.coverImageUrl ? { backgroundImage: `linear-gradient(180deg, transparent 35%, color-mix(in srgb, var(--bookedz-ink) 78%, transparent)), url('${form.coverImageUrl}')` } : undefined">
+          <span v-if="!form.coverImageUrl" class="preview-art-mark" aria-hidden="true"><svg viewBox="0 0 80 60" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 12h56v12a6 6 0 0 0 0 12v12H12V36a6 6 0 0 0 0-12Z"/><path d="M50 12v36" stroke-dasharray="3 4"/><path d="m23 29 6 6 11-12"/></svg></span>
+          <span class="preview-tag">{{ form.tags[0] || 'Your event' }}</span>
+        </div>
+        <div class="preview-copy">
+          <p class="preview-date">{{ previewDate }}</p>
+          <h2>{{ form.title.trim() || 'Your event title' }}</h2>
+          <p class="preview-description">{{ form.description.trim() || 'Your description will appear here as you write it.' }}</p>
+          <div class="preview-meta"><span aria-hidden="true">⌖</span><span>{{ form.venue?.name || 'Venue to be chosen' }}</span></div>
+          <div class="preview-meta"><span aria-hidden="true">◎</span><span>{{ Number.isInteger(form.capacity) && form.capacity > 0 ? `${form.capacity} spots` : 'Capacity to be set' }}</span></div>
+        </div>
+      </article>
+      <p class="preview-note">This is a guide to how your event details come together.</p>
+    </aside>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.create-heading { margin: 1rem 0 1.5rem; padding: 1.5rem clamp(1rem, 3vw, 2rem); border-left: 5px solid var(--bookedz-primary-dark); border-radius: 0 20px 20px 0; background: var(--bookedz-glass-active); }
+.create-heading h1 { margin: 0 0 .4rem; color: var(--bookedz-ink); font-size: clamp(1.7rem, 3vw, 2.3rem); font-weight: 700; letter-spacing: -.035em; }
+.create-heading p:last-child { margin: 0; color: var(--bookedz-muted); }
+.create-kicker { margin: 0 0 .35rem; color: var(--bookedz-primary-dark); font-size: .875rem; font-weight: 650; }
+.creation-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(15rem, .85fr); align-items: start; gap: 1.25rem; }
+.create-event-page :deep(.card) { border: 1px solid var(--bookedz-border); border-radius: 20px; box-shadow: var(--bookedz-card-shadow) !important; }
+.create-event-page :deep(.card-body) { padding: clamp(1rem, 3vw, 2rem) !important; }
+.create-event-page :deep(.card-footer) { position: sticky; bottom: 0; z-index: 2; padding: .85rem clamp(1rem, 3vw, 2rem); border-color: var(--bookedz-border); background: var(--bookedz-glass-solid) !important; backdrop-filter: blur(14px); }
+.create-event-page :deep(.card-footer .btn) { min-width: 6.5rem; min-height: 44px; }
+.create-event-page :deep(.form-control), .create-event-page :deep(.form-select) { border-radius: 10px; transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease; }
+.create-event-page :deep(.form-control:focus), .create-event-page :deep(.form-select:focus) { border-color: var(--bookedz-primary-dark); box-shadow: var(--bookedz-focus-glow); }
+.create-event-page :deep(.btn-primary), .create-event-page :deep(.btn-success) { background: var(--bookedz-primary-dark); border-color: var(--bookedz-primary-dark); color: var(--bookedz-surface); }
+.create-event-page :deep(.btn-primary:hover), .create-event-page :deep(.btn-success:hover) { background: var(--bookedz-primary-hover); border-color: var(--bookedz-primary-hover); }
+.event-preview { position: sticky; top: 1rem; padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 1.25rem; background: var(--bookedz-glass-solid); box-shadow: var(--bookedz-card-shadow); }
+.preview-heading { display: flex; align-items: center; gap: .55rem; margin: 0 0 .85rem; color: var(--bookedz-muted); font-size: .78rem; font-weight: 650; }
+.preview-pulse { width: .5rem; height: .5rem; border-radius: 50%; background: var(--bookedz-success); box-shadow: 0 0 0 .25rem var(--bookedz-glass-active); }
+.preview-card { overflow: hidden; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); }
+.preview-art { position: relative; display: grid; min-height: 8rem; place-items: center; overflow: hidden; background: var(--bookedz-glass-active); background-position: center; background-size: cover; }
+.preview-art-mark svg { width: 80px; height: 60px; }
+.preview-art-mark { color: var(--bookedz-primary-dark); font-size: 3.3rem; line-height: 1; }
+.preview-tag { position: absolute; bottom: .65rem; left: .7rem; max-width: calc(100% - 1.4rem); overflow: hidden; padding: .25rem .55rem; border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
+.preview-art.has-cover .preview-tag { background: var(--bookedz-glass-solid); }
+.preview-copy { padding: .9rem; }
+.preview-date { margin: 0 0 .35rem; color: var(--bookedz-primary-dark); font-size: .76rem; font-weight: 650; }
+.preview-copy h2 { margin: 0 0 .45rem; color: var(--bookedz-ink); font-size: 1.1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.preview-description { display: -webkit-box; overflow: hidden; margin: 0 0 .8rem; color: var(--bookedz-muted); font-size: .82rem; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.preview-meta { display: flex; gap: .5rem; align-items: baseline; margin-top: .4rem; color: var(--bookedz-ink); font-size: .78rem; }
+.preview-meta span:first-child { color: var(--bookedz-primary-dark); font-size: 1rem; }
+.preview-note { margin: .75rem 0 0; color: var(--bookedz-muted); font-size: .75rem; line-height: 1.4; }
+.step-panel { min-width: 0; }
+.step-forward-enter-active, .step-forward-leave-active, .step-back-enter-active, .step-back-leave-active { transition: opacity .2s ease, transform .24s cubic-bezier(.2,.7,.2,1); }
+.step-forward-enter-from { opacity: 0; transform: translateX(1.1rem); }
+.step-forward-leave-to { opacity: 0; transform: translateX(-.65rem); }
+.step-back-enter-from { opacity: 0; transform: translateX(-1.1rem); }
+.step-back-leave-to { opacity: 0; transform: translateX(.65rem); }
+@media (max-width: 767.98px) { .creation-layout { grid-template-columns: minmax(0, 1fr); } .event-preview { position: static; order: -1; } .preview-art { min-height: 6rem; } }
+@media (max-width: 575.98px) { .create-heading { margin-top: .5rem; } }
+.cover-preview { display: grid; justify-items: start; gap: .5rem; margin: 1rem 0 0; }
+.cover-preview img { display: block; width: min(100%, 32rem); max-height: 15rem; aspect-ratio: 16 / 8; object-fit: cover; border: 1px solid var(--bookedz-border); border-radius: 14px; }
+.cover-preview figcaption { color: var(--bookedz-muted); font-size: .85rem; }
+@media (prefers-reduced-motion: reduce) { .step-forward-enter-active, .step-forward-leave-active, .step-back-enter-active, .step-back-leave-active, .create-event-page :deep(.form-control), .create-event-page :deep(.form-select) { transition: none; } }
+</style>

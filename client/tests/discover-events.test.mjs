@@ -7,6 +7,8 @@ const source = (await readFile(new URL('../src/composables/useEvents.js', import
   .replace("from 'vue'", `from '${import.meta.resolve('vue')}'`)
   .replace("import { supabase } from '@/lib/supabase'", 'const supabase = globalThis.discoverTestClient')
   .replace("import { api } from '@/lib/api'", 'const api = globalThis.discoverTestApi')
+  .replace("import { USING_SUPABASE, getEvents } from '@/utils/api'", 'const USING_SUPABASE = true; const getEvents = () => []')
+  .replace("import { demoDiscoveryEvents } from '@/lib/discoveryState'", 'const demoDiscoveryEvents = () => []')
 let responses
 let requests
 let session
@@ -46,7 +48,7 @@ test('searches title, description and resolved venue IDs; retains all filters an
   assert.equal(state.events.value[0].registration_status, 'confirmed')
   assert.equal(state.total.value, 31)
   const calls = requests.find(r => r.table === 'events_with_counts').calls
-  assert.ok(calls.some(c => c[0] === 'or' && c[1] === 'title.ilike.%Sports%,description.ilike.%Sports%,venue_id.in.(venue-1)'))
+  assert.ok(calls.some(c => c[0] === 'or' && c[1] === 'title.ilike.%Sports%,description.ilike.%Sports%,and(using_backup.eq.false,venue_id.in.(venue-1)),and(using_backup.eq.true,backup_venue_id.in.(venue-1))'))
   assert.ok(calls.some(c => c[0] === 'contains' && c[1] === 'tags' && c[2][0] === 'sports'))
   assert.ok(calls.some(c => c[0] === 'gte' && c[1] === 'start_time'))
   assert.ok(calls.some(c => c[0] === 'lte' && c[1] === 'start_time'))
@@ -186,4 +188,34 @@ test('existing event locations are retained if the optional venue lookup is unav
   assert.equal(state.error.value, '')
   assert.equal(state.events.value[0].venue_name, 'Sports Hall')
   assert.equal(state.events.value[0].venue_address, '81 Victoria Street')
+})
+
+test('a switched event resolves the active backup venue rather than the original venue', async () => {
+  reset((table,calls) => table === 'events_with_counts'
+    ? {data:[{...event,using_backup:true,backup_venue_id:'backup-1'}],count:1}
+    : table === 'venues' ? {data:[{id:'backup-1',name:'Backup Hall',address:'Backup Street'}]}
+    : {data:[]})
+  const state=useEvents()
+  await state.fetchEvents()
+  const venueQuery=requests.find(row=>row.table==='venues')
+  assert.deepEqual(venueQuery.calls.find(call=>call[0]==='in'),['in','id',['backup-1']])
+  assert.equal(state.events.value[0].venue_name,'Backup Hall')
+})
+
+test('map mode fetches every filtered page and uses active venue coordinates', async () => {
+  const rows = Array.from({ length: 203 }, (_, i) => ({ ...event, id: `map-${i}` }))
+  reset((table, calls) => {
+    if (table === 'events_with_counts') {
+      const [,from,to] = calls.filter(c => c[0] === 'range').at(-1)
+      return { data: rows.slice(from,to+1), count: rows.length }
+    }
+    if (table === 'venues') return { data: [{ id: 'venue-1', name: 'Map venue', latitude: 1.3, longitude: 103.8 }] }
+    return { data: [] }
+  }, false)
+  const state = useEvents()
+  await state.fetchEvents({ forMap: true, categories: ['music'] })
+  assert.equal(state.events.value.length, 203)
+  assert.equal(state.events.value[202].lat, 1.3)
+  assert.equal(state.events.value[202].lng, 103.8)
+  assert.equal(state.error.value, '')
 })

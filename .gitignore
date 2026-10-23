@@ -219,3 +219,20 @@ _olddata/src/main.js
 _olddata/src/assets/main.css
 _olddata/src/components/NavBar.vue
 _olddata/src/stores/counter.js
+
+# Supplied/private source material stays local. Deployable art/fonts and their
+# licences live in client/src/assets; shareable design guidance is in docs/design.
+/docs/resources/
+
+# Local design-tool audits, browser output, Python caches and scratch credentials
+/.hallmark/
+playwright-report/
+test-results/
+blob-report/
+__pycache__/
+*.py[cod]
+*.pem
+*.key
+*.p12
+*.pfx
+*.tsbuildinfo

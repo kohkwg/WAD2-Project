@@ -96,6 +96,7 @@ function withCounts(db, event) {
   const count = (status) => rsvps.filter((r) => r.status === status).length
   return {
     ...event,
+    isOnTeam: event.organiserId === CURRENT_USER_ID || (db.eventMembers || []).some(member => member.eventId === event.id && member.userId === CURRENT_USER_ID),
     isMine: event.organiserId === CURRENT_ORGANISER_ID, // can the logged-in person manage it?
     confirmedCount: count('confirmed'),
     offeredCount: count('offered'),
@@ -134,13 +135,14 @@ function rankedWaitlist(db, eventId) {
 // They get OFFER_HOURS to confirm before it passes to the next person.
 function fillFreeSpots(db, eventId) {
   const event = findEvent(db, eventId)
+  if (new Date(event.startTime).getTime() <= Date.now()) return
   let freeSpots = event.capacity - spotsTaken(db, eventId)
   const queue = rankedWaitlist(db, eventId)
 
   while (freeSpots > 0 && queue.length > 0) {
     const next = queue.shift() // take the first person out of the queue
     next.status = 'offered'
-    next.offerExpiresAt = new Date(Date.now() + OFFER_HOURS * 60 * 60 * 1000).toISOString()
+    next.offerExpiresAt = new Date(Math.min(Date.now() + OFFER_HOURS * 60 * 60 * 1000, new Date(event.startTime).getTime())).toISOString()
     freeSpots--
   }
 }
@@ -283,6 +285,7 @@ export async function createRsvp({ eventId, name, email, answers }) {
   const db = loadFreshDb()
   const event = findEvent(db, eventId)
   const userId = CURRENT_USER_ID
+  if (withCounts(db, event).isOnTeam) throw new Error("Organisers and helpers can't RSVP to their own event")
 
   const alreadyIn = db.rsvps.some(
     (r) => r.eventId === eventId && r.userId === userId && ACTIVE_STATUSES.includes(r.status),
@@ -315,6 +318,8 @@ export async function cancelRsvp(rsvpId) {
   await fakeDelay()
   const db = loadFreshDb()
   const rsvp = findRsvp(db, rsvpId)
+  if (rsvp.userId !== CURRENT_USER_ID) throw new Error('You can only cancel your own RSVP.')
+  if (rsvp.checkedInAt || (db.checkIns || []).some(row => row.registrationId === rsvp.id)) throw new Error("You have already checked in, so this RSVP can't be cancelled")
   if (!ACTIVE_STATUSES.includes(rsvp.status)) throw new Error('This RSVP is already closed.')
 
   const wasHoldingSpot = rsvp.status === 'confirmed' || rsvp.status === 'offered'

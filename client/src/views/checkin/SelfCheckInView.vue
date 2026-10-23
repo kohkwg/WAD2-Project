@@ -107,18 +107,18 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container py-4" style="max-width: 480px">
+  <div class="container py-4 self-checkin-page">
     <RouterLink to="/my-rsvps" class="small d-block mb-3">&larr; My RSVPs</RouterLink>
-    <h1 class="h4 mb-1">Check in</h1>
-    <p class="text-body-secondary small mb-4">{{ event?.title ?? '' }}</p>
+    <header class="checkin-heading"><span class="ticket-kicker">At the venue</span><h1 class="h3 mb-1">Check in</h1>
+    <p class="text-body-secondary small mb-4">{{ event?.title ?? '' }}</p></header>
 
-    <template v-if="step === 'scan'">
+    <section v-if="step === 'scan'" class="checkin-card">
       <p>Point your camera at the QR code on the screen at the entrance.</p>
       <QrScanner @decoded="onDecoded" />
       <p class="small text-body-secondary mt-3">
         We'll ask for your location to confirm you're at the venue.
       </p>
-    </template>
+    </section>
 
     <div v-else-if="step === 'working'" class="text-center py-5">
       <div class="spinner-border mb-3" role="status" aria-hidden="true"></div>
@@ -142,3 +142,7 @@ onMounted(async () => {
     </template>
   </div>
 </template>
+
+<style scoped>
+.self-checkin-page{max-width:600px}.checkin-heading{display:block;padding:1.15rem 1.25rem;margin-bottom:1rem;border-radius:22px;background:var(--bookedz-cream,#fff9ef)}.checkin-card{padding:1.25rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:22px;background:#fffdfa}.self-checkin-page :deep(.qr-scanner){border:5px solid #292d32;border-radius:16px!important}.self-checkin-page .alert{border-radius:14px}.self-checkin-page .btn{min-height:46px;border-radius:12px}.self-checkin-page .btn-primary{--bs-btn-bg:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-border-color:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-color:#fff;--bs-btn-hover-bg:#8f3022;--bs-btn-hover-border-color:#8f3022;--bs-btn-hover-color:#fff}.self-checkin-page .btn-outline-primary{--bs-btn-color:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-border-color:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-hover-bg:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-hover-border-color:var(--bookedz-coral-dark,#aa3e2c)}
+</style>

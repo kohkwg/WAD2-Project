@@ -105,18 +105,23 @@ function edit(item) {
 </template>
 <style scoped>
 .limit-input { max-width: 18rem; }
-.expense-editor { max-width: 48rem; }
+.expense-editor { max-width: 56rem; padding: clamp(1rem, 2vw, 1.4rem); border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
 .item-name, dd { overflow-wrap: anywhere; }
-.budget-totals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin-bottom: 1rem; }
-.budget-totals dt, .cost-comparison dt { color: var(--bookedz-muted); font-size: .875rem; font-weight: 400; margin-bottom: .35rem; }
-.budget-totals dd { font-size: 1.125rem; font-weight: 600; margin: 0; font-variant-numeric: tabular-nums; }
-.expense-row { display: grid; gap: 1rem; padding: 1.25rem 0; border-bottom: 1px solid var(--bookedz-border); }
+.budget-totals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1rem; padding: .85rem; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-glass-solid); }
+.budget-totals > div { min-width: 0; padding: .85rem; border: 1px solid var(--bookedz-border); border-radius: .8rem; background: var(--bookedz-surface); }
+.budget-totals dt, .cost-comparison dt { color: var(--bookedz-muted); font-size: .78rem; font-weight: 600; margin-bottom: .3rem; }
+.budget-totals dd { color: var(--bookedz-ink); font-size: clamp(1rem, 2vw, 1.25rem); font-weight: 700; margin: 0; font-variant-numeric: tabular-nums; }
+.budget-totals > div:last-child dd { color: var(--bookedz-primary-dark); }
+.expense-row { display: grid; gap: 1rem; padding: 1.1rem 0; border-bottom: 1px solid var(--bookedz-border); }
 .expense-row:first-child { padding-top: 0; }
 .expense-row:last-child { border-bottom: 0; padding-bottom: 0; }
 .cost-comparison { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 0; }
-.cost-comparison dd { font-size: .875rem; font-weight: 600; margin: 0; font-variant-numeric: tabular-nums; }
-@media (min-width: 992px) {
-  .budget-totals { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .expense-row { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; align-items: center; }
-}
+.cost-comparison > div { min-width: 0; }
+.cost-comparison dd { color: var(--bookedz-ink); font-size: .875rem; font-weight: 650; margin: 0; font-variant-numeric: tabular-nums; }
+.expense-list { border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); }
+.budget-limit-form { max-width: 48rem; padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: .95rem; background: var(--bookedz-surface); }
+.budget-limit-form .btn, .expense-editor .btn, .expense-row .btn { min-height: 44px; }
+.budget-totals, .expense-list { box-shadow: var(--bookedz-card-shadow); }
+@media (min-width: 992px) { .budget-totals { grid-template-columns: repeat(4, minmax(0, 1fr)); } .expense-row { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; align-items: center; } }
+@media (max-width: 399.98px) { .cost-comparison { grid-template-columns: 1fr; gap: .5rem; } }
 </style>
