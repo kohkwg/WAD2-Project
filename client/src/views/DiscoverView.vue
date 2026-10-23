@@ -84,7 +84,7 @@ function goToPage(page) {
 
 <template>
   <div class="discover-page" :style="{ '--discover-navbar-height': `${navbarHeight}px` }">
-    <main class="container discover-content">
+    <div class="container discover-content">
       <header class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h1 class="fw-bold mb-0">Discover events</h1>
         <RouterLink v-if="loggedIn" to="/profile" class="btn btn-outline-secondary btn-sm">Edit interests</RouterLink>
@@ -137,7 +137,7 @@ function goToPage(page) {
         </nav>
       </section>
 
-    </main>
+    </div>
   </div>
 </template>
 

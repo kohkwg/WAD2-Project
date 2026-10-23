@@ -53,8 +53,13 @@ const router = createRouter({
       meta: { title: 'Attendance', requiresAuth: true },
     },
 
-    // Feature 6: floor plan editor skeleton (Vivienne)
-    { path: '/editor', component: () => import('../editor.vue'), meta: { title: 'Floor plan editor' } },
+    // Feature 6: floor plan editor (Vivienne). Organisers edit, the event's team views;
+    // participants see it read-only on the public event page. Live Supabase only.
+    {
+      path: '/organiser/events/:eventId/floor-plan',
+      component: () => import('../editor.vue'),
+      meta: { title: 'Floor plan', requiresAuth: true },
+    },
 
     // Any URL not listed above (e.g. a typo) goes back to /events
     { path: '/:pathMatch(.*)*', redirect: '/events' },

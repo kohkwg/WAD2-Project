@@ -8,13 +8,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:unit": "NODE_ENV=test node --test src/utils/__tests__/feature4*.test.js src/utils/__tests__/supabaseApi.test.js src/utils/__tests__/supabaseFeature4*.test.js",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:live": "playwright test -c playwright.live.config.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
     "axios": "^1.18.1",
     "bootstrap": "^5.3.8",
     "html5-qrcode": "^2.3.8",
+    "jsbarcode": "^3.12.1",
     "konva": "^10.9.0",
     "leaflet": "^1.9.4",
     "papaparse": "^5.7.0",

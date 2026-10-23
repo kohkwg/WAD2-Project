@@ -26,9 +26,39 @@ export const getEvent = (eventId) =>
 
 // Staff scans a participant's personal QR (the QR holds registrations.qr_token).
 // Returns the check_ins row (new, or the existing one if they were already in).
-// method: 'personal_qr' for a camera scan, 'manual' for a typed code (shown in the CSV export)
+// method: 'personal_qr' (camera QR), 'barcode' (camera barcode) or 'manual'
+// (typed code / name search); shown in the CSV export.
+// code can also be a registration id (used by the name search).
 export const staffCheckIn = (eventId, code, method = 'personal_qr') =>
   call(supabase.rpc('staff_check_in', { p_event_id: eventId, p_code: code, p_method: method }))
+
+// BOILERPLATE: confirmed attendees for the station's name/email search, plus who is
+// already in. Organisers get emails through event_registrations() (organiser-only);
+// helpers fall back to names, since RLS hides other users' emails.
+export async function listAttendees(eventId) {
+  const [regs, checkIns] = await Promise.all([
+    supabase.rpc('event_registrations', { p_event_id: eventId }),
+    supabase.from('check_ins').select('registration_id').eq('event_id', eventId),
+  ])
+  let people
+  if (!regs.error) {
+    people = regs.data
+      .filter((r) => r.status === 'confirmed')
+      .map((r) => ({ id: r.registration_id, name: r.display_name || 'Participant', email: r.email || '' }))
+  } else {
+    const rows = await call(
+      supabase
+        .from('registrations')
+        .select('id, profiles!registrations_user_id_fkey(display_name)')
+        .eq('event_id', eventId)
+        .eq('status', 'confirmed'),
+    )
+    people = rows.map((r) => ({ id: r.id, name: r.profiles?.display_name || 'Participant', email: '' }))
+  }
+  if (checkIns.error) throw new Error(checkIns.error.message)
+  const checkedIn = new Set(checkIns.data.map((c) => c.registration_id))
+  return people.map((p) => ({ ...p, checkedIn: checkedIn.has(p.id) }))
+}
 
 // Participant scans the venue QR. Returns the check_ins row (new or existing).
 export const selfCheckIn = (eventId, secret, deviceId, lat, lng) =>

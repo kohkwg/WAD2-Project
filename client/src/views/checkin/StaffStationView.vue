@@ -1,9 +1,10 @@
 <script setup>
-// Feature 3: staff check-in station. Scan a participant's personal QR (from their
-// My Ticket page) and check them in.
+// Feature 3: staff check-in station. Scan a participant's personal QR or ticket
+// barcode (from their My Ticket page), type the code, or find them by name/email.
 import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import QrScanner from '@/components/checkin/QrScanner.vue'
+import AttendeeSearch from '@/components/checkin/AttendeeSearch.vue'
 import { supabase } from '@/utils/supabase'
 import { formatTime, getEvent, staffCheckIn, wasAlreadyCheckedIn } from '@/utils/checkin'
 
@@ -53,9 +54,15 @@ async function onScan(code, method = 'personal_qr') {
     recent.value = [{ ...last.value, at: Date.now() }, ...recent.value].slice(0, 20)
     busy.value = false
   }
+  return last.value.kind !== 'error' // lets the name search mark the person as in
 }
 
-// Dev/testing: paste a qr_token when you're on a laptop with no second phone
+// Camera: QR codes are personal tickets; CODE128 is the ticket barcode
+function onCameraScan(code, format) {
+  onScan(code, format === 'CODE_128' ? 'barcode' : 'personal_qr')
+}
+
+// Typed ticket code (the number under the barcode) or a pasted qr_token
 function submitTyped() {
   if (typedCode.value.trim()) onScan(typedCode.value, 'manual')
   typedCode.value = ''
@@ -71,7 +78,7 @@ onMounted(() =>
 </script>
 
 <template>
-  <main class="container py-4" style="max-width: 560px">
+  <div class="container py-4" style="max-width: 560px">
     <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
     <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
       <div>
@@ -83,7 +90,7 @@ onMounted(() =>
       </RouterLink>
     </div>
 
-    <QrScanner @decoded="onScan" />
+    <QrScanner :formats="['QR_CODE', 'CODE_128']" @decoded="onCameraScan" />
 
     <div v-if="busy" class="alert alert-secondary mt-3 mb-0" role="status">
       <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Checking…
@@ -103,13 +110,17 @@ onMounted(() =>
       </template>
     </div>
 
-    <details class="mt-3">
-      <summary class="small text-body-secondary">No camera? Paste a ticket code (testing)</summary>
-      <form class="input-group mt-2" @submit.prevent="submitTyped">
-        <input v-model="typedCode" class="form-control" placeholder="qr_token" aria-label="Ticket code" />
-        <button class="btn btn-outline-primary" :disabled="busy">Check in</button>
+    <div class="card card-body mt-3">
+      <h2 class="h6 mb-3">Manual check-in</h2>
+      <AttendeeSearch :event-id="eventId" :busy="busy" @pick="async (id, done) => done(await onScan(id, 'manual'))" />
+      <form class="mt-3" @submit.prevent="submitTyped">
+        <label for="typed-code" class="form-label small text-body-secondary">Or type the ticket code under the barcode</label>
+        <div class="input-group">
+          <input id="typed-code" v-model="typedCode" class="form-control" placeholder="e.g. 2C3980B894" autocomplete="off" />
+          <button class="btn btn-outline-primary" :disabled="busy">Check in</button>
+        </div>
       </form>
-    </details>
+    </div>
 
     <h2 class="h6 text-uppercase text-body-secondary mt-4">Recent scans</h2>
     <p v-if="!recent.length" class="small text-body-secondary">Nothing scanned yet.</p>
@@ -124,5 +135,5 @@ onMounted(() =>
         </span>
       </li>
     </ul>
-  </main>
+  </div>
 </template>

@@ -15,7 +15,9 @@ import {
   CURRENT_USER_ID,
   ACTIVE_STATUSES,
   JOINED_STATUSES,
+  USING_SUPABASE,
 } from '../utils/api.js'
+import FloorPlan from '../editor.vue'
 import { eventsOverlap } from '../utils/helpers.js'
 
 const route = useRoute()
@@ -166,6 +168,8 @@ async function submitRsvp() {
         </p>
       </EventSummary>
       <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
+      <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
+      <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>
 
     <!-- RSVP actions and private-data states follow the public context. -->

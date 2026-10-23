@@ -65,7 +65,7 @@ async function save() {
 </script>
 
 <template>
-  <main class="container py-4" style="max-width: 640px">
+  <div class="container py-4" style="max-width: 640px">
     <h1 class="h3 mb-4">Your profile</h1>
 
     <div v-if="loading" class="text-center py-5">
@@ -106,5 +106,5 @@ async function save() {
     </form>
 
     <div v-else class="alert alert-warning">{{ error }}</div>
-  </main>
+  </div>
 </template>

@@ -107,7 +107,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="container py-4" style="max-width: 480px">
+  <div class="container py-4" style="max-width: 480px">
     <RouterLink to="/my-rsvps" class="small d-block mb-3">&larr; My RSVPs</RouterLink>
     <h1 class="h4 mb-1">Check in</h1>
     <p class="text-body-secondary small mb-4">{{ event?.title ?? '' }}</p>
@@ -140,5 +140,5 @@ onMounted(async () => {
       <div class="alert alert-danger" role="alert">{{ message }}</div>
       <button class="btn btn-primary w-100" @click="scanAgain">Scan again</button>
     </template>
-  </main>
+  </div>
 </template>
