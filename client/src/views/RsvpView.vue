@@ -176,7 +176,7 @@ async function submitRsvp() {
 
         <!-- Only show this section if the organiser added questions -->
         <template v-if="event.questions.length > 0">
-          <h3 class="h6 mt-2">Questions from the organiser</h3>
+          <h3 class="h6 mt-2 mb-3">Questions from the organiser</h3>
           <div v-for="question in event.questions" :key="question.id" class="mb-3">
             <label class="form-label" :for="question.id">
               {{ question.text }}
@@ -218,26 +218,30 @@ async function submitRsvp() {
           </div>
         </template>
 
-        <!-- Warns if this event overlaps another event you've already joined (shows nothing if no clash) -->
-        <ClashWarning :clashes="clashes" />
+        <!-- Footer of the card: mt-auto pushes it to the bottom, so the button lines up with
+             the "spots left" line in the event card instead of floating in the middle -->
+        <div class="mt-auto pt-3 border-top">
+          <!-- Warns if this event overlaps another event you've already joined (shows nothing if no clash) -->
+          <ClashWarning :clashes="clashes" />
 
-        <!-- Tells the user what happens next: needs approval / confirmed now / goes to waitlist -->
-        <div class="alert alert-light border small">{{ whatHappensNext }}</div>
+          <!-- Tells the user what happens next: needs approval / confirmed now / goes to waitlist -->
+          <div class="alert alert-light border small">{{ whatHappensNext }}</div>
 
-        <!-- Validation errors only appear after the first submit attempt (triedSubmit) -->
-        <div v-if="triedSubmit && formErrors.length > 0" class="alert alert-danger">
-          <ul class="mb-0">
-            <li v-for="error in formErrors" :key="error">{{ error }}</li>
-          </ul>
+          <!-- Validation errors only appear after the first submit attempt (triedSubmit) -->
+          <div v-if="triedSubmit && formErrors.length > 0" class="alert alert-danger">
+            <ul class="mb-0">
+              <li v-for="error in formErrors" :key="error">{{ error }}</li>
+            </ul>
+          </div>
+          <!-- Error from the API/server, separate from form validation -->
+          <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+          <!-- Disabled while sending so it can't be submitted twice -->
+          <button type="submit" class="btn btn-primary px-4" :disabled="submitting">
+            <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
+            {{ submitting ? 'Sending…' : 'RSVP' }}
+          </button>
         </div>
-        <!-- Error from the API/server, separate from form validation -->
-        <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
-
-        <!-- Disabled while sending so it can't be submitted twice -->
-        <button type="submit" class="btn btn-primary align-self-start" :disabled="submitting">
-          <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          {{ submitting ? 'Sending…' : 'RSVP' }}
-        </button>
       </form>
     </div>
 

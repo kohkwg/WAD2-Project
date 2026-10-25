@@ -13,8 +13,8 @@ const STATUS_INFO = {
   offered: { label: 'Spot offered', css: 'text-bg-info' },
   // rejected = organiser said no while pending, OR removed someone they'd accepted
   rejected: { label: 'Declined by organiser', css: 'text-bg-danger' },
-  cancelled: { label: 'Cancelled', css: 'text-bg-light border' },
-  declined: { label: 'Offer declined', css: 'text-bg-light border' },
+  cancelled: { label: 'Cancelled', css: 'bg-body-secondary text-body border' },
+  declined: { label: 'Offer declined', css: 'bg-body-secondary text-body border' },
   expired: { label: 'Offer expired', css: 'text-bg-dark' },
 }
 

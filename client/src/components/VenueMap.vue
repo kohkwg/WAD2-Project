@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 // Leaflet's default pin image doesn't load with Vite, so we import the images ourselves
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+import { theme } from '../utils/theme.js'
 
 // A OneMap (Singapore) map with one pin.
 // draggable = true → the organiser can drag the pin or click the map to move it; we emit 'move'
@@ -24,6 +25,16 @@ const emit = defineEmits(['move'])
 
 const mapDiv = ref(null) // the <div> Leaflet draws the map into
 let map = null
+let tiles = null // the map images layer, kept so we can swap it for dark mode
+
+// OneMap has a "Night" map style, so the map matches dark mode
+function tileUrl() {
+  const style = theme.value === 'dark' ? 'Night' : 'Default'
+  return `https://www.onemap.gov.sg/maps/tiles/${style}/{z}/{x}/{y}.png`
+}
+
+// Theme switched while the map is open → swap the map images, no reload needed
+watch(theme, () => tiles.setUrl(tileUrl()))
 
 onMounted(() => {
   // Leaflet needs the real <div> on the page, so this has to wait until onMounted
@@ -31,7 +42,7 @@ onMounted(() => {
   // scrolling the page doesn't zoom the map by accident. Use the + / − buttons instead.
   map = L.map(mapDiv.value, { scrollWheelZoom: false }).setView([props.lat, props.lng], 17)
 
-  L.tileLayer('https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png', {
+  tiles = L.tileLayer(tileUrl(), {
     minZoom: 11,
     maxZoom: 19,
     attribution:

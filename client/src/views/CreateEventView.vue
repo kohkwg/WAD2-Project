@@ -263,7 +263,7 @@ async function publish() {
         <div v-else-if="step === 2">
           <h5>Main venue</h5>
           <!-- Venue picked → show it with a "Change" link; otherwise (v-else) show the search box -->
-          <div v-if="form.venue" class="border rounded p-3 mb-3 bg-light">
+          <div v-if="form.venue" class="border rounded p-3 mb-3 bg-body-tertiary">
             <div class="fw-semibold">{{ form.venue.name }}</div>
             <div class="small text-secondary">{{ form.venue.address }}</div>
             <div v-if="form.venue.lat" class="small text-secondary">
@@ -311,7 +311,7 @@ async function publish() {
           <!-- Backup venue is only asked for outdoor events -->
           <template v-if="form.isOutdoor">
             <h5>Backup venue (if it rains)</h5>
-            <div v-if="form.backupVenue" class="border rounded p-3 mb-3 bg-light">
+            <div v-if="form.backupVenue" class="border rounded p-3 mb-3 bg-body-tertiary">
               <div class="fw-semibold">{{ form.backupVenue.name }}</div>
               <div class="small text-secondary">{{ form.backupVenue.address }}</div>
               <button
@@ -363,7 +363,7 @@ async function publish() {
             >
               <div>
                 {{ question.text }}
-                <span class="badge text-bg-light border ms-1">
+                <span class="badge bg-body-secondary text-body border ms-1">
                   {{ question.type === 'yesno' ? 'Yes / No' : 'Short answer' }}
                 </span>
                 <span v-if="question.required" class="badge text-bg-secondary ms-1">Required</span>
@@ -379,7 +379,7 @@ async function publish() {
           </ul>
           <p v-else class="text-secondary small">No questions yet.</p>
 
-          <div class="bg-light border rounded p-3">
+          <div class="bg-body-tertiary border rounded p-3">
             <div class="row g-2 align-items-end">
               <div class="col-md-6">
                 <label for="q-text" class="form-label small">Question</label>
@@ -462,7 +462,7 @@ async function publish() {
       </div>
 
       <!-- Back / Next / Publish -->
-      <div class="card-footer bg-white d-flex justify-content-between">
+      <div class="card-footer bg-body d-flex justify-content-between">
         <!-- Back is disabled on step 1; Next shows until the last step, then becomes Publish -->
         <button
           type="button"

@@ -42,11 +42,11 @@ onMounted(async () => {
           <p class="small text-secondary mb-2">{{ formatEventTime(event) }}</p>
           <p class="small mb-2">{{ event.venue.name }}</p>
           <!-- One small badge per tag -->
-          <span v-for="tag in event.tags" :key="tag" class="badge text-bg-light border me-1">
+          <span v-for="tag in event.tags" :key="tag" class="badge bg-body-secondary text-body border me-1">
             {{ tag }}
           </span>
         </div>
-        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <div class="card-footer bg-body d-flex justify-content-between align-items-center">
           <!-- Spots left (with "spot"/"spots" plural) or, if full, a waitlist note -->
           <span v-if="event.spotsLeft > 0" class="small text-success">
             {{ event.spotsLeft }} spot{{ event.spotsLeft === 1 ? '' : 's' }} left

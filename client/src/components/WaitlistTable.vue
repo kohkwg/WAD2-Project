@@ -48,7 +48,7 @@ function percent(value) {
 
   <div v-else class="table-responsive">
     <table class="table align-middle">
-      <thead class="table-light">
+      <thead>
         <tr>
           <th scope="col">#</th>
           <th scope="col">Name</th>

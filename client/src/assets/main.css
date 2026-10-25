@@ -4,6 +4,11 @@ body {
   background-color: #f5f6fa;
 }
 
+/* Dark mode: a bit darker than Bootstrap's dark cards, so the cards still stand out */
+[data-bs-theme='dark'] body {
+  background-color: #16191c;
+}
+
 /* Keeps long descriptions' line breaks (what the organiser typed) */
 .keep-line-breaks {
   white-space: pre-line;

@@ -105,7 +105,7 @@ async function removeEvent(eventId) {
             {{ event.waitlistCount }} on waitlist
           </span>
         </div>
-        <div class="card-footer bg-white d-flex gap-2">
+        <div class="card-footer bg-body d-flex gap-2">
           <!-- Link is built from the event id, e.g. /organiser/events/abc123/rsvps -->
           <RouterLink
             :to="'/organiser/events/' + event.id + '/rsvps'"

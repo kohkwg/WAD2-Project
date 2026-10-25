@@ -250,7 +250,7 @@ async function demoExpireOffers() {
       </li>
     </ul>
 
-    <div class="bg-white border border-top-0 rounded-bottom p-3">
+    <div class="bg-body border border-top-0 rounded-bottom p-3">
       <!-- Tab content: only the block matching activeTab renders (pending → confirmed → waitlist → else = closed) -->
       <template v-if="activeTab === 'pending'">
         <!-- Note for auto-confirm events, since nothing will ever be pending -->
@@ -307,7 +307,7 @@ async function demoExpireOffers() {
         <p v-if="closed.length === 0" class="text-secondary my-4">Nothing here yet.</p>
         <div v-else class="table-responsive">
           <table class="table align-middle">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th scope="col">Name</th>
                 <th scope="col">Status</th>

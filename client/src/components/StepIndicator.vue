@@ -13,7 +13,7 @@ const percentDone = computed(() => ((props.current - 1) / (props.steps.length - 
 function badgeClass(stepNumber) {
   if (stepNumber < props.current) return 'text-bg-success'
   if (stepNumber === props.current) return 'text-bg-primary'
-  return 'text-bg-light border'
+  return 'bg-body-secondary text-body border'
 }
 </script>
 

@@ -39,7 +39,7 @@ const descriptionToShow = computed(() => {
       <p class="mb-2"><strong>Capacity:</strong> {{ event.capacity }}</p>
 
       <div class="mb-2">
-        <span v-for="tag in event.tags" :key="tag" class="badge text-bg-light border me-1">
+        <span v-for="tag in event.tags" :key="tag" class="badge bg-body-secondary text-body border me-1">
           {{ tag }}
         </span>
       </div>

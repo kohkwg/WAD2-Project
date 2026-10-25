@@ -34,7 +34,7 @@ function formatAnswer(question, answer) {
 
   <div v-else class="table-responsive">
     <table class="table align-middle">
-      <thead class="table-light">
+      <thead>
         <tr>
           <th scope="col">Name</th>
           <th scope="col" v-if="questions.length > 0">Answers</th>

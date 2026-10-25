@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { USING_SUPABASE, getCurrentUser, onAuthChange, signOut, resetDemoData } from '../utils/api.js'
+import { theme, toggleTheme } from '../utils/theme.js'
 
 const router = useRouter()
 const user = ref(null) // { id, email } of whoever is signed in
@@ -30,7 +31,8 @@ function resetDemo() {
 
 <template>
   <!-- Placeholder navbar so the Feature 2 pages can be reached. Swap for the team's shared one. -->
-  <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
+  <!-- bg-body (not bg-white) so the navbar turns dark in dark mode -->
+  <nav class="navbar navbar-expand-lg bg-body border-bottom shadow-sm">
     <div class="container">
       <RouterLink class="navbar-brand fw-bold text-primary" to="/events">Bookedz</RouterLink>
 
@@ -70,6 +72,17 @@ function resetDemo() {
             </RouterLink>
           </li>
         </ul>
+
+        <!-- Light / dark mode switch; the icon shows what you'll switch TO -->
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm me-2"
+          :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+          :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+          @click="toggleTheme"
+        >
+          {{ theme === 'dark' ? '☀️' : '🌙' }}
+        </button>
 
         <!-- Supabase: real accounts -->
         <div v-if="USING_SUPABASE && user" class="d-flex align-items-center gap-2">
