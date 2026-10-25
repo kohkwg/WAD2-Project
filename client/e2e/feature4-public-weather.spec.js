@@ -48,7 +48,8 @@ test('public announcement feed precedes RSVP actions on mobile and survives subm
   await page.goto('/events/e2/rsvp')
 
   const feed = page.getByRole('region', { name: 'Event announcements' })
-  const form = page.getByRole('heading', { name: 'RSVP', exact: true })
+  // The redesigned RSVP form's heading is "Count me in"
+  const form = page.getByRole('heading', { name: 'Count me in', exact: true })
   await expect(feed).toContainText(/long public update/)
   await expect(form).toBeVisible()
   const feedBox = await feed.boundingBox()
@@ -56,7 +57,7 @@ test('public announcement feed precedes RSVP actions on mobile and survives subm
   expect(feedBox.y).toBeLessThan(formBox.y)
   expect(await page.evaluate(() => {
     const feedNode = document.querySelector('#public-announcements-heading')
-    const formNode = [...document.querySelectorAll('h2')].find(node => node.textContent.trim() === 'RSVP')
+    const formNode = [...document.querySelectorAll('h2')].find(node => node.textContent.trim() === 'Count me in')
     return Boolean(feedNode.compareDocumentPosition(formNode) & Node.DOCUMENT_POSITION_FOLLOWING)
   })).toBe(true)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

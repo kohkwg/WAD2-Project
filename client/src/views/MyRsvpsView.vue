@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import OfferBanner from '../components/OfferBanner.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
@@ -20,6 +20,27 @@ const statusMessage = ref('')
 const busyId = ref(null) // which RSVP is being saved
 const confirmCancelId = ref(null) // which RSVP is showing "Are you sure?"
 const showClosed = ref(false)
+const statusAlert = ref(null)
+const errorAlert = ref(null)
+
+// The button that was pressed disappears (confirm step, cancelled card, answered offer),
+// so keyboard focus moves to whatever replaced it instead of falling back to the page.
+async function focusMessage(target) {
+  await nextTick()
+  target.value?.focus()
+}
+
+async function askCancel(rsvpId) {
+  confirmCancelId.value = rsvpId
+  await nextTick()
+  document.getElementById(`keep-${rsvpId}`)?.focus() // the safe choice is focused first
+}
+
+async function keepRsvp(rsvpId) {
+  confirmCancelId.value = null
+  await nextTick()
+  document.getElementById(`cancel-${rsvpId}`)?.focus()
+}
 const planCounts = computed(() => [
   { label: 'Confirmed', value: rsvps.value.filter(r => r.status === 'confirmed').length },
   { label: 'Awaiting approval', value: rsvps.value.filter(r => r.status === 'pending').length },
@@ -114,6 +135,7 @@ async function answerOffer(rsvpId, accept) {
     statusMessage.value = accept
       ? 'Spot confirmed. See you there!'
       : 'Offer declined. The spot goes to the next person on the waitlist.'
+    focusMessage(statusAlert)
   } catch (error) {
     if (!mounted) return
     errorMessage.value = error.message
@@ -122,6 +144,7 @@ async function answerOffer(rsvpId, accept) {
     } catch (refreshError) {
       errorMessage.value = error.message + ' Could not refresh RSVPs: ' + refreshError.message
     }
+    focusMessage(errorAlert)
   } finally {
     if (mounted) busyId.value = null
   }
@@ -147,11 +170,13 @@ async function cancel(rsvpId) {
     if (!mounted) return
     confirmCancelId.value = null
     statusMessage.value = 'RSVP cancelled.'
+    focusMessage(statusAlert)
   } catch (error) {
     if (mounted) {
       errorMessage.value = error.message
       confirmCancelId.value = null
       try { await loadRsvps(true) } catch { /* retain the original cancellation error */ }
+      focusMessage(errorAlert)
     }
   } finally {
     if (mounted) busyId.value = null
@@ -188,6 +213,8 @@ async function cancel(rsvpId) {
     </div>
     <div
       v-if="statusMessage"
+      ref="statusAlert"
+      tabindex="-1"
       class="alert alert-success d-flex justify-content-between align-items-center" role="status" aria-live="polite"
     >
       <span>{{ statusMessage }}</span>
@@ -198,7 +225,7 @@ async function cancel(rsvpId) {
         @click="statusMessage = ''"
       ></button>
     </div>
-    <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+    <div v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
 
     <!-- 24-hour offers go on top so they're not missed -->
     <OfferBanner
@@ -256,20 +283,22 @@ async function cancel(rsvpId) {
               Yes, cancel
             </button>
             <button
+              :id="`keep-${rsvp.id}`"
               type="button"
               class="btn btn-outline-secondary btn-sm"
-              @click="confirmCancelId = null"
+              @click="keepRsvp(rsvp.id)"
             >
               Keep it
             </button>
           </template>
           <button
             v-else
+            :id="`cancel-${rsvp.id}`"
             type="button"
             class="btn btn-outline-danger btn-sm"
-            @click="confirmCancelId = rsvp.id"
+            @click="askCancel(rsvp.id)"
           >
-            Cancel RSVP
+            Cancel RSVP<span class="visually-hidden"> for {{ rsvp.event.title }}</span>
           </button>
         </div>
       </div>
@@ -292,11 +321,13 @@ async function cancel(rsvpId) {
         <li
           v-for="rsvp in closedRsvps"
           :key="rsvp.id"
-          class="list-group-item d-flex justify-content-between align-items-center"
+          class="list-group-item closed-rsvp"
         >
-          <span>{{ rsvp.event.title }}</span>
-          <RsvpStatusBadge :status="rsvp.status" />
-          <span v-if="rsvp.checkedInAt" class="badge text-bg-success ms-2">Checked in</span>
+          <span class="closed-title">{{ rsvp.event.title }}</span>
+          <span class="closed-badges">
+            <RsvpStatusBadge :status="rsvp.status" />
+            <span v-if="rsvp.checkedInAt" class="badge text-bg-success">Checked in</span>
+          </span>
         </li>
       </ul>
     </div>
@@ -328,5 +359,8 @@ async function cancel(rsvpId) {
 :deep(.btn-primary) { border-color: var(--bookedz-primary-dark, #aa3e2c); background: var(--bookedz-primary-dark, #aa3e2c); }
 :deep(:focus-visible) { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
 @media (min-width: 768px) { .rsvp-card-main { flex-direction: row; align-items: center; padding: 1.35rem 1.5rem; } }
+.closed-rsvp { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; }
+.closed-title { min-width: 0; overflow-wrap: anywhere; }
+.closed-badges { display: inline-flex; flex-wrap: wrap; gap: .5rem; }
 @media (max-width: 575px) { .my-rsvps-page { padding-top: .5rem; } }
 </style>

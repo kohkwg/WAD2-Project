@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import RsvpTable from '../components/RsvpTable.vue'
 import WaitlistTable from '../components/WaitlistTable.vue'
@@ -28,6 +28,15 @@ const errorMessage = ref('')
 const statusMessage = ref('')
 const busyId = ref(null)
 const activeTab = ref('confirmed')
+const statusAlert = ref(null)
+const errorAlert = ref(null)
+
+// A row's buttons are disabled while it saves (which drops keyboard focus) and the row then
+// moves to another tab, so focus continues from the message that reports the outcome.
+async function focusMessage(target) {
+  await nextTick()
+  target.value?.focus()
+}
 
 // `now` ticks every 30 seconds so offer countdowns stay current
 const now = ref(Date.now())
@@ -153,8 +162,12 @@ async function approve(rsvpId) {
       updated.status === 'confirmed'
         ? 'Approved. They are confirmed.'
         : 'Approved, but the event is full, so they joined the waitlist.'
+    focusMessage(statusAlert)
   } catch (error) {
-    if (isCurrentEvent(id, version)) errorMessage.value = error.message
+    if (isCurrentEvent(id, version)) {
+      errorMessage.value = error.message
+      focusMessage(errorAlert)
+    }
   } finally {
     if (actionRequest === action && actionEventId === id && routeVersion === version) {
       busyId.value = null
@@ -177,8 +190,12 @@ async function reject(rsvpId) {
     if (!isCurrentEvent(id, version)) return
     if (!(await loadData(id)) || !isCurrentEvent(id, version)) return
     statusMessage.value = 'RSVP rejected.'
+    focusMessage(statusAlert)
   } catch (error) {
-    if (isCurrentEvent(id, version)) errorMessage.value = error.message
+    if (isCurrentEvent(id, version)) {
+      errorMessage.value = error.message
+      focusMessage(errorAlert)
+    }
   } finally {
     if (actionRequest === action && actionEventId === id && routeVersion === version) {
       busyId.value = null
@@ -201,8 +218,12 @@ async function remove(rsvpId) {
     if (!isCurrentEvent(id, version)) return
     if (!(await loadData(id)) || !isCurrentEvent(id, version)) return
     statusMessage.value = 'Attendee removed. The next person on the waitlist has been offered the spot.'
+    focusMessage(statusAlert)
   } catch (error) {
-    if (isCurrentEvent(id, version)) errorMessage.value = error.message
+    if (isCurrentEvent(id, version)) {
+      errorMessage.value = error.message
+      focusMessage(errorAlert)
+    }
   } finally {
     if (actionRequest === action && actionEventId === id && routeVersion === version) {
       busyId.value = null
@@ -305,6 +326,8 @@ async function demoExpireOffers() {
 
     <div
       v-if="statusMessage"
+      ref="statusAlert"
+      tabindex="-1"
       class="alert alert-success d-flex justify-content-between align-items-center"
       role="status"
       aria-live="polite"
@@ -317,7 +340,7 @@ async function demoExpireOffers() {
         @click="statusMessage = ''"
       ></button>
     </div>
-    <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+    <div v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
 
     <!-- Tabs: Vue decides which one is showing (activeTab), so no Bootstrap JS needed -->
     <div class="nav nav-tabs status-tabs" role="group" aria-label="Filter RSVPs by status">
@@ -331,7 +354,7 @@ async function demoExpireOffers() {
           @click="activeTab = tab.key"
         >
           {{ tab.label }}
-          <span class="badge rounded-pill text-bg-secondary ms-1">{{ tab.count }}</span>
+          <span class="badge rounded-pill tab-count ms-1">{{ tab.count }}</span>
         </button>
     </div>
 
@@ -408,7 +431,7 @@ async function demoExpireOffers() {
 </template>
 
 <style scoped>
-.rsvp-back { display: inline-flex; align-items: center; min-height: 40px; color: var(--bookedz-ink); font-weight: 650; text-decoration-color: var(--bookedz-border); text-underline-offset: 4px; }
+.rsvp-back { display: inline-flex; align-items: center; min-height: 44px; color: var(--bookedz-ink); font-weight: 650; text-decoration-color: var(--bookedz-border); text-underline-offset: 4px; }
 .rsvp-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.35rem clamp(1rem, 3vw, 1.8rem); border: 1px solid var(--bookedz-border); border-left: 5px solid var(--bookedz-primary); border-radius: 20px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
 .rsvp-heading h1 { color: var(--bookedz-ink); font-size: clamp(1.55rem, 3vw, 2.25rem); font-weight: 700; letter-spacing: -.04em; overflow-wrap: anywhere; }
 .rsvp-kicker { color: var(--bookedz-primary-dark); font-weight: 700; font-size: .85rem; }
@@ -441,16 +464,19 @@ async function demoExpireOffers() {
 .status-chip--waitlist { background: color-mix(in srgb, var(--bookedz-mint) 24%, var(--bookedz-surface)); }
 .status-chip--closed { background: var(--bookedz-glass-solid); }
 .status-tabs { display: flex; flex-wrap: wrap; gap: .35rem; padding: .45rem; border: 1px solid var(--bookedz-border); border-radius: 16px 16px 0 0; background: var(--bookedz-glass-solid); }
-:deep(.status-tabs .nav-link) { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-height: 42px; border: 1px solid transparent; border-radius: 11px; color: var(--bookedz-muted); font-weight: 650; white-space: nowrap; }
-:deep(.status-tabs .nav-link.active) { color: var(--bookedz-primary-dark); border-color: var(--bookedz-border); background: var(--bookedz-surface); box-shadow: var(--bookedz-tab-shadow); }
-:deep(.status-tabs .badge) { color: var(--bookedz-ink); background: var(--bookedz-hover) !important; }
+/* Plain scoped selectors: the tab buttons belong to this template. (The earlier :deep() form
+   needed an ancestor from this component and never matched, so inactive tabs showed as coral links.) */
+.status-tabs .nav-link { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-height: 44px; border: 1px solid transparent; border-radius: 11px; color: var(--bookedz-muted); font-weight: 650; white-space: nowrap; }
+.status-tabs .nav-link:hover { color: var(--bookedz-ink); background: var(--bookedz-glass-hover); }
+.status-tabs .nav-link.active { color: var(--bookedz-primary-dark); border-color: var(--bookedz-border); background: var(--bookedz-surface); box-shadow: var(--bookedz-tab-shadow); }
+.tab-count { color: var(--bookedz-ink); background: var(--bookedz-hover); }
 .rsvp-list-panel { min-height: 120px; padding: clamp(.8rem, 2vw, 1.3rem); border: 1px solid var(--bookedz-border); border-top: 0; border-radius: 0 0 16px 16px; background: var(--bookedz-surface); }
 :deep(.table) { --bs-table-bg: transparent; --bs-table-striped-bg: var(--bookedz-glass-solid); }
 :deep(.table thead th) { color: var(--bookedz-muted); font-size: .82rem; font-weight: 700; white-space: nowrap; }
 :deep(.table td) { vertical-align: middle; }
 :deep(.table-responsive) { border-radius: 12px; }
 :deep(.alert) { border-color: var(--bookedz-border); }
-@media (max-width: 767.98px) { .guest-summary { grid-template-columns: minmax(0, 1fr); } .status-chips { grid-template-columns: repeat(2,minmax(0,1fr)); } .status-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); } :deep(.status-tabs .nav-link) { min-width: 0; white-space: normal; } }
+@media (max-width: 767.98px) { .guest-summary { grid-template-columns: minmax(0, 1fr); } .status-chips { grid-template-columns: repeat(2,minmax(0,1fr)); } .status-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); } .status-tabs .nav-link { min-width: 0; white-space: normal; } }
 @media (max-width: 575.98px) { .rsvp-heading { align-items: flex-start; padding: 1.1rem 1rem; } .guestlist-stamp { flex-basis: 40px; width: 40px; height: 40px; border-radius: 13px; } .status-chips { grid-template-columns: 1fr; } .capacity-overview { padding: 1rem; } .capacity-legend { gap: .4rem .7rem; } .rsvp-event-meta { display: grid; gap: .15rem; } .rsvp-event-meta span + span::before { content: none; } }
 @media (prefers-reduced-motion: reduce) { .capacity-segment { transition: none; } }
 </style>

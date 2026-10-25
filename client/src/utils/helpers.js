@@ -19,13 +19,15 @@ export function formatEventTime(event) {
   if (!event.startTime || !event.endTime) return 'Date and time not set'
   const start = new Date(event.startTime)
   const end = new Date(event.endTime)
-  const day = start.toLocaleDateString('en-SG', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  })
-  const from = start.toLocaleTimeString('en-SG', { hour: 'numeric', minute: '2-digit' })
-  const to = end.toLocaleTimeString('en-SG', { hour: 'numeric', minute: '2-digit' })
+  const dayFormat = { weekday: 'short', day: 'numeric', month: 'short' }
+  const timeFormat = { hour: 'numeric', minute: '2-digit' }
+  const day = start.toLocaleDateString('en-SG', dayFormat)
+  const from = start.toLocaleTimeString('en-SG', timeFormat)
+  const to = end.toLocaleTimeString('en-SG', timeFormat)
+  // Multi-day events also name the end date, so "Thu 5 pm – Sun 5 pm" doesn't read as one evening
+  if (start.toDateString() !== end.toDateString()) {
+    return `${day}, ${from} – ${end.toLocaleDateString('en-SG', dayFormat)}, ${to}`
+  }
   return `${day}, ${from} – ${to}`
 }
 

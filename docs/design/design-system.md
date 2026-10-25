@@ -87,13 +87,25 @@ My RSVPs uses actual status totals, date-led cards, consistent status badges and
 live-only ticket links. Offer deadlines, confirmation/cancellation and refresh
 cadence remain intact. List transitions reflect actual data changes.
 
+Below 992px, a state-aware "Go to RSVP" shortcut beside the back link scrolls to
+and focuses the RSVP panel without reordering the details. Yes/No answers are
+native radios inside 44px choice pills, and required questions read "(required)".
+Places and spots left appear once, in the event facts; the waitlist size is added
+only when full. Team members see a status card; the organiser also gets Manage
+RSVPs. Confirm steps focus the safe choice first, return focus when kept and move
+focus to the outcome message when a card or row disappears. Offer actions stack
+on phones. Multi-day events show their end date.
+
 ## Creation and organiser operations
 
 Create Event is a four-step studio: progress indication, direction-aware step
 changes, focus restoration, live draft preview and responsive layout. The progress
 fill uses transforms. Existing validation, cover upload, retry/publication guards,
 venue search and RSVP-question authoring are preserved. A preview is not a saved
-or published event.
+or published event. On phones the form precedes the preview so the current step's
+fields come first. Choosing a venue focuses the chosen-venue card and Change
+returns to the search; venue/question boxes use theme tokens in both themes.
+A typed but unadded question is added on Next, and Review says so.
 
 Manage Event leads with event/time/active venue, then Manage RSVPs/public-event
 links and grouped live check-in/QR/attendance/floor-plan links. Descriptive Tasks,
@@ -105,6 +117,8 @@ Manage RSVPs shows actual confirmed/offered/available capacity and separate
 pending/waitlist/closed totals. The segmented bar animates transforms when data
 changes. It never generates people or simulated statuses. RSVP and waitlist tables
 reflow to labelled mobile rows while preserving headers, actions and ranking.
+Status tabs are muted when inactive and coral when active, with 44px targets; row
+actions include the attendee's name for assistive technology.
 
 ## Motion, coverage and evidence
 

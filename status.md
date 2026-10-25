@@ -337,3 +337,39 @@ not persist. These are dated observations, not permanent database invariants.
 - Only publication/document/resource checks apply to this pass. No full suite or
   production build is requested. Feature-branch resets, PRs, merges, deployment
   and hosted data writes are not part of this publication.
+
+
+### 25 October — Gregory's F2 design branch (`gregory`)
+
+- Gregory confirmed ownership and the one-time replacement. Both tips (`798c8e1`,
+  identical locally and remotely) were pushed as
+  `backup/design-baseline/gregory/20261025-174739-local` and `-remote`; `gregory`
+  was then reset to baseline `86c026516690cc6f5e0f7c5bdbdde2093273fc02` with an
+  explicit-SHA lease. No open PR used the branch (PR #1 merged on 21 October).
+  Only the last commit (an older light/dark toggle) was absent from dev; the
+  baseline's System/Light/Dark theme supersedes it, and it remains in the backups.
+- Create Event: on Next, a typed but unadded RSVP question is added and noted on
+  Review (it was previously dropped silently). Chosen-venue/question boxes use
+  theme tokens instead of `bg-light` (unreadable in dark mode). Picking or
+  changing a venue and removing a question keep keyboard focus; step headings are
+  `h3`. On phones the form precedes the live preview.
+- Public RSVP: phone-only state-aware "Go to RSVP" shortcut; 44px Yes/No choice
+  pills around native radios; consistent "(required)"; spots left shown once;
+  team members see a status card with Manage RSVPs for the organiser.
+- My RSVPs and Manage RSVPs: confirm steps focus Keep first, return focus when
+  kept, and focus the outcome message after a card/row disappears. Offer actions
+  stack on phones. Manage RSVPs status-tab styles now apply (a scoped `:deep()`
+  selector never matched), with 44px tabs; row actions name the attendee for
+  assistive technology. Multi-day events show their end date (`formatEventTime`,
+  also used by Manage Event).
+- Targeted checks only: new `eventTime.test.js` 3/3; six changed SFCs compile;
+  `git diff --check` clean. Demo Chromium: `workspace-design` 2/2,
+  `legacy-review-fixes` 7/7 and four selected RSVP/team/wizard/radio cases 4/4.
+  Before editing, the same 13 cases ran 10/13: three stale redesign selectors
+  (step text, former Occupancy progressbar, former "RSVP" form heading); those
+  assertions were updated to current markup. A scratch behaviour script passed
+  44/44 (focus, contrast, pills, shortcut, tabs, reflow and one `main` at
+  375/575/768/1280px; light/dark; reduced motion). Port 5173 was occupied by
+  another process, so Playwright ran against an owned demo server on 5181.
+- Host used Node 24.12 rather than Node 22. No full suite, production build, live
+  or hosted check, Safari/real-device check, dependency change or Hallmark audit.
