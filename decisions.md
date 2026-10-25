@@ -217,3 +217,14 @@ use explicit force-with-lease only on the owner's feature branch. Subsequent wor
 uses normal feature pushes; Denzel will create/review/merge PRs into dev later.
 This authority does not reset teammates' branches now, force-push dev/main, deploy,
 or mutate hosted application data. See `design-branches.md`.
+
+
+### Gregory's F2 design branch, 25 October
+
+Gregory confirmed ownership of `gregory`, approved its one-time backup-first
+replacement with baseline `86c0265`, and requested Feature 2 UI/UX improvements
+following the shared design guidance, targeted checks, documentation updates and
+a normal push to `gregory`. PR creation and merging stay with Denzel. This does not
+authorise changes to dev/main, other owners' branches, shared shell/theme files,
+dependencies, schema or hosted data. Results are recorded in
+[status](status.md#25-october--gregorys-f2-design-branch-gregory).

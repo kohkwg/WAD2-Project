@@ -121,6 +121,21 @@ const whatHappensNext = computed(() => {
   return 'This event is full, so you will join the waitlist. If a spot opens up, you get 24 hours to take it.'
 })
 
+// Phones show the public details first, so a shortcut near the top jumps down to the RSVP panel
+const jumpLabel = computed(() => {
+  if (!signedIn.value) return 'Sign in to RSVP'
+  if (result.value || existingRsvp.value) return 'See your RSVP'
+  return 'Go to RSVP'
+})
+
+function jumpToRsvp() {
+  const panel = document.getElementById('rsvp')
+  if (!panel) return
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  panel.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+  panel.focus({ preventScroll: true }) // keyboard and screen-reader users continue from the panel
+}
+
 async function submitRsvp() {
   if (submitting.value || !signedIn.value || event.value?.isOnTeam) return
   triedSubmit.value = true
@@ -159,6 +174,10 @@ async function submitRsvp() {
   <div ref="pageMotion" class="public-event-page">
   <div class="rsvp-intro">
     <RouterLink to="/events" class="rsvp-back">&larr; All events</RouterLink>
+    <!-- Phones only: the RSVP panel sits below the details, map and announcements -->
+    <a v-if="!loading && event && !event.isOnTeam" href="#rsvp" class="rsvp-jump d-lg-none" @click.prevent="jumpToRsvp">
+      {{ jumpLabel }}<span aria-hidden="true">&nbsp;↓</span>
+    </a>
   </div>
 
   <div class="row g-4 mt-1 participant-rsvp">
@@ -166,11 +185,8 @@ async function submitRsvp() {
     <div class="col-lg-8 order-1 event-public-details">
       <EventSummary v-if="event" :event="event" heading-tag="h1">
         <VenueMap v-if="event.venue?.lat" :lat="event.venue.lat" :lng="event.venue.lng" class="my-3" />
-        <hr />
-        <p v-if="event.spotsLeft > 0" class="mb-0 text-success fw-semibold">
-          {{ event.spotsLeft }} of {{ event.capacity }} spots left
-        </p>
-        <p v-else class="mb-0 text-warning-emphasis fw-semibold">
+        <!-- Places and spots left are already in the facts above; the waitlist size is the extra detail -->
+        <p v-if="event.spotsLeft <= 0" class="waitlist-note">
           Full · {{ event.waitlistCount }} on the waitlist
         </p>
       </EventSummary>
@@ -180,7 +196,7 @@ async function submitRsvp() {
     </div>
 
     <!-- RSVP actions and private-data states follow the public context. -->
-    <div id="rsvp" data-scroll-reveal class="col-lg-4 order-2 rsvp-action-panel">
+    <div id="rsvp" data-scroll-reveal class="col-lg-4 order-2 rsvp-action-panel" tabindex="-1">
       <div v-if="loading" class="text-center my-5" role="status" aria-live="polite">
         <div class="spinner-border text-primary" aria-hidden="true"></div>
         <span class="visually-hidden">Loading event and RSVP information…</span>
@@ -221,7 +237,13 @@ async function submitRsvp() {
       </div>
 
       <!-- The RSVP form -->
-      <div v-else-if="event.isOnTeam" class="alert alert-info" role="status">Organisers and helpers can't RSVP to their own event.</div>
+      <!-- Team members can't RSVP; the event's organiser gets the next useful step instead of a dead end -->
+      <div v-else-if="event.isOnTeam" class="card card-body shadow-sm rsvp-state rsvp-state--team" role="status">
+        <span class="state-mark" aria-hidden="true">✳</span>
+        <h2 class="h4">You're on this event's team</h2>
+        <p>Organisers and helpers can't RSVP to their own event.</p>
+        <RouterLink v-if="event.isMine" :to="`/organiser/events/${eventId}/rsvps`" class="btn event-cta align-self-start">Manage RSVPs</RouterLink>
+      </div>
       <form v-else class="card card-body shadow-sm rsvp-form" @submit.prevent="submitRsvp" novalidate>
         <div class="form-heading">
           <div>
@@ -251,15 +273,18 @@ async function submitRsvp() {
               <fieldset class="border-0 p-0 m-0">
                 <legend class="form-label fs-6 mb-2">
                   {{ question.text }}
-                  <span v-if="question.required" class="text-danger">(required)</span>
+                  <span v-if="question.required" class="required-mark">(required)</span>
                 </legend>
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" :name="question.id" :id="question.id + '-yes'" value="yes" v-model="answers[question.id]" :required="question.required" :aria-invalid="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? 'true' : undefined" :aria-describedby="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? question.id + '-error' : undefined" />
-                  <label class="form-check-label" :for="question.id + '-yes'">Yes</label>
-                </div>
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" :name="question.id" :id="question.id + '-no'" value="no" v-model="answers[question.id]" :required="question.required" :aria-invalid="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? 'true' : undefined" :aria-describedby="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? question.id + '-error' : undefined" />
-                  <label class="form-check-label" :for="question.id + '-no'">No</label>
+                <!-- Native radios inside 44px choice pills: the whole pill is an easy touch target -->
+                <div class="choice-group">
+                  <div class="form-check choice-option">
+                    <input class="form-check-input" type="radio" :name="question.id" :id="question.id + '-yes'" value="yes" v-model="answers[question.id]" :required="question.required" :aria-invalid="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? 'true' : undefined" :aria-describedby="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? question.id + '-error' : undefined" />
+                    <label class="form-check-label" :for="question.id + '-yes'">Yes</label>
+                  </div>
+                  <div class="form-check choice-option">
+                    <input class="form-check-input" type="radio" :name="question.id" :id="question.id + '-no'" value="no" v-model="answers[question.id]" :required="question.required" :aria-invalid="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? 'true' : undefined" :aria-describedby="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? question.id + '-error' : undefined" />
+                    <label class="form-check-label" :for="question.id + '-no'">No</label>
+                  </div>
                 </div>
                 <div v-if="triedSubmit && question.required && !String(answers[question.id] || '').trim()" :id="question.id + '-error'" class="invalid-feedback d-block">Please answer: {{ question.text }}</div>
               </fieldset>
@@ -267,7 +292,7 @@ async function submitRsvp() {
             <template v-else>
               <label class="form-label" :for="question.id">
                 {{ question.text }}
-                <span v-if="question.required" class="text-danger">*</span>
+                <span v-if="question.required" class="required-mark">(required)</span>
               </label>
 
               <input
@@ -310,8 +335,23 @@ async function submitRsvp() {
 .form-spark svg { width: 24px; height: 24px; }
 .rsvp-action-panel { scroll-margin-top: 110px; }
 @media(min-width:992px) { .rsvp-action-panel :deep(.col-md-6) { width: 100%; }.rsvp-action-panel .event-cta { width: 100%; }.rsvp-action-panel .d-flex { flex-wrap: wrap; }.rsvp-action-panel { position: sticky; top: 110px; } }
-.rsvp-intro { display: grid; grid-template-columns: 1fr; gap: .15rem; margin-bottom: .8rem; }
-.rsvp-back { display: inline-flex; align-items: center; min-height: 40px; width: fit-content; color: var(--bookedz-ink); font-weight: 650; text-decoration-color: var(--bookedz-border); text-underline-offset: 4px; transition: transform var(--bookedz-motion-fast) ease; }
+.rsvp-intro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: .8rem; }
+.rsvp-jump { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border: 1px solid var(--bookedz-control-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-surface); font-weight: 650; text-decoration: none; transition: background-color var(--bookedz-motion-fast) ease; }
+.rsvp-jump:hover { color: var(--bookedz-ink); background: var(--bookedz-glass-hover); }
+/* The panel is only focused as the shortcut's target; its own controls keep their focus rings */
+.participant-rsvp > .rsvp-action-panel:focus, .participant-rsvp > .rsvp-action-panel:focus-visible { outline: none; }
+.waitlist-note { margin: 1rem 0 0; padding-top: 1rem; border-top: 1px solid var(--bookedz-border); color: var(--bookedz-ink); font-weight: 650; }
+.rsvp-state--team { background: linear-gradient(145deg, var(--bookedz-surface), color-mix(in srgb, var(--bookedz-yellow) 30%, var(--bookedz-surface))); }
+.required-mark { color: var(--bookedz-danger); font-size: .85em; font-weight: 600; }
+.choice-group { display: flex; flex-wrap: wrap; gap: .5rem; }
+.choice-option { position: relative; display: inline-flex; align-items: center; gap: .55rem; min-height: 44px; margin: 0; padding: 0 1.1rem 0 .9rem; border: 1px solid var(--bookedz-control-border); border-radius: 12px; background: var(--bookedz-surface); transition: border-color var(--bookedz-motion-fast) ease, background-color var(--bookedz-motion-fast) ease; }
+.choice-option .form-check-input { position: relative; z-index: 1; float: none; margin: 0; }
+.choice-option .form-check-label { cursor: pointer; }
+.choice-option .form-check-label::after { content: ''; position: absolute; inset: 0; border-radius: inherit; } /* the whole pill selects the option */
+.choice-option:hover { background: var(--bookedz-glass-hover); }
+.choice-option:has(.form-check-input:checked) { border-color: var(--bookedz-primary-dark); background: color-mix(in srgb, var(--bookedz-primary-dark) 12%, var(--bookedz-surface)); }
+.choice-option:has(.form-check-input[aria-invalid="true"]) { border-color: var(--bookedz-danger); }
+.rsvp-back { display: inline-flex; align-items: center; min-height: 44px; width: fit-content; color: var(--bookedz-ink); font-weight: 650; text-decoration-color: var(--bookedz-border); text-underline-offset: 4px; transition: transform var(--bookedz-motion-fast) ease; }
 .rsvp-back:hover { transform: translateX(-3px); }
 .rsvp-kicker { margin: .8rem 0 0; color: var(--bookedz-primary-dark); font-size: .82rem; font-weight: 700; }
 .rsvp-lede { margin: 0; font: 600 clamp(1.45rem, 2.5vw, 2rem)/1.15 var(--bookedz-heading); letter-spacing: -.035em; color: var(--bookedz-ink); }
@@ -337,5 +377,5 @@ async function submitRsvp() {
 @keyframes confirmation-arrive { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (max-width: 991.98px) { .rsvp-intro { margin-bottom: .25rem; } }
 @media (max-width: 575px) { .participant-rsvp { --bs-gutter-x: 1rem; } .rsvp-lede { max-width: 18ch; } .rsvp-state .d-flex { flex-direction: column; align-items: stretch; } .rsvp-state .btn { width: 100%; } }
-@media (prefers-reduced-motion: reduce) { .rsvp-back, .rsvp-state--success { animation: none; transition: none; } }
+@media (prefers-reduced-motion: reduce) { .rsvp-back, .rsvp-state--success, .rsvp-jump, .choice-option { animation: none; transition: none; } }
 </style>

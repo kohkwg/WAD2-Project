@@ -32,7 +32,7 @@ const isExpired = computed(() => timeLeft.value === 'expired')
       <div v-else class="small mt-1">This offer has expired.</div>
     </div>
 
-    <div v-if="!isExpired" class="d-flex gap-2 flex-shrink-0">
+    <div v-if="!isExpired" class="offer-actions d-flex gap-2 flex-shrink-0">
       <button
         type="button"
         class="btn event-cta"
@@ -59,5 +59,7 @@ const isExpired = computed(() => timeLeft.value === 'expired')
 .offer-banner h2 { font-size: 1.1rem; }
 .offer-expired { border-color: var(--bookedz-border, #e5ded2); color: var(--bookedz-muted); background: var(--bookedz-glass-solid); }
 .offer-banner button { min-height: 44px; }
+/* Phones: full-width stacked actions instead of two squeezed buttons with wrapping labels */
+@media (max-width: 575.98px) { .offer-actions { flex-direction: column; } }
 :deep(:focus-visible) { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
 </style>

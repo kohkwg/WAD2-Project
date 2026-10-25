@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { formatShortDateTime } from '../utils/helpers.js'
 
 // Table of RSVPs for the organiser. Used for both "Pending approval" and "Confirmed".
@@ -20,6 +20,19 @@ const confirmRemoveId = ref(null)
 function confirmRemove(rsvpId) {
   emit('remove', rsvpId)
   confirmRemoveId.value = null
+}
+
+// The pressed button is replaced by the confirm step (and back), so move focus with it
+async function askRemove(rsvpId) {
+  confirmRemoveId.value = rsvpId
+  await nextTick()
+  document.getElementById(`keep-attendee-${rsvpId}`)?.focus() // the safe choice is focused first
+}
+
+async function keepAttendee(rsvpId) {
+  confirmRemoveId.value = null
+  await nextTick()
+  document.getElementById(`remove-attendee-${rsvpId}`)?.focus()
 }
 
 function formatAnswer(question, answer) {
@@ -86,7 +99,7 @@ function formatAnswer(question, answer) {
               :disabled="busyId === rsvp.id"
               @click="emit('approve', rsvp.id)"
             >
-              Approve
+              Approve <span class="visually-hidden">{{ rsvp.user.name }}</span>
             </button>
             <button
               type="button"
@@ -94,7 +107,7 @@ function formatAnswer(question, answer) {
               :disabled="busyId === rsvp.id"
               @click="emit('reject', rsvp.id)"
             >
-              Reject
+              Reject <span class="visually-hidden">{{ rsvp.user.name }}</span>
             </button>
           </td>
 
@@ -107,24 +120,26 @@ function formatAnswer(question, answer) {
                 :disabled="busyId === rsvp.id"
                 @click="confirmRemove(rsvp.id)"
               >
-                Yes, remove
+                Yes, remove <span class="visually-hidden">{{ rsvp.user.name }}</span>
               </button>
               <button
+                :id="`keep-attendee-${rsvp.id}`"
                 type="button"
                 class="btn btn-outline-secondary btn-sm"
-                @click="confirmRemoveId = null"
+                @click="keepAttendee(rsvp.id)"
               >
                 Keep
               </button>
             </template>
             <button
               v-else
+              :id="`remove-attendee-${rsvp.id}`"
               type="button"
               class="btn btn-outline-danger btn-sm"
               :disabled="busyId === rsvp.id"
-              @click="confirmRemoveId = rsvp.id"
+              @click="askRemove(rsvp.id)"
             >
-              Remove
+              Remove <span class="visually-hidden">{{ rsvp.user.name }}</span>
             </button>
           </td>
         </tr>

@@ -64,6 +64,8 @@ const form = ref({
 
 // The question currently being typed in step 3
 const newQuestion = ref({ text: '', type: 'text', required: false })
+// Shown on Review when a typed-but-not-added question was added for the organiser
+const questionNotice = ref('')
 
 // Stops people picking a date in the past
 const nowForInput = toDateTimeInputValue(new Date())
@@ -148,6 +150,11 @@ async function focusStep() {
 }
 
 function nextStep() {
+  // A question typed but never added would otherwise be left out of the event without warning
+  if (step.value === 3 && newQuestion.value.text.trim() !== '') {
+    addQuestion()
+    questionNotice.value = 'The question you typed was added to your RSVP questions.'
+  }
   if (stepErrors.value.length > 0) {
     showErrors.value = true
     focusStep()
@@ -161,6 +168,7 @@ function nextStep() {
 
 function previousStep() {
   showErrors.value = false
+  questionNotice.value = ''
   direction.value = -1
   step.value--
   focusStep()
@@ -168,8 +176,21 @@ function previousStep() {
 
 // ---------- Step 2: venue ----------
 
+// The search box disappears once a place is chosen (and returns on "Change"), so move
+// keyboard focus to whatever replaced it instead of losing it to the page.
+async function focusById(id) {
+  await nextTick()
+  document.getElementById(id)?.focus()
+}
+
 function setVenue(place) {
   form.value.venue = place
+  focusById('venue-chosen')
+}
+
+function changeVenue() {
+  form.value.venue = null
+  focusById('venue-search')
 }
 
 function moveVenuePin(position) {
@@ -179,6 +200,12 @@ function moveVenuePin(position) {
 
 function setBackupVenue(place) {
   form.value.backupVenue = place
+  focusById('backup-chosen')
+}
+
+function changeBackupVenue() {
+  form.value.backupVenue = null
+  focusById('backup-search')
 }
 
 // ---------- Step 3: custom RSVP questions ----------
@@ -196,6 +223,7 @@ function addQuestion() {
 
 function removeQuestion(index) {
   form.value.questions.splice(index, 1)
+  focusById('q-text') // its Remove button is gone; continue where the next question is typed
 }
 
 // ---------- Step 4: publish ----------
@@ -371,18 +399,21 @@ async function publish() {
         <!-- ================= STEP 2: VENUE ================= -->
         <div v-else-if="step === 2" aria-labelledby="step-content-heading">
           <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">Venue</h2>
-          <h5>Main venue</h5>
-          <div v-if="form.venue" class="border rounded p-3 mb-3 bg-light">
-            <div class="fw-semibold">{{ form.venue.name }}</div>
-            <div class="small text-secondary">{{ form.venue.address }}</div>
-            <div v-if="form.venue.lat" class="small text-secondary">
+          <h3 class="h5 step-subheading">Main venue</h3>
+          <!-- Theme-aware chosen-venue card; it receives focus after a search result is picked -->
+          <div v-if="form.venue" class="venue-choice">
+            <p id="venue-chosen" class="venue-choice-name" tabindex="-1">
+              <span class="visually-hidden">Chosen venue: </span>{{ form.venue.name }}
+            </p>
+            <p class="venue-choice-meta">{{ form.venue.address }}</p>
+            <p v-if="form.venue.lat" class="venue-choice-meta">
               Map position: {{ form.venue.lat.toFixed(4) }}, {{ form.venue.lng.toFixed(4) }}
-            </div>
-              <template v-if="form.venue.lat">
-                <VenueMap :lat="form.venue.lat" :lng="form.venue.lng" draggable class="my-2" @move="moveVenuePin" />
-                <div class="form-text mb-2">Drag the pin or click the map to mark the exact spot.</div>
-              </template>
-            <button type="button" class="btn btn-link btn-sm p-0" @click="form.venue = null">
+            </p>
+            <template v-if="form.venue.lat">
+              <VenueMap :lat="form.venue.lat" :lng="form.venue.lng" draggable class="my-2" @move="moveVenuePin" />
+              <p class="form-text mb-2">Drag the pin or click the map to mark the exact spot.</p>
+            </template>
+            <button type="button" class="btn btn-link btn-sm p-0" @click="changeVenue">
               Change venue
             </button>
           </div>
@@ -409,15 +440,13 @@ async function publish() {
           </div>
 
           <template v-if="form.isOutdoor">
-            <h5>Backup venue (if it rains)</h5>
-            <div v-if="form.backupVenue" class="border rounded p-3 mb-3 bg-light">
-              <div class="fw-semibold">{{ form.backupVenue.name }}</div>
-              <div class="small text-secondary">{{ form.backupVenue.address }}</div>
-              <button
-                type="button"
-                class="btn btn-link btn-sm p-0"
-                @click="form.backupVenue = null"
-              >
+            <h3 class="h5 step-subheading">Backup venue (if it rains)</h3>
+            <div v-if="form.backupVenue" class="venue-choice">
+              <p id="backup-chosen" class="venue-choice-name" tabindex="-1">
+                <span class="visually-hidden">Chosen backup venue: </span>{{ form.backupVenue.name }}
+              </p>
+              <p class="venue-choice-meta">{{ form.backupVenue.address }}</p>
+              <button type="button" class="btn btn-link btn-sm p-0" @click="changeBackupVenue">
                 Change backup venue
               </button>
             </div>
@@ -449,7 +478,7 @@ async function publish() {
             </div>
           </div>
 
-          <h5>Questions for people who RSVP</h5>
+          <h3 class="h5 step-subheading">Questions for people who RSVP</h3>
           <p class="form-text mt-0">
             Optional. Use these to screen sign-ups, e.g. "Which year are you in?"
           </p>
@@ -460,25 +489,23 @@ async function publish() {
               :key="question.id"
               class="list-group-item d-flex justify-content-between align-items-center gap-2"
             >
-              <div>
-                {{ question.text }}
-                <span class="badge text-bg-light border ms-1">
-                  {{ question.type === 'yesno' ? 'Yes / No' : 'Short answer' }}
-                </span>
-                <span v-if="question.required" class="badge text-bg-secondary ms-1">Required</span>
+              <div class="question-summary">
+                <span class="question-text">{{ question.text }}</span>
+                <span class="question-chip">{{ question.type === 'yesno' ? 'Yes / No' : 'Short answer' }}</span>
+                <span v-if="question.required" class="question-chip question-chip--required">Required</span>
               </div>
               <button
                 type="button"
                 class="btn btn-outline-danger btn-sm"
                 @click="removeQuestion(index)"
               >
-                Remove
+                Remove<span class="visually-hidden"> question: {{ question.text }}</span>
               </button>
             </li>
           </ul>
           <p v-else class="text-secondary small">No questions yet.</p>
 
-          <div class="bg-light border rounded p-3">
+          <div class="question-composer">
             <div class="row g-2 align-items-end">
               <div class="col-md-6">
                 <label for="q-text" class="form-label small">Question</label>
@@ -526,6 +553,7 @@ async function publish() {
           <p class="text-secondary">
             Check everything before publishing. Use Back to change anything; nothing is lost.
           </p>
+          <p v-if="questionNotice" class="question-notice" role="status">{{ questionNotice }}</p>
           <EventSummary :event="form">
             <hr />
             <p class="mb-1">
@@ -642,10 +670,22 @@ async function publish() {
 .step-forward-leave-to { opacity: 0; transform: translateX(-.65rem); }
 .step-back-enter-from { opacity: 0; transform: translateX(-1.1rem); }
 .step-back-leave-to { opacity: 0; transform: translateX(.65rem); }
-@media (max-width: 767.98px) { .creation-layout { grid-template-columns: minmax(0, 1fr); } .event-preview { position: static; order: -1; } .preview-art { min-height: 6rem; } }
+/* Phones: the form comes first so the current step's fields are visible without scrolling; the preview follows it */
+@media (max-width: 767.98px) { .creation-layout { grid-template-columns: minmax(0, 1fr); } .event-preview { position: static; } .preview-art { min-height: 6rem; } }
 @media (max-width: 575.98px) { .create-heading { margin-top: .5rem; } }
 .cover-preview { display: grid; justify-items: start; gap: .5rem; margin: 1rem 0 0; }
 .cover-preview img { display: block; width: min(100%, 32rem); max-height: 15rem; aspect-ratio: 16 / 8; object-fit: cover; border: 1px solid var(--bookedz-border); border-radius: 14px; }
 .cover-preview figcaption { color: var(--bookedz-muted); font-size: .85rem; }
+/* Venue and question boxes use theme tokens (Bootstrap's bg-light stays white in dark mode) */
+.step-subheading { margin: 0 0 .75rem; color: var(--bookedz-ink); font-weight: 650; }
+.venue-choice { margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 14px; background: color-mix(in srgb, var(--bookedz-mint) 22%, var(--bookedz-surface)); }
+.venue-choice-name { margin: 0; color: var(--bookedz-ink); font-weight: 700; overflow-wrap: anywhere; }
+.venue-choice-meta { margin: .15rem 0 0; color: var(--bookedz-muted); font-size: .875rem; overflow-wrap: anywhere; }
+.question-composer { padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 14px; background: var(--bookedz-glass-solid); }
+.question-summary { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem; min-width: 0; }
+.question-text { color: var(--bookedz-ink); overflow-wrap: anywhere; }
+.question-chip { display: inline-flex; align-items: center; padding: .2rem .6rem; border: 1px solid var(--bookedz-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-hover); font-size: .75rem; font-weight: 650; }
+.question-chip--required { color: var(--bookedz-primary-dark); }
+.question-notice { margin: 0 0 1rem; padding: .7rem .9rem; border-radius: 12px; color: var(--bookedz-ink); background: color-mix(in srgb, var(--bookedz-mint) 30%, var(--bookedz-surface)); font-size: .9rem; }
 @media (prefers-reduced-motion: reduce) { .step-forward-enter-active, .step-forward-leave-active, .step-back-enter-active, .step-back-leave-active, .create-event-page :deep(.form-control), .create-event-page :deep(.form-select) { transition: none; } }
 </style>

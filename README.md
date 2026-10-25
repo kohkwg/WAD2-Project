@@ -314,3 +314,13 @@ prepared backup-first, owner-scoped branch replacement instructions. This does
 not reset teammates' branches or create/merge their PRs; those steps remain with
 each owner and Denzel. Private source resources and local credentials/tools remain
 excluded; deployable art/fonts/licences and design documentation are included.
+
+On 25 October 2026, at Gregory's request, Claude Code (Anthropic Claude Opus 5.5)
+followed `design-branches.md` to back up and replace the `gregory` branch with the
+published baseline, then authored Feature 2 presentation and accessibility
+refinements: Create Event question/venue/focus/dark-mode and phone-order changes,
+public RSVP choice pills, shortcut and team state, My RSVPs and Manage RSVPs focus,
+tab and offer-action fixes, multi-day `formatEventTime` output with a Node test,
+updates to three stale browser-test selectors, and these notes. Gregory's RSVP,
+waitlist and creation logic and other teammates' work keep their authorship. No
+libraries or backend changes were added. Details: [status](status.md#25-october--gregorys-f2-design-branch-gregory).
