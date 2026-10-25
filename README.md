@@ -314,3 +314,10 @@ prepared backup-first, owner-scoped branch replacement instructions. This does
 not reset teammates' branches or create/merge their PRs; those steps remain with
 each owner and Denzel. Private source resources and local credentials/tools remain
 excluded; deployable art/fonts/licences and design documentation are included.
+
+On 25 October 2026, at Aishani's request, Codex refined F1 Profile's theme-aware
+form, interest-selection feedback, saving states and Discover's responsive view
+controls, semantic hosting colours and reduced-motion hover behaviour. Codex
+also authored isolated browser regressions and updated the feature design/status
+notes. Aishani's recommendation ranking and existing data contracts retain their
+original authorship. No runtime library was added.
