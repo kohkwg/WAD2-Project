@@ -1,6 +1,8 @@
 // Run from the server folder: node tests/recommendation.test.js
 const assert = require("node:assert");
-const { recommend, scoreEvents, bumpInterestWeights } = require("../services/recommendation");
+const { recommend, scoreEvents } = require("../services/recommendation");
+
+const { bumpInterestWeights } = require("../services/interestWeights");
 
 const inDays = (d) => new Date(Date.now() + d * 86400000).toISOString();
 
