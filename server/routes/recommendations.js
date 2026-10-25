@@ -1,7 +1,9 @@
 const express = require("express");
 const supabaseForUser = require("../lib/userSupabase");
 const requireAuth = require("../lib/requireAuth");
-const { recommend, bumpInterestWeights } = require("../services/recommendation");
+const { rankEvents } = require("../services/rankEvents");
+const { bumpInterestWeights } = require("../services/interestWeights");
+const { haversineKm } = require("../services/recommendation");
 
 const router = express.Router();
 
@@ -31,7 +33,13 @@ router.get("/", requireAuth, async (req, res) => {
     if (regErr) throw regErr;
 
     const excludeEventIds = new Set((registrations || []).map((r) => r.event_id));
-    const results = recommend(events || [], profile || {}, { limit, excludeEventIds });
+    const results = rankEvents(events || [], profile || {}, { limit, excludeEventIds })
+      .map(({ event, score, reason }) => {
+        // Keep the flat card contract, including its optional distance label.
+        const km = profile?.lat != null && profile?.lng != null && event.lat != null && event.lng != null
+          ? haversineKm(profile.lat, profile.lng, event.lat, event.lng) : null;
+        return { ...event, score, reason, distance_km: km != null ? Math.round(km * 10) / 10 : null };
+      });
 
     res.json({ events: results });
   } catch (err) {
