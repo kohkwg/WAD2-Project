@@ -56,7 +56,7 @@ function fillPercent(event) {
 
 <template>
   <header class="organiser-heading d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-    <div><p class="organiser-kicker mb-2">Your hosting space</p><h1 class="mb-1">My events</h1><p class="text-secondary mb-0">Keep every gathering, guest list and detail in one place.</p></div>
+    <div><p class="organiser-kicker mb-2">Your hosting space</p><h1 class="mb-1">My events</h1><p class="organiser-lede mb-0">Keep every gathering, guest list and detail in one place.</p></div>
     <RouterLink to="/organiser/events/new" class="btn btn-primary">Create event</RouterLink>
   </header>
 
@@ -90,7 +90,7 @@ function fillPercent(event) {
         <div v-else class="organiser-event-cover organiser-event-cover--empty"><EventArtwork :category="event.tags?.[0] || 'community'" /></div>
 
         <div class="card-body organiser-event-body">
-          <div class="event-title-row"><h2 class="h5 card-title mb-1">{{ event.title }}</h2><span v-if="event.id === justCreatedId" class="badge text-bg-success">Just published</span></div>
+          <div class="event-title-row"><h2 class="h5 card-title mb-1">{{ event.title }}</h2><span v-if="event.id === justCreatedId" class="status-pill status-pill--new">Just published</span></div>
           <p class="event-meta small text-secondary mb-3">
             <span>{{ formatEventTime(event) }}</span><span>{{ event.venue.name }}</span>
           </p>
@@ -101,12 +101,12 @@ function fillPercent(event) {
           </div>
 
           <div class="event-statuses" aria-label="Registration status">
-            <span v-if="event.offeredCount > 0" class="badge text-bg-info">{{ event.offeredCount }} offers out</span>
-            <span v-if="event.pendingCount > 0" class="badge text-bg-secondary">{{ event.pendingCount }} awaiting approval</span>
-            <span v-if="event.waitlistCount > 0" class="badge text-bg-warning">{{ event.waitlistCount }} on waitlist</span>
+            <span v-if="event.offeredCount > 0" class="status-pill status-pill--offered">{{ event.offeredCount }} offers out</span>
+            <span v-if="event.pendingCount > 0" class="status-pill status-pill--pending">{{ event.pendingCount }} awaiting approval</span>
+            <span v-if="event.waitlistCount > 0" class="status-pill status-pill--waitlist">{{ event.waitlistCount }} on waitlist</span>
           </div>
         </div>
-        <footer class="card-footer bg-white event-card-actions">
+        <footer class="card-footer event-card-actions">
           <div class="event-primary-actions">
             <RouterLink :to="'/organiser/events/' + event.id + '/manage?tab=tasks'" class="btn btn-primary btn-sm">Manage event</RouterLink>
             <RouterLink :to="'/organiser/events/' + event.id + '/rsvps'" class="btn btn-outline-primary btn-sm">Manage RSVPs</RouterLink>
@@ -128,26 +128,36 @@ function fillPercent(event) {
 <style scoped>
 .organiser-heading { padding: 1.5rem clamp(1rem, 3vw, 2rem); border-radius: 22px; background: var(--bookedz-mint, #dceee3); }
 .organiser-heading h1 { color: var(--bookedz-ink, #292d32); font-size: clamp(1.7rem, 3vw, 2.35rem); font-weight: 700; letter-spacing: -.035em; }
-.organiser-kicker { color: #385b49; font-size: .875rem; font-weight: 650; }
-.organiser-heading :deep(.btn-primary), .empty-events :deep(.btn-primary) { background: var(--bookedz-primary-dark, #aa3e2c); border-color: var(--bookedz-primary-dark, #aa3e2c); color: #fff; }
-.organiser-heading :deep(.btn-primary):hover, .empty-events :deep(.btn-primary):hover { background: #873020; border-color: #873020; }
+.organiser-kicker { color: var(--bookedz-forest); font-size: .875rem; font-weight: 650; }
+/* Grey text-secondary was 3.9:1 on the light mint heading; ink reads clearly in both themes */
+.organiser-lede { color: var(--bookedz-ink); }
+/* on-action is the coral button's text colour in both themes (white on peach failed in dark mode) */
+.organiser-heading :deep(.btn-primary), .empty-events :deep(.btn-primary) { background: var(--bookedz-primary-dark, #aa3e2c); border-color: var(--bookedz-primary-dark, #aa3e2c); color: var(--bookedz-on-action); }
+.organiser-heading :deep(.btn-primary):hover, .empty-events :deep(.btn-primary):hover { background: var(--bookedz-primary-hover); border-color: var(--bookedz-primary-hover); color: var(--bookedz-on-action); }
 .empty-events { max-width: 42rem; margin: 3rem auto; padding: clamp(2rem, 6vw, 4rem) 1.5rem; border: 1px dashed var(--bookedz-border, #e5ded2); border-radius: 24px; background: var(--bookedz-surface, #fffdfa); }
-.empty-events-mark { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem; border-radius: 50%; background: var(--bookedz-yellow, #f6cf77); color: #44371a; font-size: 1.8rem; }
+.empty-events-mark { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem; border-radius: 50%; background: var(--bookedz-yellow, #f6cf77); color: var(--bookedz-ink); font-size: 1.8rem; }
 .empty-events p { max-width: 30rem; margin: 0 auto 1.5rem; }
 .organiser-event-card { overflow: hidden; border-color: var(--bookedz-border, #e5ded2); border-radius: 18px; box-shadow: var(--bookedz-shadow, 0 4px 18px rgb(41 45 50 / 5%)) !important; }
 .organiser-event-cover { display: block; width: 100%; aspect-ratio: 16 / 7; object-fit: cover; background: var(--bookedz-mint, #dceee3); }
-.organiser-event-cover--empty { display: grid; place-items: center; color: #385b49; font-size: .9rem; font-weight: 650; }
+.organiser-event-cover--empty { display: grid; place-items: center; color: var(--bookedz-forest); font-size: .9rem; font-weight: 650; }
 .organiser-event-body { display: flex; flex-direction: column; }
 .event-title-row { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .5rem; }
 .event-meta { display: grid; gap: .2rem; margin-top: .2rem; }
 .capacity-copy { display: flex; align-items: baseline; gap: .35rem; margin-top: auto; color: var(--bookedz-muted, #63665e); font-size: .9rem; }
 .capacity-copy strong { color: var(--bookedz-ink, #292d32); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
-.organiser-event-card .progress { height: .5rem; overflow: hidden; border-radius: 99px; background: #eee9df; }
-.organiser-event-card .progress-bar.bg-success { background: #56896a !important; }
+.organiser-event-card .progress { height: .5rem; overflow: hidden; border-radius: 99px; background: var(--bookedz-hover); }
+.organiser-event-card .progress-bar.bg-success { background: var(--bookedz-success) !important; }
 .event-statuses { display: flex; flex-wrap: wrap; gap: .4rem; min-height: 1.25rem; }
-.event-card-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; border-color: var(--bookedz-border, #e5ded2); }
+/* Registration status pills use theme tokens (Bootstrap's text-bg-* colours ignore the dark theme) */
+.status-pill { display: inline-flex; align-items: center; padding: .3rem .65rem; border: 1px solid var(--bookedz-border); border-radius: 999px; color: var(--bookedz-ink); font-size: .78rem; font-weight: 650; line-height: 1.2; }
+.status-pill--offered { background: color-mix(in srgb, var(--bookedz-yellow) 40%, var(--bookedz-surface)); }
+.status-pill--pending { background: color-mix(in srgb, var(--bookedz-primary) 20%, var(--bookedz-surface)); }
+.status-pill--waitlist { background: color-mix(in srgb, var(--bookedz-mint) 45%, var(--bookedz-surface)); }
+.status-pill--new { background: color-mix(in srgb, var(--bookedz-success) 22%, var(--bookedz-surface)); }
+/* The footer follows the theme (bg-white stayed white in dark mode) */
+.event-card-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; border-color: var(--bookedz-border, #e5ded2); background: var(--bookedz-surface); }
 .event-primary-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
-.event-primary-actions :deep(.btn-primary) { background: var(--bookedz-primary-dark, #aa3e2c); border-color: var(--bookedz-primary-dark, #aa3e2c); color: #fff; }
+.event-primary-actions :deep(.btn-primary) { background: var(--bookedz-primary-dark, #aa3e2c); border-color: var(--bookedz-primary-dark, #aa3e2c); color: var(--bookedz-on-action); }
 .event-delete-action { margin-left: auto; }
 @media (max-width: 575.98px) {
   .organiser-heading { align-items: stretch !important; }

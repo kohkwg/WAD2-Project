@@ -373,3 +373,18 @@ not persist. These are dated observations, not permanent database invariants.
   another process, so Playwright ran against an owned demo server on 5181.
 - Host used Node 24.12 rather than Node 22. No full suite, production build, live
   or hosted check, Safari/real-device check, dependency change or Hallmark audit.
+- Follow-up the same day: the seven components used only by F2 pages moved to
+  `client/src/components/rsvp/`. `RsvpStatusBadge` stays in place as a shared
+  status component, and `VenueMap` stays because F6's editor also imports it.
+  My events now follows the theme: its footer was `bg-white`, coral buttons forced
+  white text (1.8:1 in dark) and its label, progress track and status badges used
+  fixed colours. The waitlist offer badge, Create Event's disabled outline buttons,
+  the My events subtitle (3.9:1 in light) and RSVP validation text (4.46:1) also
+  use theme tokens. The stale "public list cards" assertions now match the
+  redesigned My events markup.
+- Follow-up checks: 15 targeted demo Chromium cases passed (the 13 above plus My
+  events deletion and public list cards). A scratch contrast audit of 18 F2 page
+  states found no issues in dark mode; in light mode only the two disabled outline
+  buttons (3.6:1, the shared disabled colours; WCAG exempts disabled controls).
+  Shared `main.css` still leaves `.btn-primary` text white in dark mode and
+  outline-button disabled colours unset; noted for Huxley.

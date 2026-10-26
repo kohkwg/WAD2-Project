@@ -315,12 +315,32 @@ not reset teammates' branches or create/merge their PRs; those steps remain with
 each owner and Denzel. Private source resources and local credentials/tools remain
 excluded; deployable art/fonts/licences and design documentation are included.
 
-On 25 October 2026, at Gregory's request, Claude Code (Anthropic Claude Opus 5.5)
+On 25 October 2026, at Gregory's request worked with Claude Code (Anthropic Claude Opus 5.5)
 followed `design-branches.md` to back up and replace the `gregory` branch with the
 published baseline, then authored Feature 2 presentation and accessibility
-refinements: Create Event question/venue/focus/dark-mode and phone-order changes,
+refinements:
+
+Summary - Fixed dark-mode for certain pages, Added notes for RSVP.
+
+Create Event question/venue/focus/dark-mode and phone-order changes,
 public RSVP choice pills, shortcut and team state, My RSVPs and Manage RSVPs focus,
 tab and offer-action fixes, multi-day `formatEventTime` output with a Node test,
 updates to three stale browser-test selectors, and these notes. Gregory's RSVP,
-waitlist and creation logic and other teammates' work keep their authorship. No
-libraries or backend changes were added. Details: [status](status.md#25-october--gregorys-f2-design-branch-gregory).
+waitlist and creation logic and other teammates' work keep their authorship.
+
+No libraries or backend changes were added. Details: [status](status.md#25-october--gregorys-f2-design-branch-gregory).
+
+
+On 26 October 2026, Gregory committed follow up with edited by claude.
+
+Summary - Grouped Feature 2 components into one folder and finished dark mode for
+the F2 pages.
+
+The seven components used only by Feature 2 pages moved into
+`client/src/components/rsvp/`; `RsvpStatusBadge` stays shared and `VenueMap` stays
+because Feature 6's floor-plan editor also uses it. My events (card footer, coral
+buttons, labels, progress bars and status badges), the waitlist offer badge, Create
+Event's disabled buttons and RSVP validation messages now follow the shared
+light/dark theme, and one more stale browser test was updated. Gregory's logic and
+other teammates' work keep their authorship. No libraries or backend changes were
+added. Details: [status](status.md#25-october--gregorys-f2-design-branch-gregory).

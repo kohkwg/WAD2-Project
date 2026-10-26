@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import RsvpTable from '../components/RsvpTable.vue'
-import WaitlistTable from '../components/WaitlistTable.vue'
+import RsvpTable from '../components/rsvp/RsvpTable.vue'
+import WaitlistTable from '../components/rsvp/WaitlistTable.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import {
   getEvent,

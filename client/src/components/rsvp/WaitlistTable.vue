@@ -1,6 +1,6 @@
 <script setup>
-import { formatTimeLeft } from '../utils/helpers.js'
-import { WEIGHTS } from '../utils/waitlistScore.js'
+import { formatTimeLeft } from '../../utils/helpers.js'
+import { WEIGHTS } from '../../utils/waitlistScore.js'
 
 // Organiser view of who is waiting, in score order, plus anyone currently holding an offer.
 defineProps({
@@ -30,7 +30,8 @@ function percent(value) {
         <div class="fw-semibold">{{ rsvp.user.name }}</div>
         <div class="small text-secondary">{{ rsvp.user.email }}</div>
       </div>
-      <span class="badge text-bg-info">
+      <!-- Styled by .offer-item .badge (theme tokens); text-bg-info forced black text in dark mode -->
+      <span class="badge">
         Expires in {{ formatTimeLeft(rsvp.offerExpiresAt, now) }}
       </span>
     </li>
