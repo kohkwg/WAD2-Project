@@ -361,3 +361,25 @@ not persist. These are dated observations, not permanent database invariants.
 - No full suite/production build, hosted writes, deployments or PR creation/merge.
   Safari, physical devices and signed-in hosted profile writes remain unverified.
   Denzel owns subsequent PR review/integration into dev.
+
+### 26 October — F1 interest formula, Step 1
+
+- Implemented Aishani's supplied 50/50 share and strength formula and exported
+  `interestScore`; other signals and diversity behaviour remain unchanged.
+- Added the supplied console-based helper and five cases under `server/checks`,
+  plus `npm run check` and usage documentation. Existing test files remain; only
+  affected numeric expectations in the ranking test were updated.
+- All five console cases and 16 targeted ranking/route/interaction tests pass on
+  installed Node 24.12.0; Node 22 was not verified in this pass. No full suite,
+  build, hosted writes or deployment. Steps 2–6 remain pending.
+
+### 26 October — F1 tag diversity, Step 2
+
+- Exported `tagSimilarity` and replaced cumulative category penalties with
+  maximum Jaccard tag overlap against selected events, without compounding
+  the original score. Missing/empty tags receive no penalty.
+- All 14 interest/diversity console checks pass, including tag-only ranking,
+  duplicate tags and missing tags. All 16 targeted ranking/route/interaction
+  tests pass on Node 24.12.0; the existing diversity fixture now uses tags.
+- No full suite, production build, hosted write or deployment. Steps 3–6 remain
+  pending. The requested commit includes the previously uncommitted Step 1 work.

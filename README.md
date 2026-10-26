@@ -43,11 +43,19 @@ settings for live Supabase/R2. Without client keys, core demo flows use localSto
 `VITE_USE_MOCK=true` forces demo. No privileged key belongs in a browser variable.
 Server scripts load `server/.env`; Express health defaults to port 3000.
 
+For the standalone recommendation interest and diversity checks, run `npm run check` from
+`server/`. Each case prints PASS or FAIL; a failure sets a nonzero exit code.
+
 The detailed disclosure below is dated authorship history, not the current test or
 deployment status. Use the timeline for the latest verified checkpoint and remaining
 limits. Keep the disclosure and library credits in submission/presentation materials.
 
 ## AI assistance disclosure
+
+On 26 October 2026, at Aishani's request, Codex implemented the supplied interest
+formula blending preference share and match strength, exported its helper, added
+the supplied console-based checks and command, and updated affected expected
+scores in the existing ranking tests. Other ranking signals remain unchanged.
 
 Codex generated the agent setup and project-context documentation, configured
 Graphify, and indexed the supplied resources. This disclosure covers repository
@@ -321,3 +329,8 @@ controls, semantic hosting colours and reduced-motion hover behaviour. Codex
 also authored isolated browser regressions and updated the feature design/status
 notes. Aishani's recommendation ranking and existing data contracts retain their
 original authorship. No runtime library was added.
+
+On 26 October 2026, for Aishani's Step 2 request, Codex replaced category-based
+diversity with maximum Jaccard tag overlap, using the supplied 0.3 tunable
+heuristic. Codex added console-based similarity/ranking checks and updated the
+existing diversity test fixture and expected order.
