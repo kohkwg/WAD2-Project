@@ -46,8 +46,14 @@ async function upload(event) {
 }
 </script>
 <template>
-<section v-if="canEdit || assets.length || error" class="my-4" aria-label="Floor-plan images">
-  <h2 class="h5">Floor-plan image</h2>
+<section v-if="canEdit || assets.length || error" class="my-4 floor-images" aria-label="Floor-plan images">
+  <div class="floor-images-heading">
+    <div>
+      <span class="floor-images-kicker">Public handoff</span>
+      <h2 class="h5">Floor-plan image</h2>
+    </div>
+    <span v-if="assets.length" class="image-status">Shared</span>
+  </div>
   <template v-if="canEdit">
     <p class="small text-muted">Upload a finished plan to share publicly on this published event. JPEG, PNG or WebP, up to 10 MiB. Uploading replaces the current image.</p>
     <p v-if="!planId" class="small">Save the floor plan before uploading an image.</p><p v-else-if="!published" class="small">Publish the event before sharing an image.</p>
@@ -56,11 +62,19 @@ async function upload(event) {
   <p v-if="loading" role="status">Loading floor-plan images…</p>
   <p v-if="busy" role="status">Uploading image…</p><p v-if="message" class="text-success" role="status">{{ message }}</p>
   <div v-if="error" role="alert" class="alert alert-danger">{{ error }} <button type="button" class="btn btn-sm btn-outline-danger" :disabled="busy || loading" @click="load">Retry loading image</button></div>
-  <figure v-for="asset in assets" :key="asset.id" class="mb-2"><img :src="asset.publicUrl" :alt="asset.name" class="img-fluid rounded border" @error="error = 'The floor-plan image could not be displayed.'" /><figcaption class="small text-muted">{{ asset.name }}</figcaption></figure>
+  <figure v-for="asset in assets" :key="asset.id" class="floor-image-preview"><img :src="asset.publicUrl" :alt="asset.name" class="img-fluid rounded border" @error="error = 'The floor-plan image could not be displayed.'" /><figcaption class="small text-muted">{{ asset.name }}</figcaption></figure>
 </section>
 </template>
 
 <style scoped>
-[aria-label="Floor-plan images"]{padding:1.1rem 1.25rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:18px;background:#fffdfa}[aria-label="Floor-plan images"] h2{font-family:Georgia,'Times New Roman',serif;letter-spacing:-.02em}[aria-label="Floor-plan images"] .form-control{min-height:42px;border-color:var(--bookedz-border,#e5ded2);border-radius:10px}[aria-label="Floor-plan images"] img{max-width:100%;border-radius:12px}[aria-label="Floor-plan images"] .btn{min-height:38px;border-radius:10px}
-@media(max-width:575.98px){[aria-label="Floor-plan images"]{padding:1rem;border-radius:16px}}
+.floor-images{padding:1.1rem 1.25rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:18px;background:var(--bookedz-surface,#fffdfa);box-shadow:var(--bookedz-card-shadow,none)}
+.floor-images-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:.7rem}
+.floor-images-kicker{display:block;color:var(--bookedz-muted,#63665e);font-size:.72rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+.floor-images h2{font-family:var(--bookedz-heading,'Bricolage Grotesque',sans-serif);letter-spacing:-.02em}
+.image-status{display:inline-flex;align-items:center;min-height:30px;padding:.25rem .55rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:999px;background:var(--bookedz-cream,#fff8ec);color:var(--bookedz-muted,#63665e);font-size:.78rem;font-weight:700}
+.floor-images .form-control{min-height:42px;border-color:var(--bookedz-border,#e5ded2);border-radius:10px}
+.floor-image-preview{margin:1rem 0 0;padding:.65rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:14px;background:var(--bookedz-cream,#fff8ec)}
+.floor-images img{max-width:100%;border-color:var(--bookedz-border,#e5ded2)!important;border-radius:12px}
+.floor-images .btn{min-height:38px;border-radius:10px}
+@media(max-width:575.98px){.floor-images{padding:1rem;border-radius:16px}}
 </style>

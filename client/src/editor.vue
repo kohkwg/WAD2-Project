@@ -36,6 +36,11 @@ const editorStatus = computed(() => {
     if (canEdit.value) return dirty.value ? 'Unsaved changes' : 'All changes saved'
     return 'View only'
 })
+const planStats = computed(() => [
+    { label: 'Zones', value: floorObjects.value.length },
+    { label: 'People markers', value: people.value.length },
+    { label: 'Team placements', value: placements.value.length },
+])
 
 const stageConfig = {
     width: 900,
@@ -334,9 +339,26 @@ function addPerson() {
         <div v-else-if="loadError" class="alert alert-danger" role="alert">{{ loadError }} <button class="btn btn-sm btn-outline-danger" @click="load">Retry floor plan</button></div>
 
         <template v-else-if="USING_SUPABASE">
+        <dl v-if="!readOnly" class="floor-status-strip" aria-label="Floor plan summary">
+            <div v-for="stat in planStats" :key="stat.label">
+                <dt>{{ stat.label }}</dt>
+                <dd>{{ stat.value }}</dd>
+            </div>
+        </dl>
         <div class="floor-editor-layout" :class="{ 'viewer-layout': readOnly }">
         <aside v-if="canEdit" class="floor-tools">
-        <section v-if="!readOnly && currentEvent" class="venue-summary"><h2 class="h5">Active venue</h2><p>{{ mapVenue?.name }} · {{ mapVenue?.address }} <span v-if="currentEvent.usingBackup" class="badge text-bg-info">Backup venue active</span></p><VenueMap v-if="hasCoordinates" :lat="Number(mapVenue.lat)" :lng="Number(mapVenue.lng)" /><p v-else class="text-muted small">No coordinates saved for this venue.</p></section>
+        <section v-if="!readOnly && currentEvent" class="venue-summary">
+            <div class="panel-heading">
+                <div>
+                    <span class="panel-kicker">Active venue</span>
+                    <h2 class="h5">{{ mapVenue?.name || 'Venue not set' }}</h2>
+                </div>
+                <span v-if="currentEvent.usingBackup" class="badge text-bg-info">Backup active</span>
+            </div>
+            <p class="venue-address">{{ mapVenue?.address || 'No venue address saved.' }}</p>
+            <VenueMap v-if="hasCoordinates" :lat="Number(mapVenue.lat)" :lng="Number(mapVenue.lng)" />
+            <p v-else class="text-muted small mb-0">No coordinates saved for this venue.</p>
+        </section>
         <p v-if="canEdit && !floorObjects.length && !people.length" class="text-muted small">
             No floor plan yet. Add boxes for areas (stage, booths, entrance) and people for helper spots, drag them into place, then save.
         </p>
@@ -344,7 +366,10 @@ function addPerson() {
         <section v-if="canEdit" class="edit-panel">
             <div>
                 <div class="edit-heading">
-                    <h2 class="h6 mb-0">Boxes</h2>
+                    <div>
+                        <span class="panel-kicker">Plan zones</span>
+                        <h2 class="h6 mb-0">Boxes</h2>
+                    </div>
                     <button
                         class="btn btn-sm btn-outline-primary"
                         type="button"
@@ -384,7 +409,10 @@ function addPerson() {
 
             <div>
                 <div class="edit-heading">
-                    <h2 class="h6 mb-0">People</h2>
+                    <div>
+                        <span class="panel-kicker">Free markers</span>
+                        <h2 class="h6 mb-0">People</h2>
+                    </div>
                     <button
                         class="btn btn-sm btn-outline-primary"
                         type="button"
@@ -433,15 +461,21 @@ function addPerson() {
         </section>
 
         <section v-if="canEdit || placements.length" class="helper-panel" aria-label="Team helper placements">
-          <h2 class="h6">Team helper placements</h2>
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">Team-only</span>
+              <h2 class="h6">Helper placements</h2>
+            </div>
+            <span class="status-pill">{{ placements.length }} placed</span>
+          </div>
           <p class="small text-muted">Real event team members. These placements are visible to the event team only.</p>
           <p v-if="!planId" class="small">Save the floor plan before placing a helper.</p>
           <div v-if="canEdit" class="d-flex flex-wrap gap-2 mb-2">
             <label class="flex-grow-1">Team member<select aria-label="Team member" v-model="selectedMember" class="form-select" :disabled="helperBusy || !planId"><option value="">Choose a team member</option><option v-for="member in availableMembers" :key="member.user_id" :value="member.user_id">{{ member.profiles?.display_name || 'Team member' }} ({{ member.member_role }})</option></select></label>
             <button class="btn btn-outline-primary align-self-end" :disabled="helperBusy || !planId || !selectedMember" @click="addHelper">Add helper</button>
           </div>
-          <div v-for="spot in placements" :key="spot.id" class="d-flex flex-wrap align-items-end gap-2 mb-2">
-            <span>{{ memberLabel(spot.user_id) }}</span>
+          <div v-for="spot in placements" :key="spot.id" class="helper-row">
+            <span class="helper-name">{{ memberLabel(spot.user_id) }}</span>
             <label>X<input :value="spot.x" type="number" min="40" max="860" class="form-control coordinate-input" :disabled="!canEdit || helperBusy" @change="moveHelper(spot.id, $event.target.value, spot.y)" /></label>
             <label>Y<input :value="spot.y" type="number" min="40" max="486" class="form-control coordinate-input" :disabled="!canEdit || helperBusy" @change="moveHelper(spot.id, spot.x, $event.target.value)" /></label>
             <button v-if="canEdit" class="btn btn-outline-danger" :disabled="helperBusy" @click="removeHelper(spot.id)">Remove helper {{ memberLabel(spot.user_id) }}</button>
@@ -452,7 +486,7 @@ function addPerson() {
         </section>
         </aside>
         <section ref="stageHost" class="editor-shell" aria-label="Floor plan canvas">
-            <div class="workspace-caption"><h2 class="h5 mb-1">Canvas</h2><p class="small mb-0">Drag zones and people into place. Use the fields alongside the canvas for precise labels and coordinates.</p></div>
+            <div class="workspace-caption"><span class="panel-kicker">Layout canvas</span><h2 class="h5 mb-1">Canvas</h2><p class="small mb-0">Drag zones and people into place. Use the fields alongside the canvas for precise labels and coordinates.</p></div>
             <div class="stage-wrap">
                 <v-stage :config="scaledStage">
                 <v-layer>
@@ -656,28 +690,38 @@ function addPerson() {
 </style>
 
 <style scoped>
-.floor-editor,.floor-plan-viewer{--floor-ink:var(--bookedz-ink,#292d32);--floor-paper:var(--bookedz-cream,#fff9ef);--floor-coral:var(--bookedz-coral-dark,#aa3e2c);--floor-line:var(--bookedz-border,#e5ded2);color:var(--floor-ink)}
+.floor-editor,.floor-plan-viewer{--floor-ink:var(--bookedz-ink,#292d32);--floor-muted:var(--bookedz-muted,#63665e);--floor-paper:var(--bookedz-cream,#fff9ef);--floor-surface:var(--bookedz-surface,#fffdfa);--floor-coral:var(--bookedz-coral-dark,#aa3e2c);--floor-line:var(--bookedz-border,#e5ded2);color:var(--floor-ink)}
 .floor-page-heading{padding:1rem 0 1.15rem;border-bottom:1px solid var(--floor-line)}
-.floor-page-heading h1{font-family:Georgia,'Times New Roman',serif;letter-spacing:-.035em;font-size:clamp(1.8rem,4vw,2.4rem)}
-.floor-page-heading .btn-primary,.floor-editor .btn-primary{--bs-btn-bg:var(--floor-coral);--bs-btn-border-color:var(--floor-coral);--bs-btn-color:#fff;--bs-btn-hover-bg:#8f3022;--bs-btn-hover-border-color:#8f3022;--bs-btn-hover-color:#fff;border-radius:12px;min-height:42px}
+.floor-page-heading h1{font-family:var(--bookedz-heading,'Bricolage Grotesque',sans-serif);letter-spacing:-.035em;font-size:clamp(1.8rem,4vw,2.4rem)}
+.floor-page-heading .btn-primary,.floor-editor .btn-primary{--bs-btn-bg:var(--floor-coral);--bs-btn-border-color:var(--floor-coral);--bs-btn-color:var(--bookedz-on-action,#fffdfa);--bs-btn-hover-bg:var(--bookedz-primary-hover,#8f3022);--bs-btn-hover-border-color:var(--bookedz-primary-hover,#8f3022);--bs-btn-hover-color:var(--bookedz-on-action,#fffdfa);border-radius:12px;min-height:42px}
 .floor-editor .btn-outline-primary,.floor-plan-viewer .btn-outline-primary{--bs-btn-color:var(--floor-coral);--bs-btn-border-color:var(--floor-coral);--bs-btn-hover-bg:var(--floor-coral);--bs-btn-hover-border-color:var(--floor-coral);border-radius:10px}
+.floor-status-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;margin:0 0 1rem;padding:0}
+.floor-status-strip div{padding:.8rem 1rem;border:1px solid var(--floor-line);border-radius:14px;background:var(--floor-surface);box-shadow:var(--bookedz-card-shadow,none)}
+.floor-status-strip dt{margin:0;color:var(--floor-muted);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.floor-status-strip dd{margin:0;color:var(--floor-ink);font-family:var(--bookedz-heading,'Bricolage Grotesque',sans-serif);font-size:1.35rem;font-weight:750;line-height:1.1}
 .floor-editor-layout{display:grid;grid-template-columns:minmax(290px,370px) minmax(0,1fr);align-items:start;gap:1rem}
 .floor-tools{display:grid;gap:1rem;min-width:0}
-.venue-summary,.edit-panel,.helper-panel{padding:1rem;border:1px solid var(--floor-line);border-radius:18px;background:#fffdfa}
-.venue-summary h2,.edit-panel h2,.helper-panel h2{font-family:Georgia,'Times New Roman',serif;font-weight:700;letter-spacing:-.02em}
-.venue-summary p{overflow-wrap:anywhere}.venue-summary :deep(.venue-map){border-radius:12px;overflow:hidden}
+.venue-summary,.edit-panel,.helper-panel{padding:1rem;border:1px solid var(--floor-line);border-radius:18px;background:var(--floor-surface);box-shadow:var(--bookedz-card-shadow,none)}
+.panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:.65rem}
+.panel-heading h2,.edit-panel h2{margin:0}
+.panel-kicker{display:block;color:var(--floor-muted);font-size:.72rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+.status-pill{display:inline-flex;align-items:center;min-height:30px;padding:.25rem .55rem;border:1px solid var(--floor-line);border-radius:999px;background:var(--floor-paper);color:var(--floor-muted);font-size:.78rem;font-weight:700;white-space:nowrap}
+.venue-summary h2,.edit-panel h2,.helper-panel h2{font-family:var(--bookedz-heading,'Bricolage Grotesque',sans-serif);font-weight:700;letter-spacing:-.02em}
+.venue-summary p{overflow-wrap:anywhere}.venue-address{color:var(--floor-muted);font-size:.92rem}.venue-summary :deep(.venue-map){border-radius:12px;overflow:hidden}
 .edit-panel{display:grid;grid-template-columns:1fr;gap:1rem;padding:1rem}
 .edit-grid{grid-template-columns:1fr;gap:.55rem}.people-grid{grid-template-columns:1fr}.edit-heading{margin-bottom:.65rem}.edit-heading .btn{min-height:38px}
 .edit-field,.person-edit-row{padding:.35rem;border-radius:10px;background:var(--floor-paper)}
 .edit-field .form-control,.person-edit-row .form-control,.person-edit-row .form-select,.helper-panel .form-control,.helper-panel .form-select{min-height:40px;border-color:var(--floor-line);border-radius:9px}
-.helper-panel{padding:1rem}.helper-panel>div{padding:.55rem 0;border-top:1px solid var(--floor-line)}.helper-panel label{font-size:.86rem;font-weight:600}.helper-panel .coordinate-input{width:5.3rem}.helper-panel button{min-height:40px;border-radius:10px}
+.helper-panel{padding:1rem}.helper-panel>div:not(.panel-heading){padding:.55rem 0;border-top:1px solid var(--floor-line)}.helper-panel label{font-size:.86rem;font-weight:600}.helper-panel .coordinate-input{width:5.3rem}.helper-panel button{min-height:40px;border-radius:10px}
+.helper-row{display:grid;grid-template-columns:minmax(8rem,1fr) auto auto;align-items:end;gap:.5rem}
+.helper-row .btn{grid-column:1/-1;justify-self:start}.helper-name{align-self:center;font-weight:700;overflow-wrap:anywhere}
 .editor-shell{min-width:0;overflow:auto;padding:1rem;border:1px solid var(--floor-line);border-radius:22px;background:var(--floor-paper)}
-.workspace-caption{padding:.2rem .25rem 1rem}.workspace-caption h2{font-family:Georgia,'Times New Roman',serif;font-weight:700}.workspace-caption p{color:#665f56;max-width:60ch}
-.stage-wrap{width:100%;background:#fff;border:1px solid var(--floor-line);border-radius:14px;overflow:hidden}.stage-wrap :deep(.konvajs-content){max-width:100%}.stage-wrap :deep(canvas){max-width:100%;height:auto!important;display:block}
-.floor-aux-panel{display:block;padding:1.1rem 1.25rem;margin-top:1rem!important;border:1px solid var(--floor-line);border-radius:18px;background:#fffdfa}
-.floor-aux-panel :deep(.border.rounded),.floor-aux-panel :deep(.list-group-item){border-color:var(--floor-line)!important}.floor-aux-panel :deep(.form-control),.floor-aux-panel :deep(.form-select){border-color:var(--floor-line);border-radius:10px;min-height:42px}.floor-aux-panel :deep(.btn){border-radius:10px;min-height:38px}.floor-aux-panel :deep(.btn-primary){--bs-btn-bg:var(--floor-coral);--bs-btn-border-color:var(--floor-coral);--bs-btn-hover-bg:#8f3022;--bs-btn-hover-border-color:#8f3022}.floor-aux-panel :deep(.btn-outline-primary){--bs-btn-color:var(--floor-coral);--bs-btn-border-color:var(--floor-coral);--bs-btn-hover-bg:var(--floor-coral);--bs-btn-hover-border-color:var(--floor-coral)}.floor-aux-panel :deep(img){border-radius:12px!important}
+.workspace-caption{padding:.2rem .25rem 1rem}.workspace-caption h2{font-family:var(--bookedz-heading,'Bricolage Grotesque',sans-serif);font-weight:700}.workspace-caption p{color:var(--floor-muted);max-width:60ch}
+.stage-wrap{width:100%;background:var(--floor-surface);border:1px solid var(--floor-line);border-radius:14px;overflow:hidden}.stage-wrap :deep(.konvajs-content){max-width:100%}.stage-wrap :deep(canvas){max-width:100%;height:auto!important;display:block}
+.floor-aux-panel{display:block;padding:1.1rem 1.25rem;margin-top:1rem!important;border:1px solid var(--floor-line);border-radius:18px;background:var(--floor-surface)}
+.floor-aux-panel :deep(.border.rounded),.floor-aux-panel :deep(.list-group-item){border-color:var(--floor-line)!important}.floor-aux-panel :deep(.form-control),.floor-aux-panel :deep(.form-select){border-color:var(--floor-line);border-radius:10px;min-height:42px}.floor-aux-panel :deep(.btn){border-radius:10px;min-height:38px}.floor-aux-panel :deep(.btn-primary){--bs-btn-bg:var(--floor-coral);--bs-btn-border-color:var(--floor-coral);--bs-btn-hover-bg:var(--bookedz-primary-hover,#8f3022);--bs-btn-hover-border-color:var(--bookedz-primary-hover,#8f3022)}.floor-aux-panel :deep(.btn-outline-primary){--bs-btn-color:var(--floor-coral);--bs-btn-border-color:var(--floor-coral);--bs-btn-hover-bg:var(--floor-coral);--bs-btn-hover-border-color:var(--floor-coral)}.floor-aux-panel :deep(img){border-radius:12px!important}
 .floor-plan-viewer{color:var(--floor-ink)}.floor-plan-viewer .floor-editor-layout{display:block}.floor-plan-viewer .editor-shell{background:var(--floor-paper)}
 .floor-editor :focus-visible,.floor-plan-viewer :focus-visible{outline:3px solid rgba(170,62,44,.55);outline-offset:2px}
 @media(max-width:991.98px){.floor-editor-layout{grid-template-columns:1fr}.floor-tools{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.venue-summary{grid-column:1/-1}.edit-panel{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:575.98px){.floor-editor{padding-inline:1rem}.floor-tools{grid-template-columns:1fr}.edit-panel{grid-template-columns:1fr}.editor-shell{padding:.6rem;border-radius:16px}.helper-panel{overflow-wrap:anywhere}.floor-page-heading{align-items:flex-start!important}.floor-page-heading>div:last-child{width:100%;justify-content:space-between}}
+@media(max-width:575.98px){.floor-editor{padding-inline:1rem}.floor-status-strip{grid-template-columns:1fr}.floor-tools{grid-template-columns:1fr}.edit-panel{grid-template-columns:1fr}.editor-shell{padding:.6rem;border-radius:16px}.helper-panel{overflow-wrap:anywhere}.helper-row{grid-template-columns:1fr 1fr}.helper-name{grid-column:1/-1}.floor-page-heading{align-items:flex-start!important}.floor-page-heading>div:last-child{width:100%;justify-content:space-between}}
 </style>

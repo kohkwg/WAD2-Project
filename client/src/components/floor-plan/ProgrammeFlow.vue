@@ -40,11 +40,17 @@ async function remove() {
 const time = (value) => new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Singapore' }).format(new Date(value))
 </script>
 <template>
-<section class="my-4" aria-label="Programme flow">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2"><h2 class="h5 mb-0">Programme</h2><button v-if="canEdit" class="btn btn-sm btn-outline-primary" @click="edit(null)" :disabled="busy">Add programme item</button></div>
+<section class="my-4 programme-flow" aria-label="Programme flow">
+  <div class="programme-heading">
+    <div>
+      <span class="programme-kicker">Run of show</span>
+      <h2 class="h5 mb-0">Programme</h2>
+    </div>
+    <button v-if="canEdit" class="btn btn-sm btn-outline-primary" @click="edit(null)" :disabled="busy">Add programme item</button>
+  </div>
   <p v-if="loading" role="status">Loading programme…</p>
   <div v-if="error" class="alert alert-danger" role="alert">{{ error }} <button v-if="!editing && !pendingDelete" class="btn btn-sm btn-outline-danger" @click="load">Retry programme</button></div>
-  <form v-if="editing && canEdit" class="border rounded p-3 mb-3" @submit.prevent="save">
+  <form v-if="editing && canEdit" class="programme-form border rounded p-3 mb-3" @submit.prevent="save">
     <div class="row g-2">
       <label class="col-12">Title<input v-model="draft.title" required maxlength="180" class="form-control" /></label>
       <label class="col-12 col-sm-6">Starts (Singapore)<input v-model="draft.starts_at" required type="datetime-local" class="form-control" /></label>
@@ -56,15 +62,37 @@ const time = (value) => new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', 
     <div class="d-flex gap-2 mt-3"><button class="btn btn-primary" :disabled="busy">Save programme item</button><button type="button" class="btn btn-outline-secondary" :disabled="busy" @click="editing = false">Cancel</button></div>
   </form>
   <div v-if="pendingDelete" class="alert alert-warning" role="alert">Delete “{{ pendingDelete.title }}”? <button class="btn btn-sm btn-danger" :disabled="busy" @click="remove">Confirm delete programme item</button> <button class="btn btn-sm btn-outline-secondary" :disabled="busy" @click="pendingDelete = null">Cancel</button></div>
-  <p v-if="!loading && !items.length" class="text-muted">No programme items yet.</p>
-  <ol v-else class="list-group list-group-numbered">
-    <li v-for="item in ordered" :key="item.id" class="list-group-item d-flex gap-2"><div class="flex-grow-1 programme-copy"><h3 class="h6 mb-1">{{ item.title }}</h3><p class="small mb-1">{{ time(item.starts_at) }}<template v-if="item.ends_at"> – {{ time(item.ends_at) }}</template> (SGT)</p><p v-if="item.description" class="mb-1">{{ item.description }}</p><p class="small text-muted mb-0">{{ item.location_label }}<template v-if="item.zone_key"> · {{ zones.find(z => z.id === item.zone_key)?.label || 'Zone no longer available' }}</template></p><div v-if="canEdit" class="d-flex gap-2 mt-2"><button class="btn btn-sm btn-outline-primary" :disabled="busy" @click="edit(item)">Edit {{ item.title }}</button><button class="btn btn-sm btn-outline-danger" :disabled="busy" @click="pendingDelete = item">Delete {{ item.title }}</button></div></div></li>
+  <p v-if="!loading && !items.length" class="programme-empty">No programme items yet.</p>
+  <ol v-else class="programme-list">
+    <li v-for="item in ordered" :key="item.id" class="programme-item">
+      <time class="programme-time" :datetime="item.starts_at">{{ time(item.starts_at) }}</time>
+      <div class="programme-copy">
+        <h3 class="h6 mb-1">{{ item.title }}</h3>
+        <p class="small mb-1"><template v-if="item.ends_at">Ends {{ time(item.ends_at) }} (SGT)</template><template v-else>Start time shown in SGT</template></p>
+        <p v-if="item.description" class="mb-1">{{ item.description }}</p>
+        <p class="small text-muted mb-0">{{ item.location_label }}<template v-if="item.zone_key"> · {{ zones.find(z => z.id === item.zone_key)?.label || 'Zone no longer available' }}</template></p>
+        <div v-if="canEdit" class="programme-actions"><button class="btn btn-sm btn-outline-primary" :disabled="busy" @click="edit(item)">Edit {{ item.title }}</button><button class="btn btn-sm btn-outline-danger" :disabled="busy" @click="pendingDelete = item">Delete {{ item.title }}</button></div>
+      </div>
+    </li>
   </ol>
 </section>
 </template>
 <style scoped>.programme-copy { min-width: 0; overflow-wrap: anywhere; }</style>
 
 <style scoped>
-[aria-label="Programme flow"]{padding:1.1rem 1.25rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:18px;background:#fffdfa}[aria-label="Programme flow"] h2,[aria-label="Programme flow"] h3{font-family:Georgia,'Times New Roman',serif;letter-spacing:-.02em}[aria-label="Programme flow"] .list-group-item{padding:1rem;border-color:var(--bookedz-border,#e5ded2);background:transparent}[aria-label="Programme flow"] .border.rounded{border-color:var(--bookedz-border,#e5ded2)!important;border-radius:14px!important}[aria-label="Programme flow"] .form-control,[aria-label="Programme flow"] .form-select{min-height:42px;border-color:var(--bookedz-border,#e5ded2);border-radius:10px}[aria-label="Programme flow"] .btn{border-radius:10px;min-height:38px}[aria-label="Programme flow"] .btn-primary{--bs-btn-bg:var(--bookedz-primary-dark,#aa3e2c);--bs-btn-border-color:var(--bookedz-primary-dark,#aa3e2c);--bs-btn-hover-bg:#8f3022;--bs-btn-hover-border-color:#8f3022}
-@media(max-width:575.98px){[aria-label="Programme flow"]{padding:1rem;border-radius:16px}}
+.programme-flow{padding:1.1rem 1.25rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:18px;background:var(--bookedz-surface,#fffdfa);box-shadow:var(--bookedz-card-shadow,none)}
+.programme-heading{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
+.programme-kicker{display:block;color:var(--bookedz-muted,#63665e);font-size:.72rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+.programme-flow h2,.programme-flow h3{font-family:var(--bookedz-heading,'Bricolage Grotesque',sans-serif);letter-spacing:-.02em}
+.programme-form{background:var(--bookedz-cream,#fff8ec)}
+.programme-flow .border.rounded{border-color:var(--bookedz-border,#e5ded2)!important;border-radius:14px!important}
+.programme-flow .form-control,.programme-flow .form-select{min-height:42px;border-color:var(--bookedz-border,#e5ded2);border-radius:10px}
+.programme-flow .btn{border-radius:10px;min-height:38px}
+.programme-flow .btn-primary{--bs-btn-bg:var(--bookedz-primary-dark,#aa3e2c);--bs-btn-border-color:var(--bookedz-primary-dark,#aa3e2c);--bs-btn-color:var(--bookedz-on-action,#fffdfa);--bs-btn-hover-bg:var(--bookedz-primary-hover,#8f3022);--bs-btn-hover-border-color:var(--bookedz-primary-hover,#8f3022)}
+.programme-empty{margin:0;color:var(--bookedz-muted,#63665e)}
+.programme-list{display:grid;gap:.7rem;margin:0;padding:0;list-style:none}
+.programme-item{display:grid;grid-template-columns:minmax(9rem,13rem) minmax(0,1fr);gap:1rem;padding:1rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:14px;background:var(--bookedz-cream,#fff8ec)}
+.programme-time{color:var(--bookedz-primary-dark,#aa3e2c);font-weight:750;line-height:1.35}
+.programme-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.7rem}
+@media(max-width:575.98px){.programme-flow{padding:1rem;border-radius:16px}.programme-item{grid-template-columns:1fr;gap:.45rem}.programme-time{padding-bottom:.45rem;border-bottom:1px solid var(--bookedz-border,#e5ded2)}}
 </style>

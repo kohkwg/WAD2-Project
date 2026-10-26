@@ -116,8 +116,11 @@ clean up on unmount and respect reduced motion; map loops additionally have paus
 and visibility controls. No custom animation engine or runtime package was added.
 
 The design language also covers profiles/auth, organiser lists, attendance,
-tickets, venue QR, floor plans and programmes. This is not a claim that every route
-was retested after each refinement. Use [the review](design-review.md),
+tickets, venue QR, floor plans and programmes. The floor-plan workspace now uses
+shared heading/body fonts, theme-aware panels, actual zone/marker/placement counts,
+clearer active-venue and helper-placement hierarchy, a date-led programme list and
+a token-aligned public image panel. This is not a claim that every route was
+retested after each refinement. Use [the review](design-review.md),
 [testing guide](../testing.md) and [status](../../status.md) for dated evidence.
 Only targeted checks run by default; full suites and production builds await
 explicit user instruction. Physical camera/GPS, Safari/iOS and live write flows
