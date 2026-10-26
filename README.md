@@ -346,3 +346,9 @@ organiser subpages. Codex added scoped native browser entrances and Vue list
 movement, with a GPT-6 Luna Medium review. Existing creation-step motion, themes,
 focus, reduced-motion preferences and cached drafts remain supported. No runtime
 library was added; teammate and existing library attributions remain unchanged.
+
+
+On 26 October 2026, Codex fixed the organiser workspace router scroll reset:
+switching tools for the same event retains scroll, while explicit anchors,
+browser history and ordinary page navigation retain their existing behaviour.
+Focused browser regressions cover the four supported viewport widths.
