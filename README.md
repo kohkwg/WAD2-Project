@@ -20,6 +20,14 @@ event actions and participant/organiser screens share System/Light/Dark themes.
 Public event facts lead; RSVP actions sit beside them. Creation has a live preview;
 organiser tools and RSVP capacity/status visuals use actual event data.
 
+Feature 4 uses one event workspace: open **Manage event** from **My events**, then
+choose Tasks, Announcements, Budget, Weather or the permitted guest/venue tools.
+The owner tutorial starts on first entry in this browser, supports replay and
+remembers Skip/completion per owner. Tool navigation preserves scroll within the
+same event; the tour preserves drafts and restores its starting view. See the
+[design review](docs/design/design-review.md) for outstanding UI/UX findings,
+including draft replacement, retry clarity and My events dark-mode contrast.
+
 - [Design system](docs/design/design-system.md) and [review](docs/design/design-review.md)
 - [Implementation record](docs/design/implementation-plan.md) and [asset provenance](docs/design/assets.md)
 
@@ -315,6 +323,12 @@ not reset teammates' branches or create/merge their PRs; those steps remain with
 each owner and Denzel. Private source resources and local credentials/tools remain
 excluded; deployable art/fonts/licences and design documentation are included.
 
+On 26 October, Codex corrected ambiguous task-ID column references in the Feature 4
+task-board save RPC through a new migration, preserved the original SQL and
+owner/RLS contracts, and authored a rollback-only PostgreSQL regression. Denzel
+explicitly approved applying the fix to Bookerz; local and hosted SQL verification
+passed. Existing teammate contributions retain their authorship.
+
 
 On 26 October 2026, at Denzel's request, Codex and GPT-6 Luna subagents at Medium
 effort refined Feature 4's Manage Event workspace and task presentation: grouped
@@ -368,3 +382,11 @@ Skip/completion per owner; no library, database schema or event write was added.
 On 26 October, Codex corrected tutorial spotlight tracking during async weather
 layout changes and scrolling beneath the sticky navbar, with focused browser
 regressions and a GPT-6 Luna Medium review. Existing authorship remains unchanged.
+
+
+On 26 October, at Denzel’s request, Codex updated the current project/design/test
+guides, recorded the unresolved Feature 4 UI/UX audit findings, and prepared the
+previously preserved task-board corrective migration and rollback-only regression
+for Git publication on `denzel`. This documentation/publication pass does not
+apply SQL, merge branches or change hosted services. Earlier AI/library and
+teammate attributions remain intact.

@@ -1,6 +1,7 @@
 # Bookedz visual system
 
-Current working-tree direction, 24 October 2026. Denzel authorised the redesign
+Current direction through 26 October 2026, following the 24 October baseline.
+Denzel authorised the redesign
 and subsequent motion/layout refinements. This document describes presentation;
 backend, registration, weather and privacy contracts remain in [decisions](../../decisions.md).
 
@@ -109,6 +110,22 @@ check-ins, with explanatory copy on both pages. Tool routes have an explicit
 Back to Manage event link that restores the prior task query/tab; other F4
 sections return to Tasks. Only Tasks links back to My events. Existing live-only
 visibility and destination authentication/role checks remain.
+
+My events event cards expose one management entry, **Manage event**; Registrations
+inside the workspace remains the route to RSVP and waitlist operations. A
+first-owner tutorial introduces the workspace in eight steps, from event context
+and tasks through announcements, budget, weather, guest/venue tools and public
+preview. It runs once per owner and data mode in that browser, can be replayed
+from the workspace header, and changes no event data. Skip and Finish remember
+dismissal/completion; blocked browser storage falls back to the loaded app session.
+The tour restores the starting query, hash, scroll position and disclosure state
+when it closes. Spotlight placement waits for target geometry to settle, keeps a
+curtain over the target while scrolling, and accounts for the sticky navbar so
+the highlighted control remains visible beneath it.
+
+Workspace navigation preserves scroll when switching tools for the same event;
+leaving the workspace resets normally. On mobile, closing the Sections disclosure
+can still shorten the page and naturally clamp its scroll position.
 
 Tasks default to one flat Open list, with In progress shown on individual rows.
 Open/Completed/All filters and title/notes search use URL query state. Add task

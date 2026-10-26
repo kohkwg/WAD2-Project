@@ -1,8 +1,10 @@
-# Bookedz design review — 24 October 2026
+# Bookedz design review
 
-Scope: shared theme, navbar, discovery hero/search, event filters and illustrated
-map. This is a targeted review of existing Vue screens, not a review of every
-feature's business logic or a new visual identity.
+Reviews from 24–26 October 2026. The initial scope covers the shared theme, navbar,
+discovery hero/search, event filters and illustrated map. Later sections cover
+Feature 4 workspace navigation, tasks, motion, the owner tutorial and outstanding
+UI/UX findings. These are bounded presentation reviews, not a claim of exhaustive
+business-logic, hosted access-control or device verification.
 
 ## Tools applied
 
@@ -199,3 +201,44 @@ or hosted backend verification. Base font families/palette and routing remain.
 
 [Desktop](previews/f4-navigation-light.png) and
 [mobile group hierarchy](previews/f4-navigation-mobile.png) show demo data.
+
+
+## First-owner tutorial and outstanding audit items — 26 October 2026
+
+The My events card now has one **Manage event** action. Registrations remains
+available from the shared event workspace. The first-owner eight-step tutorial
+is remembered per owner and data mode, has a Replay control, and does not write
+event data. It restores the original query/hash, scroll and disclosure state.
+The spotlight now stays covered while it prepares or scrolls, then reveals the
+settled target; its scrolling clearance includes the sticky navbar. Same-event
+workspace section navigation preserves scroll position.
+
+The first tour positioning pass had 17 focused cases at an earlier checkpoint.
+After the spotlight alignment correction, the latest source checkpoint is **12
+focused tutorial Chromium cases**, including frame-by-frame regressions for
+step 6 after delayed forecast insertion and step 8 beneath the navbar. Those two
+new regressions failed before the correction. The latest run also covers four
+widths, reduced motion, replay, owner gating, keyboard/storage fallback, browser
+Back and draft/query preservation. The 17-case count is historical and is not a
+fresh rerun of all 17 against the corrected source. Demo captures
+[desktop](previews/f4-tutorial-desktop.png) and
+[mobile](previews/f4-tutorial-mobile.png) show step 2 before the latest spotlight
+fix; the target itself is unchanged, so the images document composition rather
+than prove the corrected positioning.
+
+The broader local demo audit covered 40 screen combinations at 375, 575, 768 and
+1280px in light and dark themes, with no page overflow or browser page errors.
+Isolated failure flows were reproduced. The following findings remain unresolved
+in the current review record:
+
+- Retry save can publish the earlier announcement snapshot while revised text
+  remains in the editor.
+- Selecting Edit can overwrite an unsaved announcement or expense draft.
+- A failed event deletion hides all event cards and shows duplicate errors.
+- In dark mode, My events has fixed white foregrounds with measured contrast of
+  1.8:1, and its kicker measures 1.33:1.
+- Its fixed white card-footer background also breaks dark-theme consistency.
+
+These are known audit findings, not claims that the 40-combination layout audit
+covered failure-state correctness. The isolated reproductions establish the
+reported failures; this documentation update does not claim they were fixed.

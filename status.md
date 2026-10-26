@@ -8,26 +8,32 @@ superseded choices; [testing](docs/testing.md) explains reproducible checks;
 
 ## Current checkpoint
 
-All six features are integrated on `dev`, including the accumulated fix work,
-project-wide frontend redesign, themes, motion and organiser/participant refinements.
-The latest 24 October refinements used focused checks only; older full-suite counts
-predate them. Denzel has now authorised committing/publishing this working state
-as the shared design baseline. Use the published `origin/dev` SHA and Denzel’s
-kickoff message for exact baseline identity; this is not a production deployment. Teammates' branches and PRs
-are not changed by the publication. See [branch workflow](design-branches.md) and
-[design system](docs/design/design-system.md).
+The six-feature shared design baseline was published on `dev` at
+`86c026516690cc6f5e0f7c5bdbdde2093273fc02` on 24 October. The 26 October
+Feature 4 workspace, task-list, motion, scroll and tutorial refinements are
+published on Denzel’s `denzel` branch; they have not been merged into `dev`.
+The tutorial spotlight correction was published as `47d6ef9` before this
+documentation update. Source, hosted deployment and branch integration are
+separate checkpoints; publishing a feature branch does not deploy it.
+
+The latest UI checks are targeted, not a fresh project-wide suite: 12 tutorial
+cases passed after the spotlight correction, including normal-motion delayed
+weather tracking and sticky-navbar clearance. Earlier 17-case checkpoints and
+full-suite/build counts are dated evidence. See [testing](docs/testing.md),
+[design review](docs/design/design-review.md) and [branch workflow](design-branches.md).
 
 | Feature / owner | Working functionality | Remaining limits / acceptance |
 | --- | --- | --- |
 | F1 — Aishani | Public Discover in demo/live; tag/search/date filters; personalised reasons under user JWT; live profile load/save; R2 event covers. One browser client and refresh per identity. | Profile editing requires live mode. Legacy EventDetailsDialog is unmounted; RecommendationCard is used inside PickedForYou. Ranking remains Aishani's. |
 | F2 — Gregory | Atomic four-step creation/OneMap; approval; RSVP, waitlist and offers; My RSVPs/tickets; UI+SQL own-team/check-in guards; matching demo offer deadlines. | Full production concurrency/response-loss coverage is not established. Waitlist scoring is Gregory's; its nine former Vitest cases now run under Node. |
 | F3 — Huxley | QR/CODE128 tickets; staff camera/manual/name/email search; venue QR/self check-in; Realtime ticket/dashboard; CSV/fraud fields; attendance interest trigger. | Physical camera/geolocation testing remains. Automated check-in uses typed codes/search; it does not prove real-phone scanning. |
-| F4 — Denzel | Owner tasks/keyboard order; public/manual announcements; exact-cent budget/90% warning; real NEA reads; server-verified one-way venue switching. | Latest live NEA check correctly refused dry weather. Successful rainy switching remains weather-dependent; no claim of exhaustive concurrency testing. Historical three browser failures did not reproduce in the final runs. |
+| F4 — Denzel | Shared event workspace; compact owner task list/search/filter/order; public announcements; exact-cent budget/90% warning; NEA-authorised one-way switching; responsive motion and owner tutorial/replay with browser-local preferences. | Unresolved audit findings include announcement retry snapshots, announcement/expense draft replacement, failed event-delete presentation and My events dark-mode contrast. See the design review. Latest tutorial evidence is local/mock; hosted rainy switching, exhaustive concurrency and physical-device coverage remain separately bounded. |
 | F5 — Timothy | Supabase/RLS; Express health/recommendations/upload presigning; five-minute waitlist cron; validated public R2 uploads; future-created venue cleanup. | Existing SECURITY DEFINER warnings need owner review; leaked-password protection is off. Storage cleanup queue has no deployed drain worker; old unmarked venue orphans are intentionally untouched. |
 | F6 — Vivienne | Per-event saved responsive plan and read-only viewer; programme CRUD/zone links; active venue map; real team placements and keyboard coordinates; public finished images. Route/image/drag-bound guards. | Explicitly live-only; private object-image storage is not implemented against a public bucket. Multi-row helper saves can partially succeed and report retry; no transaction is promised. |
 
-Bookerz development history contains the initial migration plus ten later versions
-(**11 total**), through `20261023062011_event_cover_and_venue_cleanup`, and the
+The latest recorded Bookerz development history from the 26 October SQL task contains
+the initial migration plus eleven later versions
+(**12 total**), through `20261025190158_fix_task_board_value_ambiguity`, and the
 `venue-switch` Edge Function. The application schema and permissions were checked;
 repository SQL alone is not proof of a future deployment.
 
@@ -37,6 +43,24 @@ venues. Test R2 objects were deleted; the rollback-only third test auth user did
 not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
+
+### 26 October — task-board save SQL correction
+
+- Confirm hosted function/history and reproduce `column reference "value" is
+  ambiguous` in isolated PostgreSQL 17 using the application schema. Both JSON
+  expansions exposed `value`; qualify task IDs in all three queries, plus the
+  final status/order columns, in a corrective migration. Preserve original SQL,
+  event locking, full-board validation, SECURITY INVOKER, RLS and execute grants.
+- Denzel explicitly approves applying the reviewed fix to Bookerz. Hosted history
+  records `20261025190158_fix_task_board_value_ambiguity`; local filename matches.
+- Rollback-only SQL regression passes locally and on Bookerz as `authenticated`:
+  status/order persistence, same-board retry, empty board, duplicate/missing/foreign
+  IDs, malformed columns, non-owner denial, rejected-save atomicity and grants.
+  Cleanup readback finds zero test events/users from this regression. The focused
+  client task-board API check also passes. No existing event is modified.
+- Security advisor counts are unchanged; the corrected invoker function has no
+  related finding. Existing definer/password-protection notices remain outside
+  this fix. No browser journey, full suite, production build, commit or push.
 
 ### 15–16 October — orientation and first Feature 4 delivery
 
@@ -509,3 +533,25 @@ not persist. These are dated observations, not permanent database invariants.
   whitespace checks pass and Graphify AST is refreshed. Independent GPT-6 Luna
   Medium review reports no actionable issue. No full suite/build or hosted write.
   Existing SQL/docs work remains untouched and excluded from this publication.
+
+
+### 26 October — documentation refresh and SQL Git publication
+
+- Denzel explicitly authorises updating the documentation and committing/pushing
+  all reviewed working-tree changes on `denzel`, followed by a read-only remote
+  `dev` comparison against the six personal design branches. This supersedes the
+  earlier instruction to exclude the completed SQL task from frontend commits.
+- Publish the preserved `20261025190158_fix_task_board_value_ambiguity.sql` and
+  rollback-only `supabase/tests/task_board.sql`, together with their existing
+  delivery notes. The earlier local/hosted SQL results remain historical evidence;
+  this pass does not rerun hosted SQL, apply a migration or perform a deployment.
+- Update current project/design/test navigation, tutorial and motion behaviour,
+  screenshot provenance, latest verification scope and unresolved UX findings.
+  Preserve detailed AI/library authorship and the supplied local resources.
+- Documentation checks resolve 126 local links/anchors/assets and preserve all
+  seven supplied resource files; whitespace checks pass. The single targeted
+  client task-board RPC delegation check passes. The SQL function delta is limited
+  to qualified aliases; its existing invoker, owner and grant contracts remain.
+  No application changes, full test suite, production build, PR or merge are part
+  of this pass. Remote branch comparison is reported after publication; it shows
+  pushed Git work, not teammates’ local work or an acceptance judgment.
