@@ -67,7 +67,7 @@ function requestCompletion(event) {
 </script>
 
 <template>
-  <li class="task-row" :class="{ completed: task.status === 'done', editing }">
+  <li data-organiser-enter class="task-row" :class="{ completed: task.status === 'done', editing }">
     <div class="task-row-main">
       <label v-if="!editorOnly" class="completion-hit" :class="{ saving }">
         <input
@@ -115,7 +115,7 @@ function requestCompletion(event) {
       </div>
     </div>
 
-    <div v-if="expanded" class="task-details">
+    <div v-if="expanded" data-organiser-enter class="task-details">
       <p v-if="task.notes && !editing" class="task-notes">{{ task.notes }}</p>
       <template v-if="editing">
         <form class="edit-fields" name="task-edit" autocomplete="off" @submit.prevent="emit('save-edit')">

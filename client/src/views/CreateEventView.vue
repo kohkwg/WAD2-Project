@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import { vOrganiserMotion } from '../utils/organiserMotion.js'
 import StepIndicator from '../components/StepIndicator.vue'
 import AddressSearch from '../components/AddressSearch.vue'
 import VenueMap from '../components/VenueMap.vue'
@@ -249,7 +250,7 @@ async function publish() {
 </script>
 
 <template>
-  <div class="create-event-page col-12 col-xl-11 mx-auto">
+  <div v-organiser-motion class="create-event-page col-12 col-xl-11 mx-auto">
     <header class="create-heading"><h1>Create an event</h1><p>Start with the essentials. You can review everything before it goes live.</p></header>
     <StepIndicator :steps="steps" :current="step" />
 

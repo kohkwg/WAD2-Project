@@ -241,3 +241,11 @@ Tasks remains the default entry, rather than introducing a new overview dashboar
 Shared routing and surrounding presentation now connect the existing feature
 pages; their API, authentication and role contracts remain owned by their authors.
 No new hosted change, PR creation or merge is part of this refinement.
+
+
+### Organiser motion — 26 October 2026
+
+Denzel selected subtle fades and small slides across My events and its subpages,
+with gentle card/list updates, preserved drafts/focus and immediate reduced-motion
+behaviour. Use the established Vue/browser motion facilities without new packages.
+The shared event header/navigation stays in place during tool changes.

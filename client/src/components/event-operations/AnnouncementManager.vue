@@ -33,12 +33,14 @@ function date(value) { return new Date(value).toLocaleString('en-SG', { timeZone
     <div class="tool-heading"><div><h2 id="announcements-heading" tabindex="-1">Announcements</h2><p class="tool-description">Keep participants up to date. Published updates appear on the public event page.</p></div><button id="announcements-write" class="btn btn-outline-primary" type="button" :disabled="pending" @click="focusEditor">{{ editingId ? 'Continue editing' : 'Write announcement' }}</button></div>
 
     <p v-if="!posts.length" class="text-secondary">No announcements yet.</p>
-    <article v-for="post in posts" :key="post.id" class="announcement-entry border-bottom py-3">
+    <TransitionGroup name="organiser-list" tag="div">
+    <article v-for="post in posts" :key="post.id" data-organiser-enter class="announcement-entry border-bottom py-3">
       <p class="post-body">{{ post.body }}</p>
       <p class="small text-secondary"><time :datetime="post.createdAt">{{ date(post.createdAt) }}</time><span v-if="post.updatedAt"> · Edited {{ date(post.updatedAt) }}</span></p>
       <div v-if="post.kind === 'manual'" class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-primary" :disabled="pending" :aria-label="'Edit announcement: ' + post.body" @click="edit(post)">Edit</button><button type="button" class="btn btn-sm btn-outline-danger" :disabled="pending" :aria-label="'Delete announcement: ' + post.body" @click="deleting = post">Delete</button></div>
       <p v-else class="small text-secondary mb-0"><span class="badge text-bg-info me-1">Venue update</span>Automatic event history · cannot be edited or deleted.</p>
     </article>
+    </TransitionGroup>
     <form class="workspace-panel announcement-editor mt-4" @submit.prevent="save">
       <h3 class="section-heading">{{ editingId ? 'Edit announcement' : 'New announcement' }}</h3>
       <fieldset :disabled="pending"><label for="announcement-body" class="form-label">Announcement text</label><textarea id="announcement-body" ref="bodyInput" v-model="body" class="form-control mb-3" required rows="4" /><p v-if="validation" class="text-danger" role="alert">{{ validation }}</p><div class="d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">{{ editingId ? 'Save announcement' : 'Publish announcement' }}</button><button v-if="editingId" type="button" class="btn btn-outline-secondary" @click="clearDraft">Cancel edit</button></div></fieldset>

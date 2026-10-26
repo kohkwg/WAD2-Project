@@ -414,3 +414,26 @@ not persist. These are dated observations, not permanent database invariants.
 - No full suite/build, dependency, business-logic or hosted change. Existing local
   SQL/docs work is preserved. Demo captures: [desktop](docs/design/previews/f4-navigation-light.png),
   [mobile groups](docs/design/previews/f4-navigation-mobile.png).
+
+
+### 26 October — subtle organiser motion
+
+- Apply the approved short fades/small slides to My events, Create event and the
+  event workspace content, including asynchronously loaded guest/venue tools.
+  Add bounded visible-card/row entrances, native disclosure opening feedback and
+  Vue list movement for tasks, announcements and expenses. Keep the shared rail
+  and header steady while tools change; typing does not replay the page entrance.
+- Motion cancels for focused content, hidden tabs, reduced-motion changes and
+  unmount. Rendering and navigation remain immediate; cached task drafts, stable
+  IDs, saves and owner/role guards retain their existing contracts. No new package.
+- **17 distinct targeted Chromium cases pass**, after correcting the new test
+  assertions for an empty task fixture and ordinary input-focus transitions.
+  Covers navigation/live-tool fixtures, creation preview, draft preservation,
+  failure/retry/dialog focus, full-board ordering, 100-task layouts and normal/
+  reduced motion at 375/575/768/1280px in light/dark. No page errors or overflow
+  in the motion layout checks; one shell main remains. Seven SFCs compile,
+  JavaScript syntax/whitespace checks pass; Graphify AST refreshed locally.
+- GPT-6 Luna Medium independent review finds no actionable issue. Screenshots
+  inspected in ignored Playwright results. No full suite/build, hosted write or
+  auth/RLS verification; physical camera/GPS, Safari and touch devices remain
+  outside this check. Existing SQL/docs work remains uncommitted and excluded.

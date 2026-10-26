@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, provide, reactive, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import * as api from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
+import { vOrganiserMotion } from '../utils/organiserMotion.js'
 
 const route = useRoute()
 const event = ref(null)
@@ -81,7 +82,7 @@ onBeforeUnmount(() => { requestEpoch++ })
 </script>
 
 <template>
-  <section class="event-workspace" aria-label="Event workspace">
+  <section v-organiser-motion="`${route.path}:${isManage ? route.query.tab || 'tasks' : ''}`" class="event-workspace" aria-label="Event workspace">
     <RouterLink v-if="isWorkspaceHome" to="/organiser/events" class="workspace-back">← My events</RouterLink>
     <RouterLink v-else :to="backToManage" class="workspace-back">← Back to Manage event</RouterLink>
 
@@ -141,7 +142,7 @@ onBeforeUnmount(() => { requestEpoch++ })
           </section>
         </nav>
       </aside>
-      <div class="workspace-main">
+      <div class="workspace-main" data-organiser-scene>
         <RouterView v-slot="{ Component }">
           <KeepAlive include="ManageEventView" :max="1">
             <component :is="Component" :key="eventId" />
