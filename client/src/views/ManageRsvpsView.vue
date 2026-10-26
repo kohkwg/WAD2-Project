@@ -281,7 +281,7 @@ async function demoExpireOffers() {
   <template v-else>
     <header v-if="!$route.meta.eventWorkspace" class="rsvp-heading mt-2 mb-4"><div><p class="rsvp-kicker mb-1">Guest list</p><h1 class="mb-1">{{ event.title }}</h1>
     <p class="rsvp-event-meta mb-0"><span>{{ formatEventTime(event) }}</span><span>{{ event.venue.name }}</span></p></div><span class="guestlist-stamp" aria-hidden="true">✳</span></header>
-    <h2 v-else class="h4 mb-4">Manage RSVPs</h2>
+    <div v-else class="mb-4"><h2 class="h4 mb-2">Registrations</h2><p class="text-body-secondary mb-0">Manage event sign-ups, approvals and the waitlist.</p></div>
 
     <section class="guest-summary mb-4" aria-label="RSVP status summary">
       <div class="capacity-overview">

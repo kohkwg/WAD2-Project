@@ -395,3 +395,22 @@ not persist. These are dated observations, not permanent database invariants.
 - Existing SQL/docs work remains local and excluded from UI publication.
   [Desktop RSVP workspace](docs/design/previews/f4-unified-desktop.png) and
   [mobile workspace](docs/design/previews/f4-unified-mobile.png) show demo data.
+
+
+### 26 October — organiser navigation hierarchy and terminology
+
+- At Denzel's request, distinguish registration management (sign-ups, approvals
+  and waitlist) from actual checked-in attendance. Label the destinations
+  Registrations and Attendance report, with a concise explanation on each page.
+- Rename Operations/Event tools to Event planning/Guests & venue. Use semantic
+  h2 group labels at 16px, stronger ink contrast, purpose text, separators and
+  41px measured inter-group spacing. Increase navigation text to 15px, strengthen
+  the selected state, separate the rail from content and improve event metadata
+  readability/wrapping. Use Bootstrap's 992px desktop threshold.
+- Two affected Chromium route/visibility cases pass. An isolated demo browser
+  check passes 375/575/768/1280px in both themes with reduced motion: group-header
+  contrast is at least 11.57:1, link targets are at least 44px, one main remains,
+  and no page errors/overflow occur. Three SFCs compile; whitespace checks pass.
+- No full suite/build, dependency, business-logic or hosted change. Existing local
+  SQL/docs work is preserved. Demo captures: [desktop](docs/design/previews/f4-navigation-light.png),
+  [mobile groups](docs/design/previews/f4-navigation-mobile.png).

@@ -139,7 +139,8 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
 
     <header class="attendance-header d-flex justify-content-between align-items-start gap-2 mb-4">
       <div>
-        <component :is="$route.meta.eventWorkspace ? 'h2' : 'h1'" class="h4 mb-1">Attendance</component>
+        <component :is="$route.meta.eventWorkspace ? 'h2' : 'h1'" class="h4 mb-1">Attendance report</component>
+        <p class="text-body-secondary mb-2">See who checked in and when.</p>
         <p v-if="!$route.meta.eventWorkspace" class="text-body-secondary small mb-0">{{ event?.title ?? '' }}</p>
       </div>
       <span

@@ -180,3 +180,22 @@ authorisation and Safari remain outside this verification.
 Evidence: [desktop](previews/f4-unified-desktop.png),
 [mobile](previews/f4-unified-mobile.png). The earlier task-list plan remains
 discarded; this section supersedes its navigation/presentation direction.
+
+
+## Navigation hierarchy and wording — subsequent 26 October refinement
+
+The Web Interface Guidelines pass responds to ambiguous group headers and the
+registration/attendance distinction. Event planning and Guests & venue now have
+16px ink headings, concise purpose text and visible separators. Navigation labels
+are 15px with stronger active-state contrast and a wider content gutter. Event
+metadata is more readable and wraps without page overflow. Registrations explains
+sign-ups, approvals and waitlist; Attendance report explains actual check-ins.
+
+Two affected navigation/visibility cases pass. Isolated demo measurements pass
+all four course widths in both themes/reduced motion: group-heading contrast
+11.57:1–15.01:1, 44px minimum link targets, 41px group separation, one main and no
+page errors/overflow. This is targeted evidence, not full guidelines certification
+or hosted backend verification. Base font families/palette and routing remain.
+
+[Desktop](previews/f4-navigation-light.png) and
+[mobile group hierarchy](previews/f4-navigation-mobile.png) show demo data.

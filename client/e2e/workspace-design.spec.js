@@ -81,7 +81,7 @@ test('organiser event routes share workspace navigation and return to Manage eve
     const workspace = page.getByRole('region', { name: 'Event workspace' })
     const mobileSections = page.locator('details.workspace-mobile-sections')
     let navigation
-    if (width <= 900) {
+    if (width < 992) {
       await expect(mobileSections).toBeVisible()
       await mobileSections.locator('summary').click()
       navigation = mobileSections.getByRole('navigation', { name: 'Event workspace sections' })
@@ -90,12 +90,12 @@ test('organiser event routes share workspace navigation and return to Manage eve
     }
     await expect(workspace.locator('.workspace-header h1')).toContainText('Campus Green Social')
     await expect(navigation.getByRole('link', { name: 'Tasks', exact: true })).toBeVisible()
-    if (width > 900) await expect(navigation.getByRole('link', { name: 'Tasks', exact: true })).toHaveCount(1)
-    await expect(navigation.getByRole('link', { name: 'RSVPs', exact: true })).toBeVisible()
+    if (width >= 992) await expect(navigation.getByRole('link', { name: 'Tasks', exact: true })).toHaveCount(1)
+    await expect(navigation.getByRole('link', { name: 'Registrations', exact: true })).toBeVisible()
     await expect(page.getByRole('navigation', { name: 'Event operations' })).toHaveCount(0)
-    await expect(navigation.getByRole('link', { name: 'Check-in', exact: true })).toHaveCount(0)
+    await expect(navigation.getByRole('link', { name: 'Check-in station', exact: true })).toHaveCount(0)
     for (const tab of ['Tasks', 'Announcements', 'Budget', 'Weather']) {
-      if (width <= 900 && !await mobileSections.evaluate(el => el.open)) await mobileSections.locator('summary').click()
+      if (width < 992 && !await mobileSections.evaluate(el => el.open)) await mobileSections.locator('summary').click()
       await navigation.getByRole('link', { name: tab, exact: true }).click()
       await expect(page.getByRole('heading', { name: tab, exact: true })).toBeVisible()
       if (tab === 'Tasks') {
@@ -103,16 +103,16 @@ test('organiser event routes share workspace navigation and return to Manage eve
       } else {
         await expect(workspace.getByRole('link', { name: /Back to Manage event/ })).toHaveAttribute('href', '/organiser/events/e-weather-demo/manage?tab=tasks')
       }
-      if (width <= 900) await expect(mobileSections.locator('summary')).toContainText(`Sections · ${tab}`)
+      if (width < 992) await expect(mobileSections.locator('summary')).toContainText(`Sections · ${tab}`)
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     }
-    if (width <= 900 && !await mobileSections.evaluate(el => el.open)) await mobileSections.locator('summary').click()
-    await navigation.getByRole('link', { name: 'RSVPs', exact: true }).click()
+    if (width < 992 && !await mobileSections.evaluate(el => el.open)) await mobileSections.locator('summary').click()
+    await navigation.getByRole('link', { name: 'Registrations', exact: true }).click()
     await expect(page).toHaveURL(/\/organiser\/events\/e-weather-demo\/rsvps(?:\?.*)?$/)
     await expect(workspace.locator('.workspace-header h1')).toContainText('Campus Green Social')
-    await expect(page.getByRole('heading', { name: 'Manage RSVPs', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Registrations', exact: true })).toBeVisible()
     await expect(workspace.getByRole('link', { name: /Back to Manage event/ })).toHaveAttribute('href', '/organiser/events/e-weather-demo/manage?tab=weather')
-    if (width > 900) await expect(navigation.getByRole('link', { name: 'Tasks', exact: true })).toBeVisible()
+    if (width >= 992) await expect(navigation.getByRole('link', { name: 'Tasks', exact: true })).toBeVisible()
     else await expect(mobileSections).toHaveJSProperty('open', false)
     await page.screenshot({ path: testInfo.outputPath(`event-workspace-${width}.png`) })
   }
@@ -127,9 +127,9 @@ test('live-only event tools keep their routes in the shared workspace shell', as
   const workspace = page.getByRole('region', { name: 'Event workspace' })
   const navigation = page.getByRole('navigation', { name: 'Event workspace navigation' })
   for (const [label, suffix, heading] of [
-    ['Check-in', 'check-in', 'Check-in station'],
+    ['Check-in station', 'check-in', 'Check-in station'],
     ['Venue QR', 'venue-qr', 'Campus Green Social'],
-    ['Attendance', 'attendance', 'Attendance'],
+    ['Attendance report', 'attendance', 'Attendance report'],
     ['Floor plan', 'floor-plan', 'Floor plan'],
   ]) {
     await navigation.getByRole('link', { name: label, exact: true }).click()
@@ -157,7 +157,7 @@ test('task search, filter and draft survive RSVP navigation and Back to Manage e
   await page.getByLabel('Task title', { exact: true }).fill('Draft kept across RSVP route')
   await expect(page).toHaveURL(/taskFilter=all.*taskSearch=task|taskSearch=task.*taskFilter=all/)
 
-  await navigation.getByRole('link', { name: 'RSVPs', exact: true }).click()
+  await navigation.getByRole('link', { name: 'Registrations', exact: true }).click()
   await expect(page).toHaveURL(/\/organiser\/events\/e-weather-demo\/rsvps/)
   await expect(workspace.locator('.workspace-header h1')).toContainText('Campus Green Social')
   await page.getByRole('link', { name: /Back to Manage event/ }).click()
