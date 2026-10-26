@@ -99,7 +99,13 @@ Manage Event is the default Tasks entry inside a shared event workspace. Its
 compact header retains the event title/time/active venue with secondary details
 in a disclosure. A persistent desktop rail opens all operations and existing
 RSVP/check-in/QR/attendance/floor-plan routes in the content area. Mobile uses a
-labelled Sections disclosure with wrapping links. Tool routes have an explicit
+labelled Sections disclosure with wrapping links. Navigation groups are Event
+planning (prepare/update the event) and Guests & venue (manage guests and the
+venue). Group headings use 16px high-contrast ink text, purpose descriptions and
+clear separators; 15px navigation labels keep at least 44px hit areas. The rail
+uses a wider gutter, and the desktop layout begins at Bootstrap’s 992px threshold.
+Registrations manages sign-ups/approvals/waitlist; Attendance report shows actual
+check-ins, with explanatory copy on both pages. Tool routes have an explicit
 Back to Manage event link that restores the prior task query/tab; other F4
 sections return to Tasks. Only Tasks links back to My events. Existing live-only
 visibility and destination authentication/role checks remain.

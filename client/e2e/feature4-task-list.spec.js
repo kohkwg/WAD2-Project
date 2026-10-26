@@ -186,13 +186,13 @@ test('100 tasks reflow at course widths with light, dark and reduced motion sett
 test('live-only event tools stay hidden in demo and appear in a live-visibility fixture', async ({ page }) => {
   await openTasks(page)
   const demoNavigation = page.getByRole('navigation', { name: 'Event workspace navigation' })
-  await expect(demoNavigation.getByRole('link', { name: 'RSVPs', exact: true })).toBeVisible()
+  await expect(demoNavigation.getByRole('link', { name: 'Registrations', exact: true })).toBeVisible()
   await expect(demoNavigation.getByRole('link', { name: 'Check-in', exact: true })).toHaveCount(0)
 
   await page.route(/\/src\/utils\/api(?:\.js)?(?:\?.*)?$/, route => route.fulfill({ contentType: 'text/javascript', body: liveVisibilityApi }))
   await page.reload()
   const liveFixtureNavigation = page.getByRole('navigation', { name: 'Event workspace navigation' })
-  for (const name of ['Check-in', 'Venue QR', 'Attendance', 'Floor plan']) {
+  for (const name of ['Check-in station', 'Venue QR', 'Attendance report', 'Floor plan']) {
     await expect(liveFixtureNavigation.getByRole('link', { name, exact: true })).toBeVisible()
   }
 })

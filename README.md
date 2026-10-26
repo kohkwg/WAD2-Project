@@ -332,3 +332,10 @@ context, consistent section/return navigation and lighter Tasks presentation.
 Codex adapted only the surrounding navigation/headings of the existing RSVP,
 check-in, QR, attendance and floor-plan pages; teammates retain their business
 logic and authorship. No new library or hosted change was introduced.
+
+
+For the subsequent 26 October navigation-clarity pass, Codex refined organiser
+workspace typography, contrast and spacing, renamed the navigation groups to
+Event planning and Guests & venue, and clarified Registrations versus Attendance
+report with concise page descriptions. This was AI-authored presentation/copy
+work; existing registration and attendance logic remains its authors' contribution.
