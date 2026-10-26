@@ -31,7 +31,7 @@ test("six-event fixture ranks upcoming candidates and returns the promised shape
 test("weights and each signal follow the requested normalized formulas", () => {
   assert.deepEqual(RANKING_CONFIG.weights, { interest: .4, recency: .2, popularity: .15, distance: .15, spots: .1 });
   const jazz = rankOne(sampleEvents[0]);
-  closeTo(jazz.score, .4 * .75 + .2 * Math.exp(-1 / 14) + .15 * .6 + .15 + .1 * .4);
+  closeTo(jazz.score, .4 * .7634349199257851 + .2 * Math.exp(-1 / 14) + .15 * .6 + .15 + .1 * .4);
   assert.equal(jazz.reason, "Matches your interests: music");
   const full = rankOne(sampleEvents[3]);
   closeTo(full.score, (.2 * Math.exp(-1) + .15) / .85);
@@ -39,7 +39,7 @@ test("weights and each signal follow the requested normalized formulas", () => {
 
 test("missing coordinates on either side drop distance and redistribute its weight", () => {
   const event = { ...sampleEvents[0], lat: null, lng: null };
-  const expected = (.4 * .75 + .2 * Math.exp(-1 / 14) + .15 * .6 + .1 * .4) / .85;
+  const expected = (.4 * .7634349199257851 + .2 * Math.exp(-1 / 14) + .15 * .6 + .1 * .4) / .85;
   closeTo(rankOne(event).score, expected);
   closeTo(rankOne(sampleEvents[0], { interest_weights: profile.interest_weights }).score, expected);
   closeTo(rankOne({ ...event, lat: "", lng: "" }).score, expected);
@@ -49,7 +49,7 @@ test("distance uses 1 / (1 + km / 5), including latitude/longitude venue coordin
   const km = 6371 * Math.PI / 180; // One degree along the equator.
   const event = { ...sampleEvents[0], lat: null, lng: null, venue: { latitude: 0, longitude: 1 } };
   const result = rankOne(event, { ...profile, latitude: 0, longitude: 0, lat: undefined, lng: undefined });
-  closeTo(result.score, .4 * .75 + .2 * Math.exp(-1 / 14) + .15 * .6 + .15 / (1 + km / 5) + .1 * .4);
+  closeTo(result.score, .4 * .7634349199257851 + .2 * Math.exp(-1 / 14) + .15 * .6 + .15 / (1 + km / 5) + .1 * .4);
 });
 
 test("cold start uses recency and popularity only, even with location and open spots", () => {
@@ -65,26 +65,26 @@ test("selected interests work without learned weights; duplicate tags count once
   const single = rankOne(sampleEvents[0], user);
   const duplicate = rankOne({ ...sampleEvents[0], tags: ["music", "music"] }, user);
   closeTo(single.score, duplicate.score);
-  closeTo(single.score, (.4 * .5 + .2 * Math.exp(-1 / 14) + .15 * .6 + .1 * .4) / .85);
+  closeTo(single.score, (.4 * .4467346701436833 + .2 * Math.exp(-1 / 14) + .15 * .6 + .1 * .4) / .85);
 });
 
-test("greedy diversity applies a cumulative 0.7 category penalty", () => {
+test("greedy diversity applies a maximum tag-overlap penalty", () => {
   const equal = { start_time: NOW, capacity: 10, confirmed_count: 5, spots_left: 5 };
   const events = [
-    { ...equal, id: "a", category: "music" },
-    { ...equal, id: "b", category: "music" },
-    { ...equal, id: "c", category: "sports", confirmed_count: 1 },
-    { ...equal, id: "d", category: "music" },
-    { ...equal, id: "e", category: "arts", start_time: daysFromNow(1), confirmed_count: 0 },
+    { ...equal, id: "a", tags: ["music"] },
+    { ...equal, id: "b", tags: ["music"] },
+    { ...equal, id: "c", tags: ["sports"], confirmed_count: 1 },
+    { ...equal, id: "d", tags: ["music"] },
+    { ...equal, id: "e", tags: ["arts"], start_time: daysFromNow(1), confirmed_count: 0 },
   ];
-  assert.equal(RANKING_CONFIG.categoryPenalty, .7);
-  assert.deepEqual(rankEvents(events, {}, { now: NOW }).map(r => r.event.id), ["a", "c", "b", "e", "d"]);
+  assert.equal(RANKING_CONFIG.diversityPenalty, .3);
+  assert.deepEqual(rankEvents(events, {}, { now: NOW }).map(r => r.event.id), ["a", "c", "b", "d", "e"]);
 });
 
 test("invalid/unlimited capacities and malformed values never produce NaN scores", () => {
   for (const capacity of [0, -1, null, undefined, Infinity]) {
     const result = rankOne({ ...sampleEvents[0], capacity });
-    closeTo(result.score, .4 * .75 + .2 * Math.exp(-1 / 14) + .15);
+    closeTo(result.score, .4 * .7634349199257851 + .2 * Math.exp(-1 / 14) + .15);
   }
   const result = rankOne({ ...sampleEvents[0], confirmed_count: Infinity, spots_left: NaN }, { interest_weights: { music: NaN, sports: -1 } });
   assert.ok(Number.isFinite(result.score));
@@ -92,7 +92,7 @@ test("invalid/unlimited capacities and malformed values never produce NaN scores
 
 test("signals are clamped when counts exceed capacity or are negative", () => {
   const result = rankOne({ ...sampleEvents[0], confirmed_count: 500, spots_left: -5 });
-  closeTo(result.score, .4 * .75 + .2 * Math.exp(-1 / 14) + .15 + .15);
+  closeTo(result.score, .4 * .7634349199257851 + .2 * Math.exp(-1 / 14) + .15 + .15);
 });
 
 test("empty input, limits, exclusions, invalid dates, and stable ties are supported", () => {

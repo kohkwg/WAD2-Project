@@ -4,6 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+    "check": "node checks/interest.check.js && node checks/diversity.check.js",
     "start": "node --env-file=.env server.js",
     "dev": "nodemon --env-file=.env server.js",
     "test:crud": "node --env-file=.env scripts/crud-check.js",

@@ -36,6 +36,10 @@ confirmation and reseeds relative event dates in that browser only.
 
 ## Check selection
 
+For the standalone interest and tag-diversity checks, run `npm run check` from `server/`
+(or run `node checks/interest.check.js` and `node checks/diversity.check.js`). These use `checks/helpers.js` to print
+PASS/FAIL with a 0.01 tolerance and set a nonzero exit code on failure.
+
 Use only the necessary targeted checks for the changed flow. Full suites and
 production builds require explicit user instruction; do not repeat them after
 each visual adjustment. Source-only SFC compilation is not a production build.

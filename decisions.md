@@ -217,3 +217,16 @@ use explicit force-with-lease only on the owner's feature branch. Subsequent wor
 uses normal feature pushes; Denzel will create/review/merge PRs into dev later.
 This authority does not reset teammates' branches now, force-push dev/main, deploy,
 or mutate hosted application data. See `design-branches.md`.
+## 26 October 2026 — F1 interest formula
+
+Aishani requests Step 1 first: blend matched preference share and saturating
+match strength equally, expose `interestScore`, and add console-based numeric
+checks. Preserve the existing test files, updating affected expected scores only.
+The later steps were initially pending; Step 2 is authorised below.
+
+## 26 October 2026 — F1 tag diversity
+
+Aishani requests maximum Jaccard tag similarity against already selected events,
+with adjusted score = original score × (1 − 0.3 × maximum similarity). The 0.3
+is a tunable heuristic; empty tags imply zero similarity. Category penalties
+are replaced. Add console checks and commit with the supplied message.
