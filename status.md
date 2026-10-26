@@ -490,3 +490,22 @@ not persist. These are dated observations, not permanent database invariants.
   correctness. Existing SQL/docs work remains preserved and excluded.
 - Inspected demo previews: [desktop](docs/design/previews/f4-tutorial-desktop.png)
   and [mobile](docs/design/previews/f4-tutorial-mobile.png).
+
+
+### 26 October — tutorial spotlight alignment correction
+
+- Reproduce step 6 sweeping across the forecast while the active venue moves
+  after async forecast insertion, and step 8 exposing navbar content when the
+  public-event link scrolls behind the sticky header.
+- Close the spotlight aperture while preparing or scrolling, then fade it open
+  at the actual target after geometry settles. Observe external content changes
+  as well as resize/scroll, and reserve sticky-navbar clearance when scrolling.
+  Keep Skip available and enable step navigation when the target is ready.
+- **12 focused tutorial Chromium cases pass**, including two new frame-by-frame
+  regressions at 375/1280px with normal motion and delayed successful weather.
+  Both new regressions failed before the fix. Existing four-width positioning,
+  reduced motion, replay, owner gating, keyboard/storage fallback, browser Back
+  and draft/query preservation checks pass. The changed SFC compiles; syntax/
+  whitespace checks pass and Graphify AST is refreshed. Independent GPT-6 Luna
+  Medium review reports no actionable issue. No full suite/build or hosted write.
+  Existing SQL/docs work remains untouched and excluded from this publication.

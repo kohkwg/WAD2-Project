@@ -363,3 +363,8 @@ Manage Event tutorial with a spotlight, explanatory popup, Previous/Next/Skip
 and Finish controls, motion, reduced-motion support and replay. GPT-6 Luna Medium
 assisted the popup implementation and review. Browser-local preferences remember
 Skip/completion per owner; no library, database schema or event write was added.
+
+
+On 26 October, Codex corrected tutorial spotlight tracking during async weather
+layout changes and scrolling beneath the sticky navbar, with focused browser
+regressions and a GPT-6 Luna Medium review. Existing authorship remains unchanged.
