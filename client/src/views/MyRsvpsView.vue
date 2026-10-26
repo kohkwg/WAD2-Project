@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import OfferBanner from '../components/OfferBanner.vue'
+import OfferBanner from '../components/rsvp/OfferBanner.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import {
   getMyRsvps,

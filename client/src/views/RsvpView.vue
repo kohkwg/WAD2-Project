@@ -2,9 +2,9 @@
 import { ref, computed, watch, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useDiscoveryMotion } from '../composables/useDiscoveryMotion'
-import EventSummary from '../components/EventSummary.vue'
+import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnouncementFeed from '../components/event-operations/AnnouncementFeed.vue'
-import ClashWarning from '../components/ClashWarning.vue'
+import ClashWarning from '../components/rsvp/ClashWarning.vue'
 import VenueMap from '../components/VenueMap.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import {
@@ -343,6 +343,8 @@ async function submitRsvp() {
 .waitlist-note { margin: 1rem 0 0; padding-top: 1rem; border-top: 1px solid var(--bookedz-border); color: var(--bookedz-ink); font-weight: 650; }
 .rsvp-state--team { background: linear-gradient(145deg, var(--bookedz-surface), color-mix(in srgb, var(--bookedz-yellow) 30%, var(--bookedz-surface))); }
 .required-mark { color: var(--bookedz-danger); font-size: .85em; font-weight: 600; }
+/* Bootstrap's validation red is 4.46:1 on the light card; the theme's danger token passes in both themes */
+.rsvp-form .invalid-feedback { color: var(--bookedz-danger); }
 .choice-group { display: flex; flex-wrap: wrap; gap: .5rem; }
 .choice-option { position: relative; display: inline-flex; align-items: center; gap: .55rem; min-height: 44px; margin: 0; padding: 0 1.1rem 0 .9rem; border: 1px solid var(--bookedz-control-border); border-radius: 12px; background: var(--bookedz-surface); transition: border-color var(--bookedz-motion-fast) ease, background-color var(--bookedz-motion-fast) ease; }
 .choice-option .form-check-input { position: relative; z-index: 1; float: none; margin: 0; }

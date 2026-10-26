@@ -1,6 +1,6 @@
 <script setup>
 import { ref, nextTick } from 'vue'
-import { formatShortDateTime } from '../utils/helpers.js'
+import { formatShortDateTime } from '../../utils/helpers.js'
 
 // Table of RSVPs for the organiser. Used for both "Pending approval" and "Confirmed".
 // It doesn't change any data itself — it emits events and the parent page does the work.

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { formatEventTime, formatTimeLeft } from '../utils/helpers.js'
+import { formatEventTime, formatTimeLeft } from '../../utils/helpers.js'
 
 // Shown on My RSVPs when a waitlist spot has been offered to you.
 // The parent passes `now` (updated every 30s) so the countdown moves.

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, useId, watch } from 'vue'
-import { formatEventTime } from '../utils/helpers.js'
-import EventArtwork from './EventArtwork.vue'
+import { formatEventTime } from '../../utils/helpers.js'
+import EventArtwork from '../EventArtwork.vue'
 
 // Read-only card with an event's key details.
 // Used on the RSVP page and the "Review" step of Create Event.

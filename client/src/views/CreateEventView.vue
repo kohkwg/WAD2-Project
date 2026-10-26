@@ -1,10 +1,10 @@
 <script setup>
 import { ref, computed, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import StepIndicator from '../components/StepIndicator.vue'
-import AddressSearch from '../components/AddressSearch.vue'
+import StepIndicator from '../components/rsvp/StepIndicator.vue'
+import AddressSearch from '../components/rsvp/AddressSearch.vue'
 import VenueMap from '../components/VenueMap.vue'
-import EventSummary from '../components/EventSummary.vue'
+import EventSummary from '../components/rsvp/EventSummary.vue'
 import { uploadCover } from '../lib/uploadCover.js'
 import { createEvent, USING_SUPABASE } from '../utils/api.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
@@ -687,5 +687,8 @@ async function publish() {
 .question-chip { display: inline-flex; align-items: center; padding: .2rem .6rem; border: 1px solid var(--bookedz-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-hover); font-size: .75rem; font-weight: 650; }
 .question-chip--required { color: var(--bookedz-primary-dark); }
 .question-notice { margin: 0 0 1rem; padding: .7rem .9rem; border-radius: 12px; color: var(--bookedz-ink); background: color-mix(in srgb, var(--bookedz-mint) 30%, var(--bookedz-surface)); font-size: .9rem; }
+/* Disabled outline buttons (Back on step 1, an empty "Add question") use the theme's disabled
+   colours instead of Bootstrap's default grey/blue, matching disabled .event-cta buttons */
+.create-event-page :deep(.btn-outline-primary), .create-event-page :deep(.btn-outline-secondary) { --bs-btn-disabled-color: var(--bookedz-disabled-ink); --bs-btn-disabled-bg: var(--bookedz-disabled-bg); --bs-btn-disabled-border-color: var(--bookedz-border); --bs-btn-disabled-opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .step-forward-enter-active, .step-forward-leave-active, .step-back-enter-active, .step-back-leave-active, .create-event-page :deep(.form-control), .create-event-page :deep(.form-select) { transition: none; } }
 </style>
