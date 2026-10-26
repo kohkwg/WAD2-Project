@@ -339,3 +339,10 @@ workspace typography, contrast and spacing, renamed the navigation groups to
 Event planning and Guests & venue, and clarified Registrations versus Attendance
 report with concise page descriptions. This was AI-authored presentation/copy
 work; existing registration and attendance logic remains its authors' contribution.
+
+
+On 26 October 2026, Denzel approved subtle motion across My events and its
+organiser subpages. Codex added scoped native browser entrances and Vue list
+movement, with a GPT-6 Luna Medium review. Existing creation-step motion, themes,
+focus, reduced-motion preferences and cached drafts remain supported. No runtime
+library was added; teammate and existing library attributions remain unchanged.

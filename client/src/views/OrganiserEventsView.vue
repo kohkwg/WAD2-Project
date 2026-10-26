@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { getOrganiserEvents, deleteEvent } from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
 import EventArtwork from '../components/EventArtwork.vue'
+import { vOrganiserMotion } from '../utils/organiserMotion.js'
 
 // The organiser's list of events. (This may later merge into Denzel's organiser dashboard.)
 
@@ -55,6 +56,7 @@ function fillPercent(event) {
 </script>
 
 <template>
+  <div v-organiser-motion>
   <header class="organiser-heading d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
     <div><p class="organiser-kicker mb-2">Your hosting space</p><h1 class="mb-1">My events</h1><p class="text-secondary mb-0">Keep every gathering, guest list and detail in one place.</p></div>
     <RouterLink to="/organiser/events/new" class="btn btn-primary">Create event</RouterLink>
@@ -83,8 +85,8 @@ function fillPercent(event) {
     <RouterLink to="/organiser/events/new" class="btn btn-primary">Create your first event</RouterLink>
   </div>
 
-  <div v-else class="row row-cols-1 row-cols-md-2 g-3">
-    <div class="col" v-for="event in events" :key="event.id">
+  <TransitionGroup v-else tag="div" name="organiser-list" class="row row-cols-1 row-cols-md-2 g-3">
+    <div class="col" v-for="event in events" :key="event.id" data-organiser-enter>
       <article class="card organiser-event-card h-100" :class="{ 'border-success': event.id === justCreatedId }">
         <img v-if="event.coverImageUrl" class="organiser-event-cover" :src="event.coverImageUrl" :alt="'Cover image for ' + event.title" loading="lazy" />
         <div v-else class="organiser-event-cover organiser-event-cover--empty"><EventArtwork :category="event.tags?.[0] || 'community'" /></div>
@@ -122,6 +124,7 @@ function fillPercent(event) {
         </footer>
       </article>
     </div>
+  </TransitionGroup>
   </div>
 </template>
 

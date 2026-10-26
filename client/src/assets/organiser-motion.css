@@ -1,0 +1,21 @@
+/* Scoped to the organiser surface; existing theme and shared controls still own colour. */
+.organiser-motion .organiser-list-move {
+  transition: transform 240ms cubic-bezier(.2,.7,.2,1);
+}
+.organiser-motion :is(.workspace-nav-group a, .mobile-nav-group a, .filter-button, .text-button) {
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.organiser-motion .organiser-event-card {
+  transition: box-shadow 240ms ease, border-color 180ms ease;
+}
+.organiser-motion .organiser-event-card:hover,
+.organiser-motion .organiser-event-card:focus-within {
+  border-color: var(--bookedz-control-border);
+  box-shadow: var(--bookedz-card-shadow) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .organiser-motion .organiser-list-move,
+  .organiser-motion :is(.workspace-nav-group a, .mobile-nav-group a, .filter-button, .text-button, .organiser-event-card) {
+    transition: none;
+  }
+}

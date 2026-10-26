@@ -317,7 +317,7 @@ function isLastTask(task) {
       <button id="tasks-add-task" class="btn btn-primary add-task-button" type="button" :aria-expanded="composerOpen" @click="toggleComposer">{{ composerOpen ? 'Close composer' : 'Add task' }}</button>
     </div>
 
-    <form v-if="composerOpen" class="task-composer" name="task-create" autocomplete="off" aria-label="Add task" @submit.prevent="saveCreateTask">
+    <form v-if="composerOpen" data-organiser-enter class="task-composer" name="task-create" autocomplete="off" aria-label="Add task" @submit.prevent="saveCreateTask">
       <div class="composer-fields">
         <label class="visually-hidden" for="task-title">Task title</label>
         <input id="task-title" ref="createTitleInput" class="form-control" name="title" autocomplete="off" :value="createDraft.title" type="text" required maxlength="200" placeholder="Task title" :disabled="pending" @input="updateCreateDraft('title', $event.target.value)" />
@@ -379,7 +379,7 @@ function isLastTask(task) {
     </div>
 
     <div v-if="filteredTasks.length" class="task-groups" :aria-busy="pending">
-      <ul v-if="activeFilter !== 'completed' && openTasks.length" class="task-list" aria-label="Open tasks">
+      <TransitionGroup v-if="activeFilter !== 'completed' && openTasks.length" tag="ul" name="organiser-list" class="task-list" aria-label="Open tasks">
         <TaskListRow
           v-for="task in openTasks"
           :key="task.id"
@@ -409,7 +409,7 @@ function isLastTask(task) {
           @save-edit="saveEditTask"
           @cancel-edit="cancelEdit"
         />
-      </ul>
+      </TransitionGroup>
       <section v-if="activeFilter === 'completed' || (activeFilter === 'all' && counts.completed)" class="completed-group">
         <h3 v-if="activeFilter === 'all' && completedForcedOpen" id="task-group-done" class="group-heading">Completed tasks <span class="group-count">{{ counts.completed }}</span></h3>
         <button v-else-if="activeFilter === 'all'" id="task-group-done" class="group-toggle" type="button" :aria-expanded="completedIsExpanded" @click="completedExpanded = !completedExpanded">
@@ -417,7 +417,7 @@ function isLastTask(task) {
         </button>
         <h3 v-else id="task-group-done" class="group-heading">Completed tasks <span class="group-count">{{ counts.completed }}</span></h3>
         <p v-if="completedIsExpanded && !completedTasks.length && isSearching" class="empty-state">No matching completed tasks.</p>
-        <ul v-if="completedIsExpanded && completedTasks.length" class="task-list" aria-label="Completed tasks">
+        <TransitionGroup v-if="completedIsExpanded && completedTasks.length" tag="ul" name="organiser-list" class="task-list" aria-label="Completed tasks">
           <TaskListRow
             v-for="task in completedTasks"
             :key="task.id"
@@ -447,7 +447,7 @@ function isLastTask(task) {
             @save-edit="saveEditTask"
             @cancel-edit="cancelEdit"
           />
-        </ul>
+        </TransitionGroup>
       </section>
     </div>
     <ConfirmationDialog v-if="deleting" title="Delete task?" focus-fallback="#tasks-add-task" :pending="pending" :error="actionError" @cancel="cancelDelete" @confirm="deleteTask">

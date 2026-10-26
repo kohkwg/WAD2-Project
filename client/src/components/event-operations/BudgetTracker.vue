@@ -75,8 +75,8 @@ function edit(item) {
 
     <h3 class="section-heading">Expenses</h3>
     <p v-if="!budget.items.length" class="text-secondary">No expenses yet. Add your first item below.</p>
-    <div v-else class="expense-list workspace-panel">
-      <article v-for="item in budget.items" :key="item.id" class="expense-row">
+    <TransitionGroup v-else tag="div" name="organiser-list" class="expense-list workspace-panel">
+      <article v-for="item in budget.items" :key="item.id" data-organiser-enter class="expense-row">
         <div class="expense-identity"><h4 class="h6 item-name mb-1">{{ item.name }}</h4><p class="small text-secondary mb-0">{{ item.category }}</p></div>
         <dl class="cost-comparison">
           <div><dt>Planned</dt><dd>{{ money(item.plannedCents) }}</dd></div>
@@ -85,7 +85,7 @@ function edit(item) {
         </dl>
         <div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-sm btn-outline-primary" :disabled="pending" :aria-label="'Edit expense: ' + item.name" @click="edit(item)">Edit</button><button type="button" class="btn btn-sm btn-outline-danger" :disabled="pending" :aria-label="'Delete expense: ' + item.name" @click="deleting = item">Delete</button></div>
       </article>
-    </div>
+    </TransitionGroup>
 
     <form class="workspace-panel expense-editor mt-4" @submit.prevent="saveItem">
       <h3 class="section-heading">{{ editingId ? 'Edit expense' : 'New expense' }}</h3>
