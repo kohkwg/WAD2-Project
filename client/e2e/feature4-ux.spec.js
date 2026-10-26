@@ -9,12 +9,13 @@ test.beforeEach(async ({ page }) => {
 })
 
 for (const tool of [
-  { tab: 'tasks', field: 'Task title', value: 'Check stage lighting', save: 'Add task', edit: 'Check stage lighting' },
+  { tab: 'tasks', field: 'Task title', value: 'Check stage lighting', save: 'Save task', edit: 'Check stage lighting' },
   { tab: 'announcements', field: 'Announcement text', value: 'Please bring your student card', save: 'Publish announcement', edit: 'Edit announcement: Please bring your student card' },
   { tab: 'budget', field: 'Item name', value: 'Stage lighting', save: 'Save item', edit: 'Edit expense: Stage lighting' },
 ]) {
   test(`${tool.tab} edit brings the existing draft into keyboard focus and view`, async ({ page }) => {
     await page.goto(`${eventPath}?tab=${tool.tab}`)
+    if (tool.tab === 'tasks') await page.getByRole('button', { name: 'Add task', exact: true }).click()
     const input = page.getByLabel(tool.field, { exact: true })
     await input.fill(tool.value)
     if (tool.tab === 'budget') await page.getByLabel('Planned cost (SGD)', { exact: true }).fill('125.00')

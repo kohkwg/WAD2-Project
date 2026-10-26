@@ -61,16 +61,18 @@ test.beforeEach(async ({ page }) => {
 
 test('cancelled task, announcement and expense deletes invalidate their failed retries', async ({ page }) => {
   await openTool(page)
-  await page.getByLabel('Task title', { exact: true }).fill('Retry target task')
   await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await page.getByLabel('Task title', { exact: true }).fill('Retry target task')
+  await page.getByRole('button', { name: 'Save task', exact: true }).click()
   const taskDelete = await requestTaskDelete(page, 'Retry target task')
   await failStorage(page)
   await failDelete(page, taskDelete)
   await expect(page.getByRole('button', { name: 'Retry save', exact: true })).toHaveCount(0)
   await expect(taskDelete).toBeVisible()
 
-  await page.getByLabel('Task title', { exact: true }).fill('Changed retry target')
   await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await page.getByLabel('Task title', { exact: true }).fill('Changed retry target')
+  await page.getByRole('button', { name: 'Save task', exact: true }).click()
   const changedTaskDelete = await requestTaskDelete(page, 'Changed retry target')
   await expect(page.getByRole('button', { name: 'Retry save', exact: true })).toHaveCount(0)
   await failStorage(page)
@@ -116,8 +118,9 @@ test('cancelled task, announcement and expense deletes invalidate their failed r
 
 test('task completion keeps status on failed save and retry', async ({ page }) => {
   await openTool(page)
-  await page.getByLabel('Task title', { exact: true }).fill('Keyboard focus task')
   await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await page.getByLabel('Task title', { exact: true }).fill('Keyboard focus task')
+  await page.getByRole('button', { name: 'Save task', exact: true }).click()
   await page.locator('.task-title').filter({ hasText: 'Keyboard focus task' }).focus()
   await page.locator('.task-title').filter({ hasText: 'Keyboard focus task' }).click()
   await page.getByRole('button', { name: 'Start task', exact: true }).click()
@@ -131,24 +134,28 @@ test('task completion keeps status on failed save and retry', async ({ page }) =
   await expect(checkbox).not.toBeChecked()
   await restoreStorage(page)
   await page.getByRole('button', { name: 'Retry save', exact: true }).click()
+  await page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^Completed\b/ }).click()
   await expect(page.getByLabel('Reopen task: Keyboard focus task', { exact: true })).toBeChecked()
 })
 
 test('completing from All sends focus to a visible task when Completed is collapsed', async ({ page }) => {
   await openTool(page)
   for (const title of ['Focus first task', 'Focus next task']) {
-    await page.locator('#task-title').fill(title)
     await page.getByRole('button', { name: 'Add task', exact: true }).click()
+    await page.locator('#task-title').fill(title)
+    await page.getByRole('button', { name: 'Save task', exact: true }).click()
   }
+  await page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^All\b/ }).click()
   await page.getByLabel('Complete task: Focus first task', { exact: true }).click()
   await expect(page.getByLabel('Complete task: Focus next task', { exact: true })).toBeFocused()
-  await expect(page.getByLabel('Reopen task: Focus first task', { exact: true })).not.toBeInViewport()
+  await expect(page.getByLabel('Reopen task: Focus first task', { exact: true })).toHaveCount(0)
 })
 
 test('dialog cancel and Escape restore the opener; successful delete focuses a nearby task action', async ({ page }) => {
   await openTool(page)
-  await page.getByLabel('Task title', { exact: true }).fill('Dialog focus task')
   await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await page.getByLabel('Task title', { exact: true }).fill('Dialog focus task')
+  await page.getByRole('button', { name: 'Save task', exact: true }).click()
   const menuOpener = page.getByRole('button', { name: 'More actions for: Dialog focus task', exact: true })
   await menuOpener.focus()
   await menuOpener.click()
@@ -171,7 +178,7 @@ test('dialog cancel and Escape restore the opener; successful delete focuses a n
   await opener.click()
   await dialog.getByRole('button', { name: 'Delete', exact: true }).click()
   await expect(dialog).toHaveCount(0)
-  await expect(page.getByLabel('Task title', { exact: true })).toBeFocused()
+  await expect(page.getByRole('button', { name: 'Add task', exact: true })).toBeFocused()
 })
 
 test('weather confirmation returns focus on cancellation and success', async ({ page }) => {

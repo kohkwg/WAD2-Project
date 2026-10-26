@@ -230,3 +230,14 @@ and Back to to do controls retaining In progress. The shared fonts, semantic
 colours, themes and motion/accessibility conventions remain. Denzel authorised
 GPT-6 Luna subagents at Medium effort for suitable implementation/tool work.
 This approval does not authorise new hosted changes, PR creation or merging.
+
+
+### Unified event workspace — subsequent 26 October approval
+
+Denzel approved the proposed follow-up: consistent event-scoped navigation with
+tool content in the right-hand workspace, an explicit Back to Manage event path,
+and a less cluttered task interface within the established fonts/colours/themes.
+Tasks remains the default entry, rather than introducing a new overview dashboard.
+Shared routing and surrounding presentation now connect the existing feature
+pages; their API, authentication and role contracts remain owned by their authors.
+No new hosted change, PR creation or merge is part of this refinement.

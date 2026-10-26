@@ -95,21 +95,25 @@ fill uses transforms. Existing validation, cover upload, retry/publication guard
 venue search and RSVP-question authoring are preserved. A preview is not a saved
 or published event.
 
-Manage Event uses a compact event/time/active-venue header with a secondary
-public-event link. A desktop local rail groups Event operations (Tasks,
-Announcements, Budget, Weather) and Event tools (RSVPs and live-only
-check-in/QR/attendance/floor-plan destinations). Narrow screens use a wrapping
-operations grid and an explicitly labelled Event tools disclosure.
+Manage Event is the default Tasks entry inside a shared event workspace. Its
+compact header retains the event title/time/active venue with secondary details
+in a disclosure. A persistent desktop rail opens all operations and existing
+RSVP/check-in/QR/attendance/floor-plan routes in the content area. Mobile uses a
+labelled Sections disclosure with wrapping links. Tool routes have an explicit
+Back to Manage event link that restores the prior task query/tab; other F4
+sections return to Tasks. Only Tasks links back to My events. Existing live-only
+visibility and destination authentication/role checks remain.
 
-Tasks use one list with In progress, To do and collapsed Completed groups,
-search/status filters and real counts. Native checkboxes complete/reopen tasks;
-Start task and Back to to do preserve the three stored states without a status
-select. Notes, inline editing, ordering and deletion use row disclosures rather
-than permanent action clusters. Reopening returns to To do. Full-board saves
-always include hidden tasks; presentation filters never change stored contents.
-Existing ownership, draft preservation, retry and cancellation semantics remain.
-Tasks retain keyboard/drag controls; announcement cards remain public updates;
-budget figures remain exact SGD cents; weather retains trusted, one-way switching.
+Tasks default to one flat Open list, with In progress shown on individual rows.
+Open/Completed/All filters and title/notes search use URL query state. Add task
+opens a compact composer on intent; collapsed composers and cached F4 views keep
+drafts across workspace navigation. Completed is collapsed under All except
+when search reveals matches. Empty status groups, repeated instructions and
+permanent success banners are removed. Native completion, explicit progress
+actions, inline edits and secondary row actions retain the three stored states.
+Full-board saves still include every hidden task. Cached confirmations close and
+invalidate failed retries on leaving F4; pending server operations still finish
+under the existing guarded mutation contract.
 
 Manage RSVPs shows actual confirmed/offered/available capacity and separate
 pending/waitlist/closed totals. The segmented bar animates transforms when data

@@ -1,4 +1,28 @@
 import { test, expect } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+
+const liveVisibilityApi = readFileSync(new URL('../src/utils/api.js', import.meta.url), 'utf8')
+  .replace(/export const USING_SUPABASE = .*/, 'export const USING_SUPABASE = true')
+  .replace(/const backend = .*/, 'const backend = mockApi')
+  .replace(/const operationsBackend = .*/, 'const operationsBackend = mockApi')
+  .replace(/const weatherBackend = .*/, 'const weatherBackend = mockApi')
+  .replace(/export const getCurrentUser = .*/, "export const getCurrentUser = () => Promise.resolve({ id: 'u1', email: 'organiser@example.invalid' })")
+
+const liveCheckinFixture = `
+export const getEvent = async id => ({ id, title: 'Campus Green Social · Weather demo', starts_at: '2026-10-26T10:00:00.000Z', ends_at: '2026-10-26T12:00:00.000Z' })
+export const staffCheckIn = async () => ({ user_id: 'u1', checked_in_at: new Date().toISOString() })
+export const wasAlreadyCheckedIn = () => false
+export const formatTime = iso => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+export const listAttendees = async () => []
+export const selfCheckIn = async () => ({})
+export const getCheckinSecret = async () => ({ checkin_secret: 'local-e2e-secret', rotated_at: new Date().toISOString() })
+export const rotateCheckinSecret = async () => 'local-e2e-secret'
+export const exportAttendance = async () => []
+export const importAttendance = async () => ({ matched: 0, unmatched: 0 })
+export const venueCheckInUrl = (id, secret) => '/events/' + id + '/check-in?s=' + secret
+export const getDeviceId = () => 'local-e2e-device'
+export const getLocation = async () => null
+`
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' })
@@ -48,48 +72,118 @@ test('public layout prioritises event facts and My RSVPs stays responsive', asyn
   expect(errors).toEqual([])
 })
 
-test('organiser layouts expose tools and capacity from actual RSVP data', async ({ page }, testInfo) => {
+test('organiser event routes share workspace navigation and return to Manage event', async ({ page }, testInfo) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   for (const width of [1280, 768, 575, 375]) {
     await page.setViewportSize({ width, height: 900 })
-    await page.goto('/organiser/events/e-weather-demo/manage?source=spec&tab=tasks#local')
-    const operations = page.getByRole('navigation', { name: 'Event operations' })
-    const tools = page.getByRole('navigation', { name: 'Event tools' })
-    const mobileDisclosure = page.locator('details.mobile-tools')
-    if (width < 992) {
-      await expect(operations).toBeVisible()
-      await expect(mobileDisclosure).toBeVisible()
-      await expect(mobileDisclosure.locator('summary')).toContainText('RSVPs, check-in and venue')
-      await mobileDisclosure.locator('summary').focus()
-      await page.keyboard.press('Enter')
-      await expect(mobileDisclosure).toHaveAttribute('open', '')
-      await expect(tools.getByRole('link', { name: /^Manage RSVPs\b/ })).toBeVisible()
+    await page.goto('/organiser/events/e-weather-demo/manage?tab=tasks')
+    const workspace = page.getByRole('region', { name: 'Event workspace' })
+    const mobileSections = page.locator('details.workspace-mobile-sections')
+    let navigation
+    if (width <= 900) {
+      await expect(mobileSections).toBeVisible()
+      await mobileSections.locator('summary').click()
+      navigation = mobileSections.getByRole('navigation', { name: 'Event workspace sections' })
     } else {
-      await expect(operations).toBeVisible()
-      await expect(tools).toBeVisible()
-      await expect(tools.getByRole('link', { name: /^Manage RSVPs\b/ })).toBeVisible()
+      navigation = page.getByRole('navigation', { name: 'Event workspace navigation' })
     }
+    await expect(workspace.locator('.workspace-header h1')).toContainText('Campus Green Social')
+    await expect(navigation.getByRole('link', { name: 'Tasks', exact: true })).toBeVisible()
+    if (width > 900) await expect(navigation.getByRole('link', { name: 'Tasks', exact: true })).toHaveCount(1)
+    await expect(navigation.getByRole('link', { name: 'RSVPs', exact: true })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Event operations' })).toHaveCount(0)
+    await expect(navigation.getByRole('link', { name: 'Check-in', exact: true })).toHaveCount(0)
     for (const tab of ['Tasks', 'Announcements', 'Budget', 'Weather']) {
-      await operations.getByRole('link', { name: new RegExp(`^${tab}\\b`) }).click()
+      if (width <= 900 && !await mobileSections.evaluate(el => el.open)) await mobileSections.locator('summary').click()
+      await navigation.getByRole('link', { name: tab, exact: true }).click()
       await expect(page.getByRole('heading', { name: tab, exact: true })).toBeVisible()
-      await expect(operations.getByRole('link', { name: new RegExp(`^${tab}\\b`) })).toHaveAttribute('aria-current', 'page')
-      await expect(page).toHaveURL(new RegExp(`source=spec.*tab=${tab.toLowerCase()}.*#local`))
+      if (tab === 'Tasks') {
+        await expect(workspace.getByRole('link', { name: /My events/ })).toBeVisible()
+      } else {
+        await expect(workspace.getByRole('link', { name: /Back to Manage event/ })).toHaveAttribute('href', '/organiser/events/e-weather-demo/manage?tab=tasks')
+      }
+      if (width <= 900) await expect(mobileSections.locator('summary')).toContainText(`Sections · ${tab}`)
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     }
-    await operations.getByRole('link', { name: /^Tasks\b/ }).click()
-    await expect(page.getByRole('link', { name: 'View public event', exact: true })).toHaveAttribute('href', '/events/e-weather-demo/rsvp')
-    if (width < 992) await expect(mobileDisclosure.locator('summary')).toBeVisible()
-    await page.screenshot({ path: testInfo.outputPath(`event-tools-${width}.png`) })
-    await page.goto('/organiser/events/e2/rsvps')
-    const capacity = page.getByRole('img', { name: /^Capacity:/ })
-    await expect(capacity).toBeVisible()
-    const expectedCapacity = await page.evaluate(() => JSON.parse(localStorage.getItem('bookedz-feature2-demo')).events.find(e => e.id === 'e2').capacity)
-    const counts = await page.locator('.capacity-legend strong').allTextContents()
-    expect(counts.map(Number).reduce((a, b) => a + b, 0)).toBe(expectedCapacity)
-    await page.getByRole('button', { name: /^Waitlist & offers/ }).click()
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-    await page.screenshot({ path: testInfo.outputPath(`manage-rsvps-${width}.png`) })
+    if (width <= 900 && !await mobileSections.evaluate(el => el.open)) await mobileSections.locator('summary').click()
+    await navigation.getByRole('link', { name: 'RSVPs', exact: true }).click()
+    await expect(page).toHaveURL(/\/organiser\/events\/e-weather-demo\/rsvps(?:\?.*)?$/)
+    await expect(workspace.locator('.workspace-header h1')).toContainText('Campus Green Social')
+    await expect(page.getByRole('heading', { name: 'Manage RSVPs', exact: true })).toBeVisible()
+    await expect(workspace.getByRole('link', { name: /Back to Manage event/ })).toHaveAttribute('href', '/organiser/events/e-weather-demo/manage?tab=weather')
+    if (width > 900) await expect(navigation.getByRole('link', { name: 'Tasks', exact: true })).toBeVisible()
+    else await expect(mobileSections).toHaveJSProperty('open', false)
+    await page.screenshot({ path: testInfo.outputPath(`event-workspace-${width}.png`) })
   }
   expect(errors).toEqual([])
+})
+
+test('live-only event tools keep their routes in the shared workspace shell', async ({ page }) => {
+  await page.route(/\/src\/utils\/api(?:\.js)?(?:\?.*)?$/, route => route.fulfill({ contentType: 'text/javascript', body: liveVisibilityApi }))
+  await page.route(/\/src\/utils\/checkin\.js(?:\?.*)?$/, route => route.fulfill({ contentType: 'text/javascript', body: liveCheckinFixture }))
+  await page.route('**/*.supabase.co/**', route => route.abort())
+  await page.goto('/organiser/events/e-weather-demo/manage?tab=tasks')
+  const workspace = page.getByRole('region', { name: 'Event workspace' })
+  const navigation = page.getByRole('navigation', { name: 'Event workspace navigation' })
+  for (const [label, suffix, heading] of [
+    ['Check-in', 'check-in', 'Check-in station'],
+    ['Venue QR', 'venue-qr', 'Campus Green Social'],
+    ['Attendance', 'attendance', 'Attendance'],
+    ['Floor plan', 'floor-plan', 'Floor plan'],
+  ]) {
+    await navigation.getByRole('link', { name: label, exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(`/organiser/events/e-weather-demo/${suffix}(?:\\?.*)?$`))
+    await expect(workspace.locator('.workspace-header h1')).toContainText('Campus Green Social')
+    await expect(workspace.getByRole('link', { name: /Back to Manage event/ })).toHaveAttribute('href', '/organiser/events/e-weather-demo/manage?tab=tasks')
+    if (label === 'Venue QR') {
+      await expect(page.locator('.venue-qr-page')).toBeVisible()
+      await expect(page.getByRole('img', { name: 'Venue check-in QR code' })).toBeVisible()
+    } else {
+      await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible()
+    }
+    await expect(navigation.getByRole('link', { name: label, exact: true })).toHaveAttribute('aria-current', 'page')
+  }
+})
+
+test('task search, filter and draft survive RSVP navigation and Back to Manage event', async ({ page }) => {
+  await page.goto('/organiser/events/e-weather-demo/manage?tab=tasks')
+  const workspace = page.getByRole('region', { name: 'Event workspace' })
+  const navigation = page.getByRole('navigation', { name: 'Event workspace navigation' })
+  const filters = page.getByRole('group', { name: 'Filter tasks by status' })
+  await filters.getByRole('button', { name: /^All\b/ }).click()
+  await page.getByLabel('Search tasks', { exact: true }).fill('task')
+  await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await page.getByLabel('Task title', { exact: true }).fill('Draft kept across RSVP route')
+  await expect(page).toHaveURL(/taskFilter=all.*taskSearch=task|taskSearch=task.*taskFilter=all/)
+
+  await navigation.getByRole('link', { name: 'RSVPs', exact: true }).click()
+  await expect(page).toHaveURL(/\/organiser\/events\/e-weather-demo\/rsvps/)
+  await expect(workspace.locator('.workspace-header h1')).toContainText('Campus Green Social')
+  await page.getByRole('link', { name: /Back to Manage event/ }).click()
+
+  await expect(page).toHaveURL(/\/organiser\/events\/e-weather-demo\/manage\?tab=tasks/)
+  await expect(page.getByLabel('Search tasks', { exact: true })).toHaveValue('task')
+  await expect(filters.getByRole('button', { name: /^All\b/ })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByLabel('Task title', { exact: true })).toHaveValue('Draft kept across RSVP route')
+})
+
+test('Budget Back to Manage event opens Tasks and restores the full task query', async ({ page }) => {
+  await page.goto('/organiser/events/e-weather-demo/manage?tab=tasks')
+  const workspace = page.getByRole('region', { name: 'Event workspace' })
+  await page.getByLabel('Search tasks', { exact: true }).fill('Campus')
+  await page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^All\b/ }).click()
+  await page.getByRole('navigation', { name: 'Event workspace navigation' }).getByRole('link', { name: 'Budget', exact: true }).click()
+  await expect.poll(async () => page.evaluate(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('tab') === 'budget' && params.get('taskFilter') === 'all' && params.get('taskSearch') === 'Campus'
+  })).toBe(true)
+  await page.getByRole('link', { name: /Back to Manage event/ }).click()
+  await expect.poll(async () => page.evaluate(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('tab') === 'tasks' && params.get('taskFilter') === 'all' && params.get('taskSearch') === 'Campus'
+  })).toBe(true)
+  await expect(workspace.getByRole('heading', { name: 'Tasks', exact: true })).toBeVisible()
+  await expect(page.getByLabel('Search tasks', { exact: true })).toHaveValue('Campus')
+  await expect(page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^All\b/ })).toHaveAttribute('aria-pressed', 'true')
 })

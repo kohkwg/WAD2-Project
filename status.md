@@ -365,3 +365,33 @@ not persist. These are dated observations, not permanent database invariants.
 - Demo evidence: [desktop dark](docs/design/previews/f4-task-list-desktop-dark.png),
   [mobile light](docs/design/previews/f4-task-list-mobile-light.png). Fixtures are
   example data, not current event metrics.
+
+
+### 26 October — unified event workspace and lighter task view
+
+- Implement Denzel's approved follow-up: persistent event context/navigation around
+  existing operations, RSVP, check-in, venue QR, attendance and floor-plan routes.
+  Tool content opens in the same workspace; Back returns to the same event and
+  remembered management query. Non-default F4 sections return to Tasks. Mobile
+  Sections navigation closes after selection and retains a usable focus target.
+- Keep Tasks as the default; show a flat Open list, Open/Completed/All filters,
+  URL-backed search and an intent-opened composer. Remove duplicate navigation,
+  repeated event headings, empty status groups and persistent visual save banners.
+  Base fonts, semantic colours/themes, task states and full-board saves remain.
+- Cache only F4 within the current workspace to preserve drafts. Guard cached
+  watchers from private reads/query changes on other tools. Close transient
+  confirmation dialogs on deactivation and invalidate failed retries. Correct
+  last-task deletion focus to the visible Add task trigger.
+- **22 selected Chromium cases pass after necessary targeted reruns**: shared
+  routes/Back targets, actual RSVP content, mocked QR content, query/typing and
+  drafts across routes, task CRUD/order/reload/isolation, failure/retry/focus,
+  confirmation deactivation and the weather switch. The final mobile-menu case
+  passes separately at 375/575/768/1280px. The 100-task case covers those widths
+  in light/dark with reduced motion, console errors, one main and overflow.
+- Ten changed Vue SFC scripts/templates/styles compile; router/test syntax and
+  whitespace checks pass. Graphify AST update remains local. No full suite,
+  production build, new package or hosted write. Live-only tools use local API
+  fixtures; actual hosted auth/RLS, camera and QR rotation are not reverified.
+- Existing SQL/docs work remains local and excluded from UI publication.
+  [Desktop RSVP workspace](docs/design/previews/f4-unified-desktop.png) and
+  [mobile workspace](docs/design/previews/f4-unified-mobile.png) show demo data.

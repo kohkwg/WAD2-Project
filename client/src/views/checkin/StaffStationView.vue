@@ -78,12 +78,12 @@ onMounted(() =>
 </script>
 
 <template>
-  <div class="container py-4 staff-page">
-    <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
+  <div class="staff-page" :class="{ 'container py-4': !$route.meta.eventWorkspace }">
+    <RouterLink v-if="!$route.meta.eventWorkspace" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
     <header class="staff-heading d-flex justify-content-between align-items-start gap-2 mb-4">
       <div>
-        <h1 class="h4 mb-1">Check-in station</h1>
-        <p class="text-body-secondary small mb-0">{{ event?.title ?? '' }}</p>
+        <component :is="$route.meta.eventWorkspace ? 'h2' : 'h1'" class="h4 mb-1">Check-in station</component>
+        <p v-if="!$route.meta.eventWorkspace" class="text-body-secondary small mb-0">{{ event?.title ?? '' }}</p>
       </div>
       <RouterLink :to="`/organiser/events/${eventId}/attendance`" class="btn btn-sm btn-outline-primary text-nowrap">
         Attendance

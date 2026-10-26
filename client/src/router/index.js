@@ -5,6 +5,7 @@ import OrganiserEventsView from '../views/OrganiserEventsView.vue'
 import CreateEventView from '../views/CreateEventView.vue'
 import ManageRsvpsView from '../views/ManageRsvpsView.vue'
 import ManageEventView from '../views/ManageEventView.vue'
+import EventWorkspaceLayout from '../layouts/EventWorkspaceLayout.vue'
 import LoginView from '../views/LoginView.vue'
 import { USING_SUPABASE, getCurrentUser } from '../utils/api.js'
 import { feature1Routes } from './feature1Routes'
@@ -53,8 +54,19 @@ const router = createRouter({
     { path: '/my-rsvps', component: MyRsvpsView, meta: { title: 'My RSVPs' } },
     { path: '/organiser/events', component: OrganiserEventsView, meta: { title: 'My events' } },
     { path: '/organiser/events/new', component: CreateEventView, meta: { title: 'Create event' } },
-    { path: '/organiser/events/:id/rsvps', component: ManageRsvpsView, meta: { title: 'Manage RSVPs' } },
-    { path: '/organiser/events/:id/manage', component: ManageEventView, meta: { title: 'Manage event' } },
+    {
+      path: '/organiser/events',
+      component: EventWorkspaceLayout,
+      meta: { eventWorkspace: true },
+      children: [
+        { path: ':id/manage', component: ManageEventView, meta: { title: 'Manage event' } },
+        { path: ':id/rsvps', component: ManageRsvpsView, meta: { title: 'Manage RSVPs' } },
+        { path: ':eventId/check-in', component: () => import('../views/checkin/StaffStationView.vue'), meta: { title: 'Check-in station', requiresAuth: true } },
+        { path: ':eventId/venue-qr', component: () => import('../views/checkin/VenueQrView.vue'), meta: { title: 'Venue QR', requiresAuth: true } },
+        { path: ':eventId/attendance', component: () => import('../views/checkin/AttendanceDashboardView.vue'), meta: { title: 'Attendance', requiresAuth: true } },
+        { path: ':eventId/floor-plan', component: () => import('../editor.vue'), meta: { title: 'Floor plan', requiresAuth: true } },
+      ],
+    },
 
     // Feature 1: public discovery (demo/live) and signed-in live profile (Aishani).
     ...feature1Routes,
@@ -70,29 +82,9 @@ const router = createRouter({
       component: () => import('../views/checkin/SelfCheckInView.vue'),
       meta: { title: 'Check in', requiresAuth: true },
     },
-    {
-      path: '/organiser/events/:eventId/check-in',
-      component: () => import('../views/checkin/StaffStationView.vue'),
-      meta: { title: 'Check-in station', requiresAuth: true },
-    },
-    {
-      path: '/organiser/events/:eventId/venue-qr',
-      component: () => import('../views/checkin/VenueQrView.vue'),
-      meta: { title: 'Venue QR', requiresAuth: true },
-    },
-    {
-      path: '/organiser/events/:eventId/attendance',
-      component: () => import('../views/checkin/AttendanceDashboardView.vue'),
-      meta: { title: 'Attendance', requiresAuth: true },
-    },
 
     // Feature 6: floor plan editor (Vivienne). Organisers edit, the event's team views;
     // participants see it read-only on the public event page. Live Supabase only.
-    {
-      path: '/organiser/events/:eventId/floor-plan',
-      component: () => import('../editor.vue'),
-      meta: { title: 'Floor plan', requiresAuth: true },
-    },
 
     // Any URL not listed above (e.g. a typo) goes back to /events
     { path: '/:pathMatch(.*)*', redirect: '/events' },

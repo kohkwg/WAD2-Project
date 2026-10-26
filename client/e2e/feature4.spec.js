@@ -31,7 +31,7 @@ async function mockWeather(page, description, options) {
 
 async function openTool(page, tab = 'tasks', event = 'e-weather-demo') {
   await page.goto(`/organiser/events/${event}/manage?tab=${tab}`)
-  await expect(page.getByRole('link', { name: new RegExp(`^${tab[0].toUpperCase() + tab.slice(1)}\\b`) })).toBeVisible()
+  await expect(page.getByRole('heading', { name: tab[0].toUpperCase() + tab.slice(1), exact: true })).toBeVisible()
 }
 
 async function db(page) {
@@ -39,8 +39,9 @@ async function db(page) {
 }
 
 async function addTask(page, title) {
-  await page.getByLabel('Task title', { exact: true }).fill(title)
   await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await page.getByLabel('Task title', { exact: true }).fill(title)
+  await page.getByRole('button', { name: 'Save task', exact: true }).click()
   await expect(titleDisclosure(page, title)).toBeVisible()
 }
 
@@ -100,10 +101,10 @@ test('task CRUD, completion, start, order, reload and event isolation', async ({
   await addTask(page, 'Confirm volunteers')
   await page.getByRole('button', { name: 'More actions for: Confirm volunteers', exact: true }).click()
   await page.getByRole('button', { name: 'Move up', exact: true }).click()
-  await expect(page.getByRole('list', { name: 'To do tasks' })).toContainText('Confirm volunteers')
+  await expect(page.getByRole('list', { name: 'Open tasks' })).toContainText('Confirm volunteers')
   await page.getByRole('button', { name: 'Show details: Book microphones', exact: true }).click()
   await page.getByRole('button', { name: 'Start task', exact: true }).click()
-  await expect(page.getByRole('list', { name: 'In progress tasks' })).toContainText('Book microphones')
+  await expect(page.getByRole('list', { name: 'Open tasks' })).toContainText('Book microphones')
   await page.getByRole('button', { name: 'More actions for: Book microphones', exact: true }).click()
   await page.getByRole('button', { name: 'Edit', exact: true }).click()
   await page.locator('input[id^="task-title-edit-"]').fill('Book two microphones')
@@ -111,15 +112,15 @@ test('task CRUD, completion, start, order, reload and event isolation', async ({
   await page.getByRole('button', { name: 'Save task', exact: true }).click()
   await expect(task(page, 'Book two microphones')).toContainText('Collect at noon')
   await page.getByLabel('Complete task: Book two microphones', { exact: true }).click()
-  await page.getByRole('button', { name: /^Completed tasks\b/ }).click()
+  await page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^Completed\b/ }).click()
   await expect(titleDisclosure(page, 'Book two microphones')).toBeVisible()
   await page.reload()
-  await page.getByRole('button', { name: /^Completed tasks\b/ }).click()
+  await page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^Completed\b/ }).click()
   await expect(titleDisclosure(page, 'Book two microphones')).toBeVisible()
   await openTool(page, 'tasks', 'e2')
   await expect(titleDisclosure(page, 'Book two microphones')).toHaveCount(0)
   await openTool(page)
-  await page.getByRole('button', { name: /^Completed tasks\b/ }).click()
+  await page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^Completed\b/ }).click()
   await page.getByRole('button', { name: 'More actions for: Book two microphones', exact: true }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
   await confirmDelete(page)
@@ -128,6 +129,7 @@ test('task CRUD, completion, start, order, reload and event isolation', async ({
 
 test('failed storage save keeps the draft and supports retry', async ({ page }) => {
   await openTool(page)
+  await page.getByRole('button', { name: 'Add task', exact: true }).click()
   await page.getByLabel('Task title', { exact: true }).fill('Recover my draft')
   await page.evaluate(() => {
     window.__originalSetItem = Storage.prototype.setItem
@@ -136,12 +138,12 @@ test('failed storage save keeps the draft and supports retry', async ({ page }) 
       return window.__originalSetItem.call(this, key, value)
     }
   })
-  await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await page.getByRole('button', { name: 'Save task', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText(/storage|save|persist/i)
   await expect(page.getByLabel('Task title', { exact: true })).toHaveValue('Recover my draft')
   await expect(titleDisclosure(page, 'Recover my draft')).toHaveCount(0)
   await page.evaluate(() => { Storage.prototype.setItem = window.__originalSetItem })
-  await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await page.getByRole('button', { name: 'Retry save', exact: true }).click()
   await expect(titleDisclosure(page, 'Recover my draft')).toBeVisible()
 })
 
@@ -162,17 +164,21 @@ test('checkbox save failure keeps status and restores the pending completion on 
   expect((await db(page)).feature4.tasks).toEqual(saved.feature4.tasks)
   await page.evaluate(() => { Storage.prototype.setItem = window.__originalSetItem })
   await page.getByRole('button', { name: 'Retry save', exact: true }).click()
+  await page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^Completed\b/ }).click()
   await expect(page.getByLabel('Reopen task: Completion retry task', { exact: true })).toBeChecked()
 })
 
 test('reused workspace route clears drafts and ignores old weather responses', async ({ page }) => {
   await openTool(page)
+  await page.getByRole('button', { name: 'Add task', exact: true }).click()
   await page.getByLabel('Task title', { exact: true }).fill('Unsaved event-one draft')
   await page.evaluate(async () => {
     const router = document.querySelector('#app').__vue_app__.config.globalProperties.$router
     await router.push('/organiser/events/e2/manage?tab=tasks')
   })
   await expect(page.getByRole('heading', { name: 'Intro to Vue Workshop', exact: true })).toBeVisible()
+  await expect(page.getByRole('form', { name: 'Add task' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Add task', exact: true }).click()
   await expect(page.getByLabel('Task title', { exact: true })).toHaveValue('')
   let release
   let requested
