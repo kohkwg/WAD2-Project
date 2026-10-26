@@ -187,3 +187,48 @@ test('Budget Back to Manage event opens Tasks and restores the full task query',
   await expect(page.getByLabel('Search tasks', { exact: true })).toHaveValue('Campus')
   await expect(page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^All\b/ })).toHaveAttribute('aria-pressed', 'true')
 })
+
+for (const width of [375, 575, 768, 1280]) {
+  test(`guest and venue navigation preserves workspace scroll at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 600 })
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await page.route(/\/src\/utils\/api(?:\.js)?(?:\?.*)?$/, route => route.fulfill({ contentType: 'text/javascript', body: liveVisibilityApi }))
+    await page.route(/\/src\/utils\/checkin\.js(?:\?.*)?$/, route => route.fulfill({ contentType: 'text/javascript', body: liveCheckinFixture }))
+    await page.goto('/organiser/events/e-weather-demo/manage?tab=tasks')
+    await expect(page.getByRole('heading', { name: 'Tasks', exact: true })).toBeVisible()
+    await page.evaluate(() => {
+      const scrollTo = window.scrollTo.bind(window)
+      window.scrollTo = (...args) => {
+        if (args[0]?.top === 0 || args[1] === 0) window.workspaceScrollResets++
+        scrollTo(...args)
+      }
+      document.addEventListener('click', event => {
+        if (event.target.closest('.workspace-sidebar a, .workspace-mobile-nav a')) {
+          window.workspaceClickScroll = scrollY
+          window.workspaceScrollResets = 0
+        }
+      }, true)
+    })
+    const mobile = width < 992
+    const nav = page.getByRole('navigation', { name: mobile ? 'Event workspace sections' : 'Event workspace navigation' })
+    for (const label of ['Registrations', 'Check-in station', 'Venue QR', 'Attendance report', 'Floor plan', 'Tasks']) {
+      if (mobile) await page.locator('.workspace-mobile-sections > summary').click()
+      const link = nav.getByRole('link', { name: label, exact: true })
+      await link.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }))
+      if (!mobile) await page.evaluate(() => window.scrollTo({ top: 120, behavior: 'instant' }))
+      await link.click()
+      if (mobile) await expect(page.locator('.workspace-mobile-nav a[aria-current="page"]')).toHaveText(label)
+      else await expect(link).toHaveAttribute('aria-current', 'page')
+      await expect.poll(() => page.evaluate(mobile => {
+        const expected = Math.min(window.workspaceClickScroll, document.documentElement.scrollHeight - innerHeight)
+        // Collapsing the mobile menu and loading a shorter tool may clamp the
+        // viewport naturally. Neither layout should request a reset to the top.
+        return { hasScrolled: window.workspaceClickScroll > 0, retained: mobile ? scrollY > 0 : Math.abs(scrollY - expected) < 4, resets: window.workspaceScrollResets }
+      }, mobile)).toEqual({ hasScrolled: true, retained: true, resets: 0 })
+    }
+    // Leaving the workspace is still an ordinary page navigation.
+    await page.getByRole('link', { name: '← My events', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'My events', exact: true })).toBeVisible()
+    await expect.poll(() => page.evaluate(() => scrollY)).toBe(0)
+  })
+}

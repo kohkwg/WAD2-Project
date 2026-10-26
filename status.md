@@ -437,3 +437,20 @@ not persist. These are dated observations, not permanent database invariants.
   inspected in ignored Playwright results. No full suite/build, hosted write or
   auth/RLS verification; physical camera/GPS, Safari and touch devices remain
   outside this check. Existing SQL/docs work remains uncommitted and excluded.
+
+
+### 26 October — retain scroll between organiser tools
+
+- Reproduce the Guests & venue scroll jump: the router reset every changed path
+  to the page top, including tools inside the persistent event workspace. Skip
+  that reset only when both routes share the workspace and event ID; saved
+  browser-history positions and explicit anchors still take precedence. Ordinary
+  page changes and switching to a different event retain their prior behaviour.
+- Six targeted Chromium cases pass: every Guests & venue tool and return to Tasks
+  at 375/575/768/1280px, plus existing live-tool fixture and cached-draft journeys.
+  Desktop retains its scroll offset; mobile has no forced top reset while its
+  Sections disclosure closes (natural height clamping can still occur). Leaving
+  the workspace resets normally. The desktop regression failed before the fix.
+- Router/test syntax and whitespace checks pass; Graphify AST refreshed locally.
+  Mocked live-tool visibility is not hosted auth/RLS evidence. No full suite,
+  build, dependency or hosted change; unrelated SQL/docs remain excluded.

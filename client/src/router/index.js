@@ -43,6 +43,11 @@ const router = createRouter({
       const target = document.getElementById(id)
       if (target) return { el: target, behavior: 'instant' }
     }
+    // Tools share a persistent workspace. Switching tools for the same event
+    // should leave its navigation in place, just like changing planning tabs.
+    // Explicit anchors and browser-history positions retain precedence above.
+    if (to.meta.eventWorkspace && from.meta.eventWorkspace
+      && String(to.params.id || to.params.eventId) === String(from.params.id || from.params.eventId)) return false
     if (to.path !== from.path) return { top: 0, behavior: 'instant' }
     return false
   },
