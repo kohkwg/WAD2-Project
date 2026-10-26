@@ -1,7 +1,7 @@
 # Decisions
 
 Denzel's recorded instructions and approvals, consolidated on 23 October and
-updated through 24 October 2026.
+updated through 26 October 2026.
 Dates identify the decision, not a blanket approval for later work. Team decisions
 and implementation contracts are attributed separately. The [status timeline](status.md)
 records delivery and evidence; [README](README.md#ai-assistance-disclosure) retains
@@ -217,3 +217,16 @@ use explicit force-with-lease only on the owner's feature branch. Subsequent wor
 uses normal feature pushes; Denzel will create/review/merge PRs into dev later.
 This authority does not reset teammates' branches now, force-push dev/main, deploy,
 or mutate hosted application data. See `design-branches.md`.
+
+
+## Feature 4 workspace refinement — 26 October 2026
+
+Denzel approved implementing the reviewed workspace/task-list design and removing
+the temporary implementation-plan Markdown afterward. The requested direction is
+a compact event header, explicit grouped organiser navigation and conventional
+task-list interactions instead of Kanban columns and per-row status dropdowns.
+Completion uses a checkbox; reopening returns to To do, with explicit Start task
+and Back to to do controls retaining In progress. The shared fonts, semantic
+colours, themes and motion/accessibility conventions remain. Denzel authorised
+GPT-6 Luna subagents at Medium effort for suitable implementation/tool work.
+This approval does not authorise new hosted changes, PR creation or merging.

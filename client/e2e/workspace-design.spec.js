@@ -51,17 +51,35 @@ test('public layout prioritises event facts and My RSVPs stays responsive', asyn
 test('organiser layouts expose tools and capacity from actual RSVP data', async ({ page }, testInfo) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
-  for (const width of [1280, 375]) {
+  for (const width of [1280, 768, 575, 375]) {
     await page.setViewportSize({ width, height: 900 })
-    await page.goto('/organiser/events/e-weather-demo/manage')
-    await expect(page.getByRole('link', { name: 'Manage RSVPs', exact: true })).toBeVisible()
-    const nav = page.getByRole('navigation', { name: 'Event tools' })
+    await page.goto('/organiser/events/e-weather-demo/manage?source=spec&tab=tasks#local')
+    const operations = page.getByRole('navigation', { name: 'Event operations' })
+    const tools = page.getByRole('navigation', { name: 'Event tools' })
+    const mobileDisclosure = page.locator('details.mobile-tools')
+    if (width < 992) {
+      await expect(operations).toBeVisible()
+      await expect(mobileDisclosure).toBeVisible()
+      await expect(mobileDisclosure.locator('summary')).toContainText('RSVPs, check-in and venue')
+      await mobileDisclosure.locator('summary').focus()
+      await page.keyboard.press('Enter')
+      await expect(mobileDisclosure).toHaveAttribute('open', '')
+      await expect(tools.getByRole('link', { name: /^Manage RSVPs\b/ })).toBeVisible()
+    } else {
+      await expect(operations).toBeVisible()
+      await expect(tools).toBeVisible()
+      await expect(tools.getByRole('link', { name: /^Manage RSVPs\b/ })).toBeVisible()
+    }
     for (const tab of ['Tasks', 'Announcements', 'Budget', 'Weather']) {
-      await nav.getByRole('link', { name: tab, exact: true }).click()
+      await operations.getByRole('link', { name: new RegExp(`^${tab}\\b`) }).click()
       await expect(page.getByRole('heading', { name: tab, exact: true })).toBeVisible()
+      await expect(operations.getByRole('link', { name: new RegExp(`^${tab}\\b`) })).toHaveAttribute('aria-current', 'page')
+      await expect(page).toHaveURL(new RegExp(`source=spec.*tab=${tab.toLowerCase()}.*#local`))
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     }
-    await nav.getByRole('link', { name: 'Tasks', exact: true }).click()
+    await operations.getByRole('link', { name: /^Tasks\b/ }).click()
+    await expect(page.getByRole('link', { name: 'View public event', exact: true })).toHaveAttribute('href', '/events/e-weather-demo/rsvp')
+    if (width < 992) await expect(mobileDisclosure.locator('summary')).toBeVisible()
     await page.screenshot({ path: testInfo.outputPath(`event-tools-${width}.png`) })
     await page.goto('/organiser/events/e2/rsvps')
     const capacity = page.getByRole('img', { name: /^Capacity:/ })

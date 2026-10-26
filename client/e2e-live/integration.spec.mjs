@@ -107,9 +107,9 @@ test('F4 persists task, public announcement and exact-cent budget through live U
  await page.goto(`/organiser/events/${eventId}/manage?tab=tasks`)
  await page.getByLabel('Task title',{exact:true}).fill('[TEST] Prepare welcome desk')
  await page.getByRole('button',{name:'Add task',exact:true}).click()
- await expect(page.getByRole('button',{name:'Edit task: [TEST] Prepare welcome desk',exact:true})).toBeVisible()
+ await expect(page.locator('.task-title').filter({hasText:'[TEST] Prepare welcome desk'})).toBeVisible()
  await page.reload()
- await expect(page.getByRole('button',{name:'Edit task: [TEST] Prepare welcome desk',exact:true})).toBeVisible()
+ await expect(page.locator('.task-title').filter({hasText:'[TEST] Prepare welcome desk'})).toBeVisible()
  const result=await db(page,async id=>{
   const api=await import('/src/utils/api.js')
   await api.createAnnouncement(id,'[TEST] Doors open at the main entrance.')

@@ -95,9 +95,19 @@ fill uses transforms. Existing validation, cover upload, retry/publication guard
 venue search and RSVP-question authoring are preserved. A preview is not a saved
 or published event.
 
-Manage Event leads with event/time/active venue, then Manage RSVPs/public-event
-links and grouped live check-in/QR/attendance/floor-plan links. Descriptive Tasks,
-Announcements, Budget and Weather navigation shares a coherent panel hierarchy.
+Manage Event uses a compact event/time/active-venue header with a secondary
+public-event link. A desktop local rail groups Event operations (Tasks,
+Announcements, Budget, Weather) and Event tools (RSVPs and live-only
+check-in/QR/attendance/floor-plan destinations). Narrow screens use a wrapping
+operations grid and an explicitly labelled Event tools disclosure.
+
+Tasks use one list with In progress, To do and collapsed Completed groups,
+search/status filters and real counts. Native checkboxes complete/reopen tasks;
+Start task and Back to to do preserve the three stored states without a status
+select. Notes, inline editing, ordering and deletion use row disclosures rather
+than permanent action clusters. Reopening returns to To do. Full-board saves
+always include hidden tasks; presentation filters never change stored contents.
+Existing ownership, draft preservation, retry and cancellation semantics remain.
 Tasks retain keyboard/drag controls; announcement cards remain public updates;
 budget figures remain exact SGD cents; weather retains trusted, one-way switching.
 
