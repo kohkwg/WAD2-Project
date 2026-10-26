@@ -454,3 +454,11 @@ not persist. These are dated observations, not permanent database invariants.
 - Router/test syntax and whitespace checks pass; Graphify AST refreshed locally.
   Mocked live-tool visibility is not hosted auth/RLS evidence. No full suite,
   build, dependency or hosted change; unrelated SQL/docs remain excluded.
+
+
+### 26 October — one organiser entry from event cards
+
+- Remove the My events card’s Manage RSVPs shortcut at Denzel’s request. Manage
+  event opens the workspace, where Registrations retains sign-up/waitlist access.
+- Two focused Chromium card/workspace journeys pass; whitespace checks pass and
+  Graphify AST is refreshed. No full suite/build or hosted change.

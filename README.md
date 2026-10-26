@@ -352,3 +352,7 @@ On 26 October 2026, Codex fixed the organiser workspace router scroll reset:
 switching tools for the same event retains scroll, while explicit anchors,
 browser history and ordinary page navigation retain their existing behaviour.
 Focused browser regressions cover the four supported viewport widths.
+
+
+On 26 October, Codex removed the redundant My events card RSVP shortcut at
+Denzel’s request; registration tools remain available through Manage event.
