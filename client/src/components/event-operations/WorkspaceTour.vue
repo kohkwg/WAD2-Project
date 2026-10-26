@@ -14,6 +14,7 @@ const dialog = ref(null)
 const heading = ref(null)
 const card = ref(null)
 const spotlightStyle = ref({ display: 'none' })
+const spotlightReady = ref(false)
 const cardStyle = ref({})
 const isLastStep = computed(() => props.index >= props.count - 1)
 const stepNumber = computed(() => props.index + 1)
@@ -22,7 +23,10 @@ const mobileQuery = typeof window !== 'undefined' ? window.matchMedia('(max-widt
 let frame = 0
 let pendingScrollIntoView = false
 let observer
+let mutations
 let disposed = false
+let previousGeometry = null
+let stableFrames = 0
 let observedTarget = null
 let mobileDisclosure = null
 let originalDisclosureOpen = false
@@ -65,7 +69,10 @@ function updateMobileDisclosure() {
 function scrollTargetForCard(targetRect, cardRect) {
   const margin = 16
   const mobile = mobileQuery?.matches
-  const visibleTop = margin
+  // The shared navbar remains above the event header while scrolling. A hole
+  // over a link behind it would reveal the navbar instead of the actual link.
+  const navbarBottom = document.querySelector('.app-navbar')?.getBoundingClientRect().bottom || 0
+  const visibleTop = Math.max(margin, navbarBottom + margin)
   const visibleBottom = window.innerHeight - (mobile ? cardRect.height + 32 : margin)
   if (targetRect.height > visibleBottom - visibleTop) {
     const delta = targetRect.top - visibleTop
@@ -121,6 +128,7 @@ function placeTour() {
     if (observedTarget) observer?.observe(observedTarget)
   }
   if (!target) {
+    spotlightReady.value = false
     spotlightStyle.value = { display: 'none' }
     cardStyle.value = { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }
     return
@@ -138,14 +146,34 @@ function placeTour() {
   const cardRect = card.value?.getBoundingClientRect()
   if (pendingScrollIntoView && cardRect) {
     pendingScrollIntoView = false
-    if (scrollTargetForCard(rect, cardRect)) schedulePlacement(false)
+    if (scrollTargetForCard(rect, cardRect)) {
+      previousGeometry = null
+      stableFrames = 0
+      queueFrame()
+      return
+    }
   }
+  // Keep the aperture closed during scrolling, section changes and late layout
+  // updates. Reveal it only after the target and callout have stopped moving.
+  const geometry = [rect.left, rect.top, rect.width, rect.height, cardRect?.height || 0, window.scrollY]
+  const unchanged = previousGeometry && geometry.every((value, index) => Math.abs(value - previousGeometry[index]) < .25)
+  stableFrames = unchanged ? stableFrames + 1 : 0
+  previousGeometry = geometry
+  if (stableFrames < 3) queueFrame()
+  else spotlightReady.value = true
 }
 
+function queueFrame() {
+  if (disposed) return
+  if (!frame) frame = window.requestAnimationFrame(placeTour)
+}
 function schedulePlacement(scrollIntoView = false) {
   if (disposed) return
+  spotlightReady.value = false
+  previousGeometry = null
+  stableFrames = 0
   pendingScrollIntoView ||= scrollIntoView
-  if (!frame) frame = window.requestAnimationFrame(placeTour)
+  queueFrame()
 }
 
 function onResize() {
@@ -187,6 +215,9 @@ function openDialog() {
 }
 
 watch(() => [props.step?.id, props.busy], async () => {
+  spotlightReady.value = false
+  previousGeometry = null
+  stableFrames = 0
   if (props.busy) return
   await nextTick()
   schedulePlacement(true)
@@ -203,6 +234,15 @@ onMounted(async () => {
   observer = new ResizeObserver(() => schedulePlacement(true))
   observer.observe(document.documentElement)
   if (card.value) observer.observe(card.value)
+  const navbar = document.querySelector('.app-navbar')
+  if (navbar) observer.observe(navbar)
+  // A forecast can move the existing venue card to another grid column without
+  // changing that card's size. ResizeObserver alone cannot detect that move.
+  mutations = new MutationObserver(records => {
+    if (records.some(record => !dialog.value?.contains(record.target))) schedulePlacement(true)
+  })
+  const content = document.querySelector('.workspace-main')
+  if (content) mutations.observe(content, { childList: true, subtree: true })
   window.addEventListener('resize', onResize, { passive: true })
   window.visualViewport?.addEventListener('resize', onResize, { passive: true })
   window.addEventListener('scroll', onScroll, { passive: true, capture: true })
@@ -219,6 +259,7 @@ onBeforeUnmount(() => {
   disposed = true
   if (frame) window.cancelAnimationFrame(frame)
   observer?.disconnect()
+  mutations?.disconnect()
   window.removeEventListener('resize', onResize)
   window.visualViewport?.removeEventListener('resize', onResize)
   window.removeEventListener('scroll', onScroll, true)
@@ -232,7 +273,10 @@ onBeforeUnmount(() => {
 
 <template>
   <dialog ref="dialog" class="workspace-tour" aria-label="Manage event tutorial" @cancel.prevent="emit('skip')">
-    <div class="tour-spotlight" :style="spotlightStyle" aria-hidden="true"></div>
+    <div v-if="!spotlightReady || busy" class="tour-curtain" aria-hidden="true"></div>
+    <div class="tour-spotlight" :style="[spotlightStyle, { visibility: spotlightReady && !busy ? 'visible' : 'hidden' }]" aria-hidden="true">
+      <div v-if="spotlightReady && !busy" class="tour-aperture"></div>
+    </div>
     <section ref="card" class="tour-card" :style="cardStyle" aria-labelledby="tour-heading" aria-describedby="tour-body">
         <div :key="step.id" class="tour-copy" aria-live="polite">
           <p class="tour-progress">Step {{ stepNumber }} of {{ count }}</p>
@@ -242,8 +286,8 @@ onBeforeUnmount(() => {
       <div class="tour-actions">
         <button type="button" class="tour-skip" @click="emit('skip')">Skip</button>
         <div class="tour-navigation">
-          <button type="button" class="tour-previous" :disabled="index === 0 || busy" @click="emit('previous')">Previous</button>
-          <button type="button" class="tour-next" :disabled="busy" @click="emit('next')">{{ isLastStep ? 'Finish' : 'Next' }}</button>
+          <button type="button" class="tour-previous" :disabled="index === 0 || busy || !spotlightReady" @click="emit('previous')">Previous</button>
+          <button type="button" class="tour-next" :disabled="busy || !spotlightReady" @click="emit('next')">{{ isLastStep ? 'Finish' : 'Next' }}</button>
         </div>
       </div>
     </section>
@@ -271,7 +315,9 @@ onBeforeUnmount(() => {
 
 .workspace-tour::backdrop { background: transparent; }
 .tour-scroll-space { display: none; }
-.tour-spotlight { position: fixed; z-index: 0; border-radius: .85rem; box-shadow: 0 0 0 100vmax rgb(14 20 28 / 70%); pointer-events: none; transition: left .18s ease, top .18s ease, width .18s ease, height .18s ease; }
+.tour-curtain { position: fixed; inset: 0; z-index: 0; background: rgb(14 20 28 / 70%); pointer-events: none; }
+.tour-spotlight { position: fixed; z-index: 0; border-radius: .85rem; box-shadow: 0 0 0 100vmax rgb(14 20 28 / 70%); pointer-events: none; }
+.tour-aperture { position: absolute; inset: 0; border-radius: inherit; background: rgb(14 20 28 / 70%); animation: tour-reveal .18s ease-out both; }
 .tour-card { position: fixed; z-index: 1; box-sizing: border-box; display: flex; flex-direction: column; gap: .7rem; padding: 1.2rem; overflow-y: auto; border: 1px solid rgb(255 255 255 / 20%); border-radius: 1rem; background: var(--bookedz-surface, #fff); color: var(--bookedz-ink, #20242a); box-shadow: 0 1rem 3rem rgb(0 0 0 / 28%); opacity: 1; transform: translateY(0); animation: tour-enter .18s ease-out both; }
 .tour-progress { margin: 0; color: var(--bookedz-primary-dark, #824d25); font-size: .75rem; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
 .tour-card h2 { margin: 0; font-size: 1.2rem; font-weight: 750; line-height: 1.25; }
@@ -285,6 +331,7 @@ onBeforeUnmount(() => {
 .tour-card button:focus-visible, .tour-card h2:focus-visible { outline: 3px solid var(--bookedz-primary, #df984e); outline-offset: 3px; }
 
 @keyframes tour-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tour-reveal { from { opacity: 1; } to { opacity: 0; } }
 .tour-copy { animation: tour-enter .18s ease-out; }
 
 @media (max-width: 991.98px) {
@@ -294,7 +341,7 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tour-spotlight { transition: none; }
+  .tour-aperture { animation: none; background: transparent; }
   .tour-card, .tour-copy { animation: none; }
 }
 </style>

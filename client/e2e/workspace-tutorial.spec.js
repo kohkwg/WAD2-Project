@@ -116,6 +116,7 @@ test('keyboard focus stays in the tour and a blocked preference write still allo
   const tour = page.getByRole('dialog', { name: 'Manage event tutorial' })
   const skip = tour.getByRole('button', { name: 'Skip', exact: true })
   const next = tour.getByRole('button', { name: 'Next', exact: true })
+  await expect(next).toBeEnabled()
   await skip.focus()
   await page.keyboard.press('Shift+Tab')
   await expect(next).toBeFocused()
@@ -160,3 +161,59 @@ test('light-theme motion works through all steps and adapts while resizing', asy
   await expect(page.getByRole('heading', { name: 'Tasks', exact: true })).toBeVisible()
   await expect(tour).toHaveCount(0)
 })
+
+for (const width of [375, 1280]) {
+  test(`steps 6 and 8 keep their spotlight on the real target below the navbar at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 850 })
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await page.unroute('**/two-hr-forecast*')
+    await page.route('**/two-hr-forecast*', async route => {
+      // A real response inserts the forecast before the active venue. Hold it
+      // briefly so the tour also exercises that asynchronous layout change.
+      await new Promise(resolve => setTimeout(resolve, 250))
+      const now = Date.now()
+      await route.fulfill({ json: { code: 0, data: {
+        area_metadata: [{ name: 'City', label_location: { latitude: 1.2966, longitude: 103.8502 } }],
+        items: [{ timestamp: new Date(now).toISOString(), update_timestamp: new Date(now).toISOString(),
+          valid_period: { start: new Date(now).toISOString(), end: new Date(now + 7200000).toISOString() },
+          forecasts: [{ area: 'City', forecast: 'Thundery Showers' }] }],
+      } } })
+    })
+    await page.goto(eventPath + '?tab=tasks')
+    const tour = page.getByRole('dialog', { name: 'Manage event tutorial' })
+    await expect(tour).toBeVisible()
+    await page.evaluate(() => {
+      window.tourMisalignedFrames = []
+      window.tourMatchedFrames = { 6: 0, 8: 0 }
+      function sample() {
+        const dialog = document.querySelector('.workspace-tour')
+        const number = dialog?.querySelector('.tour-progress')?.textContent.match(/Step (\d+)/)?.[1]
+        const selector = { 6: '[data-workspace-tour="weather"]', 8: '[data-workspace-tour="public-event"]' }[number]
+        const spot = dialog?.querySelector('.tour-spotlight')
+        if (selector && spot && getComputedStyle(spot).visibility !== 'hidden' && getComputedStyle(spot).display !== 'none' && Number(getComputedStyle(spot).opacity) > .9) {
+          const target = document.querySelector(selector)?.getBoundingClientRect()
+          const hole = spot.getBoundingClientRect()
+          const navBottom = document.querySelector('.app-navbar').getBoundingClientRect().bottom
+          if (target) {
+            const matches = Math.abs(hole.left - Math.max(0, target.left - 8)) < 3 && Math.abs(hole.top - Math.max(0, target.top - 8)) < 3
+              && Math.abs(hole.width - Math.min(innerWidth, target.width + 16)) < 3
+              && Math.abs(hole.height - Math.min(innerHeight, target.height + 16)) < 3
+              && hole.top >= navBottom
+            if (matches) window.tourMatchedFrames[number]++
+            else window.tourMisalignedFrames.push({ number, top: hole.top, targetTop: target.top, navBottom })
+          }
+        }
+        window.tourTrackingFrame = requestAnimationFrame(sample)
+      }
+      sample()
+    })
+    for (let step = 1; step <= 8; step++) {
+      await expect(tour.getByText(`Step ${step} of 8`, { exact: true })).toBeVisible()
+      if (step === 6) await page.getByRole('heading', { name: 'Thundery Showers', exact: true, includeHidden: true }).waitFor({ state: 'attached' })
+      if (step === 6 || step === 8) await expect.poll(() => page.evaluate(step => window.tourMatchedFrames[step], step)).toBeGreaterThan(8)
+      await tour.getByRole('button', { name: step === 8 ? 'Finish' : 'Next', exact: true }).click()
+    }
+    const incorrect = await page.evaluate(() => { cancelAnimationFrame(window.tourTrackingFrame); return window.tourMisalignedFrames })
+    expect(incorrect).toEqual([])
+  })
+}
