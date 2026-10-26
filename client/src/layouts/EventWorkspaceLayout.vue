@@ -10,6 +10,7 @@ const event = ref(null)
 const loading = ref(false)
 const error = ref('')
 const mobileSections = ref(null)
+const tutorialLauncher = ref(null)
 const lastManageLocations = reactive({})
 let requestEpoch = 0
 
@@ -60,6 +61,11 @@ watch(() => [eventId.value, route.path, route.query, route.hash], () => {
 provide('syncWorkspaceEvent', updatedEvent => {
   if (updatedEvent && String(updatedEvent.id) === eventId.value) event.value = updatedEvent
 })
+provide('workspaceContextReady', computed(() => Boolean(event.value) && !loading.value && !error.value))
+provide('registerWorkspaceTutorial', launcher => {
+  tutorialLauncher.value = launcher
+  return () => { if (tutorialLauncher.value === launcher) tutorialLauncher.value = null }
+})
 
 async function loadEvent() {
   const ticket = ++requestEpoch
@@ -86,7 +92,7 @@ onBeforeUnmount(() => { requestEpoch++ })
     <RouterLink v-if="isWorkspaceHome" to="/organiser/events" class="workspace-back">← My events</RouterLink>
     <RouterLink v-else :to="backToManage" class="workspace-back">← Back to Manage event</RouterLink>
 
-    <header class="workspace-header">
+    <header class="workspace-header" data-workspace-tour="context">
       <div class="workspace-heading-row">
         <div class="workspace-heading-copy">
           <p class="workspace-eyebrow">Event workspace <span aria-hidden="true">·</span> {{ currentTitle }}</p>
@@ -97,7 +103,10 @@ onBeforeUnmount(() => { requestEpoch++ })
             <span>{{ event.venue?.name || 'Venue not set' }}<template v-if="event.usingBackup"> · Backup active</template></span>
           </p>
         </div>
-        <RouterLink v-if="event" :to="`/events/${event.id}/rsvp`" class="workspace-public-link">Public event ↗</RouterLink>
+        <div v-if="event" class="workspace-header-actions">
+          <button v-if="tutorialLauncher" type="button" class="workspace-tour-link" data-workspace-tour-replay @click="tutorialLauncher()">Replay tutorial</button>
+          <RouterLink :to="`/events/${event.id}/rsvp`" class="workspace-public-link" data-workspace-tour="public-event">Public event ↗</RouterLink>
+        </div>
       </div>
       <details v-if="event" class="workspace-details">
         <summary>Event details</summary>
@@ -114,7 +123,7 @@ onBeforeUnmount(() => { requestEpoch++ })
           <p class="nav-group-description">Prepare and update your event</p>
           <RouterLink v-for="item in operationLinks" :key="item.label" :to="routeHref(item)" :aria-current="isOperationActive(item) ? 'page' : undefined" @click="closeMobileSections">{{ item.label }}</RouterLink>
         </section>
-        <section class="mobile-nav-group" aria-labelledby="mobile-guests-title">
+        <section class="mobile-nav-group" aria-labelledby="mobile-guests-title" data-workspace-tour="guests">
           <h2 id="mobile-guests-title">Guests &amp; venue</h2>
           <p class="nav-group-description">Manage guests and the venue</p>
           <RouterLink v-for="item in visibleTools" :key="item.suffix" :to="routeHref(item)" :aria-current="isToolActive(item) ? 'page' : undefined" @click="closeMobileSections">{{ item.label }}</RouterLink>
@@ -135,7 +144,7 @@ onBeforeUnmount(() => { requestEpoch++ })
             <p class="nav-group-description">Prepare and update your event</p>
             <RouterLink v-for="item in operationLinks" :key="item.label" :to="routeHref(item)" :class="{ active: isOperationActive(item) }" :aria-current="isOperationActive(item) ? 'page' : undefined">{{ item.label }}</RouterLink>
           </section>
-          <section class="workspace-nav-group" aria-labelledby="guests-title">
+          <section class="workspace-nav-group" aria-labelledby="guests-title" data-workspace-tour="guests">
             <h2 id="guests-title">Guests &amp; venue</h2>
             <p class="nav-group-description">Manage guests and the venue</p>
             <RouterLink v-for="item in visibleTools" :key="item.suffix" :to="routeHref(item)" :class="{ active: isToolActive(item) }" :aria-current="isToolActive(item) ? 'page' : undefined">{{ item.label }}</RouterLink>
@@ -179,6 +188,9 @@ onBeforeUnmount(() => { requestEpoch++ })
 .workspace-nav-group a:hover { background: var(--bookedz-glass-hover); }
 .workspace-nav-group a.active { border-left-color: var(--bookedz-primary-dark); background: var(--bookedz-glass-active); color: var(--bookedz-primary-dark); font-weight: 700; }
 .workspace-main { min-width: 0; }
+.workspace-header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem 1rem; }
+.workspace-tour-link { min-height: 44px; padding: .25rem 0; border: 0; background: transparent; color: var(--workspace-muted); font: inherit; font-size: .82rem; font-weight: 650; text-decoration: underline; text-underline-offset: .2em; }
+.workspace-tour-link:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
 .workspace-mobile-sections { display: none; }
 .workspace-loading { padding: .5rem 0; color: var(--workspace-muted); font-size: .84rem; }
 .workspace-back:focus-visible, .workspace-public-link:focus-visible, .workspace-details summary:focus-visible, .workspace-nav-group a:focus-visible, .workspace-mobile-sections summary:focus-visible, .workspace-mobile-nav a:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }

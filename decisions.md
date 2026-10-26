@@ -249,3 +249,13 @@ Denzel selected subtle fades and small slides across My events and its subpages,
 with gentle card/list updates, preserved drafts/focus and immediate reduced-motion
 behaviour. Use the established Vue/browser motion facilities without new packages.
 The shared event header/navigation stays in place during tool changes.
+
+
+### Manage Event tutorial — 26 October 2026
+
+Denzel requests the guided owner tutorial and selects once per owner in the
+current browser, across events. The tour covers event context, adding/managing
+tasks, announcements, budget, weather, guest/venue navigation and public preview.
+Remember Skip/completion locally, retain replay, preserve drafts and restore the
+original section/query/scroll. The tutorial explains actions without performing
+event writes; weather/ownership/role contracts remain unchanged.
