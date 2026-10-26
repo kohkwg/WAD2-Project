@@ -84,5 +84,6 @@ onUnmounted(() => {
 <style scoped>
 .venue-map {
   height: 260px; /* Leaflet shows nothing without a height */
+  isolation: isolate; /* keeps internal z-indexes inside the map so it does not cover navbar */
 }
 </style>
