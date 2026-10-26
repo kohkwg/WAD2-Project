@@ -111,7 +111,6 @@ function fillPercent(event) {
         <footer class="card-footer bg-white event-card-actions">
           <div class="event-primary-actions">
             <RouterLink :to="'/organiser/events/' + event.id + '/manage?tab=tasks'" class="btn btn-primary btn-sm">Manage event</RouterLink>
-            <RouterLink :to="'/organiser/events/' + event.id + '/rsvps'" class="btn btn-outline-primary btn-sm">Manage RSVPs</RouterLink>
             <RouterLink :to="'/events/' + event.id + '/rsvp'" class="btn btn-link btn-sm">View public page</RouterLink>
           </div>
           <div class="event-delete-action">
