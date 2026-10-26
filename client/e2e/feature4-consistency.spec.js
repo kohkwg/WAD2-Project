@@ -21,13 +21,15 @@ test.beforeEach(async ({ page, context }) => {
 })
 
 async function addTask(page, title) {
-  await page.getByLabel('Task title', { exact: true }).fill(title)
   await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await page.getByLabel('Task title', { exact: true }).fill(title)
+  await page.getByRole('button', { name: 'Save task', exact: true }).click()
   await expect(page.locator('.task-title').filter({ hasText: title })).toBeVisible()
 }
 
 async function preparePublicPage(page) {
   await page.goto(`/organiser/events/${EVENT_ID}/manage?tab=tasks`)
+  await page.getByRole('button', { name: 'Add task', exact: true }).click()
   await expect(page.getByLabel('Task title', { exact: true })).toBeVisible()
   await page.evaluate(({ key, id }) => {
     const state = JSON.parse(localStorage.getItem(key))
@@ -67,14 +69,14 @@ test('task order stays canonical after multiple deletions and a new task', async
     await expect(page.getByRole('dialog')).not.toBeVisible()
   }
   await addTask(page, 'E')
-  const todo = page.getByRole('list', { name: 'To do tasks' }).locator('.task-title')
-  await expect(todo).toHaveText(['C', 'D', 'E'])
+  const open = page.getByRole('list', { name: 'Open tasks' }).locator('.task-title')
+  await expect(open).toHaveText(['C', 'D', 'E'])
   await page.locator('.task-title').filter({ hasText: 'E' }).click()
   await page.getByRole('button', { name: 'Start task', exact: true }).click()
-  await expect(page.getByRole('list', { name: 'In progress tasks' })).toContainText('E')
+  await expect(page.getByRole('list', { name: 'Open tasks' })).toContainText('E')
   await page.reload()
-  await expect(page.getByRole('list', { name: 'To do tasks' })).toContainText('C')
-  await expect(page.getByRole('list', { name: 'In progress tasks' })).toContainText('E')
+  await expect(page.getByRole('list', { name: 'Open tasks' })).toContainText('C')
+  await expect(page.getByRole('list', { name: 'Open tasks' })).toContainText('E')
 })
 
 test('public announcement refresh updates the venue while preserving RSVP drafts', async ({ page }) => {

@@ -89,13 +89,13 @@ onUnmounted(() => clearInterval(timer))
 </script>
 
 <template>
-  <div class="container py-4 venue-qr-page text-center">
-    <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block text-start mb-3">&larr; Manage event</RouterLink>
+  <div class="venue-qr-page text-center" :class="{ 'container py-4': !$route.meta.eventWorkspace }">
+    <RouterLink v-if="!$route.meta.eventWorkspace" :to="`/organiser/events/${eventId}/manage`" class="small d-block text-start mb-3">&larr; Manage event</RouterLink>
 
     <div v-if="error && !secret" class="alert alert-danger" role="alert">{{ error }}</div>
 
     <template v-else-if="secret">
-      <span class="ticket-kicker">Entrance display</span><h1 class="h3 mb-1">{{ event?.title }}</h1>
+      <span class="ticket-kicker">Entrance display</span><component :is="$route.meta.eventWorkspace ? 'h2' : 'h1'" class="h3 mb-1">{{ $route.meta.eventWorkspace ? 'Venue QR' : event?.title }}</component>
       <p class="lead mb-4">Scan to check in</p>
 
       <div class="venue-qr-stock align-items-center mx-auto">

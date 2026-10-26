@@ -134,13 +134,13 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
 </script>
 
 <template>
-  <div class="container py-4 attendance-page">
-    <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
+  <div class="attendance-page" :class="{ 'container py-4': !$route.meta.eventWorkspace }">
+    <RouterLink v-if="!$route.meta.eventWorkspace" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
 
     <header class="attendance-header d-flex justify-content-between align-items-start gap-2 mb-4">
       <div>
-        <h1 class="h4 mb-1">Attendance</h1>
-        <p class="text-body-secondary small mb-0">{{ event?.title ?? '' }}</p>
+        <component :is="$route.meta.eventWorkspace ? 'h2' : 'h1'" class="h4 mb-1">Attendance</component>
+        <p v-if="!$route.meta.eventWorkspace" class="text-body-secondary small mb-0">{{ event?.title ?? '' }}</p>
       </div>
       <span
         class="badge"

@@ -149,3 +149,34 @@ Captures: [desktop dark](previews/f4-task-list-desktop-dark.png) and
 [mobile light](previews/f4-task-list-mobile-light.png). These show demo fixtures.
 The approved temporary plan is discarded; adopted behavior is recorded here and
 in the design system rather than keeping a second implementation report.
+
+
+## Unified event workspace — subsequent 26 October refinement
+
+The follow-up resolves the mismatch between tab-like operations and tool links
+that previously replaced the workspace. A shared route layout now retains a
+compact event header and local navigation for all existing management routes.
+Child pages keep their business logic/guards but avoid duplicate event headers
+and return links. Mobile Sections closes after selection, with focus recovery.
+
+Tasks now prioritise existing open work with a flat list, three filters and a
+composer opened on intent. Query-backed search/filter state and cached F4 drafts
+survive normal workspace navigation. Completed stays available separately;
+success feedback is announced without a permanent visual band.
+
+Review identified native confirmations remaining stale when F4 deactivated under
+KeepAlive; deactivation now closes/clears them. Targeted browser checks also
+identified the last-task deletion focus fallback targeting the collapsed composer;
+it now targets the visible Add task trigger.
+
+Twenty-two selected Chromium cases pass after targeted reruns; the final
+mobile-menu check passes at all four course widths. Coverage includes search
+typing/query restoration, cross-route drafts, task save/retry/order/isolation,
+Back links, loaded RSVP content and locally mocked live-only route/QR content.
+The 100-task layout case covers both themes/reduced motion at all four widths.
+No full suite/build or hosted write was run. Real camera, QR rotation, hosted
+authorisation and Safari remain outside this verification.
+
+Evidence: [desktop](previews/f4-unified-desktop.png),
+[mobile](previews/f4-unified-mobile.png). The earlier task-list plan remains
+discarded; this section supersedes its navigation/presentation direction.

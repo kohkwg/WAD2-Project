@@ -247,3 +247,23 @@ pnpm --dir client test:e2e e2e/feature4-task-list.spec.js
 pnpm --dir client test:e2e e2e/feature4.spec.js --grep 'task CRUD|failed storage save|reused workspace route'
 pnpm --dir client test:e2e e2e/feature4-interactions.spec.js --grep 'task|dialog cancel'
 ```
+
+
+## Unified event-workspace checks
+
+`e2e/workspace-design.spec.js` covers the persistent workspace shell, existing
+tool routes, operation Back targets, remembered query state and cross-route draft
+preservation. Live-only route smoke checks use local API/check-in fixtures; they
+do not verify hosted auth, RLS, camera hardware or venue-code rotation.
+`e2e/feature4-task-list.spec.js` covers Open/Completed/All, URL-backed search,
+intent-opened composition, cached confirmation cleanup and responsive task lists.
+Use the affected cases, not a full suite:
+
+```sh
+pnpm --dir client test:e2e e2e/workspace-design.spec.js --grep 'organiser event|live-only|task search|Budget Back'
+pnpm --dir client test:e2e e2e/feature4-task-list.spec.js
+```
+
+When capturing child tools, wait for their loaded heading/content (for example
+Manage RSVPs or the QR canvas), not merely the shared event header. The shell
+loads public event context separately from the child tool's authorised data.

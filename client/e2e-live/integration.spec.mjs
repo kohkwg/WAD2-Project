@@ -105,8 +105,9 @@ test('F2 participant submits pending RSVP and owner approves',async()=>{
 test('F4 persists task, public announcement and exact-cent budget through live UI',async()=>{
  const page=organiser.page
  await page.goto(`/organiser/events/${eventId}/manage?tab=tasks`)
- await page.getByLabel('Task title',{exact:true}).fill('[TEST] Prepare welcome desk')
  await page.getByRole('button',{name:'Add task',exact:true}).click()
+ await page.getByLabel('Task title',{exact:true}).fill('[TEST] Prepare welcome desk')
+ await page.getByRole('button',{name:'Save task',exact:true}).click()
  await expect(page.locator('.task-title').filter({hasText:'[TEST] Prepare welcome desk'})).toBeVisible()
  await page.reload()
  await expect(page.locator('.task-title').filter({hasText:'[TEST] Prepare welcome desk'})).toBeVisible()

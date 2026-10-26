@@ -307,13 +307,13 @@ function addPerson() {
 
 <template>
     <!-- Viewer mode renders nothing until a plan exists, so event pages without one stay clean -->
-    <div v-if="!readOnly || (!loading && !loadError && planId)" :class="readOnly ? 'floor-plan-viewer' : 'container py-4 floor-editor'">
+    <div v-if="!readOnly || (!loading && !loadError && planId)" :class="readOnly ? 'floor-plan-viewer' : ['floor-editor', { 'container py-4': !$route.meta.eventWorkspace }]">
         <p v-if="!USING_SUPABASE" class="alert alert-info">Floor plans and programme editing require a configured live Supabase connection.</p>
         <template v-if="!readOnly && USING_SUPABASE">
-            <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
+            <RouterLink v-if="!$route.meta.eventWorkspace" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
             <div class="floor-page-heading d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
                 <div>
-                    <span class="ticket-kicker">Event workspace</span><h1 class="h2 mb-1">Floor plan</h1>
+                    <span v-if="!$route.meta.eventWorkspace" class="ticket-kicker">Event workspace</span><component :is="$route.meta.eventWorkspace ? 'h2' : 'h1'" class="h2 mb-1">Floor plan</component>
                     <p class="text-muted mb-0" role="status">{{ loading ? 'Loading…' : editorStatus }}</p>
                 </div>
 

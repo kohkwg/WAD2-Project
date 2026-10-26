@@ -39,25 +39,27 @@ async function seedTasks(page, count = 100) {
   await expect(page.locator('.task-title').filter({ hasText: 'Long title for viewport reflow' })).toBeVisible()
 }
 
-test('search, status filters and completion save the full board with hidden tasks intact', async ({ page }) => {
+test('open, completed and all filters save the full board with hidden tasks intact', async ({ page }) => {
   await seedTasks(page)
   const before = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).feature4.tasks.map(task => task.id), STORE)
   const filters = page.getByRole('group', { name: 'Filter tasks by status' })
 
-  await expect(filters.getByRole('button', { name: /^All\b/ })).toContainText('100')
-  await expect(filters.getByRole('button', { name: /^To do\b/ })).toContainText('34')
-  await expect(filters.getByRole('button', { name: /^In progress\b/ })).toContainText('33')
+  await expect(filters.getByRole('button', { name: /^Open\b/ })).toContainText('67')
   await expect(filters.getByRole('button', { name: /^Completed\b/ })).toContainText('33')
-  await filters.getByRole('button', { name: /^In progress\b/ }).click()
-  await expect(page.getByRole('heading', { name: /^In progress\b/ })).toBeVisible()
-  await expect(page.locator('.task-title').filter({ hasText: 'Scale task 001' })).toBeVisible()
-  await expect(page.locator('.task-title').filter({ hasText: 'Scale task 000' })).toHaveCount(0)
+  await expect(filters.getByRole('button', { name: /^All\b/ })).toContainText('100')
+  await expect(filters.getByRole('button', { name: /^Open\b/ })).toHaveAttribute('aria-pressed', 'true')
   await filters.getByRole('button', { name: /^All\b/ }).click()
+  await expect(page.locator('.task-title').filter({ hasText: 'Scale task 001' })).toBeVisible()
+  await filters.getByRole('button', { name: /^Completed\b/ }).click()
+  await expect(page.locator('.task-title').filter({ hasText: 'Scale task 002' })).toBeVisible()
+  await filters.getByRole('button', { name: /^Open\b/ }).click()
+  await expect(page.locator('.task-title').filter({ hasText: 'Scale task 002' })).toHaveCount(0)
 
   await page.getByLabel('Search tasks', { exact: true }).fill('match this note')
   await expect(page.locator('.task-title').filter({ hasText: 'Long title for viewport reflow' })).toBeVisible()
   await expect(page.getByText(/matching task/i)).toBeVisible()
   await page.getByLabel(`Complete task: ${LONG_TITLE}`, { exact: true }).click()
+  await filters.getByRole('button', { name: /^Completed\b/ }).click()
   await expect(page.getByLabel(`Reopen task: ${LONG_TITLE}`, { exact: true })).toBeChecked()
 
   const after = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).feature4.tasks, STORE)
@@ -67,29 +69,44 @@ test('search, status filters and completion save the full board with hidden task
   expect(after.filter(task => task.id !== 'scale-task-0').every(task => task.status === ['todo', 'in_progress', 'done'][Number(task.id.split('-').at(-1)) % 3])).toBe(true)
 })
 
-test('search distinguishes no results and draft survives filters and local section changes', async ({ page }) => {
-  await openTasks(page)
-  await page.locator('#task-title').fill('Existing task')
-  await page.getByRole('button', { name: 'Add task', exact: true }).click()
-  await page.getByLabel('Task title', { exact: true }).fill('Unsaved scoped task')
+test('deep links restore task filter and search; composer draft survives local section changes', async ({ page }) => {
+  await seedTasks(page)
+  await expect(page.getByRole('button', { name: /^Open\b/ })).toHaveAttribute('aria-pressed', 'true')
   await page.getByLabel('Search tasks', { exact: true }).fill('nothing matches this')
   await expect(page.getByText('No matching tasks.', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Clear search', exact: true }).click()
+  await expect(page).toHaveURL(/taskSearch=nothing\+matches\+this/)
+  const search = page.getByLabel('Search tasks', { exact: true })
+  await search.fill('')
+  await search.pressSequentially('Scale task 002', { delay: 0 })
+  await expect(search).toHaveValue('Scale task 002')
+  await expect(page).toHaveURL(/taskSearch=Scale\+task\+002/)
   await page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^Completed\b/ }).click()
+  await expect(page).toHaveURL(/taskFilter=completed.*taskSearch=Scale\+task\+002|taskSearch=Scale\+task\+002.*taskFilter=completed/)
+  await page.reload()
+  await expect(page.getByLabel('Search tasks', { exact: true })).toHaveValue('Scale task 002')
+  await expect(page.getByRole('group', { name: 'Filter tasks by status' }).getByRole('button', { name: /^Completed\b/ })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.task-title').filter({ hasText: 'Scale task 002' })).toBeVisible()
+  await page.getByLabel('Search tasks', { exact: true }).fill('')
+  await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await expect(page.getByRole('form', { name: 'Add task' })).toBeVisible()
+  await page.getByLabel('Task title', { exact: true }).fill('Unsaved scoped task')
   await page.getByRole('link', { name: /^Announcements\b/ }).click()
   await expect(page.getByRole('heading', { name: 'Announcements', exact: true })).toBeVisible()
   await page.getByRole('link', { name: /^Tasks\b/ }).click()
   await expect(page.getByLabel('Task title', { exact: true })).toHaveValue('Unsaved scoped task')
+  await expect(page.getByRole('button', { name: /^Completed\b/ })).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('composer draft survives row editing and dirty edits cannot be replaced', async ({ page }) => {
   await openTasks(page)
   for (const title of ['Existing task one', 'Existing task two']) {
-    await page.locator('#task-title').fill(title)
     await page.getByRole('button', { name: 'Add task', exact: true }).click()
+    await page.locator('#task-title').fill(title)
+    await page.getByRole('button', { name: 'Save task', exact: true }).click()
     await expect(page.locator('.task-title').filter({ hasText: title })).toBeVisible()
   }
 
+  await page.getByRole('button', { name: 'Add task', exact: true }).click()
   await page.locator('#task-title').fill('New task draft')
   await page.getByRole('button', { name: 'More actions for: Existing task one', exact: true }).click()
   await page.getByRole('button', { name: 'Edit', exact: true }).click()
@@ -103,6 +120,43 @@ test('composer draft survives row editing and dirty edits cannot be replaced', a
   await page.getByRole('button', { name: 'Cancel edit', exact: true }).click()
   await expect(page.locator('#task-title')).toHaveValue('New task draft')
   await expect(page.locator('.task-title').filter({ hasText: 'Existing task two' })).toBeVisible()
+})
+
+test('leaving Manage event closes a task delete dialog and it can reopen on return', async ({ page }) => {
+  await openTasks(page)
+  await page.getByRole('button', { name: 'Add task', exact: true }).click()
+  await page.getByLabel('Task title', { exact: true }).fill('Dialog route task')
+  await page.getByRole('button', { name: 'Save task', exact: true }).click()
+  await page.getByRole('button', { name: 'More actions for: Dialog route task', exact: true }).click()
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.evaluate(() => {
+    window.__originalSetItem = Storage.prototype.setItem
+    Storage.prototype.setItem = function (key, value) {
+      if (key === 'bookedz-feature2-demo') throw new DOMException('Storage full', 'QuotaExceededError')
+      return window.__originalSetItem.call(this, key, value)
+    }
+  })
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('alert')).toBeVisible()
+
+  await page.evaluate(async () => {
+    const router = document.querySelector('#app').__vue_app__.config.globalProperties.$router
+    await router.push('/organiser/events/e-weather-demo/rsvps')
+  })
+  await expect(page).toHaveURL(/\/organiser\/events\/e-weather-demo\/rsvps/)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.evaluate(() => { Storage.prototype.setItem = window.__originalSetItem })
+  await page.getByRole('link', { name: /Back to Manage event/ }).click()
+  await expect(page).toHaveURL(/\/organiser\/events\/e-weather-demo\/manage\?tab=tasks/)
+  await expect(page.getByRole('button', { name: 'Retry save', exact: true })).toHaveCount(0)
+  const menu = page.getByRole('button', { name: 'More actions for: Dialog route task', exact: true })
+  await menu.click()
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.locator('.task-title').filter({ hasText: 'Dialog route task' })).toHaveCount(0)
 })
 
 test('100 tasks reflow at course widths with light, dark and reduced motion settings', async ({ page }, testInfo) => {
@@ -131,16 +185,14 @@ test('100 tasks reflow at course widths with light, dark and reduced motion sett
 
 test('live-only event tools stay hidden in demo and appear in a live-visibility fixture', async ({ page }) => {
   await openTasks(page)
-  const demoTools = page.getByRole('navigation', { name: 'Event tools' })
-  await expect(demoTools.getByRole('link', { name: /^Manage RSVPs\b/ })).toBeVisible()
-  for (const name of ['Check-in station', 'Venue QR', 'Attendance', 'Floor plan']) {
-    await expect(demoTools.getByRole('link', { name: new RegExp(`^${name}\\b`) })).toHaveCount(0)
-  }
+  const demoNavigation = page.getByRole('navigation', { name: 'Event workspace navigation' })
+  await expect(demoNavigation.getByRole('link', { name: 'RSVPs', exact: true })).toBeVisible()
+  await expect(demoNavigation.getByRole('link', { name: 'Check-in', exact: true })).toHaveCount(0)
 
   await page.route(/\/src\/utils\/api(?:\.js)?(?:\?.*)?$/, route => route.fulfill({ contentType: 'text/javascript', body: liveVisibilityApi }))
   await page.reload()
-  const liveFixtureTools = page.getByRole('navigation', { name: 'Event tools' })
-  for (const name of ['Check-in station', 'Venue QR', 'Attendance', 'Floor plan']) {
-    await expect(liveFixtureTools.getByRole('link', { name: new RegExp(`^${name}\\b`) })).toBeVisible()
+  const liveFixtureNavigation = page.getByRole('navigation', { name: 'Event workspace navigation' })
+  for (const name of ['Check-in', 'Venue QR', 'Attendance', 'Floor plan']) {
+    await expect(liveFixtureNavigation.getByRole('link', { name, exact: true })).toBeVisible()
   }
 })

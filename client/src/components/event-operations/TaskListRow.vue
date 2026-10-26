@@ -118,14 +118,14 @@ function requestCompletion(event) {
     <div v-if="expanded" class="task-details">
       <p v-if="task.notes && !editing" class="task-notes">{{ task.notes }}</p>
       <template v-if="editing">
-        <form class="edit-fields" @submit.prevent="emit('save-edit')">
+        <form class="edit-fields" name="task-edit" autocomplete="off" @submit.prevent="emit('save-edit')">
           <div>
             <label class="form-label" :for="'task-title-edit-' + task.id">Task title</label>
-            <input :id="'task-title-edit-' + task.id" class="form-control" :value="draft.title" maxlength="200" required :disabled="pending" @input="setDraft('title', $event)" />
+            <input :id="'task-title-edit-' + task.id" class="form-control" name="title" autocomplete="off" :value="draft.title" maxlength="200" required :disabled="pending" @input="setDraft('title', $event)" />
           </div>
           <div>
             <label class="form-label" :for="'task-notes-edit-' + task.id">Task notes <span class="text-secondary">(optional)</span></label>
-            <textarea :id="'task-notes-edit-' + task.id" class="form-control" rows="2" :value="draft.notes" :disabled="pending" @input="setDraft('notes', $event)" />
+            <textarea :id="'task-notes-edit-' + task.id" class="form-control" name="notes" autocomplete="off" rows="2" :value="draft.notes" :disabled="pending" @input="setDraft('notes', $event)" />
           </div>
           <p v-if="error" class="text-danger" role="alert">{{ error }}</p>
           <div class="edit-actions">
