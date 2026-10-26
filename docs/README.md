@@ -7,6 +7,7 @@
 - [Testing and local operation](testing.md)
 - [Contributor instructions](../AGENTS.md)
 - [Frontend design system](design/design-system.md)
+- [Owner tutorial checks and browser-local preferences](testing.md#manage-event-tutorial-checks)
 - [Design review and verification limits](design/design-review.md)
 - [Implementation record](design/implementation-plan.md)
 - [Component gallery](design/component-gallery.html) and [asset register](design/assets.md)

@@ -1,6 +1,7 @@
 # Frontend redesign implementation record
 
-Current working-tree delivery, 24 October 2026. Preserve Vue 3 Composition API,
+Delivery record: initial 24 October baseline, updated through 26 October 2026.
+Preserve Vue 3 Composition API,
 JavaScript, Router, Bootstrap 5, existing API/demo/live contracts and teammate
 ownership. No release, Git or cloud operation is implied by these changes.
 
@@ -39,3 +40,22 @@ physical camera/GPS or Safari/iOS claim is made. Screenshot events are demo fixt
 
 See [design system](design-system.md), [review](design-review.md),
 [assets](assets.md), [testing](../testing.md) and [timeline](../../status.md).
+
+
+## Current 26 October tutorial and workspace checkpoint
+
+- [x] Keep one **Manage event** entry on each My events card; RSVP operations
+  remain under Registrations in the event workspace.
+- [x] Deliver the first-owner eight-step tutorial once per owner/data mode, with
+  replay, owner gating, preference-storage fallback and event-data-free steps.
+- [x] Restore the original route query/hash, scroll position and mobile section
+  disclosure after the tour; preserve scroll during same-event tool navigation.
+- [x] Settle the spotlight against changing target geometry and reserve sticky
+  navbar clearance while scrolling.
+
+The latest corrected-source evidence is 12 focused tutorial Chromium cases,
+including delayed-forecast and navbar-clearance frame regressions. An earlier
+17-case run predates the spotlight correction and was not rerun in full. Changed
+SFC compilation and syntax/whitespace checks passed; no full suite, production
+build or hosted write ran. See the [design review](design-review.md#first-owner-tutorial-and-outstanding-audit-items--26-october-2026)
+for outstanding audit findings and capture limits.

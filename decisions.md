@@ -21,6 +21,8 @@ authorise a commit, push, deployment, SQL change or hosted data mutation.
 
 | Date | Decision / approval | Status and limits |
 | --- | --- | --- |
+| 26 Oct | Implement the task-board save fix; explicitly approve applying the reviewed corrective migration to Bookerz. | Limited to qualifying ambiguous SQL columns in `save_feature4_task_board`, with rollback-only verification. No Git publication or unrelated hosted changes. |
+| 26 Oct | Update the documentation, commit/push everything reviewed on the current `denzel` branch, then compare remote `dev` with all personal design branches. | Includes the previously preserved task-board SQL migration/test and their notes. Supersedes their earlier Git-publication exclusion; no new SQL application, cloud mutation, branch reset, PR or merge is authorised. |
 | 15–16 Oct | Use the supplied course resources and team proposal to orient Bookedz work; respect each teammate's feature ownership. | Official requirements, proposed scope, observed implementation and suggestions must remain distinct. |
 | 16 Oct | Reported updated course permission allowing full agentic coding; authorised the first Feature 4 implementation and its follow-up iteration. | User-reported permission, not independent faculty verification. Detailed public AI disclosure remains required. Supersedes the older assistant handoff's coding restriction for authorised work. |
 | 16 Oct | Selectively import Timothy's Supabase initializer, initial migration/config and environment examples from `575e20d`, and add the client SDK. | A source import, not a branch merge or proof of hosted deployment. Timothy retains authorship. |

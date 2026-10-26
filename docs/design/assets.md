@@ -132,8 +132,12 @@ reduced-motion handling. They are decorative transport, not live positions.
 | `previews/create-studio-dark.png`, `previews/create-studio-mobile.png` | Draft preview and progressive creation |
 | `previews/public-event-desktop.png`, `previews/public-event-mobile.png` | Detail-first public layout and compact RSVP actions |
 | `previews/my-rsvps-desktop.png`, `previews/my-rsvps-mobile.png` | Status totals, date cards and status icons |
-| `previews/event-tools-desktop.png`, `previews/event-tools-mobile.png` | Organiser hierarchy and quick actions |
+| `previews/event-tools-desktop.png`, `previews/event-tools-mobile.png` | Historical 24 October organiser tools before the unified workspace |
 | `previews/manage-rsvps-desktop.png`, `previews/manage-rsvps-mobile.png` | Actual-data capacity/status visual and responsive rows |
+| `previews/f4-task-list-desktop-dark.png`, `previews/f4-task-list-mobile-light.png` | 26 October compact task-list checkpoint |
+| `previews/f4-unified-desktop.png`, `previews/f4-unified-mobile.png` | Shared workspace and RSVP tool integration checkpoint |
+| `previews/f4-navigation-light.png`, `previews/f4-navigation-mobile.png` | Clearer Event planning / Guests & venue group hierarchy |
+| `previews/f4-tutorial-desktop.png`, `previews/f4-tutorial-mobile.png` | Demo tutorial step 2 composition; captured before the latest spotlight alignment fix, with the same target |
 
 Other preview filenames preserve earlier checkpoints. All captures use isolated
 demo data; they do not establish current live attendance or full browser coverage.

@@ -127,6 +127,15 @@ local environment; privileged credentials never enter browser code.
 
 ## Database checks and acceptance limits
 
+[`supabase/tests/task_board.sql`](../supabase/tests/task_board.sql) verifies the
+task-board RPC against a migrated local/development PostgreSQL database. Run with
+`psql -v ON_ERROR_STOP=1 -f supabase/tests/task_board.sql` using the intended database
+connection. It creates only temporary `[TEST]` fixtures and rolls everything back;
+hosted execution still requires explicit approval. It checks actual authenticated
+status/order saves, retry/empty boards, validation, owner denial, atomicity and
+execute grants. PostgreSQL platform stubs in a local harness do not replace hosted
+RLS verification. No frontend build is needed for an SQL-only fix.
+
 [`supabase/tests/live_waitlist.sql`](../supabase/tests/live_waitlist.sql) is a
 development-only, rollback-only lifecycle/deadline/grant check. It creates a
 third disposable auth user inside its transaction and rolls all fixtures back.
@@ -194,11 +203,13 @@ contexts and do not create hosted events.
 | Spec | Purpose |
 | --- | --- |
 | `e2e/motion-theme.spec.js` | System theme/default/persistence, filter disclosure and view changes, wizard draft preview/back navigation |
-| `e2e/workspace-design.spec.js` | Public detail/action priority, My RSVPs, all four event tools, actual capacity totals; desktop/mobile and dark mode |
+| `e2e/workspace-design.spec.js` | Workspace tool routes, cached drafts, task query restoration and same-event guest/venue scroll at 375/575/768/1280px; also public detail/My RSVPs layout |
 | `e2e/immersive-discovery.spec.js` | Hero asset loading, map preview/pause/focus, reduced motion and directory filtering |
 | `e2e/design-polish.spec.js` | 375/575/768/1280px layout, pending search and Navbar-only auth-session fixture |
 | `e2e/feature4.spec.js` | Select exact-budget, weather-failure or RSVP-submission case when that UI changes |
 | `e2e/feature4-interactions.spec.js` | Select task focus/keyboard or destructive-confirmation case when affected |
+| `e2e/organiser-motion.spec.js` | My events/creation/workspace motion, draft preservation, typing without scene replay, light/dark and reduced motion |
+| `e2e/workspace-tutorial.spec.js` | First-owner tour, replay/preferences, owner gating, focus, state restoration, responsive placement and frame-by-frame spotlight tracking |
 | `e2e/legacy-review-fixes.spec.js` | Select My RSVPs refresh/cadence or route-reuse case when affected |
 
 Examples from the repository root:
@@ -280,3 +291,16 @@ The browser-local `bookedz:organiser-tour:v1:<demo-or-live>:<owner-id>` preferen
 remembers dismissal/completion. If storage is blocked, it lasts for the current
 loaded app session; Replay tutorial stays available. No hosted test writes are
 needed for this feature.
+
+
+The latest tutorial correction adds successful delayed-weather fixtures and
+frame-by-frame checks for steps 6 and 8 at 375/1280px under normal motion. These
+verify the spotlight tracks the actual target and stays below the sticky navbar:
+
+```sh
+pnpm --dir client test:e2e e2e/workspace-tutorial.spec.js --grep 'real target below'
+```
+
+The full tutorial spec is still a focused feature check (12 cases), not the full
+project suite. Existing four-width cases also cover reduced motion; these results
+do not establish real hosted ownership/RLS, Safari or physical touch behaviour.
