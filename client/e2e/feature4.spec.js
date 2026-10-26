@@ -31,7 +31,7 @@ async function mockWeather(page, description, options) {
 
 async function openTool(page, tab = 'tasks', event = 'e-weather-demo') {
   await page.goto(`/organiser/events/${event}/manage?tab=${tab}`)
-  await expect(page.getByRole('link', { name: tab[0].toUpperCase() + tab.slice(1), exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: new RegExp(`^${tab[0].toUpperCase() + tab.slice(1)}\\b`) })).toBeVisible()
 }
 
 async function db(page) {
@@ -41,34 +41,15 @@ async function db(page) {
 async function addTask(page, title) {
   await page.getByLabel('Task title', { exact: true }).fill(title)
   await page.getByRole('button', { name: 'Add task', exact: true }).click()
-  await expect(page.getByRole('button', { name: `Edit task: ${title}`, exact: true })).toBeVisible()
+  await expect(titleDisclosure(page, title)).toBeVisible()
 }
 
 function task(page, title) {
-  return page.locator('article.task-card').filter({ has: page.getByRole('button', { name: `Edit task: ${title}`, exact: true }) })
+  return page.locator('.task-row').filter({ has: titleDisclosure(page, title) })
 }
 
-async function dragTask(page, source, target, targetPosition) {
-  await source.scrollIntoViewIfNeeded()
-  await target.scrollIntoViewIfNeeded()
-  const from = await source.boundingBox()
-  const to = await target.boundingBox()
-  const taskId = await source.evaluate(el => el.closest('article').dataset.taskId)
-  const column = await target.evaluate(el => el.closest('.task-list').getAttribute('aria-label'))
-  const x = to.x + (targetPosition?.x ?? to.width / 2)
-  const y = to.y + (targetPosition?.y ?? to.height / 2)
-  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
-  await page.mouse.down()
-  await page.mouse.move(from.x + from.width / 2 + 8, from.y + from.height / 2 + 8, { steps: 3 })
-  await page.mouse.move(x, y, { steps: 15 })
-  // Sortable briefly suppresses hit-testing after a swap. Keep the real pointer
-  // moving until the destination accepts the card, then release it.
-  await expect.poll(async () => {
-    await page.mouse.move(x + 1, y)
-    await page.mouse.move(x, y)
-    return page.locator(`[aria-label="${column}"] [data-task-id="${taskId}"]`).count()
-  }).toBe(1)
-  await page.mouse.up()
+function titleDisclosure(page, title) {
+  return page.locator('.task-title').filter({ hasText: title })
 }
 
 async function confirmDelete(page) {
@@ -113,27 +94,36 @@ test('organiser event deletion cascades across RSVPs and Feature 4 records', asy
   expect(saved.events.some(event => event.id === 'e2')).toBe(true)
 })
 
-test('task CRUD, keyboard column moves/order, reload and event isolation', async ({ page }) => {
+test('task CRUD, completion, start, order, reload and event isolation', async ({ page }) => {
   await openTool(page)
   await addTask(page, 'Book microphones')
   await addTask(page, 'Confirm volunteers')
-  await page.getByRole('button', { name: 'Move Confirm volunteers up', exact: true }).click()
-  await expect(page.locator('[aria-label="To do tasks"] article.task-card').first()).toContainText('Confirm volunteers')
-  await page.getByLabel('Status for Book microphones', { exact: true }).selectOption('in_progress')
-  await expect(page.locator('[aria-label="In progress tasks"]')).toContainText('Book microphones')
-  await page.getByRole('button', { name: 'Edit task: Book microphones', exact: true }).click()
-  await page.getByLabel('Task title', { exact: true }).fill('Book two microphones')
-  await page.getByLabel('Task notes (optional)', { exact: true }).fill('Collect at noon')
+  await page.getByRole('button', { name: 'More actions for: Confirm volunteers', exact: true }).click()
+  await page.getByRole('button', { name: 'Move up', exact: true }).click()
+  await expect(page.getByRole('list', { name: 'To do tasks' })).toContainText('Confirm volunteers')
+  await page.getByRole('button', { name: 'Show details: Book microphones', exact: true }).click()
+  await page.getByRole('button', { name: 'Start task', exact: true }).click()
+  await expect(page.getByRole('list', { name: 'In progress tasks' })).toContainText('Book microphones')
+  await page.getByRole('button', { name: 'More actions for: Book microphones', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit', exact: true }).click()
+  await page.locator('input[id^="task-title-edit-"]').fill('Book two microphones')
+  await page.locator('textarea[id^="task-notes-edit-"]').fill('Collect at noon')
   await page.getByRole('button', { name: 'Save task', exact: true }).click()
   await expect(task(page, 'Book two microphones')).toContainText('Collect at noon')
+  await page.getByLabel('Complete task: Book two microphones', { exact: true }).click()
+  await page.getByRole('button', { name: /^Completed tasks\b/ }).click()
+  await expect(titleDisclosure(page, 'Book two microphones')).toBeVisible()
   await page.reload()
-  await expect(page.locator('[aria-label="In progress tasks"]')).toContainText('Book two microphones')
+  await page.getByRole('button', { name: /^Completed tasks\b/ }).click()
+  await expect(titleDisclosure(page, 'Book two microphones')).toBeVisible()
   await openTool(page, 'tasks', 'e2')
-  await expect(page.getByRole('button', { name: 'Edit task: Book two microphones', exact: true })).toHaveCount(0)
+  await expect(titleDisclosure(page, 'Book two microphones')).toHaveCount(0)
   await openTool(page)
-  await page.getByRole('button', { name: 'Delete task: Book two microphones', exact: true }).click()
+  await page.getByRole('button', { name: /^Completed tasks\b/ }).click()
+  await page.getByRole('button', { name: 'More actions for: Book two microphones', exact: true }).click()
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
   await confirmDelete(page)
-  await expect(page.getByRole('button', { name: 'Edit task: Book two microphones', exact: true })).toHaveCount(0)
+  await expect(titleDisclosure(page, 'Book two microphones')).toHaveCount(0)
 })
 
 test('failed storage save keeps the draft and supports retry', async ({ page }) => {
@@ -149,24 +139,15 @@ test('failed storage save keeps the draft and supports retry', async ({ page }) 
   await page.getByRole('button', { name: 'Add task', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText(/storage|save|persist/i)
   await expect(page.getByLabel('Task title', { exact: true })).toHaveValue('Recover my draft')
-  await expect(page.getByRole('button', { name: 'Edit task: Recover my draft', exact: true })).toHaveCount(0)
+  await expect(titleDisclosure(page, 'Recover my draft')).toHaveCount(0)
   await page.evaluate(() => { Storage.prototype.setItem = window.__originalSetItem })
   await page.getByRole('button', { name: 'Add task', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Edit task: Recover my draft', exact: true })).toBeVisible()
+  await expect(titleDisclosure(page, 'Recover my draft')).toBeVisible()
 })
 
-test('real Sortable dragging moves into an empty column, orders and restores on failure', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1100 })
+test('checkbox save failure keeps status and restores the pending completion on retry', async ({ page }) => {
   await openTool(page)
-  await addTask(page, 'Drag alpha')
-  await addTask(page, 'Drag beta')
-  const progress = page.locator('[aria-label="In progress tasks"]')
-  await dragTask(page, task(page, 'Drag alpha').locator('.task-handle'), progress)
-  await expect(progress).toContainText('Drag alpha')
-  await dragTask(page, task(page, 'Drag beta').locator('.task-handle'), task(page, 'Drag alpha'), { x: 50, y: 10 })
-  await expect(progress.locator('article').first()).toContainText('Drag beta')
-  await page.reload()
-  await expect(progress.locator('article').first()).toContainText('Drag beta')
+  await addTask(page, 'Completion retry task')
   const saved = await db(page)
   await page.evaluate(() => {
     window.__originalSetItem = Storage.prototype.setItem
@@ -175,14 +156,13 @@ test('real Sortable dragging moves into an empty column, orders and restores on 
       return window.__originalSetItem.call(this, key, value)
     }
   })
-  await dragTask(page, task(page, 'Drag alpha').locator('.task-handle'), page.locator('[aria-label="Done tasks"]'))
+  await page.getByLabel('Complete task: Completion retry task', { exact: true }).click()
   await expect(page.getByRole('alert')).toContainText(/storage|save|persist/i)
-  await expect(progress).toContainText('Drag alpha')
-  await expect(page.locator('[aria-label="Done tasks"] article')).toHaveCount(0)
+  await expect(page.getByLabel('Complete task: Completion retry task', { exact: true })).toBeChecked({ checked: false })
   expect((await db(page)).feature4.tasks).toEqual(saved.feature4.tasks)
   await page.evaluate(() => { Storage.prototype.setItem = window.__originalSetItem })
   await page.getByRole('button', { name: 'Retry save', exact: true }).click()
-  await expect(page.locator('[aria-label="Done tasks"]')).toContainText('Drag alpha')
+  await expect(page.getByLabel('Reopen task: Completion retry task', { exact: true })).toBeChecked()
 })
 
 test('reused workspace route clears drafts and ignores old weather responses', async ({ page }) => {
@@ -215,7 +195,7 @@ test('reused workspace route clears drafts and ignores old weather responses', a
   })
   release()
   await expect(page.getByRole('heading', { name: 'Intro to Vue Workshop', exact: true })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Tasks', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('link', { name: /^Tasks\b/ })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('heading', { name: 'Showers', exact: true })).toHaveCount(0)
 })
 

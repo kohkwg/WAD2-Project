@@ -1,6 +1,6 @@
 # Project status and timeline
 
-Consolidated 23 October; updated 24 October 2026. Dates use Singapore time; same-day entries are ordered
+Consolidated 23 October; updated 26 October 2026. Dates use Singapore time; same-day entries are ordered
 by milestone because exact times are not consistently recorded. This replaces
 separate handoffs/merge/fix reports. [Decisions](decisions.md) records authority and
 superseded choices; [testing](docs/testing.md) explains reproducible checks;
@@ -337,3 +337,31 @@ not persist. These are dated observations, not permanent database invariants.
 - Only publication/document/resource checks apply to this pass. No full suite or
   production build is requested. Feature-branch resets, PRs, merges, deployment
   and hosted data writes are not part of this publication.
+
+
+### 26 October — Feature 4 workspace and task-list refinement
+
+- Denzel approves the compact Manage Event navigation and conventional task-list
+  plan. Codex and GPT-6 Luna Medium subagents implement the grouped local rail /
+  mobile Event tools disclosure, checkbox completion/reopening, named progress
+  actions, title/notes search, status filters, inline editing and secondary row
+  actions. Existing task IDs/status/order API contracts and ownership remain.
+- Review and browser failures identify a native checkbox showing an unsaved
+  completion and focus attempting to enter collapsed Completed content. Correct
+  both; add outside-pointer/Escape dismissal for row actions while preserving
+  confirmation focus and cancellation/retry invalidation.
+- Final frozen-source Chromium run: **16 targeted cases pass** in 35.1 seconds.
+  Covers CRUD/order/reload/event isolation, hidden-task preservation in full-board
+  saves, failed save/retry, create/edit drafts, delete cancellation/focus, route
+  reuse and organiser navigation. The 100-task layout case checks 375/575/768/1280px
+  in light/dark with reduced motion, page errors, one main and overflow. A mocked
+  live-visibility fixture checks tool links; this is not hosted auth/RLS evidence.
+- Three changed Vue SFCs compile (scripts/templates/styles); whitespace check
+  passes. Graphify AST update completes locally; prose is not semantically
+  reindexed. The host's documented direct pnpm launcher workaround is required.
+- No full suite, production build, new dependency or hosted write. Existing local
+  task-board SQL/docs work remains preserved and excluded from UI publication.
+  The temporary implementation-plan Markdown is removed as requested.
+- Demo evidence: [desktop dark](docs/design/previews/f4-task-list-desktop-dark.png),
+  [mobile light](docs/design/previews/f4-task-list-mobile-light.png). Fixtures are
+  example data, not current event metrics.

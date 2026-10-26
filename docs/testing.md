@@ -231,3 +231,19 @@ ignore patterns and permissions were not the cause. A project-scoped server
 rescan indexed both files successfully. Use the server GUI's Rescan when this
 recurs, then check transfer/receipt on Windows before restarting Vite and refreshing.
 Do not delete caches, overwrite files or reset data as a first response.
+
+
+## Feature 4 task-list checks
+
+The Manage Event task UI uses completion checkboxes, explicit progress actions,
+search/status filters and expandable row actions. Existing task browser checks
+use these controls instead of Kanban columns, drag handles and status selects.
+The focused task-list spec covers filtered saves without losing hidden task IDs,
+drafts and responsive/theme states. Choose the affected cases; these commands do
+not authorise a full suite or live writes:
+
+```sh
+pnpm --dir client test:e2e e2e/feature4-task-list.spec.js
+pnpm --dir client test:e2e e2e/feature4.spec.js --grep 'task CRUD|failed storage save|reused workspace route'
+pnpm --dir client test:e2e e2e/feature4-interactions.spec.js --grep 'task|dialog cancel'
+```

@@ -122,3 +122,30 @@ condition for data correctness or completing an action.
 A final one-case public/My RSVPs check also passed after making offer actions
 theme-aware; it verifies normal-text contrast of at least 4.5:1 on Confirm my spot
 at desktop and mobile sizes. The latest participant captures include that fix.
+
+
+## Feature 4 workspace and task list — 26 October 2026
+
+Denzel requested fewer competing header actions, discoverable organiser tools and
+a conventional to-do list. The implementation replaces Quick links with grouped
+local navigation, and replaces the three-column board/status selects with a
+searchable list, checkbox completion, named progress actions, inline editing and
+secondary action disclosures. Existing fonts, theme tokens and API contracts stay.
+
+The final frozen-source run passes 16 focused Chromium cases. Coverage includes
+full-board saves with hidden tasks, failure/retry, ordering/reload/event isolation,
+create/edit drafts, delete cancellation and keyboard focus, local section
+navigation and 100 tasks at 375/575/768/1280px in light/dark with reduced motion.
+The live-link visibility test uses mocked APIs; no signed-in hosted flow is claimed.
+The changed SFCs compile and whitespace checks pass. No full suite/build ran.
+
+Review fixes include keeping a checkbox at its saved state on failure, skipping
+hidden Completed controls during focus restoration, preserving a visible editor
+outside filters and dismissing row actions without losing confirmation focus.
+A read-only GPT-6 Luna Medium review found no remaining actionable issue in these
+changes. Actual touch hardware, Safari and hosted writes remain unverified.
+
+Captures: [desktop dark](previews/f4-task-list-desktop-dark.png) and
+[mobile light](previews/f4-task-list-mobile-light.png). These show demo fixtures.
+The approved temporary plan is discarded; adopted behavior is recorded here and
+in the design system rather than keeping a second implementation report.

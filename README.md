@@ -314,3 +314,12 @@ prepared backup-first, owner-scoped branch replacement instructions. This does
 not reset teammates' branches or create/merge their PRs; those steps remain with
 each owner and Denzel. Private source resources and local credentials/tools remain
 excluded; deployable art/fonts/licences and design documentation are included.
+
+
+On 26 October 2026, at Denzel's request, Codex and GPT-6 Luna subagents at Medium
+effort refined Feature 4's Manage Event workspace and task presentation: grouped
+organiser navigation, a conventional searchable task list, checkbox completion,
+explicit progress actions, inline editing and secondary row actions. Codex
+integrated the work and adapted focused browser checks. Existing task/API,
+ownership, exact-money and trusted-weather contracts and teammates' contributions
+retain their provenance. No new library was added.
