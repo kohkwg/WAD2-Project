@@ -314,7 +314,7 @@ function isLastTask(task) {
         <h2 id="tasks-heading" tabindex="-1">Tasks</h2>
         <p class="task-counts">{{ counts.open }} open · {{ counts.completed }} completed</p>
       </div>
-      <button id="tasks-add-task" class="btn btn-primary add-task-button" type="button" :aria-expanded="composerOpen" @click="toggleComposer">{{ composerOpen ? 'Close composer' : 'Add task' }}</button>
+      <button id="tasks-add-task" data-workspace-tour="add-task" class="btn btn-primary add-task-button" type="button" :aria-expanded="composerOpen" @click="toggleComposer">{{ composerOpen ? 'Close composer' : 'Add task' }}</button>
     </div>
 
     <form v-if="composerOpen" data-organiser-enter class="task-composer" name="task-create" autocomplete="off" aria-label="Add task" @submit.prevent="saveCreateTask">
@@ -334,7 +334,7 @@ function isLastTask(task) {
       <p v-if="dirtyEdit" class="edit-hint">Finish this edit or choose Cancel edit before editing another task.</p>
     </form>
 
-    <div class="task-toolbar">
+    <div class="task-toolbar" data-workspace-tour="task-controls">
       <div class="search-field">
         <label for="task-search" class="form-label">Search tasks</label>
         <input id="task-search" ref="searchInput" v-model="search" class="form-control" name="taskSearch" autocomplete="off" type="search" placeholder="Search title or notes" />

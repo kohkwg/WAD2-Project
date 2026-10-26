@@ -12,6 +12,15 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:5173',
+    // Existing journeys exercise returning owners. Tutorial cases opt into a
+    // fresh browser state explicitly to verify automatic first-entry onboarding.
+    storageState: {
+      cookies: [],
+      origins: [{ origin: 'http://127.0.0.1:5173', localStorage: [
+        { name: 'bookedz:organiser-tour:v1:demo:org1', value: 'completed' },
+        { name: 'bookedz:organiser-tour:v1:live:org1', value: 'completed' },
+      ] }],
+    },
     timezoneId: 'Asia/Singapore',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',

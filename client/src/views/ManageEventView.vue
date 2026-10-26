@@ -6,6 +6,7 @@ import TaskBoard from '../components/event-operations/TaskBoard.vue'
 import AnnouncementManager from '../components/event-operations/AnnouncementManager.vue'
 import BudgetTracker from '../components/event-operations/BudgetTracker.vue'
 import WeatherTool from '../components/event-operations/WeatherTool.vue'
+import ManageEventTour from '../components/event-operations/ManageEventTour.vue'
 import { TASK_STATUSES } from '../utils/feature4.js'
 
 defineOptions({ name: 'ManageEventView' })
@@ -148,6 +149,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
     Only this event’s organiser can manage its tasks, announcements, budget, and weather plan.
   </div>
   <template v-else-if="workspace">
+    <ManageEventTour v-if="isOwner" :owner-id="String(workspace.event.organiserId || '')" :event-id="String(workspace.event.id)" :active="isManageRoute" />
     <div class="tool-feedback">
       <div v-if="errors[activeTab]" class="alert alert-danger" role="alert">
         {{ errors[activeTab] }} <button v-if="retries[activeTab]" type="button" class="btn btn-sm btn-outline-danger" :disabled="pending[activeTab]" @click="retries[activeTab]()">Retry save</button>

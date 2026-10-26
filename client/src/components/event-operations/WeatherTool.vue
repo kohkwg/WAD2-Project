@@ -65,7 +65,7 @@ function cancelSwitch() { confirming.value = false; emit('cancel-action') }
         <p v-if="reason" class="mb-0" role="status">{{ reason }}</p>
         <p class="small text-secondary mt-3 mb-0">Forecast areas approximate local conditions.</p>
       </div>
-      <div class="workspace-panel">
+      <div class="workspace-panel" data-workspace-tour="weather">
         <h3 class="section-heading">Active venue</h3>
         <p class="mb-1 fw-semibold">{{ event.venue?.name }}</p><p class="text-secondary venue-address">{{ event.venue?.address }}</p>
         <p v-if="event.usingBackup" class="alert alert-success mb-0">The backup venue is active. Participants can see its address and the venue update.</p>

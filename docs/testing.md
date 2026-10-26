@@ -267,3 +267,16 @@ pnpm --dir client test:e2e e2e/feature4-task-list.spec.js
 When capturing child tools, wait for their loaded heading/content (for example
 Manage RSVPs or the QR canvas), not merely the shared event header. The shell
 loads public event context separately from the child tool's authorised data.
+
+
+## Manage Event tutorial checks
+
+Run `pnpm --dir client test:e2e e2e/workspace-tutorial.spec.js` for the focused
+first-owner, Skip/Finish/replay, owner gating, keyboard, local-preference failure,
+responsive positioning and draft/query preservation checks. Standard demo browser
+journeys start with returning-owner tutorial preferences; tutorial cases explicitly
+use fresh browser state. This is test-fixture setup, not a production bypass.
+The browser-local `bookedz:organiser-tour:v1:<demo-or-live>:<owner-id>` preference
+remembers dismissal/completion. If storage is blocked, it lasts for the current
+loaded app session; Replay tutorial stays available. No hosted test writes are
+needed for this feature.

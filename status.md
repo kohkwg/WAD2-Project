@@ -462,3 +462,31 @@ not persist. These are dated observations, not permanent database invariants.
   event opens the workspace, where Registrations retains sign-up/waitlist access.
 - Two focused Chromium card/workspace journeys pass; whitespace checks pass and
   Graphify AST is refreshed. No full suite/build or hosted change.
+
+
+### 26 October — first-owner Manage Event tutorial
+
+- Deliver Denzel’s approved eight-step tour: event context, Add task, task
+  controls, announcements, budget, weather, guest/venue tools and public preview.
+  Use a native modal, spotlight and compact callout with Previous/Next/Skip,
+  Finish, step count and an owner-only Replay tutorial control in the header.
+- Start after successful owner/context loading. Remember Skip/completion per
+  owner and data mode in the current browser, with an in-memory fallback when
+  preferences cannot be saved. No event data is created or changed by the tour.
+- Open the relevant section and mobile navigation as needed. Retain cached
+  drafts and restore the original query/hash, scroll and disclosure state; close
+  safely on route departure. Respect reduced motion and keyboard focus trapping.
+  Temporary mobile scroll space keeps bottom-of-page targets above the callout.
+- **17 targeted Chromium cases pass**: ten tutorial cases plus seven affected
+  workspace/motion/navigation/draft/scroll regressions. Positioning checks cover
+  375/575/768/1280px with dark/reduced motion; a light/normal-motion journey also
+  covers live resizing. Checks caught and corrected mobile callout overlap on
+  short pages and after async weather feedback. Escape, browser Back, blocked
+  preferences, cross-event suppression, non-owner denial and no-write behaviour
+  are covered. Eight SFCs compile; syntax/whitespace checks pass; AST refreshed.
+- GPT-6 Luna Medium assists the popup and independently reviews the integration;
+  a motion-preference listener quirk is corrected. No full suite/build, dependency
+  or hosted change. Fixtures do not establish hosted auth/RLS or device/Safari
+  correctness. Existing SQL/docs work remains preserved and excluded.
+- Inspected demo previews: [desktop](docs/design/previews/f4-tutorial-desktop.png)
+  and [mobile](docs/design/previews/f4-tutorial-mobile.png).

@@ -56,7 +56,7 @@ function edit(item) {
       <button id="budget-new-expense" class="btn btn-outline-primary" type="button" :disabled="pending" @click="focusEditor">{{ editingId ? 'Continue editing' : 'New expense' }}</button>
     </div>
 
-    <dl class="budget-totals workspace-panel">
+    <dl class="budget-totals workspace-panel" data-workspace-tour="budget">
       <div><dt>Budget limit</dt><dd>{{ budget.limitCents === null ? 'Not set' : money(budget.limitCents) }}</dd></div>
       <div><dt>Planned total</dt><dd>{{ money(summary.plannedCents) }}</dd></div>
       <div><dt>Actual total</dt><dd>{{ money(summary.actualCents) }}</dd></div>

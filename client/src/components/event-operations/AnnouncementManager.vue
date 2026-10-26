@@ -41,7 +41,7 @@ function date(value) { return new Date(value).toLocaleString('en-SG', { timeZone
       <p v-else class="small text-secondary mb-0"><span class="badge text-bg-info me-1">Venue update</span>Automatic event history · cannot be edited or deleted.</p>
     </article>
     </TransitionGroup>
-    <form class="workspace-panel announcement-editor mt-4" @submit.prevent="save">
+    <form class="workspace-panel announcement-editor mt-4" data-workspace-tour="announcements" @submit.prevent="save">
       <h3 class="section-heading">{{ editingId ? 'Edit announcement' : 'New announcement' }}</h3>
       <fieldset :disabled="pending"><label for="announcement-body" class="form-label">Announcement text</label><textarea id="announcement-body" ref="bodyInput" v-model="body" class="form-control mb-3" required rows="4" /><p v-if="validation" class="text-danger" role="alert">{{ validation }}</p><div class="d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">{{ editingId ? 'Save announcement' : 'Publish announcement' }}</button><button v-if="editingId" type="button" class="btn btn-outline-secondary" @click="clearDraft">Cancel edit</button></div></fieldset>
     </form>

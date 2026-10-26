@@ -356,3 +356,10 @@ Focused browser regressions cover the four supported viewport widths.
 
 On 26 October, Codex removed the redundant My events card RSVP shortcut at
 Denzel’s request; registration tools remain available through Manage event.
+
+
+On 26 October 2026, at Denzel’s request, Codex added an owner-only eight-step
+Manage Event tutorial with a spotlight, explanatory popup, Previous/Next/Skip
+and Finish controls, motion, reduced-motion support and replay. GPT-6 Luna Medium
+assisted the popup implementation and review. Browser-local preferences remember
+Skip/completion per owner; no library, database schema or event write was added.
