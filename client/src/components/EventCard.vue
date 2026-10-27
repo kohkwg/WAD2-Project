@@ -94,9 +94,10 @@ function initials(attendee) {
   .event-card { transition: none; }
   .event-card:hover { transform: none; }
 }
-.event-cover { position: relative; min-height: 210px; overflow: hidden; border-radius: 16px; background: var(--bookedz-mint, #dceee3); }
-.event-cover > :deep(.event-artwork) { position: absolute; inset: 0; }
-.event-cover-image { display: block; width: 100%; height: 100%; min-height: 210px; object-fit: cover; }
+/* Fixed 16:9 box, the same crop as every event card. The photo and artwork are absolutely
+   positioned so a portrait upload can no longer stretch the card. */
+.event-cover { position: relative; align-self: center; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 16px; background: var(--bookedz-mint, #dceee3); }
+.event-cover > :deep(.event-artwork), .event-cover-image { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
 .artwork-category { position: absolute; right: 12px; bottom: 12px; max-width: calc(100% - 24px); padding: .35rem .65rem; overflow: hidden; border: 1px solid rgb(255 249 239 / 72%); border-radius: 999px; background: rgb(255 249 239 / 92%); color: var(--bookedz-ink, #292d32); font-size: .78rem; font-weight: 650; text-overflow: ellipsis; text-transform: capitalize; white-space: nowrap; }
 .event-details { min-width: 0; align-self: center; }
 .event-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem .7rem; margin-bottom: .55rem; }
@@ -122,8 +123,7 @@ function initials(attendee) {
 .event-actions .btn-outline-secondary { --bs-btn-color: #4f5656; --bs-btn-border-color: #bdc3bc; --bs-btn-hover-bg: #f4f0e7; --bs-btn-hover-color: #292d32; --bs-btn-hover-border-color: #aeb4ad; }
 @media (max-width: 575px) {
   .event-card { grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: .8rem; border-radius: 18px; }
-  .event-cover { min-height: 172px; max-height: 205px; border-radius: 13px; }
-  .event-cover-image { min-height: 172px; }
+  .event-cover { border-radius: 13px; }
   .event-title { font-size: 1.35rem; }
   .event-actions { margin-top: 14px; }
 }

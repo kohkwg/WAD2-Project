@@ -15,6 +15,8 @@ const errorMessage = ref('')
 const statusMessage = ref('')
 const confirmDeleteId = ref(null)
 const busyId = ref(null)
+// Cover URLs that failed to load; those cards fall back to the category artwork
+const failedCovers = ref(new Set())
 
 // After publishing, Create Event sends us here as /organiser/events?created=<id>
 const justCreatedId = computed(() => route.query.created)
@@ -86,8 +88,11 @@ function fillPercent(event) {
   <div v-else class="row row-cols-1 row-cols-md-2 g-3">
     <div class="col" v-for="event in events" :key="event.id">
       <article class="card organiser-event-card h-100" :class="{ 'border-success': event.id === justCreatedId }">
-        <img v-if="event.coverImageUrl" class="organiser-event-cover" :src="event.coverImageUrl" :alt="'Cover image for ' + event.title" loading="lazy" />
-        <div v-else class="organiser-event-cover organiser-event-cover--empty"><EventArtwork :category="event.tags?.[0] || 'community'" /></div>
+        <!-- One fixed 16:9 box for every cover: photos and the fallback artwork are both centre-cropped to fill it -->
+        <div class="organiser-event-cover">
+          <img v-if="event.coverImageUrl && !failedCovers.has(event.coverImageUrl)" :src="event.coverImageUrl" :alt="'Cover image for ' + event.title" loading="lazy" @error="failedCovers.add(event.coverImageUrl)" />
+          <EventArtwork v-else :category="event.tags?.[0] || 'community'" />
+        </div>
 
         <div class="card-body organiser-event-body">
           <div class="event-title-row"><h2 class="h5 card-title mb-1">{{ event.title }}</h2><span v-if="event.id === justCreatedId" class="status-pill status-pill--new">Just published</span></div>
@@ -138,8 +143,10 @@ function fillPercent(event) {
 .empty-events-mark { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem; border-radius: 50%; background: var(--bookedz-yellow, #f6cf77); color: var(--bookedz-ink); font-size: 1.8rem; }
 .empty-events p { max-width: 30rem; margin: 0 auto 1.5rem; }
 .organiser-event-card { overflow: hidden; border-color: var(--bookedz-border, #e5ded2); border-radius: 18px; box-shadow: var(--bookedz-shadow, 0 4px 18px rgb(41 45 50 / 5%)) !important; }
-.organiser-event-cover { display: block; width: 100%; aspect-ratio: 16 / 7; object-fit: cover; background: var(--bookedz-mint, #dceee3); }
-.organiser-event-cover--empty { display: grid; place-items: center; color: var(--bookedz-forest); font-size: .9rem; font-weight: 650; }
+/* Fixed 16:9 box; the photo or artwork is absolutely positioned so it can never resize the box
+   (the artwork used to stretch it to 3:2, making no-photo cards taller) */
+.organiser-event-cover { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: var(--bookedz-mint, #dceee3); }
+.organiser-event-cover > img, .organiser-event-cover > :deep(.event-artwork) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .organiser-event-body { display: flex; flex-direction: column; }
 .event-title-row { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .5rem; }
 .event-meta { display: grid; gap: .2rem; margin-top: .2rem; }
@@ -167,5 +174,4 @@ function fillPercent(event) {
   .event-primary-actions :deep(.btn:first-child) { grid-column: 1 / -1; }
   .event-delete-action { margin-left: 0; }
 }
-.organiser-event-cover--empty :deep(svg) { width: 100%; height: 100%; object-fit: cover; }
 </style>
