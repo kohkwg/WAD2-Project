@@ -344,3 +344,11 @@ Event's disabled buttons and RSVP validation messages now follow the shared
 light/dark theme, and one more stale browser test was updated. Gregory's logic and
 other teammates' work keep their authorship. No libraries or backend changes were
 added. Details: [status](status.md#25-october--gregorys-f2-design-branch-gregory).
+
+On 28 October 2026,
+
+Went ahead to make every event card cover the same 16:9 shape: photos and the fallback artwork are
+centre-cropped on screen on My events, Discover's event cards (Aishani's `EventCard`)
+and the Create Event previews. Uploaded images are unchanged. 
+
+Details: [status](status.md#28-october--event-covers-cropped-to-169-gregory).

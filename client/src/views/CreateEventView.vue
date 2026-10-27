@@ -320,7 +320,7 @@ async function publish() {
             <p v-if="coverError" class="text-danger" role="alert">{{ coverError }}</p>
             <figure v-if="form.coverImageUrl" class="cover-preview">
               <img :src="form.coverImageUrl" alt="Event cover preview" />
-              <figcaption>Cover image preview</figcaption>
+              <figcaption>How your cover is cropped on event cards</figcaption>
               <button type="button" class="btn btn-outline-secondary btn-sm" @click="form.coverImageUrl = ''">Remove cover</button>
             </figure>
           </div>
@@ -652,7 +652,8 @@ async function publish() {
 .preview-heading { display: flex; align-items: center; gap: .55rem; margin: 0 0 .85rem; color: var(--bookedz-muted); font-size: .78rem; font-weight: 650; }
 .preview-pulse { width: .5rem; height: .5rem; border-radius: 50%; background: var(--bookedz-success); box-shadow: 0 0 0 .25rem var(--bookedz-glass-active); }
 .preview-card { overflow: hidden; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); }
-.preview-art { position: relative; display: grid; min-height: 8rem; place-items: center; overflow: hidden; background: var(--bookedz-glass-active); background-position: center; background-size: cover; }
+/* Same 16:9 crop as the event cards, so the preview shows what participants will see */
+.preview-art { position: relative; display: grid; aspect-ratio: 16 / 9; place-items: center; overflow: hidden; background: var(--bookedz-glass-active); background-position: center; background-size: cover; }
 .preview-art-mark svg { width: 80px; height: 60px; }
 .preview-art-mark { color: var(--bookedz-primary-dark); font-size: 3.3rem; line-height: 1; }
 .preview-tag { position: absolute; bottom: .65rem; left: .7rem; max-width: calc(100% - 1.4rem); overflow: hidden; padding: .25rem .55rem; border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
@@ -671,10 +672,10 @@ async function publish() {
 .step-back-enter-from { opacity: 0; transform: translateX(-1.1rem); }
 .step-back-leave-to { opacity: 0; transform: translateX(.65rem); }
 /* Phones: the form comes first so the current step's fields are visible without scrolling; the preview follows it */
-@media (max-width: 767.98px) { .creation-layout { grid-template-columns: minmax(0, 1fr); } .event-preview { position: static; } .preview-art { min-height: 6rem; } }
+@media (max-width: 767.98px) { .creation-layout { grid-template-columns: minmax(0, 1fr); } .event-preview { position: static; } }
 @media (max-width: 575.98px) { .create-heading { margin-top: .5rem; } }
 .cover-preview { display: grid; justify-items: start; gap: .5rem; margin: 1rem 0 0; }
-.cover-preview img { display: block; width: min(100%, 32rem); max-height: 15rem; aspect-ratio: 16 / 8; object-fit: cover; border: 1px solid var(--bookedz-border); border-radius: 14px; }
+.cover-preview img { display: block; width: min(100%, 32rem); aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--bookedz-border); border-radius: 14px; }
 .cover-preview figcaption { color: var(--bookedz-muted); font-size: .85rem; }
 /* Venue and question boxes use theme tokens (Bootstrap's bg-light stays white in dark mode) */
 .step-subheading { margin: 0 0 .75rem; color: var(--bookedz-ink); font-weight: 650; }
