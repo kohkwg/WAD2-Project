@@ -104,7 +104,7 @@ onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('point
         </div>
         <button ref="toggle" type="button" class="filter-toggle" :class="{ 'is-active': activeCount > 0 }" :aria-expanded="expanded" aria-controls="event-filter-panel" @click="expanded = !expanded">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16" /><circle cx="9" cy="7" r="3" /><circle cx="15" cy="17" r="3" /></svg>
-          Filters <span v-if="activeCount" class="filter-count">{{ activeCount }}</span>
+          Filters 
         </button>
       </div>
       <div v-if="expanded" id="event-filter-panel" class="filter-panel" role="region" aria-label="Event filters">
