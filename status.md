@@ -1,5 +1,73 @@
 # Project status and timeline
 
+27 October — separate public landing page: the illustrated hero is now at `/`,
+and sidebar/mobile/footer Bookedz links return there. Discover retains its search,
+recommendations, categories, Closing soon, timeline and Map/List browsing without
+the hero. Landing search, explicit interest shortcuts and Map/List actions hand
+filters into Discover; existing tab state retains them through reloads. Root is
+public even when account lookup fails, while existing protected routes retain
+their guards. Nine focused Node checks pass. Eleven browser journeys passed across
+focused runs, with affected mobile cases rerun after an initial-load menu/focus fix.
+The existing hero/search regression also passes at its new landing-page location.
+No backend, SQL, dependencies, hosted changes or new artwork.
+
+27 October — removed the sidebar promotional card and its Create event button at
+Aishani's request. Other navigation/account controls remain. NavBar Vue compilation
+and whitespace checks passed; no new browser run for this presentation-only removal.
+
+27 October — sidebar account placement: signed-in live accounts now have Profile
+and Sign out in the sidebar footer. The existing System/Light/Dark control is below
+Settings and remains available to visitors. Two focused mocked browser journeys
+passed at 1280px and 375/575/768px, covering ordering, theme changes, profile routing,
+Escape/focus restoration and sign-out failure/retry/success. NavBar Vue compilation
+and whitespace checks passed. This verifies mocked authentication only; no real
+sign-out or shared Supabase operation was performed. Other concurrent layout work
+was preserved.
+
+27 October — map access and persistent recommendation visibility: the hero map
+action now appears immediately below search with geographic browsing copy. The
+existing map retains filters and event previews. Picked for you was previously
+hidden by the Island/no-filters condition; it now has a compact variant for
+filtered/List/Map views. Display filters preserve server scores/order; an explicit
+View all picks control reveals other picks without clearing the user's filters
+or describing unrelated events as matching them. Default homepage layout remains.
+All 24 targeted Node checks and six mocked Chromium journeys passed, including
+both themes/four widths, markers/previews and compact save/dismiss/undo. Shared
+Supabase, SQL, backend routes and scoring were not changed or verified live.
+The existing hero/search regression also passed; the compact journey was rerun
+after final card sizing and screenshot-loading adjustments.
+
+27 October — focused Discover search/card refinement: clearer hero search and
+existing-category suggestions, clear search/removable filters, and tab-scoped
+control-state retention when switching views or returning from details. Existing
+cards now link titles and show real descriptions; ordinary cards show complete
+date/time and omit unknown attendance counts. All 27 targeted component/helper
+checks and five mocked Chromium journeys pass on Node 24.12.0, covering both
+themes at 375/575/768/1280px, search/category/view preservation, details/RSVP route
+navigation, empty feedback and recommendation save/dismiss/undo/retry. These check
+navigation and mocked actions, not a real booking or hosted database integration.
+No backend, SQL, route definitions, algorithms, dependencies or section order changed.
+
+Category UI refinement is complete: larger directory cards/icons, hidden directory
+view toggle and removable chips that preserve search and return focus to its input.
+Focused category navigation/removal checks cover responsive light/dark layouts;
+recommendations, backend and database remain unchanged.
+
+Latest Discover frontend change: category grid/directory navigation and factual
+Closing soon are implemented. Nineteen focused Node cases and three mocked browser
+checks pass; the affected navigation case was rerun after accessibility/layout fixes.
+No recommendation algorithm, backend, database or RSVP logic changed.
+
+Final isolated SQL verification: all 17 PostgreSQL checks pass against the complete
+local migration chain plus recommendation draft. No application/SQL fixes were
+required. Shared Supabase remains untouched; deployment and hosted sign-in testing
+still require approval. Details and platform-substitute limits are in testing.md.
+
+Latest recommendation checkpoint: V1 is wired locally through Profile, Express and
+For You. All 53 targeted Node cases and two mocked Chromium journeys pass. SQL is
+still review-only; no shared database writes or deployment occurred. See
+[deployment dependencies](docs/recommendation-design.md).
+
 Consolidated 23 October; updated 24 October 2026. Dates use Singapore time; same-day entries are ordered
 by milestone because exact times are not consistently recorded. This replaces
 separate handoffs/merge/fix reports. [Decisions](decisions.md) records authority and
@@ -37,6 +105,145 @@ venues. Test R2 objects were deleted; the rollback-only third test auth user did
 not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
+
+### 27 October — category UI cohesion refinement
+
+- Added a roomier two-column directory variant using existing pastel artwork,
+  reduced directory spacing and aligned results search/listing widths. Common
+  category cards retain their compact layout; no unsupported event counts added.
+- EventFilters shows removable category chips without opening Filters. Removal
+  reuses category toggling, preserves search, clears a stale category query through
+  replace navigation and returns keyboard focus to search. Browser Back and existing
+  category URLs/RSVP links remain covered by the navigation regression.
+- Three urgency Node checks and SFC compilation pass. Two focused mocked browser
+  cases pass for existing navigation and the new directory/chip flow, covering
+  light/dark and 375/575/768/1280px. The chip flow was rerun after narrowing an
+  ambiguous test selector and adding focus recovery. Captures inspected under
+  `/tmp/wad2-discover-browse-results`.
+- No schema/SQL, backend, recommendation-section/scoring, existing route-definition
+  or event-card changes; no new dependencies, full suite or production build.
+
+### 27 October — Discover categories and Closing soon
+
+- Kept mood cards, personalised actions and existing event timeline; added compact
+  category links and an all-category directory on `/discover?view=categories`.
+  `/discover?category=music` reuses the existing tag-filtered list, supports reload,
+  browser Back and a directory return link. No additional event database or routes.
+- Closing soon reuses EventCard and current filtered map data. It selects at most
+  three upcoming events with a known deadline within 48 hours or 1–5 known places
+  remaining. It excludes full/closed/unpublished/actively registered events and
+  hides without qualifying data. Deadline labels include SGT; no fill predictions.
+- Nineteen targeted Node checks pass (3 urgency, 12 recommendation cards, 4 actions).
+  Two new mocked browser cases cover ordering, categories, filtering/reload/back,
+  truthful urgency/hide behaviour; the existing recommendation-action journey also
+  passes. Light/dark and 375/575/768/1280px covered; captures inspected. Corrected
+  decorative-arrow accessible names and compact-card layout, rerunning the affected
+  navigation case successfully after each correction.
+- No shared database/network writes, schema/backend/scoring changes, dependencies,
+  full suite or production build. Browser checks used the existing Playwright
+  runner with an isolated temporary config on port 5187 and mocked event data.
+
+### 27 October — isolated recommendation database verification
+
+- With Aishani's approval to verify in isolation, downloaded a temporary PGlite
+  runtime outside the project and added a test-only SQL harness. All eleven existing
+  migrations plus the recommendation draft load in fresh in-memory PostgreSQL.
+- Seventeen checks pass: permissions/RLS, profile save/rollback, save and confirmation
+  timestamps, approval/cancellation/reconfirmation, waitlist offer acceptance, event
+  creation, existing waitlist scoring, attendance/fraud/undo and rollback removal order.
+- No product or SQL-draft correction was needed. Test scaffolding was corrected
+  to invoke volatile composite-returning RPCs once and use the public organiser
+  registration RPC rather than its intentionally private scoring helper.
+- Auth identity, storage and cron are local substitutes. Hosted JWT, PostgREST,
+  actual hosted grants and multi-connection concurrency remain unverified. No
+  project dependency/lockfile, migration, shared Supabase or deployment was changed.
+
+### 27 October — simplified recommendation MVP wiring
+
+- Profile reads explicit profile_interests and uses a draft transactional profile
+  RPC; legacy behavioural weights are neither inferred nor overwritten.
+- Existing Express route loads user-scoped, paginated V1 inputs and batched history,
+  excludes team/rejected events and returns the unchanged flat events envelope.
+  Save/dismiss/undo uses the evidence store. Legacy interaction notifications verify
+  actual records without permanent boosts; existing attendance trigger is untouched.
+- Cards show topic match scores, supported reasons and general-discovery labels,
+  preserve pipeline order, and support save/dismiss/undo with refresh and failure
+  recovery. Signed-in read failures show retry, not unfiltered replacement picks.
+- 53 targeted Node checks pass (9 routes/actions, 26 evidence/persistence/pipeline,
+  18 Profile/card/composable). Two mocked Chromium journeys pass in both themes
+  and at 375/575/768/1280px; keyboard, focus, retry and reflow covered. Inspected
+  captures led to scoped dark-theme label/reason contrast corrections.
+- Local tests use Node 24.12.0 and browser fixtures. The in-app browser was
+  unavailable; the existing Playwright runner used an isolated localhost server
+  with sandbox escalation. No SQL execution, Supabase connection, migration,
+  deployment, dependency change, full suite or production build.
+- Before live use, review/apply preference storage, first-confirmation capture/
+  backfill, evidence RPCs and the profile RPC. Existing users may need to reselect
+  explicit interests. Hosted permissions/concurrency and real journeys are pending.
+
+
+### 27 October — V1 confirmation and first-timestamp contract alignment
+
+- Added review-only `first_confirmed_at`, trusted confirmation capture for direct
+  inserts/transitions and a best-known-date backfill for currently confirmed rows.
+  Save updates preserve the first date through unsave/resave. SQL remains outside
+  deployed migrations and has not been executed.
+- Simulated persistence now models actual registration statuses and confirmed-only
+  RSVP evidence. Five added cases cover confirmation/transitions, cancellation,
+  ageing/reactivation and flagged attendance. Explicit choices are documented as
+  `profile_interests`, never accumulated `interest_weights`.
+- Ten persistence, eleven evidence and sixteen pipeline cases pass (37 total) on
+  Node 24.12.0 without assertion imports. Core calculations/pipeline are unchanged;
+  only evidence comments were clarified. No hosted access, frontend/route edits,
+  full suite/build, dependency changes or SQL execution.
+- Existing overwritten confirmation history cannot be recovered. SQL execution,
+  RLS/concurrency and real data-loading adapter integration remain pending.
+
+### 27 October — standalone recommendation pipeline
+
+- Added `buildRecommendationPipeline()` with canonical historical evidence,
+  event-interest mapping, eligibility, current-registration exclusions and labelled
+  general discovery. Core functions and existing live code are unchanged.
+- Inspected actual registration schema/RPC logic: `offer_expires_at <= now` is
+  expired. Malformed offer expiry excludes the candidate with a diagnostic.
+- Sixteen focused mock-data end-to-end tests pass, covering drift, deduplication,
+  dismissal/undo, exact boundaries, fallback, diversity and deterministic behaviour.
+  Conflicting duplicate evidence/candidates/registrations throw rather than guess.
+- No assertion imports, dependencies, Supabase calls, SQL/migration changes,
+  route/frontend edits, full suite/build or hosted deployment. These tests do not
+  establish hosted security or real adapter consistency.
+
+### 27 October — standalone diversity selection
+
+- Implemented the approved Jaccard helper and greedy selector in `diverseEvents.js`.
+  Penalty 0.3, stable input-order ties, unique positive-score events and separate
+  ranking scores preserve explainable compatibility. No random selection.
+- All 29 targeted diversity/preference/compatibility cases pass on Node 24.12.0
+  without Node assertion imports. Eleven new cases include partial overlap,
+  noncompounding penalties, ties, limits, zero matches and unchanged inputs.
+- Existing `rankEvents.js`, Supabase, SQL, routes and frontend are unchanged. No
+  full suite/build, hosted operation or deployment; full pipeline remains pending.
+
+### 27 October — standalone compatibility scoring
+
+- Implemented agreed per-tag rational fit, averaged over unique tags including
+  unmatched tags. Returns an unrounded 0–100 topic-fit score and zero for missing
+  tags or empty preferences, assuming valid nonnegative finite points.
+- All 18 targeted compatibility/preference checks pass without Node assertion
+  imports. Tests include the five hand-calculated examples and baseline-to-learned
+  preference integration. No full suite/build or database operation.
+- Existing ranking, routes, SQL, frontend and RSVP logic are unchanged. Diversity
+  selection and integration remain pending.
+
+### 27 October — local preference-builder completion
+
+- At Aishani's direction, completed the remaining preference-scoring chunk: equal
+  splitting across unique interest tags, accumulation across distinct events and
+  separate explicit/learned/combined score objects. Explicit priors stay at 10.
+- Seven targeted checks pass on Node 24.12.0 without Node assertion calls. No
+  additional ageing, caps, hierarchy or conflict resolution were introduced.
+- Duplicate evidence must be canonical and identical. No database, SQL, migration,
+  route or live ranking changes; compatibility and further integration remain pending.
 
 ### 15–16 October — orientation and first Feature 4 delivery
 
@@ -383,3 +590,34 @@ not persist. These are dated observations, not permanent database invariants.
   tests pass on Node 24.12.0; the existing diversity fixture now uses tags.
 - No full suite, production build, hosted write or deployment. Steps 3–6 remain
   pending. The requested commit includes the previously uncommitted Step 1 work.
+
+### 27 October — recommendation V1 evidence foundation
+
+- Reviewed local migrations against the four-function design. Existing profiles,
+  interests, event tags, registrations and check-ins are reusable; save/dismissal,
+  taxonomy hierarchy and topic relevance weights are absent from the source schema.
+- Added a pure `calculateEventEvidence()` over canonical event snapshots, with
+  strongest-stage precedence, dismissal override, original timestamps and elapsed
+  UTC 30/90-day ageing. It is not wired into existing routes or UI.
+- Added 11 targeted tests covering no history, repeat calculation, distinct events,
+  cancellation, dismiss/undo, exact age boundaries, offsets and invalid timestamps.
+  All 11 pass on Node 24.12.0; Node 22 is not verified in this pass.
+- Documented the registration timestamp reset and permanent attendance/interaction
+  boosts that must be reconciled before integration. No hosted inspection, new SQL,
+  data writes, full suite, production build, dependency change or Git publication.
+  Preference reconstruction, compatibility and frontend integration remain pending.
+
+### 27 October — persistence adapter and explicit test checks
+
+- Added caller-JWT evidence-store RPC adapter, restricting preference actions to
+  save/unsave/dismiss/undo. Existing registration and check-in flows are unchanged.
+- Prepared SQL outside migrations for own-user preference storage, narrow RPC
+  writes and first-RSVP capture. No connected Supabase inspection tool or local
+  PostgreSQL CLI was available; SQL execution/security/concurrency remain unverified.
+- Added five simulated RPC contract cases, including the complete action sequence,
+  cancellation fallback, first-date preservation, token forwarding and error paths.
+- Replaced Node assertion calls in all five recommendation test files with explicit
+  condition checks that throw on failure. Other features' tests are unchanged.
+- All 33 targeted recommendation checks pass on Node 24.12.0 (including the legacy
+  script reported as one file-level check). No full suite/build, hosted mutation,
+  new route, live ranking switch, dependency change or deployment.

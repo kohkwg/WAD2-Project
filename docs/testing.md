@@ -1,5 +1,43 @@
 # Testing and local operation
 
+For the landing-page split, run the focused browser files `landing-page.spec.js`,
+`discover-browse.spec.js`, `recommendation-mvp.spec.js` and `navbar-account.spec.js`
+through the existing client `test:e2e` script. Eleven journeys passed across focused
+runs on the owned demo Vite server at 5187 with temporary config/output under `/tmp`;
+the mobile menu cases were rerun after fixing initial-route focus timing. Tests
+cover public `/`, absent hero on Discover, logo return paths, mobile menu closure,
+search/category/date/availability handoff, Map/List switching and reload retention.
+Supabase requests are blocked. Nine focused Node checks also pass using
+`node --test client/tests/event-filters.test.mjs client/tests/discover-browse.test.mjs`.
+The existing `design-polish.spec.js --grep 'search stays'` additionally passed
+after changing its starting URL to `/` (12 distinct browser journeys in total).
+
+For sidebar account placement, run `pnpm --dir client test:e2e e2e/navbar-account.spec.js`.
+The 27 October run passed both focused Chromium journeys using a temporary config
+and owned demo Vite server on 5187. The fixture replaces only navbar/router identity
+and sign-out responses and blocks Supabase; it checks desktop/mobile positioning,
+theme selection, profile routing, Escape focus and sign-out failure/retry/success.
+This does not exercise a real signed-in Supabase session.
+
+For the subsequent map/filtered-picks refinement, run
+`node --test client/tests/picked-for-you.test.mjs client/tests/discover-browse.test.mjs client/tests/event-filters.test.mjs`
+from the repository root. All 24 cases passed on Node 24.12.0. The same two focused
+browser files below now contain six journeys, adding compact matching/other picks
+and map marker preview links while preserving filters. All six passed with mock
+responses and blocked Supabase requests; no real account or booking was exercised.
+The existing `design-polish.spec.js --grep 'search stays'` also passed with its
+updated map action label, using an owned demo server and temporary config on 5187.
+
+For Discover search/card changes, run from the repository root:
+`node --test client/tests/event-filters.test.mjs client/tests/event-card.test.mjs client/tests/picked-for-you.test.mjs client/tests/discover-browse.test.mjs`.
+The 27 October run passed all 27 cases on Node 24.12.0. Focused browser fixtures
+are `client/e2e/discover-browse.spec.js` and `client/e2e/recommendation-mvp.spec.js`;
+five journeys passed using the existing Chromium runner with an owned demo Vite
+server on 5187 and a temporary config/output under `/tmp`. Supabase requests are
+blocked and event/recommendation responses are mocked. Search/category persistence,
+clear/empty states, Island/Map/List, details/RSVP navigation and recommendation
+actions are covered; this does not claim a successful live RSVP transaction.
+
 [README](../README.md) is the setup entry point; [status](../status.md) records dated
 results and limits; [decisions](../decisions.md) records permissions/contracts.
 There is no root runner or lint script. Use Node 22 and pnpm; preserve npm lockfiles.
@@ -47,6 +85,117 @@ Documentation-only work needs path/anchor, whitespace and source-preservation
 checks, not browser/application tests.
 
 ## Local regressions
+
+For the MVP route/actions and frontend wiring, choose these targeted checks:
+
+```sh
+node --test server/tests/recommendations-route.test.js server/tests/recommendation-interactions.test.js
+node --test client/tests/recommendation-profile.test.mjs client/tests/recommendation-actions.test.mjs client/tests/picked-for-you.test.mjs
+```
+
+They cover 9 backend and 18 frontend cases with mocked data and explicit condition
+checks. The 26 evidence/persistence/pipeline cases were also run for this integration.
+The existing Profile browser fixture now mocks `profile_interests` and the profile
+RPC; `client/e2e/recommendation-mvp.spec.js` mocks recommendation reads/actions.
+Neither contacts the shared database. Run the two affected browser cases with:
+
+```sh
+pnpm --dir client exec playwright test e2e/f1-profile-design.spec.js e2e/recommendation-mvp.spec.js --grep 'profile reflows|recommendation MVP'
+```
+
+On this host, the in-app Browser runtime reported no available browser. The existing
+Playwright runner verified the two cases using an isolated temporary config on port
+5187 and `/tmp/wad2-recommendation-mvp-results`; localhost startup required sandbox
+escalation. Both themes/four widths, focus, labels, no overflow, one main and error/
+retry were checked; captures were inspected. No full suite or build was run.
+
+Before real integration, review/deploy the SQL draft including
+`update_recommendation_profile`; missing V1 objects deliberately fail rather than
+silently ignoring evidence. Browser mocks do not establish SQL permissions or real
+attendance/registration integration.
+
+For the standalone pipeline's 16 mock-data end-to-end cases, run:
+
+```sh
+node --test server/tests/recommendation-pipeline.test.js
+```
+
+These invoke all four real V1 functions with in-memory evidence, mappings,
+candidate events and registrations, using one injected time. They do not execute
+SQL, call Supabase, load `.env`, or test the live recommendation route. Checks use
+explicit conditions and thrown errors; no assertion library is imported.
+
+For all four local V1 core functions (no database), run:
+
+```sh
+node --test server/tests/event-evidence.test.js server/tests/user-preferences.test.js server/tests/event-compatibility.test.js server/tests/diverse-events.test.js
+```
+
+The 40 cases comprise 11 evidence, 7 preference, 11 compatibility and 11 diversity
+checks, without Node assertion imports. They do not establish a complete pipeline
+or hosted integration. For diversity alone, run `node --test server/tests/diverse-events.test.js`.
+
+For compatibility and its preference-builder integration, run:
+
+```sh
+node --test server/tests/event-compatibility.test.js server/tests/user-preferences.test.js
+```
+
+The eleven compatibility checks and seven preference checks run without a database
+or environment file, using explicit conditions rather than an assertion library.
+
+For the local V1 preference builder, run:
+
+```sh
+node --test server/tests/user-preferences.test.js
+```
+
+These seven cases use explicit checks, canonical evidence and local interest slugs.
+They do not test hosted persistence or integration with live ranking.
+
+For the isolated recommendation V1 evidence function (no database or environment
+file required), run from the repository root:
+
+```sh
+node --test server/tests/event-evidence.test.js
+```
+
+For the persistence adapter's simulated RPC contract (also no database), run:
+
+```sh
+node --test server/tests/event-evidence-store.test.js
+```
+
+The ten simulated persistence cases now model actual registration status names.
+Only confirmed earns RSVP evidence; first confirmation/save dates survive
+deactivation/reactivation. Cases include direct confirmation, transitions,
+45/91-day reconfirmation, 91-day resave and flagged attendance. Together with
+the evidence and pipeline regressions, the focused contract-alignment command is:
+
+```sh
+node --test server/tests/event-evidence-store.test.js server/tests/event-evidence.test.js server/tests/recommendation-pipeline.test.js
+```
+
+It covers 37 local cases, without an assertion library or database connection.
+Draft SQL capture/backfill and database permissions/concurrency remain untested.
+
+Recommendation tests use the explicit checks in `server/tests/checks.js`; failed
+checks throw errors and make Node's runner fail. Persistence fixtures cover action
+sequences and token forwarding, not actual Supabase security or concurrency.
+The SQL in `docs/sql/recommendation-evidence-draft.sql` has not been executed.
+Before promoting it to a migration, verify hosted history and test on PostgreSQL:
+
+- Authenticate as two different users and as anonymous; verify read isolation and
+  denied direct writes, forged timestamps/attendance and unauthenticated RPCs.
+- Run concurrent duplicate saves and concurrent save/dismiss writes from separate
+  database sessions; check one row, stable first dates and preservation of both flags.
+- Execute real registration/check-in/cancellation RPCs, including repeat registration,
+  expired offers and check-in removal, then compare reconstructed evidence.
+- Run save → RSVP → attend → dismiss → undo and check original timestamps and
+  5 → 10 → 15 → 0 → 15 points, plus cancellation fallback separately.
+
+These checks cover calculation from canonical snapshots. They do not prove
+database write deduplication, RLS or integration with the existing ranking route.
 
 The broader commands below are available **when explicitly requested**. Run from
 the repository root:
@@ -131,6 +280,27 @@ local environment; privileged credentials never enter browser code.
 
 ## Database checks and acceptance limits
 
+The final recommendation draft was executed in isolated in-memory PostgreSQL using
+PGlite 0.5.12, with all eleven repository migrations and local Supabase auth/storage/cron
+substitutes. To rerun using the temporary runtime already downloaded on this host:
+
+```sh
+node server/checks/recommendation-db.check.mjs /tmp/wad2-sql-verification/node_modules/@electric-sql/pglite/dist/index.js
+```
+
+The runtime path is an explicit argument; the harness never reads `.env`, accepts
+database credentials or connects to a server. It adds no application dependency.
+Only unsupported pg_cron extension loading is substituted in migration text;
+repository migrations remain unmodified. Supabase-style roles/default grants,
+`auth.uid()`, storage metadata and cron scheduling are local test scaffolding.
+
+All 17 cases pass on Node 24.12.0. They execute real application SQL, role checks,
+RLS, transaction rollback, confirmations, waitlist acceptance, event creation and
+attendance. They do not establish hosted JWT/API integration, actual hosted grants
+or concurrent sessions. The removal-order test rolls its DDL back; it is not a
+live deployment rollback. Shared deployment and signed-in test writes require
+separate explicit approval.
+
 [`supabase/tests/live_waitlist.sql`](../supabase/tests/live_waitlist.sql) is a
 development-only, rollback-only lifecycle/deadline/grant check. It creates a
 third disposable auth user inside its transaction and rolls all fixtures back.
@@ -190,6 +360,34 @@ repeating the whole suite. Source-only Vue compilation is not a production build
 
 
 ## Current targeted frontend checks
+
+For the focused directory/chip refinement, run the affected cases:
+
+```sh
+pnpm --dir client exec playwright test e2e/discover-browse.spec.js --grep 'Discover orders sections|category directory and removable'
+```
+
+The refinement checks larger directory icons/cards, hidden directory view controls,
+removable chips, search preservation, query clearing, keyboard focus recovery and
+existing directory/back/reload/RSVP navigation in the two themes and four widths.
+It uses mocked events. Source SFC compilation and the three urgency checks also
+pass; full suites/builds were not run.
+
+For Discover's category navigation and factual Closing soon helper:
+
+```sh
+node --test client/tests/discover-browse.test.mjs client/tests/picked-for-you.test.mjs client/tests/recommendation-actions.test.mjs
+pnpm --dir client exec playwright test e2e/discover-browse.spec.js e2e/recommendation-mvp.spec.js
+```
+
+Nineteen Node cases and three mocked Chromium cases pass. The new browser fixture
+injects existing event DTOs, blocks Supabase requests, and checks the five-section
+order, six common/all ten catalog categories, keyboard navigation, category URL
+reload/back and existing RSVP links. Closing soon requires deadline ≤48 hours or
+known 1–5 places; missing urgency hides the section. Both themes/four widths were
+checked; compact-card text width and no page overflow are covered. This host used
+`/tmp/wad2-discover-browse.playwright.mjs`, port 5187 and captures under
+`/tmp/wad2-discover-browse-results` to avoid existing servers. No hosted data was used.
 
 Choose the affected spec or `--grep` case rather than running all of these for
 every edit. Existing tests exercise API behaviour; visual specs use isolated demo
