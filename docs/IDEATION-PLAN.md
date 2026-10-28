@@ -7,8 +7,9 @@
 
 | Date | Change | Who |
 |---|---|---|
-| 26 Oct 2026 | Initial ideation doc on branch `revamp/ideate` | Huxley (+ Claude) |
-| 28 Oct 2026 | Product name set to **OpenJio** ✅; build order added (§11) | Huxley (+ Claude) |
+| 26 Oct 2026 | Initial ideation doc on branch `revamp/ideate` | Huxley |
+| 28 Oct 2026 | Product name set to **OpenJio** ✅; build order added (§11) | Huxley |
+| 28 Oct 2026 | Step 1 foundation on `revamp/foundation`: dev app ported, floor plan removed, planning schema + demo seed, placeholder hangout pages, algorithm stubs (A1–A5) | Huxley |
 
 ---
 
