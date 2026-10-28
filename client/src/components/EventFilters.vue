@@ -2,6 +2,22 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { normalizeDiscoveryFilters } from '@/lib/discoveryFilters'
 
+const invalidCustomRange = computed(() =>
+  selected.value.when === 'pick_dates' &&
+  (!selected.value.dateFrom ||
+   !selected.value.dateTo ||
+   selected.value.dateFrom > selected.value.dateTo)
+)
+
+function updateDate(field, value) {
+  flushSearch()
+  emit('update:modelValue', {
+    ...selected.value,
+    [field]: value,
+  })
+}
+
+
 const props = defineProps({
   modelValue: { type: Object, required: true }, search: { type: String, default: '' },
   total: { type: Number, default: null }, loading: Boolean, error: { type: String, default: '' }, showActive: Boolean,
@@ -66,7 +82,12 @@ async function clearSearch() { search.value = ''; flushSearch(); await nextTick(
 function close(restoreFocus = false) { expanded.value = false; if (restoreFocus) nextTick(() => toggle.value?.focus()) }
 function outside(event) { if (expanded.value && !root.value?.contains(event.target)) close() }
 function escape(event) { if (event.key === 'Escape' && expanded.value) { event.preventDefault(); event.stopPropagation(); close(true) } }
-function showEvents() { flushSearch(); close(); emit('show') }
+function showEvents() {
+  if (invalidCustomRange.value) return
+  flushSearch()
+  close()
+  emit('show')
+}
 onMounted(() => { document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape) })
 onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape) })
 </script>
@@ -87,21 +108,74 @@ onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('point
         </button>
       </div>
       <div v-if="expanded" id="event-filter-panel" class="filter-panel" role="region" aria-label="Event filters">
-        <fieldset v-for="group in groups" :key="group.key" class="filter-section">
-          <legend>{{ group.label }}</legend>
-          <div class="filter-options" role="group" :aria-label="group.label">
-            <button v-for="option in group.options" :key="option.value" type="button" class="filter-chip" :aria-pressed="isSelected(group.key, option.value)" @click="choose(group.key, option.value)">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="option.icon" /></svg>{{ option.label }}
-            </button>
-          </div>
-          <div v-if="group.key === 'when' && selected.when === 'pick_dates'" class="calendar-hook" data-calendar-hook>
-            <slot name="pick-dates"><p>Custom calendar coming here. No date range is applied yet.</p></slot>
-          </div>
-        </fieldset>
+       <header class="panel-heading">
+  <strong>Filters</strong>
+  <button type="button" class="close-panel"
+    aria-label="Close filters" @click="close(true)">×</button>
+</header>
+
+<fieldset class="filter-section">
+  <legend>When</legend>
+  <div class="date-segments">
+    <button type="button" :aria-pressed="!selected.when"
+      @click="selected.when && choose('when', selected.when)">
+      Anytime
+    </button>
+    <button v-for="option in whenOptions" :key="option.value"
+      type="button" :aria-pressed="isSelected('when', option.value)"
+      @click="choose('when', option.value)">
+      {{ option.label }}
+    </button>
+  </div>
+<div v-if="selected.when === 'pick_dates'" class="calendar-hook">
+  <div class="custom-date-range">
+    <label>
+      From
+      <input
+        type="date"
+        :value="selected.dateFrom"
+        @change="updateDate('dateFrom', $event.target.value)"
+      >
+    </label>
+    <label>
+      To
+      <input
+        type="date"
+        :value="selected.dateTo"
+        :min="selected.dateFrom || undefined"
+        @change="updateDate('dateTo', $event.target.value)"
+      >
+    </label>
+  </div>
+  <p v-if="selected.dateFrom && selected.dateTo &&
+           selected.dateFrom > selected.dateTo" role="alert">
+    End date must be on or after the start date.
+  </p>
+</div>
+</fieldset>
+
+<fieldset class="filter-section">
+  <legend>Category</legend>
+  <div class="category-grid">
+    <label v-for="option in categoryOptions" :key="option.value">
+      <input type="checkbox"
+        :checked="isSelected('categories', option.value)"
+        @change="choose('categories', option.value)">
+      {{ option.label }}
+    </label>
+  </div>
+</fieldset>
+
+<label class="availability-row">
+  Only events with spots left
+  <input class="availability-switch" type="checkbox" role="switch"
+    :checked="isSelected('extras', 'spots_left')"
+    @change="choose('extras', 'spots_left')">
+</label>
         <p v-if="error" class="count-error" role="alert">Couldn’t load the event count. <button type="button" @click="emit('retry')">Try again</button></p>
         <footer class="filter-footer">
           <button type="button" class="clear-all" @click="clearAll">Clear all</button>
-          <button type="submit" class="show-events" :disabled="loading || Boolean(error) || total === null">{{ loading ? 'Finding events…' : total === null ? 'Show events' : `Show ${total} events` }}</button>
+          <button type="submit" class="show-events" :disabled="loading || Boolean(error) || total === null || invalidCustomRange">{{ loading ? 'Finding events…' : total === null ? 'Show events' : `Show ${total} events` }}</button>
         </footer>
       </div>
     </div>
@@ -144,4 +218,90 @@ svg { flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; strok
 .active-filter { min-height: 44px; padding: 7px 12px; border: 1px solid var(--bookedz-control-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .85rem; }.active-filter span { margin-left: 8px; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
 @media(max-width:575px) { .filter-panel { padding: 18px; }.filter-toggle { padding-inline: 10px; gap: 5px; }.filter-toggle svg { width: 17px; height: 17px; } }
+.search-toolbar, .filter-panel { border-radius: 8px; }
+.filter-toggle { border-radius: 5px; }
+.filter-panel { padding: 22px; }
+.panel-heading {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 22px;
+}
+.close-panel {
+  border: 0; background: transparent; color: var(--bookedz-muted);
+  font-size: 24px; padding: 0 5px; cursor: pointer;
+}
+.date-segments {
+  display: flex; gap: 2px; padding: 3px; border-radius: 6px;
+  background: var(--bookedz-canvas);
+}
+.date-segments button {
+  flex: 1; min-width: 0; border: 0; border-radius: 4px;
+  padding: 9px 5px; background: transparent;
+  color: var(--bookedz-ink); font: inherit; font-size: 12px;
+  cursor: pointer;
+}
+.date-segments button[aria-pressed="true"] {
+  background: var(--bookedz-surface);
+  color: var(--bookedz-primary-dark);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
+  font-weight: 650;
+}
+.category-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px;
+}
+.category-grid label {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; color: var(--bookedz-ink); cursor: pointer;
+}
+.category-grid input {
+  width: 16px; height: 16px; margin: 0;
+  accent-color: var(--bookedz-primary-dark);
+}
+.availability-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 18px 0; color: var(--bookedz-ink);
+  border-top: 1px solid var(--bookedz-border); cursor: pointer;
+}
+.availability-switch {
+  appearance: none; position: relative; flex-shrink: 0;
+  width: 34px; height: 20px; margin: 0;
+  border-radius: 20px; background: var(--bookedz-muted);
+  cursor: pointer;
+}
+.availability-switch::before {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 14px; height: 14px; border-radius: 50%; background: #fff;
+}
+.availability-switch:checked { background: var(--bookedz-primary-dark); }
+.availability-switch:checked::before { transform: translateX(14px); }
+.show-events {
+  border-radius: 5px; background: var(--bookedz-primary-dark);
+  border-color: var(--bookedz-primary-dark); color: #fff;
+}
+.active-filter { border-radius: 4px; }
+.custom-date-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.custom-date-range label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--bookedz-ink);
+  font-size: .875rem;
+}
+
+.custom-date-range input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--bookedz-control-border);
+  border-radius: 6px;
+  background: var(--bookedz-surface);
+  color: var(--bookedz-ink);
+  font: inherit;
+}
 </style>

@@ -1,14 +1,34 @@
 import { CATEGORIES } from './constants.js'
 
+function validDate(value) {
+  if (typeof value !== 'string' ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+
+  const date = new Date(`${value}T00:00:00Z`)
+  return Number.isFinite(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value
+}
+
 export const WHEN_VALUES = ['today', 'weekend', 'week', 'pick_dates']
+
 export function normalizeDiscoveryFilters(value = {}) {
-  const categories = Array.isArray(value.categories) ? value.categories
-    : typeof value.categories === 'string' ? [value.categories]
-      : typeof value.category === 'string' ? [value.category] : []
+  const categories = Array.isArray(value.categories)
+    ? value.categories
+    : typeof value.categories === 'string'
+      ? [value.categories]
+      : typeof value.category === 'string'
+        ? [value.category]
+        : []
+
   return {
     when: WHEN_VALUES.includes(value.when) ? value.when : '',
-    extras: Array.isArray(value.extras) && value.extras.includes('spots_left') ? ['spots_left'] : [],
-    categories: [...new Set(categories.filter(category => CATEGORIES.includes(category)))],
+    extras: Array.isArray(value.extras) &&
+      value.extras.includes('spots_left') ? ['spots_left'] : [],
+    categories: [
+      ...new Set(categories.filter(category => CATEGORIES.includes(category))),
+    ],
+    dateFrom: validDate(value.dateFrom) ? value.dateFrom : '',
+    dateTo: validDate(value.dateTo) ? value.dateTo : '',
   }
 }
 
@@ -31,18 +51,53 @@ export function discoveryDateRange(when, now = Date.now()) {
 }
 
 // Query fields are derived, never a second editable filter state.
-export function discoveryEventQuery(filters, { search = '', sort = 'soonest', page = 1, now = Date.now() } = {}) {
+export function discoveryEventQuery(
+  filters,
+  { search = '', sort = 'soonest', page = 1, now = Date.now() } = {}
+) {
   const selected = normalizeDiscoveryFilters(filters)
-  return { search, categories: selected.categories, ...discoveryDateRange(selected.when, now),
-    availableOnly: selected.extras.includes('spots_left'), sort, page }
+  let range = discoveryDateRange(selected.when, now)
+
+  if (
+    selected.when === 'pick_dates' &&
+    selected.dateFrom &&
+    selected.dateTo &&
+    selected.dateFrom <= selected.dateTo
+  ) {
+    range = {
+      dateFrom: selected.dateFrom,
+      dateTo: selected.dateTo,
+    }
+  }
+
+  return {
+    search,
+    categories: selected.categories,
+    ...range,
+    availableOnly: selected.extras.includes('spots_left'),
+    sort,
+    page,
+  }
 }
 
-export function discoveryUrlQuery(filters, search = '', view = 'list', sort = 'soonest') {
+export function discoveryUrlQuery(
+  filters, search = '', view = 'list', sort = 'soonest'
+) {
   const selected = normalizeDiscoveryFilters(filters)
-  return { view, search, when: selected.when || undefined,
+
+  return {
+    view,
+    search,
+    when: selected.when || undefined,
     extras: selected.extras.length ? selected.extras : undefined,
-    categories: selected.categories.length ? selected.categories : undefined,
-    sort: sort === 'popular' ? sort : undefined }
+    categories: selected.categories.length
+      ? selected.categories : undefined,
+    sort: sort === 'popular' ? sort : undefined,
+    dateFrom: selected.when === 'pick_dates'
+      ? selected.dateFrom || undefined : undefined,
+    dateTo: selected.when === 'pick_dates'
+      ? selected.dateTo || undefined : undefined,
+  }
 }
 
 export function discoveryFiltersFromQuery(query) {
