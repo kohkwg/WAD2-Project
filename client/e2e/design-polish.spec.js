@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test('search stays with its hero and preserves pending text when views change', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/discover')
+  await page.goto('/')
   await expect(page.locator('.hero-illustration')).toHaveAttribute('data-loaded', 'true')
   for (const width of [375, 575, 768, 1280]) {
     await page.setViewportSize({ width, height: 800 })
@@ -10,7 +10,7 @@ test('search stays with its hero and preserves pending text when views change', 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await expect(page.locator('main')).toHaveCount(1)
     if (width === 1280) {
-      const action = await page.getByRole('button', { name: 'Explore the event map', exact: true }).boundingBox()
+      const action = await page.getByRole('button', { name: 'Explore events', exact: true }).boundingBox()
       expect(action.y + action.height).toBeLessThanOrEqual(800)
     }
     await page.screenshot({ path: testInfo.outputPath(`discovery-${width}.png`) })

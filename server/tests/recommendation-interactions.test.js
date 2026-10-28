@@ -1,55 +1,35 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const vm = require("node:vm");
-const { createRequire } = require("node:module");
+const test = require('node:test');
+const { checkEqual, checkTrue } = require('./checks');
+const { fixture, USER, EVENT } = require('./recommendation-route-fixture');
 
-const filename = path.join(__dirname, "../routes/recommendations.js");
-const source = fs.readFileSync(filename, "utf8");
-const localRequire = createRequire(filename);
-
-async function runInteraction({ eventError, profileError, type = "rsvp" } = {}) {
-  const calls = [];
-  const client = { from(table) {
-    const query = new Proxy({}, { get(_target, method) {
-      if (method === "then") return resolve => resolve(table === "events_with_counts"
-        ? { data: { tags: ["sports"] }, error: eventError }
-        : { data: { interest_weights: { sports: 1, music: 2 } }, error: profileError });
-      return (...args) => { calls.push({ table, method, args }); return query; };
-    } });
-    return query;
-  } };
-  const moduleStub = { exports: {} };
-  vm.runInNewContext(source, {
-    module: moduleStub,
-    require: name => name === "../lib/userSupabase" ? () => client
-      : name === "../lib/requireAuth" ? (_req, _res, next) => next()
-        : localRequire(name),
-    console: { error() {} },
-  }, { filename });
-  const handler = moduleStub.exports.stack.find(layer => layer.route?.path === "/interactions").route.stack.at(-1).handle;
-  const response = { statusCode: 200, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; } };
-  await handler({ body: { eventId: "event-1", type }, user: { id: "user-1" }, accessToken: "user-jwt" }, response);
-  return { calls, response };
-}
-
-test("interaction reads the event's tags and increments their weights without discarding other interests", async () => {
-  for (const [type, expected] of [["rsvp", 1.5], ["attend", 2]]) {
-    const { calls, response } = await runInteraction({ type });
-    assert.equal(response.statusCode, 200);
-    assert.equal(calls.find(call => call.table === "events_with_counts" && call.method === "select").args[0], "tags");
-    const saved = calls.find(call => call.method === "update").args[0];
-    assert.deepEqual(calls.find(call => call.table === "profiles" && call.method === "eq" && call.args[0] === "id").args, ["id", "user-1"]);
-    assert.equal(saved.interest_weights.sports, expected);
-    assert.equal(saved.interest_weights.music, 2);
-  }
+test('save/dismiss/undo refreshes route results and unsave retains original timestamp', async () => {
+  const app = fixture({ tables: { events: [{ id: EVENT, event_interests: [{ interests: { slug: 'music' } }] }] } });
+  const act = action => app.request('/:eventId/preferences', { method: 'post', params: { eventId: EVENT }, body: { action } });
+  checkEqual((await act('save')).body.saved, true);
+  const first = app.data.user_event_preferences[0].saved_at;
+  checkEqual((await app.request('/')).body.events[0].compatibilityScore, 60);
+  checkEqual((await act('dismiss')).body.dismissed, true);
+  checkEqual((await app.request('/')).body.events.length, 0);
+  checkEqual((await act('undo_dismiss')).body.dismissed, false);
+  checkEqual((await app.request('/')).body.events[0].saved, true);
+  await act('unsave'); await act('save');
+  checkEqual(app.data.user_event_preferences[0].saved_at, first);
+  checkTrue(app.calls.every(call => call.method !== 'update'));
 });
 
-test("failed event/profile reads never overwrite interest weights", async () => {
-  for (const errors of [{ eventError: { message: "Event unavailable" } }, { profileError: { message: "Profile unavailable" } }]) {
-    const { calls, response } = await runInteraction(errors);
-    assert.equal(response.statusCode, 500);
-    assert.ok(!calls.some(call => call.method === "update"));
-  }
+test('preference actions reject forged attendance and map undeployed RPC failures', async () => {
+  const app = fixture();
+  const forged = await app.request('/:eventId/preferences', { method: 'post', params: { eventId: EVENT }, body: { action: 'attend' } });
+  checkEqual(forged.statusCode, 400);
+  const missing = fixture({ rpcError: { code: 'PGRST202' } });
+  checkEqual((await missing.request('/:eventId/preferences', { method: 'post', params: { eventId: EVENT }, body: { action: 'save' } })).statusCode, 503);
+});
+
+test('legacy interaction notifications verify database state without permanent interest boosts', async () => {
+  const app = fixture();
+  const notify = () => app.request('/interactions', { method: 'post', body: { eventId: EVENT, type: 'rsvp' } });
+  checkEqual((await notify()).statusCode, 409);
+  app.data.registrations.push({ id: 'r1', event_id: EVENT, user_id: USER, status: 'confirmed' });
+  checkEqual((await notify()).body.recorded, true);
+  checkTrue(app.calls.every(call => call.method !== 'update'));
 });

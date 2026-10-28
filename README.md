@@ -1,8 +1,9 @@
 # Bookedz — IS216 WAD2
 
 Vue 3 / JavaScript / Bootstrap frontend, Supabase data/auth/Realtime and an Express
-recommendations/image-upload API. Discover is the public browsing entry point;
-organisers manage events, attendance and operations through the same shell.
+recommendations/image-upload API. `/` is the public illustrated landing page;
+Discover is the separate event-browsing page, reached through search or navigation.
+Organisers manage events, attendance and operations through the same shell.
 
 ## Start here
 
@@ -51,6 +52,102 @@ deployment status. Use the timeline for the latest verified checkpoint and remai
 limits. Keep the disclosure and library credits in submission/presentation materials.
 
 ## AI assistance disclosure
+
+For Aishani's landing-page request, Codex moved the existing illustrated hero into
+`LandingView.vue` at `/`, linked all Bookedz brands home and retained event browsing
+at `/discover`. Existing filters carry search/category/map actions into Discover.
+Codex authored focused public-route, responsive and navigation checks; no new art,
+dependencies, backend or database changes were introduced.
+
+At Aishani's request, Codex removed the sidebar promotional card and its Create
+event button, together with their unused component styles.
+
+For Aishani's sidebar account placement request, Codex moved the existing theme
+selector below Settings and moved Profile/Sign out into the sidebar footer.
+Existing authentication/theme handlers are reused. Codex authored two mocked
+desktop/mobile navigation checks including sign-out failure/retry; no live account
+or database changes were made.
+
+For Aishani's follow-up Discover request, Codex moved the map action directly
+below search, reused display filters for compact recommendations, and retained
+access to explicitly labelled other picks in filtered/List/Map views. Existing
+scores and recommendation actions remain unchanged. Codex authored focused mock
+tests; no backend, SQL, route or dependency changes were made.
+
+For Aishani's focused Discover search/card request, Codex refined the existing
+hero search, interest shortcuts, removable filters and tab-scoped browsing-state
+retention. Event and recommendation cards gained supplied descriptions and linked
+titles; ordinary cards show full date/time and omit unknown attendance counts.
+Codex authored targeted component/browser checks. No new dependencies or assets.
+
+For Aishani's category UI refinement, Codex enlarged directory icons/cards, aligned
+results search with the listing, hid directory-only event-view controls, and added
+removable category chips with search preservation and keyboard focus recovery.
+Only frontend presentation/query synchronisation and targeted tests/docs changed;
+recommendation logic, existing routes, backend and database remain unchanged.
+
+For Aishani's Discover navigation request, Codex added a shared compact category
+grid and directory/filter query views on the existing Discover route, plus a
+Closing soon section using existing event cards and factual deadlines/places.
+Codex authored focused helper/browser tests and scoped layout corrections. Existing
+theme cards, recommendation algorithms, database/RLS, backend and RSVP logic were
+unchanged; no new dependencies were added.
+
+For final isolated database verification, Codex authored a test-only PostgreSQL
+harness that loads all eleven application migrations plus the recommendation draft
+into temporary in-memory PGlite. Seventeen checks pass, including RLS/permissions,
+profile transactions, confirmation/waitlist/attendance and rollback ordering.
+Auth identity, storage and cron are local substitutes; hosted sign-in/API/grants
+remain unverified. PGlite was downloaded only under `/tmp`; application packages
+and lockfiles were unchanged. No shared Supabase access or deployment occurred.
+
+For Aishani's approved simplified MVP integration, Codex connected the existing
+Express route to the V1 pipeline, added authenticated preference actions and verified
+legacy interaction notifications, wired Profile to explicit interest links through
+a draft transactional RPC, and added card scores/explanations/save/dismiss/undo.
+Codex authored corresponding mocked route, component, composable, Profile and
+browser tests and corrected scoped dark-theme contrast. No new libraries, core
+algorithm changes, SQL execution or hosted mutation. The SQL draft remains a
+deployment dependency: local application wiring is tested with mocks, not live
+Supabase. Existing teammate RSVP/check-in logic and the legacy attendance trigger
+retain their prior ownership. See [V1 wiring and deployment dependencies](docs/recommendation-design.md).
+
+For V1 contract alignment, Aishani chose confirmed-only RSVP evidence, preserved
+first save/confirmation dates and explicit choices from `profile_interests`. Codex
+aligned the review-only SQL draft, simulated status fixtures, focused tests and
+documentation. Core calculations and the pipeline remain unchanged; the SQL has
+not been executed and no hosted schema or application route was changed.
+
+For the approved local pipeline step, Codex authored the pure recommendation
+orchestrator and sixteen mock-data end-to-end tests. These connect the four V1
+functions with eligibility, registration exclusions and labelled general discovery.
+No existing core function, live route, SQL or frontend behaviour was changed.
+
+For the approved diversity step, Codex authored the standalone Jaccard helper,
+greedy selector and eleven focused checks. All four V1 core functions now exist
+locally; the live recommendation route still uses the existing ranking logic.
+
+For the compatibility step, Aishani accepted the per-tag `points / (points + 10)`
+scale and authorised implementation. Codex authored the standalone compatibility
+function and eleven focused checks. It remains separate from live ranking.
+
+For the subsequent preference-builder step, Aishani authorised completing the
+agreed local scoring chunk. Codex authored `userPreferences.js` and seven focused
+tests: explicit 10-point priors, unique-event/tag handling, equal evidence splitting,
+accumulation and separate explicit/learned/combined outputs. No live integration.
+
+On 27 October 2026, at Aishani's request, Codex mapped the existing source schema
+to the accepted recommendation V1 design and authored the isolated event-evidence
+function and its targeted tests. This foundation is not connected to live ranking;
+the remaining core algorithm stays a team implementation task. No hosted schema
+or data changed. See [the design](docs/recommendation-design.md).
+
+In the same 27 October follow-up, Codex authored the caller-JWT event-evidence
+persistence adapter, simulated RPC contract tests and a PostgreSQL review draft
+outside the migrations directory. At Aishani's request, recommendation tests use
+explicit checks and thrown errors instead of Node's assertion library. The SQL
+has not been executed; database permissions/concurrency and live integration
+remain unverified. Existing teammate application logic retains its authorship.
 
 On 26 October 2026, at Aishani's request, Codex implemented the supplied interest
 formula blending preference share and match strength, exported its helper, added

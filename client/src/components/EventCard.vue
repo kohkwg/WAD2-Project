@@ -9,7 +9,8 @@ const props = defineProps({
 })
 const failedCover = ref('')
 const coverSource = computed(() => props.event?.image_url || props.event?.coverImageUrl || '')
-const timeLabel = computed(() => new Date(props.event.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))
+const timeLabel = computed(() => new Date(props.event.start_time).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))
+const description = computed(() => typeof props.event.description === 'string' ? props.event.description.trim() : '')
 const isFull = computed(() => !!props.event.is_full || (props.event.spots_left != null && Number(props.event.spots_left) <= 0))
 // Events are tagged rather than categorised, so fall back to the first tag
 const primaryTag = computed(() => props.event.category || props.event.tags?.[0] || '')
@@ -58,11 +59,12 @@ function initials(attendee) {
         <time class="event-time" :datetime="event.start_time">{{ timeLabel }}</time>
         <span class="category-chip">{{ categoryLabel }}</span>
       </div>
-      <h3 class="event-title">{{ event.title }}</h3>
+      <h3 class="event-title"><RouterLink :to="`/events/${event.id}/rsvp`">{{ event.title }}</RouterLink></h3>
       <p class="venue-line" :title="venueLabel" :aria-label="venueLabel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M12 22 5.5 12a7.5 7.5 0 1 1 13 0L12 22Z" /><circle cx="12" cy="8.25" r="3.5" /></svg>
         <span aria-hidden="true">{{ venueShort }}</span>
       </p>
+      <p v-if="description" class="event-description">{{ description }}</p>
       <p v-if="showReason && event.reason" class="event-reason">{{ event.reason }}</p>
       <div class="event-status">
         <ul v-if="attendees.length" class="attendee-avatars" aria-label="Confirmed attendees available to you">
@@ -73,7 +75,7 @@ function initials(attendee) {
           </li>
           <li v-if="remainingAttendees" class="attendee-overflow" :aria-label="`${remainingAttendees} more attendees`">+{{ remainingAttendees }}</li>
         </ul>
-        <span class="going-count">{{ event.confirmed_count ?? 0 }} going</span>
+        <span v-if="event.confirmed_count != null" class="going-count">{{ event.confirmed_count }} going</span>
         <span v-if="availabilityLabel" class="availability-chip" :class="{ 'availability-chip--full': isFull }">{{ availabilityLabel }}</span>
       </div>
       <div class="event-actions">
@@ -103,6 +105,9 @@ function initials(attendee) {
 .event-time { display: block; color: var(--bookedz-muted); font-size: .9rem; }
 .category-chip { display: inline-flex; align-items: center; padding: .22rem .65rem; border: 1px solid #d6e4d9; border-radius: 999px; background: #e8f2e9; color: #3e664d; font-size: .76rem; font-weight: 650; text-transform: capitalize; }
 .event-title { font-family: var(--bookedz-heading); font-size: clamp(1.35rem, 2vw, 1.8rem); font-weight: 650; line-height: 1.13; letter-spacing: -.035em; margin: 0 0 .75rem; overflow-wrap: anywhere; }
+.event-title a { color: var(--bookedz-ink); text-decoration: none; }
+.event-title a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.event-description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; color: var(--bookedz-muted); font-size: .9rem; line-height: 1.5; margin: 0 0 .8rem; }
 .venue-line { display: flex; align-items: flex-start; gap: 7px; color: var(--bookedz-muted); font-size: .9rem; margin-bottom: 14px; }
 .venue-line svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; }
 .venue-line span { overflow-wrap: anywhere; }

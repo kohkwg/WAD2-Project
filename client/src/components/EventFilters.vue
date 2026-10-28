@@ -1,129 +1,147 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { CATEGORIES } from '@/lib/constants'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { normalizeDiscoveryFilters } from '@/lib/discoveryFilters'
 
-const props = defineProps({ modelValue: { type: Object, required: true } })
-const emit = defineEmits(['update:modelValue'])
-const expanded = ref(false)
-const search = ref(props.modelValue.search || '')
-let timer
-watch(() => props.modelValue.search, value => {
-  if (value !== search.value) {
-    clearTimeout(timer)
-    search.value = value || ''
-  }
+const props = defineProps({
+  modelValue: { type: Object, required: true }, search: { type: String, default: '' },
+  total: { type: Number, default: null }, loading: Boolean, error: { type: String, default: '' }, showActive: Boolean,
 })
+const emit = defineEmits(['update:modelValue', 'update:search', 'show', 'retry', 'pick-dates'])
+const root = ref(null)
+const searchInput = ref(null)
+const toggle = ref(null)
+const expanded = ref(false)
+const search = ref(props.search)
+let timer
+watch(() => props.search, value => { if (value !== search.value) { clearTimeout(timer); search.value = value } })
 watch(search, value => {
   clearTimeout(timer)
-  if (value === props.modelValue.search) return
-  timer = setTimeout(() => update({ search: value }), 300)
+  if (value !== props.search) timer = setTimeout(flushSearch, 250)
 })
-onBeforeUnmount(() => clearTimeout(timer))
 function flushSearch() {
   clearTimeout(timer)
-  if (search.value !== (props.modelValue.search || '')) update({ search: search.value })
+  if (search.value !== props.search) emit('update:search', search.value)
 }
 defineExpose({ flushSearch })
-
-function update(patch) {
-  emit('update:modelValue', { ...props.modelValue, ...patch, page: 1 })
+const selected = computed(() => normalizeDiscoveryFilters(props.modelValue))
+const whenOptions = [
+  { value: 'today', label: 'Today', icon: 'M8 3v4m8-4v4M4 10h16M5 5h14v15H5zM8 14h3' },
+  { value: 'weekend', label: 'This weekend', icon: 'M4 10h16M5 5h14v15H5zM8 3v4m8-4v4m-8 8 2 2 5-5' },
+  { value: 'week', label: 'This week', icon: 'M4 10h16M5 5h14v15H5zM8 3v4m8-4v4M8 14h1m3 0h1m3 0h1' },
+  { value: 'pick_dates', label: 'Pick dates', icon: 'M8 3v4m8-4v4M4 10h16M5 5h14v15H5zM9 15h6m-3-3v6' },
+]
+const extraOptions = [{ value: 'spots_left', label: 'Spots left', icon: 'M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4zM15 7v2m0 6v2' }]
+const categoryOptions = [
+  { value: 'tech', label: 'Tech', icon: 'M4 5h16v12H4zM8 21h8m-4-4v4' },
+  { value: 'music', label: 'Music', icon: 'M9 17V5l11-2v12M9 8l11-2M9 17a3 3 0 1 1-3-3 3 3 0 0 1 3 3Zm11-2a3 3 0 1 1-3-3 3 3 0 0 1 3 3Z' },
+  { value: 'sports', label: 'Sports', icon: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM3 12h18M12 3c-5 5-5 13 0 18m0-18c5 5 5 13 0 18' },
+  { value: 'arts', label: 'Arts', icon: 'M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 0-4h-1a2 2 0 0 1 0-4h3a6 6 0 0 0 0-10zM7 9h.01M10 6h.01M16 7h.01' },
+  { value: 'food', label: 'Food', icon: 'M4 3v7a3 3 0 0 0 6 0V3M7 3v18M19 21V3c-4 0-5 9-2 10h2' },
+  { value: 'volunteering', label: 'Volunteering', icon: 'M12 20 4 12a5 5 0 0 1 8-7 5 5 0 0 1 8 7z' },
+]
+const groups = computed(() => [
+  { key: 'when', label: 'When', options: whenOptions },
+  { key: 'extras', label: 'Good to know', options: extraOptions },
+  { key: 'categories', label: 'Category', options: categoryOptions },
+])
+function isSelected(group, value) { return group === 'when' ? selected.value.when === value : selected.value[group].includes(value) }
+function choose(group, value) {
+  flushSearch()
+  const next = { ...selected.value }
+  next[group] = group === 'when' ? (next.when === value ? '' : value)
+    : next[group].includes(value) ? next[group].filter(item => item !== value) : [...next[group], value]
+  emit('update:modelValue', next)
+  if (group === 'when' && next.when === 'pick_dates') emit('pick-dates')
 }
-const selectedCategories = computed(() => props.modelValue.categories?.length
-  ? props.modelValue.categories
-  : props.modelValue.category ? [props.modelValue.category] : [])
-const categoryOptions = computed(() => [...new Set([...CATEGORIES, ...selectedCategories.value])])
-function toggleCategory(category) {
-  const selected = selectedCategories.value
-  update({ category: '', categories: selected.includes(category)
-    ? selected.filter(value => value !== category)
-    : [...selected, category] })
-}
-function clearCategories() { update({ category: '', categories: [] }) }
-const activeCount = computed(() => {
-  const f = props.modelValue
-  return [selectedCategories.value.length > 0, f.tag, f.dateFrom, f.dateTo, f.availableOnly, f.sort !== 'soonest'].filter(Boolean).length
-})
-function reset() {
-  update({ category: '', categories: [], tag: '', dateFrom: '', dateTo: '', availableOnly: false, sort: 'soonest' })
-}
+const activeCount = computed(() => Number(Boolean(selected.value.when)) + selected.value.extras.length + selected.value.categories.length)
+const activeChips = computed(() => groups.value.flatMap(group => {
+  const options = group.key === 'categories'
+    ? [...group.options, ...selected.value.categories.filter(value => !group.options.some(option => option.value === value)).map(value => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }))]
+    : group.options
+  return options.filter(option => isSelected(group.key, option.value)).map(option => ({ ...option, group: group.key }))
+}))
+function clearAll() { flushSearch(); emit('update:modelValue', normalizeDiscoveryFilters()) }
+async function removeChip(chip) { choose(chip.group, chip.value); await nextTick(); searchInput.value?.focus({ preventScroll: true }) }
+async function clearSearch() { search.value = ''; flushSearch(); await nextTick(); searchInput.value?.focus() }
+function close(restoreFocus = false) { expanded.value = false; if (restoreFocus) nextTick(() => toggle.value?.focus()) }
+function outside(event) { if (expanded.value && !root.value?.contains(event.target)) close() }
+function escape(event) { if (event.key === 'Escape' && expanded.value) { event.preventDefault(); event.stopPropagation(); close(true) } }
+function showEvents() { flushSearch(); close(); emit('show') }
+onMounted(() => { document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape) })
+onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape) })
 </script>
 
 <template>
-  <form class="event-filters" role="search" @submit.prevent="flushSearch">
-    <div class="search-toolbar">
-      <div class="search-field">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
-        <label for="event-search" class="visually-hidden">Search by title, description or venue</label>
-        <input id="event-search" v-model="search" type="search" name="event-search" autocomplete="off" class="form-control" placeholder="Try music, a venue, or an event…" />
-      </div>
-      <button type="button" class="btn filter-toggle" :class="{ 'is-active': expanded }" :aria-expanded="expanded" aria-controls="event-filter-panel" @click="expanded = !expanded">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 7h16M4 17h16" /><circle cx="9" cy="7" r="3" fill="white" /><circle cx="15" cy="17" r="3" fill="white" /></svg>
-        Filters <span v-if="activeCount" class="badge rounded-pill text-bg-primary">{{ activeCount }}</span>
-      </button>
-    </div>
-    <Transition name="filter-panel">
-      <div v-if="expanded" id="event-filter-panel" class="filter-panel">
-        <fieldset class="category-fieldset"><legend>Categories</legend>    <div class="category-options" role="group" aria-label="Filter by category. Select one or more.">
-      <button type="button" class="category-option" :class="{ 'is-selected': !selectedCategories.length }" :aria-pressed="!selectedCategories.length" @click="clearCategories">All</button>
-      <button v-for="category in categoryOptions" :key="category" type="button" class="category-option" :class="{ 'is-selected': selectedCategories.includes(category) }" :aria-pressed="selectedCategories.includes(category)" @click="toggleCategory(category)">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</button>
-    </div>
-    <p v-if="selectedCategories.length > 1" class="category-hint">Showing events matching any of your selected categories.</p>
-        </fieldset>
-        <div class="row g-3">
-          <div class="col-12 col-md-6 col-lg-4">
-            <label for="dateFrom" class="form-label small text-secondary">From date</label>
-            <input id="dateFrom" name="dateFrom" autocomplete="off" :value="modelValue.dateFrom" type="date" class="form-control" @change="update({ dateFrom: $event.target.value })" />
-          </div>
-          <div class="col-12 col-md-6 col-lg-4">
-            <label for="dateTo" class="form-label small text-secondary">To date</label>
-            <input id="dateTo" name="dateTo" autocomplete="off" :value="modelValue.dateTo" type="date" class="form-control" @change="update({ dateTo: $event.target.value })" />
-          </div>
-          <div class="col-12 col-md-6 col-lg-4">
-            <label for="sort" class="form-label small text-secondary">Sort by</label>
-            <select id="sort" name="sort" autocomplete="off" :value="modelValue.sort" class="form-select" @change="update({ sort: $event.target.value })">
-              <option value="soonest">Soonest</option>
-              <option value="popular">Most popular</option>
-            </select>
-          </div>
-          <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-3 pt-2">
-            <div class="form-check mb-0">
-              <input id="available" name="available" autocomplete="off" :checked="modelValue.availableOnly" type="checkbox" class="form-check-input" @change="update({ availableOnly: $event.target.checked })" />
-              <label for="available" class="form-check-label small">Only events with spots left</label>
-            </div>
-            <button type="button" class="btn btn-link btn-sm p-0" @click="reset">Clear filters</button>
-          </div>
+  <form ref="root" class="event-filters" role="search" @submit.prevent="showEvents">
+    <div class="search-wrap">
+      <div class="search-toolbar">
+        <div class="search-field">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
+          <label for="event-search" class="visually-hidden">Search by title, description or venue</label>
+          <input id="event-search" ref="searchInput" v-model="search" type="search" autocomplete="off" placeholder="Search events, activities or places…" />
+          <button v-if="search" type="button" class="clear-search" aria-label="Clear search" @click="clearSearch">×</button>
         </div>
+        <button ref="toggle" type="button" class="filter-toggle" :class="{ 'is-active': activeCount > 0 }" :aria-expanded="expanded" aria-controls="event-filter-panel" @click="expanded = !expanded">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16" /><circle cx="9" cy="7" r="3" /><circle cx="15" cy="17" r="3" /></svg>
+          Filters <span v-if="activeCount" class="filter-count">{{ activeCount }}</span>
+        </button>
       </div>
-    </Transition>
+      <div v-if="expanded" id="event-filter-panel" class="filter-panel" role="region" aria-label="Event filters">
+        <fieldset v-for="group in groups" :key="group.key" class="filter-section">
+          <legend>{{ group.label }}</legend>
+          <div class="filter-options" role="group" :aria-label="group.label">
+            <button v-for="option in group.options" :key="option.value" type="button" class="filter-chip" :aria-pressed="isSelected(group.key, option.value)" @click="choose(group.key, option.value)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="option.icon" /></svg>{{ option.label }}
+            </button>
+          </div>
+          <div v-if="group.key === 'when' && selected.when === 'pick_dates'" class="calendar-hook" data-calendar-hook>
+            <slot name="pick-dates"><p>Custom calendar coming here. No date range is applied yet.</p></slot>
+          </div>
+        </fieldset>
+        <p v-if="error" class="count-error" role="alert">Couldn’t load the event count. <button type="button" @click="emit('retry')">Try again</button></p>
+        <footer class="filter-footer">
+          <button type="button" class="clear-all" @click="clearAll">Clear all</button>
+          <button type="submit" class="show-events" :disabled="loading || Boolean(error) || total === null">{{ loading ? 'Finding events…' : total === null ? 'Show events' : `Show ${total} events` }}</button>
+        </footer>
+      </div>
+    </div>
+    <div v-if="showActive && activeChips.length" class="active-filters" aria-label="Active filters">
+      <button v-for="chip in activeChips" :key="`${chip.group}-${chip.value}`" type="button" class="active-filter" :aria-label="`Remove ${chip.label} filter`" @click="removeChip(chip)">{{ chip.label }} <span aria-hidden="true">×</span></button>
+    </div>
   </form>
 </template>
 
 <style scoped>
-.category-fieldset { min-width: 0; margin: 0 0 20px; }.category-fieldset legend { float: none; width: auto; font-size: .9rem; font-weight: 600; margin: 0; }.category-fieldset .category-options { flex-wrap: wrap; overflow: visible; }
-.category-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding: 3px; }
-.category-option { white-space: nowrap; flex-shrink: 0; min-height: 44px; padding: 8px 18px; border: 1px solid var(--bookedz-muted-border); border-radius: 999px; background: var(--bookedz-surface); color: var(--bookedz-muted); font-size: .875rem; font-weight: 550; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
-.category-option:hover { background: var(--bookedz-hover); border-color: var(--bookedz-control-border); }
-.category-option.is-selected { background: var(--bookedz-primary-dark); border-color: var(--bookedz-primary-dark); color: var(--bookedz-surface); }
-.category-option:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
-.category-hint { margin: 8px 3px 0; font-size: .8rem; color: var(--bookedz-muted); }
-@media (max-width: 767px) { .category-options { flex-wrap: nowrap; overflow-x: auto; } }
-@media (prefers-reduced-motion: reduce) { .category-option { transition: none; } }
-.search-toolbar { display: flex; gap: 12px; }
-.search-field { position: relative; flex: 1; min-width: 0; }
-.search-field svg { position: absolute; left: 20px; top: 16px; width: 22px; height: 22px; color: var(--bookedz-icon); pointer-events: none; }
-.search-field input { height: 54px; padding-left: 56px; border-radius: 16px; font-size: .9rem; box-shadow: var(--bookedz-search-shadow); }
-.filter-toggle { white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 0 22px; background: var(--bookedz-surface); border: 1px solid var(--bookedz-muted-border); border-radius: 16px; }
+.event-filters, .search-wrap { width: 100%; min-width: 0; }
+.search-wrap { position: relative; }
+.search-toolbar, .filter-panel { box-sizing: border-box; border: 1px solid var(--bookedz-control-border); border-radius: 18px; background: var(--bookedz-surface); }
+.search-toolbar { display: flex; align-items: stretch; gap: 6px; padding: 6px; box-shadow: var(--bookedz-search-shadow); }
+.search-field { display: flex; align-items: center; position: relative; flex: 1; min-width: 0; }
+.search-field > svg { position: absolute; left: 12px; width: 22px; height: 22px; pointer-events: none; color: var(--bookedz-muted); }
+svg { flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.search-field input { width: 100%; min-width: 0; height: 56px; border: 0; border-radius: 12px; padding: 8px 40px 8px 42px; background: transparent; color: var(--bookedz-ink); font: inherit; font-size: 1rem; }
+.search-field input::-webkit-search-cancel-button { display: none; }
+.clear-search { position: absolute; right: 0; width: 40px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--bookedz-muted); font-size: 1.4rem; }
+.filter-toggle { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 12px; background: var(--bookedz-glass-active); color: var(--bookedz-ink); font-size: .9rem; font-weight: 650; }
 .filter-toggle svg { width: 20px; height: 20px; }
-.filter-toggle:hover, .filter-toggle.is-active { border-color: var(--bookedz-control-border); background: var(--bookedz-hover); }
-.filter-panel { margin-top: 12px; padding: 24px; border: 1px solid var(--bookedz-muted-border); border-radius: 16px; background: var(--bookedz-surface); transform-origin: top; }
-.filter-panel-enter-active, .filter-panel-leave-active { transition: opacity .18s ease, transform .18s ease; }
-.filter-panel-enter-from, .filter-panel-leave-to { opacity: 0; transform: translateY(-8px); }
-@media (max-width: 575px) {
-  .search-field input { font-size: .9rem; height: 58px; padding-left: 42px; }
-  .search-field svg { left: 13px; top: 18px; }
-  .filter-toggle { padding: 0 12px; font-size: .9rem; gap: 5px; }
-  .filter-toggle svg { display: none; }
-  .filter-panel { padding: 18px; }
-}
-@media (prefers-reduced-motion: reduce) { .filter-panel-enter-active, .filter-panel-leave-active { transition: none; } }
+.filter-toggle.is-active { background: var(--bookedz-primary-dark); color: #fff; }
+.filter-count { display: grid; place-items: center; min-width: 20px; height: 20px; padding-inline: 4px; border-radius: 99px; background: rgb(255 255 255 / 22%); font-size: .75rem; }
+.filter-panel { position: absolute; z-index: 30; top: calc(100% + 8px); left: 0; width: 100%; padding: 22px; box-shadow: var(--bookedz-search-shadow); max-height: min(620px, 75svh); overflow-y: auto; overflow-x: hidden; }
+.filter-section { display: block; float: none; min-width: 0; margin: 0 0 22px; padding: 0; border: 0; }
+.filter-section legend { float: none; width: auto; margin: 0 0 12px; font-size: .95rem; font-weight: 700; color: var(--bookedz-ink); }
+.filter-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; max-width: 100%; padding: 8px 12px; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-canvas); color: var(--bookedz-ink); font-size: .85rem; font-weight: 550; }
+.filter-chip svg { width: 18px; height: 18px; }
+.filter-chip:hover { border-color: var(--bookedz-primary-dark); }
+.filter-chip[aria-pressed="true"] { background: var(--bookedz-primary-dark); border-color: var(--bookedz-primary-dark); color: #fff; }
+.filter-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-top: 1px solid var(--bookedz-border); padding-top: 16px; }
+.clear-all { min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--bookedz-muted); text-decoration: underline; text-underline-offset: 3px; font-size: .875rem; }
+.show-events { min-height: 44px; padding: 10px 16px; border: 1px solid var(--bookedz-ink); border-radius: 12px; background: var(--bookedz-ink); color: var(--bookedz-surface); font-weight: 650; font-size: .875rem; }
+.show-events:disabled { opacity: .6; cursor: wait; }
+.calendar-hook p, .count-error { margin: 12px 0 0; font-size: .8rem; color: var(--bookedz-muted); }
+.count-error { margin-bottom: 16px; }.count-error button { border: 0; background: transparent; color: var(--bookedz-primary-dark); text-decoration: underline; }
+.active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.active-filter { min-height: 44px; padding: 7px 12px; border: 1px solid var(--bookedz-control-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .85rem; }.active-filter span { margin-left: 8px; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
+@media(max-width:575px) { .filter-panel { padding: 18px; }.filter-toggle { padding-inline: 10px; gap: 5px; }.filter-toggle svg { width: 17px; height: 17px; } }
 </style>

@@ -50,6 +50,9 @@ h1,h2,h3 { text-wrap: balance; overflow-wrap: break-word; min-width: 0; }
 h1 { font-size: clamp(1.9rem, 1.4rem + 1.5vw, 2.65rem); font-weight: 700; line-height: 1.12; }
 h2 { font-size: clamp(1.4rem,1.2rem + .7vw,1.9rem); font-weight: 650; }
 h3 { font-size: 1.25rem; font-weight: 650; }
+:root { --sidebar-w: 240px; }
+.app-shell { min-height: 100vh; padding-left: var(--sidebar-w); }
+@media(max-width:991.98px) { .app-shell { padding-left: 0; } }
 .app-main { padding-top: 2.5rem; padding-bottom: 4rem; min-height: calc(100vh - 230px); }
 .app-main--discover { max-width: 100%; padding: 0; }
 .card { --bs-card-bg: var(--bookedz-surface); --bs-card-border-color: var(--bookedz-border); --bs-card-cap-bg: transparent; border-radius: 1.25rem; box-shadow: var(--bookedz-card-shadow); overflow-wrap: anywhere; }

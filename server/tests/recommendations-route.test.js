@@ -1,81 +1,80 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const vm = require("node:vm");
-const { createRequire } = require("node:module");
-const { rankEvents } = require("../services/rankEvents");
+const test = require('node:test');
+const { checkEqual, checkDeepEqual, checkTrue } = require('./checks');
+const { fixture, candidate, USER, EVENT, NOW } = require('./recommendation-route-fixture');
 
-const filename = path.join(__dirname, "../routes/recommendations.js");
-const localRequire = createRequire(filename);
-const NOW = "2030-01-01T00:00:00Z";
-const events = [
-  { id: "music", title: "Music night", category: "music", tags: ["music"], start_time: "2030-01-02T00:00:00Z", capacity: 20, confirmed_count: 10, spots_left: 10, lat: 1.3, lng: 103.8 },
-  { id: "arts", title: "Arts day", category: "arts", tags: ["arts"], start_time: "2030-01-03T00:00:00Z", capacity: 40, confirmed_count: 10, spots_left: 30 },
-  { id: "registered", tags: ["music"], start_time: "2030-01-02T00:00:00Z" },
-];
-
-async function request({ profile = { interest_weights: { music: 3 }, lat: 1.3, lng: 103.8 }, limit = "8", failure } = {}) {
-  const calls = [], tokens = [], rankingCalls = [];
-  const client = { from(table) {
-    const query = new Proxy({}, { get(_target, method) {
-      if (method === "then") return resolve => resolve({
-        data: table === "profiles" ? profile : table === "events_with_counts" ? events : [{ event_id: "registered" }],
-        error: failure === table ? { message: "Read failed" } : null,
-      });
-      return (...args) => { calls.push({ table, method, args }); return query; };
-    } });
-    return query;
-  } };
-  const moduleStub = { exports: {} };
-  vm.runInNewContext(fs.readFileSync(filename, "utf8"), {
-    module: moduleStub,
-    require: name => name === "../lib/userSupabase" ? token => { tokens.push(token); return client; }
-      : name === "../lib/requireAuth" ? (_req, _res, next) => next()
-      : name === "../services/rankEvents" ? { rankEvents: (rows, user, options) => {
-        rankingCalls.push({ rows, user, options });
-        return rankEvents(rows, user, { ...options, now: NOW });
-      } } : localRequire(name),
-    console: { error() {} },
-  }, { filename });
-  const handler = moduleStub.exports.stack.find(layer => layer.route?.path === "/").route.stack.at(-1).handle;
-  const response = { statusCode: 200, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; } };
-  await handler({ query: { limit }, user: { id: "user-1" }, accessToken: "user-jwt" }, response);
-  return { response, calls, tokens, rankingCalls };
-}
-
-test("recommendations use rankEvents while preserving the flat card response and caller JWT", async () => {
-  const { response, calls, tokens, rankingCalls } = await request({ limit: "1" });
-  assert.deepEqual(tokens, ["user-jwt"]);
-  assert.equal(rankingCalls.length, 1);
-  assert.equal(rankingCalls[0].options.limit, 1);
-  assert.ok(rankingCalls[0].options.excludeEventIds.has("registered"));
-  assert.equal(response.statusCode, 200);
-  assert.deepEqual(Object.keys(response.body), ["events"]);
-  const [event] = response.body.events;
-  assert.equal(response.body.events.length, 1);
-  assert.equal(event.id, "music");
-  assert.equal(event.title, "Music night");
-  assert.equal(event.reason, "Matches your interests: music");
-  assert.equal(event.distance_km, 0);
-  assert.ok(Number.isFinite(event.score));
-  assert.ok(!("event" in event));
-  assert.ok(calls.some(call => call.table === "profiles" && call.method === "eq" && call.args[1] === "user-1"));
-  assert.ok(calls.some(call => call.table === "registrations" && call.method === "eq" && call.args[1] === "user-1"));
-});
-
-test("missing profile/location retains nullable distance, exclusion and the maximum limit", async () => {
-  const { response, rankingCalls } = await request({ profile: null, limit: "100" });
-  assert.equal(rankingCalls[0].options.limit, 24);
-  assert.deepEqual(response.body.events.map(event => event.id), ["music", "arts"]);
-  assert.ok(response.body.events.every(event => event.distance_km === null));
-});
-
-test("failed recommendation reads preserve the error response and skip ranking", async () => {
-  for (const failure of ["profiles", "events_with_counts", "registrations"]) {
-    const { response, rankingCalls } = await request({ failure });
-    assert.equal(response.statusCode, 500);
-    assert.equal(response.body.error, "Failed to build recommendations");
-    assert.equal(rankingCalls.length, 0);
+test('V1 route retains flat events, forwards JWT and uses explicit interests rather than boosted weights', async () => {
+  const app = fixture({ tables: { profiles: [{ id: USER, interest_weights: { sports: 500 } }],
+    events_with_counts: [candidate(EVENT), candidate('sports', ['sports'])] } });
+  const res = await app.request('/', { query: { limit: '1' } });
+  checkEqual(res.statusCode, 200);
+  checkDeepEqual(Object.keys(res.body), ['events']);
+  checkEqual(res.body.events[0].id, EVENT);
+  checkEqual(res.body.events[0].compatibilityScore, 50);
+  checkEqual(res.body.events[0].score, 0.5);
+  checkEqual(res.body.events[0].source, 'personalised');
+  checkTrue(res.body.events[0].reason.includes('selected interests: music'));
+  checkDeepEqual(app.tokens, ['caller-jwt']);
+  for (const table of ['registrations', 'check_ins', 'event_members', 'user_event_preferences']) {
+    checkTrue(app.calls.some(call => call.table === table && call.method === 'eq' && call.args[0] === 'user_id' && call.args[1] === USER));
   }
+});
+
+test('route loads historical attendance independently and continues capped pagination', async () => {
+  const app = fixture({ readCap: 1, tables: {
+    profile_interests: [],
+    registrations: [{ id: 'r1', user_id: USER, event_id: 'past', status: 'confirmed' }],
+    user_event_preferences: [{ user_id: USER, event_id: 'past', first_confirmed_at: '2029-12-30T00:00:00Z' }],
+    check_ins: [{ id: 'c1', user_id: USER, event_id: 'past', registration_id: 'r1', checked_in_at: '2029-12-31T00:00:00Z', fraud_flag: false }],
+    events: [{ id: 'past', event_interests: [{ interests: { slug: 'arts' } }] }],
+    events_with_counts: [candidate(EVENT), candidate('arts', ['arts'])],
+  } });
+  const res = await app.request('/');
+  checkEqual(res.statusCode, 200);
+  checkEqual(res.body.events[0].id, 'arts');
+  checkEqual(res.body.events[0].compatibilityScore, 60);
+  checkTrue(res.body.events[0].reason.includes('recent activity'));
+  checkTrue(app.calls.some(call => call.table === 'events_with_counts' && call.method === 'range' && call.args[0] === 1));
+  checkTrue(app.calls.some(call => call.table === 'events' && call.method === 'in' && call.args[1].includes('past')));
+});
+
+test('team, organiser, rejected, confirmed and unexpired offered events never enter either feed', async () => {
+  const app = fixture({ tables: {
+    profile_interests: [],
+    events_with_counts: ['team', 'own', 'rejected', 'confirmed', 'offer', 'expired', 'open'].map(id => candidate(id, ['music'], id === 'own' ? { organiser_id: USER } : {})),
+    event_members: [{ user_id: USER, event_id: 'team' }],
+    registrations: [
+      { id: 'r1', user_id: USER, event_id: 'rejected', status: 'rejected' },
+      { id: 'r2', user_id: USER, event_id: 'confirmed', status: 'confirmed' },
+      { id: 'r3', user_id: USER, event_id: 'offer', status: 'offered', offer_expires_at: '2030-01-02T00:00:00Z' },
+      { id: 'r4', user_id: USER, event_id: 'expired', status: 'offered', offer_expires_at: NOW },
+    ],
+    user_event_preferences: [{ user_id: USER, event_id: 'confirmed', first_confirmed_at: '2029-12-31T00:00:00Z' }],
+  } });
+  const res = await app.request('/');
+  checkDeepEqual(res.body.events.map(event => event.id), ['expired', 'open']);
+  // The excluded confirmed event still supplies valid interest evidence.
+  checkTrue(res.body.events.every(event => event.source === 'personalised' && event.compatibilityScore === 50));
+});
+
+test('cold-start route labels general discovery without fabricated match scores', async () => {
+  const res = await fixture({ tables: { profile_interests: [] } }).request('/');
+  checkEqual(res.body.events[0].source, 'general_discovery');
+  checkEqual(res.body.events[0].compatibilityScore, 0);
+  checkEqual(res.body.events[0].rankingScore, null);
+});
+
+test('missing deployment metadata fails explicitly; read errors do not become empty history', async () => {
+  const missing = await fixture({ failure: 'user_event_preferences' }).request('/');
+  checkEqual(missing.statusCode, 503);
+  checkEqual(missing.body.code, 'RECOMMENDATION_SETUP_REQUIRED');
+  const noDate = await fixture({ tables: { registrations: [{ id: 'r', user_id: USER, event_id: EVENT, status: 'confirmed' }] } }).request('/');
+  checkEqual(noDate.statusCode, 503);
+  checkEqual((await fixture({ failure: 'profile_interests' }).request('/')).statusCode, 500);
+});
+
+test('limit validation rejects malformed values and caps valid requests', async () => {
+  const app = fixture();
+  for (const limit of ['-1', '2.5', 'abc']) checkEqual((await app.request('/', { query: { limit } })).statusCode, 400);
+  checkDeepEqual((await app.request('/', { query: { limit: '0' } })).body.events, []);
+  checkEqual((await app.request('/', { query: { limit: '100' } })).statusCode, 200);
 });
