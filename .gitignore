@@ -236,3 +236,6 @@ __pycache__/
 *.p12
 *.pfx
 *.tsbuildinfo
+
+# Local agent instructions
+AGENTS.md
