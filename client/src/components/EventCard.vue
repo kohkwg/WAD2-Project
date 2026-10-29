@@ -2,11 +2,16 @@
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import EventArtwork from './EventArtwork.vue'
+import EventBookmark from './EventBookmark.vue'
+import EventCardActions from './EventCardActions.vue'
 
 const props = defineProps({
   event: { type: Object, required: true },
   showReason: { type: Boolean, default: false },
+  bookmarkEnabled: { type: Boolean, default: false },
+  preferencePending: { type: Boolean, default: false },
 })
+const emit = defineEmits(['preference'])
 const failedCover = ref('')
 const coverSource = computed(() => props.event?.image_url || props.event?.coverImageUrl || '')
 const timeLabel = computed(() => new Date(props.event.start_time).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))
@@ -52,6 +57,9 @@ function initials(attendee) {
     <div class="event-cover">
       <img v-if="coverSource && failedCover !== coverSource" :src="coverSource" @error="failedCover = coverSource" :alt="`Cover for ${event.title}`" class="event-cover-image" width="720" height="480" loading="lazy" />
       <EventArtwork v-else :category="primaryTag" />
+      <EventBookmark v-if="bookmarkEnabled" :saved="Boolean(event.saved)"
+        :pending="preferencePending" :event-title="event.title"
+        @toggle="emit('preference', { event, action: event.saved ? 'unsave' : 'save' })" />
       <span class="artwork-category" aria-hidden="true">{{ categoryLabel }}</span>
     </div>
     <div class="event-details">
@@ -78,10 +86,7 @@ function initials(attendee) {
         <span v-if="event.confirmed_count != null" class="going-count">{{ event.confirmed_count }} going</span>
         <span v-if="availabilityLabel" class="availability-chip" :class="{ 'availability-chip--full': isFull }">{{ availabilityLabel }}</span>
       </div>
-      <div class="event-actions">
-        <RouterLink :to="`/events/${event.id}/rsvp`" class="btn event-cta event-cta--secondary" :aria-label="`View ${event.title}`">View event</RouterLink>
-        <RouterLink :to="{ path: `/events/${event.id}/rsvp`, hash: '#rsvp' }" class="btn event-cta" :aria-label="`RSVP for ${event.title}`">RSVP</RouterLink>
-      </div>
+      <EventCardActions class="event-actions" :event="event" />
     </div>
   </article>
 </template>

@@ -33,7 +33,7 @@ async function withEventDetails(rows, includeAttendees = true) {
   const venueIds = [...new Set(rows.map(activeVenueId).filter(Boolean))]
   const { data: sessionData } = await supabase.auth.getSession()
   const userId = sessionData.session?.user.id
-  const [venues, attendees, registrations] = await Promise.all([
+  const [venues, attendees, registrations, preferences] = await Promise.all([
     venueIds.length
       ? supabase.from('venues').select('id, name, address, latitude, longitude').in('id', venueIds)
       : Promise.resolve({ data: [] }),
@@ -44,13 +44,19 @@ async function withEventDetails(rows, includeAttendees = true) {
       ? supabase.from('registrations').select('event_id, status')
         .eq('user_id', userId).in('event_id', rows.map(e => e.id))
       : Promise.resolve({ data: [] }),
+    userId && rows.length
+      ? supabase.from('user_event_preferences').select('event_id, save_active')
+        .eq('user_id', userId).in('event_id', rows.map(e => e.id))
+      : Promise.resolve({ data: [] }),
   ])
+  if (preferences.error) throw preferences.error
+  const savedIds = new Set((preferences.data || []).filter(row => row.save_active).map(row => row.event_id))
   if (registrations.error) throw registrations.error
   // Venues are optional; missing/inaccessible names simply omit the venue line.
   const venueDetails = new Map((venues.data || []).map(v => [v.id, v]))
   const statuses = new Map((registrations.data || []).map(r => [r.event_id, r.status]))
   return rows.map(e => ({
-    ...e, venue_name: venueDetails.get(activeVenueId(e))?.name || e.venue_name || '',
+    ...e, saved: savedIds.has(e.id), venue_name: venueDetails.get(activeVenueId(e))?.name || e.venue_name || '',
     venue_address: venueDetails.get(activeVenueId(e))?.address || e.venue_address || '',
     lat: venueDetails.get(activeVenueId(e))?.latitude ?? (e.using_backup ? null : e.lat),
     lng: venueDetails.get(activeVenueId(e))?.longitude ?? (e.using_backup ? null : e.lng),
