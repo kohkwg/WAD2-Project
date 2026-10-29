@@ -1,4 +1,4 @@
-# Ideation & Implementation Plan — SG Outing Planner (working title)
+# Ideation & Implementation Plan — OpenJio
 
 > Living document. Update the changelog whenever a decision changes.
 > ✅ = decided with the team · ❓ = open question (see §12). Nothing here is assumed beyond what is marked.
@@ -8,6 +8,7 @@
 | Date | Change | Who |
 |---|---|---|
 | 26 Oct 2026 | Initial ideation doc on branch `revamp/ideate` | Huxley (+ Claude) |
+| 28 Oct 2026 | Product name set to **OpenJio** ✅; build order added (§11) | Huxley (+ Claude) |
 
 ---
 
@@ -238,21 +239,29 @@ Team: Aishani, Gregory, Huxley, Denzel, Timothy, Vivienne. **Scope/ownership unc
 | Infra (DB / auth / deploy) | ❓ | | Not started | |
 | UI system / consistency | ❓ | | Not started | |
 
-### Phases
-- **P0** Align idea + owners (this doc).
-- **P1** Port dev F2–F4 onto the new branch; schema migrations for §9.
-- **P2** F5 slot finder + grid + Google Calendar.
-- **P3** F8 ingestion: channel spike, extraction prompt, review queue.
-- **P4** F6/F7 generator, voting, late join.
-- **P5** F1 Discover merge (hosted + scraped + deals).
-- **P6** Tests, polish, README, video.
+### Build order (recommended 28 Oct)
+
+Order is set by risk and dependencies: build first what is new, what other features need, and what could fail. F2–F4 already work on `origin/dev`, so they are a port, not a build.
+
+| Step | What | Why this early |
+|---|---|---|
+| 1 | **Foundation:** copy the `origin/dev` client/server scaffold onto `revamp/ideate`, rename to OpenJio, add the §9 tables (`hangouts`, `hangout_members`, `availability_blocks`, `itineraries`, `itinerary_stops`, `deals`, `deal_outlets`, `external_events`, `places`) + seed data | Every other step writes to these tables; seed data lets steps 3–4 start before ingestion works |
+| 2 | **F8 ingestion spike:** Telethon login with the team account, pull ~200 posts from 4–5 channels, run regex + Gemini extraction, measure how many come out usable | Highest unknown (account, rate limits, extraction quality). If it fails we need to know now and fall back to curated seed deals |
+| 3 | **F5 slot finder with the manual grid** (A1 as a pure, unit-tested function), then add Google Calendar freeBusy | Algorithm is self-contained and easy to demo; GCal OAuth setup (test users) can run in parallel |
+| 4 | **F6 itinerary generator on seed data** (A2 + A5), timeline + map UI, then manual mode and block voting (A3) | The signature feature; depends on 1 and is fed by 2 and 3 |
+| 5 | **F7 late join** (A4 + OneMap routing) | Small once itineraries exist |
+| 6 | **F1 Discover merge:** hosted + scraped events + deals in one feed, ranking (A6) | Needs real ingested data from 2 |
+| 7 | **Port F2–F4** from dev, re-test with live e2e | Already built; lowest risk, can be done by its original owners in parallel from step 1 |
+| 8 | Tests for each journey, responsive polish, README (AI + source disclosures), video | Course deliverables |
+
+Steps 2, 3 and 7 have no shared files and can run in parallel once step 1 lands.
 
 ---
 
 ## 12. Open questions ❓
 
 1. Feature ownership per member — does each of the 6 own ≥1 meaningful feature?
-2. Product name (§13).
+2. ~~Product name (§13).~~ Decided: **OpenJio** ✅ (28 Oct).
 3. Exact dates: progress pitch and Week 12 Friday 9am deadline.
 4. Who owns the Telegram account (Telethon) and the Google Cloud OAuth project?
 5. Can non-app friends join a hangout via link as guests, or must they sign up?
@@ -265,6 +274,8 @@ Team: Aishani, Gregory, Huxley, Denzel, Timothy, Vivienne. **Scope/ownership unc
 ---
 
 ## 13. Name ideas
+
+**Chosen: OpenJio** ✅ ("jio" is Singlish for inviting someone out; an "open jio" is an invite anyone can join). The list below is kept for reference.
 
 **From the product's traits:** OneTab · Tabless · Freeslot · Outplan · Linkup · Synced · Roundup · Plotline · Meetwhere · Gather
 
