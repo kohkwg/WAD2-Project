@@ -109,6 +109,7 @@ const { recommended, loading: recLoading, error: recError, actionPending, action
   fetchRecommendations, clearRecommendations, updatePreference } = useRecommendations()
 async function changeRecommendationPreference({ event, action }) {
   await updatePreference(event, action)
+  if (!actionError.value) refreshDiscovery()
   await nextTick()
   if (action === 'dismiss' && undoEvent.value) {
     document.getElementById('undo-recommendation-dismiss')?.focus()
@@ -118,6 +119,11 @@ async function changeRecommendationPreference({ event, action }) {
       .find(element => element.getAttribute('aria-label') === label)
     button?.focus()
   }
+}
+async function changeListingPreference(payload) {
+  if (!loggedIn.value || actionPending.value) return
+  await updatePreference(payload.event, payload.action)
+  if (!actionError.value) refreshDiscovery()
 }
 const loggedIn = ref(false)
 const navbarHeight = ref(56)
@@ -248,7 +254,7 @@ function goToPage(nextPage) {
       </section>
       <section v-if="viewMode === 'list' && !filtersActive && closingSoon.length" class="closing-section" aria-labelledby="closing-soon-title">
         <div class="section-intro"><div><p class="discovery-eyebrow">A little time left to join</p><h2 id="closing-soon-title">Closing soon</h2></div><span>Registration deadlines and remaining places.</span></div>
-        <div class="closing-grid"><EventCard v-for="event in closingSoon" :key="event.id" :event="event" show-reason /></div>
+        <div class="closing-grid"><EventCard v-for="event in closingSoon" :key="event.id" :event="event" show-reason :bookmark-enabled="loggedIn" :preference-pending="actionPending" @preference="changeListingPreference" /></div>
       </section>
       <section v-if="viewMode === 'list' && !filtersActive" class="explore-categories" aria-labelledby="explore-categories-title">
         <div class="section-intro"><div><p class="discovery-eyebrow">Find your kind of event</p><h2 id="explore-categories-title">Explore categories</h2></div><RouterLink :to="{ path: '/discover', query: { view: 'categories' } }" class="all-categories-link">See all categories <span aria-hidden="true">↗</span></RouterLink></div>
@@ -278,7 +284,9 @@ function goToPage(nextPage) {
               <time :datetime="group.date"><span class="date-label">{{ group.label }}<template v-if="group.year">, {{ group.year }}</template></span><span class="weekday">{{ group.weekday }}</span></time>
             </div>
             <div class="date-events">
-              <EventCard v-for="event in group.events" :key="event.id" :event="event" />
+              <EventCard v-for="event in group.events" :key="event.id" :event="event"
+                :bookmark-enabled="loggedIn" :preference-pending="actionPending"
+                @preference="changeListingPreference" />
             </div>
           </section>
         </div>
@@ -293,7 +301,32 @@ function goToPage(nextPage) {
       </section>
       <section v-if="viewMode === 'list'" class="neighbourhood-section" aria-labelledby="neighbourhood-title" data-scroll-reveal>
         <div class="section-intro"><div><p class="discovery-eyebrow">Familiar places. Fresh possibilities.</p><h2 id="neighbourhood-title">Find your corner of the island.</h2></div><span>Open a neighbourhood on the live map.</span></div>
-        <div class="neighbourhood-grid"><button v-for="region in neighbourhoods" :key="region.name" type="button" @click="exploreNeighbourhood(region)"><img :src="islandArt" alt="" loading="lazy" width="360" height="220" :style="{ objectPosition: region.position }" /><span class="neighbourhood-name">{{ region.name }} <span aria-hidden="true">↗</span></span><span class="neighbourhood-note">{{ region.note }}</span></button></div>
+        <div class="neighbourhood-grid">
+          <button
+            v-for="region in neighbourhoods"
+            :key="region.name"
+            type="button"
+            @click="exploreNeighbourhood(region)"
+          >
+            <div class="neighbourhood-preview">
+              <img
+                :src="islandArt"
+                alt=""
+                loading="lazy"
+                width="360"
+                height="220"
+                :style="{
+                  objectPosition: region.position,
+                  transformOrigin: region.position
+                }"
+              >
+            </div>
+            <span class="neighbourhood-name">
+              {{ region.name }} <span aria-hidden="true">↗</span>
+            </span>
+            <span class="neighbourhood-note">{{ region.note }}</span>
+          </button>
+        </div>
       </section>
       <section v-if="viewMode === 'list'" class="hosting-invitation" aria-labelledby="hosting-title" data-scroll-reveal>
         <div><p class="discovery-eyebrow">Good things happen when people get together</p><h2 id="hosting-title">Got a good idea?<br>Make it a great gathering.</h2><p>From a small workshop to a big night out, give your people something to look forward to.</p><RouterLink to="/organiser/events/new" class="btn btn-primary">Host an event <span aria-hidden="true">↗</span></RouterLink></div>
@@ -353,4 +386,30 @@ function goToPage(nextPage) {
 @media(max-width:575px) { .category-experiences { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }.curiosity-section,.neighbourhood-section { margin: 44px 0; }.neighbourhood-grid { gap: 12px; }.neighbourhood-grid img { height: 125px; }.neighbourhood-name { font-size: 1.1rem; padding: 0 12px; }.neighbourhood-note { padding: 0 12px; font-size: .65rem; }.hosting-invitation { grid-template-columns: 1fr; padding: 28px; margin-top: 48px; }.hosting-art { max-width: 300px; margin: 0 auto; }.hosting-stamp { width: 95px; height: 95px; }.section-intro > span { font-size: .7rem; } }
 @media(max-width:575px) { .discovery-topbar { flex-wrap: wrap; align-items: flex-start; }.discovery-top-actions { width: 100%; }.view-switch { width: 100%; }.view-switch button { flex: 1; } }
 @media(prefers-reduced-motion:reduce) { .category-experiences button,.neighbourhood-grid img { transition: none; }.category-experiences button:hover,.neighbourhood-grid button:hover img { transform: none; } }
+
+/* Clip the enlarged island within each neighbourhood preview. */
+.neighbourhood-preview {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  height: 200px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.neighbourhood-grid .neighbourhood-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  object-fit: cover;
+  transform: scale(2.8);
+  transform: scale(2.3);
+  transition: none;
+}
+.neighbourhood-grid button:hover .neighbourhood-preview img {
+  transform: scale(2.8);
+  transform: scale(2.3);
+}
 </style>
