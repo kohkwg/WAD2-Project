@@ -8,6 +8,7 @@
     "dev": "nodemon --env-file=.env server.js",
     "test:crud": "node --env-file=.env scripts/crud-check.js",
     "seed:checkin": "node --env-file=.env scripts/seed-checkin.js",
+    "seed:planner": "node --env-file=.env scripts/seed-planner.js",
     "test:checkin": "node --env-file=.env scripts/checkin-check.js"
   },
   "keywords": [],
