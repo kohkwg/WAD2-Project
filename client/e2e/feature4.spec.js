@@ -246,13 +246,13 @@ test('budget exact cents, separate limit and 90/100/over thresholds persist', as
   await page.getByRole('button', { name: 'Save limit', exact: true }).click()
   await page.getByLabel('Item name', { exact: true }).fill('Snacks')
   await page.getByLabel('Category', { exact: true }).selectOption({ label: 'Food & drink' })
-  await page.getByLabel('Planned cost (SGD)', { exact: true }).fill('99.99')
-  await page.getByLabel('Actual cost (SGD)', { exact: true }).fill('90.00')
+  await page.getByLabel('Planned unit cost (SGD)', { exact: true }).fill('99.99')
+  await page.getByLabel('Actual unit cost (SGD)', { exact: true }).fill('90.00')
   await page.getByRole('button', { name: 'Save item', exact: true }).click()
   await expect(page.getByRole('status').filter({ hasText: /Budget warning/ })).toContainText(/90%/i)
   for (const [amount, message] of [['100.00', /reached|100%/i], ['100.01', /over budget/i]]) {
     await page.getByRole('button', { name: 'Edit expense: Snacks', exact: true }).click()
-    await page.getByLabel('Actual cost (SGD)', { exact: true }).fill(amount)
+    await page.getByLabel('Actual unit cost (SGD)', { exact: true }).fill(amount)
     await page.getByRole('button', { name: 'Save item', exact: true }).click()
     await expect(page.getByRole('status').filter({ hasText: /budget/i })).toContainText(message)
   }
@@ -260,10 +260,10 @@ test('budget exact cents, separate limit and 90/100/over thresholds persist', as
   await expect(page.getByRole('status').filter({ hasText: /budget/i })).toContainText(/over budget/i)
   await expect(page.getByText(/100\.01/).first()).toBeVisible()
   await page.getByRole('button', { name: 'Edit expense: Snacks', exact: true }).click()
-  await page.getByLabel('Planned cost (SGD)', { exact: true }).fill('1.001')
+  await page.getByLabel('Planned unit cost (SGD)', { exact: true }).fill('1.001')
   await page.getByRole('button', { name: 'Save item', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText(/decimal|two|2|valid/i)
-  await expect(page.getByLabel('Planned cost (SGD)', { exact: true })).toHaveValue('1.001')
+  await expect(page.getByLabel('Planned unit cost (SGD)', { exact: true })).toHaveValue('1.001')
 })
 
 test('rain switch cancellation, commit, one immutable public post and reload', async ({ page }) => {
@@ -409,8 +409,8 @@ for (const width of [375, 575, 768, 1280]) {
         await addTask(page, 'Check microphones and confirm the longer sound-check schedule with volunteers')
       } else if (tab === 'budget') {
         await page.getByLabel('Item name', { exact: true }).fill('Sound equipment and volunteer refreshments')
-        await page.getByLabel('Planned cost (SGD)', { exact: true }).fill('100.00')
-        await page.getByLabel('Actual cost (SGD)', { exact: true }).fill('89.99')
+        await page.getByLabel('Planned unit cost (SGD)', { exact: true }).fill('100.00')
+        await page.getByLabel('Actual unit cost (SGD)', { exact: true }).fill('89.99')
         await page.getByRole('button', { name: 'Save item', exact: true }).click()
         await expect(page.getByRole('button', { name: 'Edit expense: Sound equipment and volunteer refreshments', exact: true })).toBeVisible()
       } else {

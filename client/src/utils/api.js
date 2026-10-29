@@ -75,6 +75,8 @@ export const deleteAnnouncement = (eventId, id) => operationsBackend.deleteAnnou
 export const saveBudgetLimit = (eventId, cents) => operationsBackend.saveBudgetLimit(eventId, cents)
 export const saveBudgetItem = (eventId, input) => operationsBackend.saveBudgetItem(eventId, input)
 export const deleteBudgetItem = (eventId, id) => operationsBackend.deleteBudgetItem(eventId, id)
+export const createBudgetCategory = (eventId, name) => operationsBackend.createBudgetCategory(eventId, name)
+export const deleteBudgetCategory = (eventId, name) => operationsBackend.deleteBudgetCategory(eventId, name) // → { categories, items }
 export const getForecastAreas = () => weatherBackend.getForecastAreas()
 export const getEventWeather = (eventId) => weatherBackend.getEventWeather(eventId)
 export const setForecastArea = (eventId, name) => operationsBackend.setForecastArea(eventId, name)

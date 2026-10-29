@@ -1,7 +1,7 @@
 import { supabase } from './supabase.js'
 import { getEvent } from './supabaseApi.js'
 import { getForecastAreas as fetchLiveForecastAreas } from './supabaseFeature4Weather.js'
-import { BUDGET_CATEGORIES, TASK_STATUSES, validateCents, summariseBudget } from './feature4.js'
+import { TASK_STATUSES, budgetCategoryOptions, validateCategoryName, validateCents, validateExpenseAmounts, summariseBudget } from './feature4.js'
 
 const MAX_AMOUNT_CENTS = 999_999_999_999
 
@@ -63,7 +63,7 @@ function announcementDto(row) {
 
 function budgetItemDto(row) {
   return {
-    id: row.id, eventId: row.event_id, name: row.description, category: row.category,
+    id: row.id, eventId: row.event_id, name: row.description, category: row.category, quantity: row.quantity ?? 1,
     plannedCents: amountToCents(row.estimated_amount), actualCents: amountToCents(row.actual_amount),
   }
 }
@@ -95,7 +95,7 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
   async function readBudget(eventId) {
     const [setting, rows] = await Promise.all([
       client.from('event_operation_settings').select('budget_limit').eq('event_id', eventId).maybeSingle(),
-      client.from('budget_items').select('id,event_id,description,category,estimated_amount,actual_amount')
+      client.from('budget_items').select('id,event_id,description,category,quantity,estimated_amount,actual_amount')
         .eq('event_id', eventId).eq('kind', 'expense').order('created_at'),
     ])
     const config = check(setting)
@@ -106,16 +106,21 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
     return { limitCents, items }
   }
 
+  async function readCategories(eventId) {
+    return check(await client.from('event_operation_settings').select('budget_categories').eq('event_id', eventId).maybeSingle())?.budget_categories ?? []
+  }
+
   async function getEventOperations(eventId) {
     const event = await requireOwner(eventId)
     const [tasksResult, announcements, budgetResult, settingsResult] = await Promise.all([
       client.from('tasks').select('id,event_id,title,description,status,position').eq('event_id', eventId).order('status').order('position'),
       readPosts(eventId), readBudget(eventId),
-      client.from('event_operation_settings').select('forecast_area').eq('event_id', eventId).maybeSingle(),
+      client.from('event_operation_settings').select('forecast_area,budget_categories').eq('event_id', eventId).maybeSingle(),
     ])
+    const settings = check(settingsResult)
     return {
       event, tasks: ordered(check(tasksResult)), announcements, budget: budgetResult,
-      forecastAreaOverride: check(settingsResult)?.forecast_area || null,
+      budgetCategories: settings?.budget_categories ?? [], forecastAreaOverride: settings?.forecast_area || null,
     }
   }
 
@@ -212,11 +217,12 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
   async function saveBudgetItem(eventId, input) {
     await requireOwner(eventId)
     const category = input?.category
-    if (!BUDGET_CATEGORIES.includes(category)) throw new Error('Choose a valid budget category.')
+    if (!budgetCategoryOptions(await readCategories(eventId)).includes(category)) throw new Error('Choose a valid budget category.')
+    const quantity = validateExpenseAmounts({ quantity: input?.quantity ?? 1, plannedCents: input?.plannedCents, actualCents: input?.actualCents })
     const planned = centsToAmount(input?.plannedCents)
     const actual = centsToAmount(input?.actualCents)
-    const values = { event_id: eventId, kind: 'expense', category, description: nonBlank(input?.name, 'Item name'), estimated_amount: planned, actual_amount: actual }
-    const columns = 'id,event_id,kind,description,category,estimated_amount,actual_amount'
+    const values = { event_id: eventId, kind: 'expense', category, description: nonBlank(input?.name, 'Item name'), quantity, estimated_amount: planned, actual_amount: actual }
+    const columns = 'id,event_id,kind,description,category,quantity,estimated_amount,actual_amount'
     let row
     if (input?.id) {
       row = check(await client.from('budget_items').update(values).eq('event_id', eventId).eq('id', input.id).select(columns).single())
@@ -227,6 +233,7 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
       } catch (error) {
         row = await reconcileCreate(client, 'budget_items', requestId, eventId,
           candidate => candidate.kind === 'expense' && candidate.category === category && candidate.description === values.description
+            && (candidate.quantity ?? 1) === quantity
             && amountToCents(candidate.estimated_amount) === input.plannedCents
             && amountToCents(candidate.actual_amount) === input.actualCents,
           columns, error)
@@ -240,6 +247,19 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
     check(await client.from('budget_items').delete().eq('event_id', eventId).eq('id', id).select('id').single())
   }
 
+  async function createBudgetCategory(eventId, name) {
+    await requireOwner(eventId)
+    const value = validateCategoryName(name, await readCategories(eventId))
+    return check(await client.rpc('add_feature4_budget_category', { p_event_id: eventId, p_name: value }))
+  }
+
+  /** The RPC moves the category's expenses to Other and removes it in one transaction. */
+  async function deleteBudgetCategory(eventId, name) {
+    await requireOwner(eventId)
+    const categories = check(await client.rpc('delete_feature4_budget_category', { p_event_id: eventId, p_name: name }))
+    return { categories, items: (await readBudget(eventId)).items }
+  }
+
   async function setForecastArea(eventId, name) {
     await requireOwner(eventId)
     if (typeof name !== 'string' || !name.trim()) throw new Error('Choose an available forecast area.')
@@ -251,7 +271,7 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
 
   return { getEventOperations, getAnnouncements, createTask, updateTask, deleteTask, saveTaskBoard,
     createAnnouncement, updateAnnouncement, deleteAnnouncement, saveBudgetLimit, saveBudgetItem,
-    deleteBudgetItem, setForecastArea }
+    deleteBudgetItem, createBudgetCategory, deleteBudgetCategory, setForecastArea }
 }
 
 const api = supabase ? createSupabaseFeature4Api(supabase) : null
@@ -274,4 +294,6 @@ export const deleteAnnouncement = live('deleteAnnouncement')
 export const saveBudgetLimit = live('saveBudgetLimit')
 export const saveBudgetItem = live('saveBudgetItem')
 export const deleteBudgetItem = live('deleteBudgetItem')
+export const createBudgetCategory = live('createBudgetCategory')
+export const deleteBudgetCategory = live('deleteBudgetCategory')
 export const setForecastArea = live('setForecastArea')
