@@ -7,7 +7,7 @@ const assets = ref([]), error = ref(''), busy = ref(false), loading = ref(false)
 let generation = 0
 let uploadController
 onBeforeUnmount(() => { generation++; uploadController?.abort() })
-watch(() => props.eventId, () => {
+watch(() => [props.eventId, props.planId], () => {
   uploadController?.abort()
   busy.value = false
   assets.value = []
@@ -17,7 +17,7 @@ async function load() {
   if (busy.value) return
   const token = ++generation; error.value = ''; message.value = ''; loading.value = true; loadReady.value = false
   try {
-    const rows = await getFloorImages(props.eventId)
+    const rows = await getFloorImages(props.eventId, props.planId)
     const resolved = await Promise.all(rows.map(async row => ({ ...row, ...(await floorImageRequest(`/${row.id}`)) })))
     if (token === generation) { assets.value = resolved; loadReady.value = true }
   } catch (e) { if (token === generation) error.value = e.message }

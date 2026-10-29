@@ -22,3 +22,37 @@ export function validateFloorImage(file) {
   if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose a JPEG, PNG or WebP image.')
   if (!file.size || file.size > 10 * 1024 * 1024) throw new Error('Choose an image no larger than 10 MiB.')
 }
+
+// A plan background is stored by R2 key in the plan layout so participants can see it.
+// Only keys under this event's floor-plan folder become URLs.
+export function backgroundUrl(base, eventId, key) {
+  if (!base || typeof key !== 'string' || !eventId) return ''
+  if (!key.startsWith(`floorplans/${eventId}/`) || key.split('/').some(part => !part || part === '.' || part === '..') || /[?#\\]/.test(key)) return ''
+  return `${String(base).replace(/\/+$/, '')}/${key.split('/').map(encodeURIComponent).join('/')}`
+}
+// Largest centred rectangle of the image's proportions that fits inside the box.
+export function fitContain(imageWidth, imageHeight, box) {
+  if (!(imageWidth > 0) || !(imageHeight > 0)) return { x: box.x, y: box.y, width: box.width, height: box.height }
+  const scale = Math.min(box.width / imageWidth, box.height / imageHeight)
+  const width = imageWidth * scale
+  const height = imageHeight * scale
+  return { x: box.x + (box.width - width) / 2, y: box.y + (box.height - height) / 2, width, height }
+}
+// Like fitContain, but for an image turned by `degrees` about its centre: the turned
+// image's bounding box must fit the box, then `zoom` scales it about that centre
+// (callers clip it to the box). Returns the centre to rotate around.
+export function fitRotated(imageWidth, imageHeight, box, degrees = 0, zoom = 1) {
+  const angle = (Number(degrees) || 0) * Math.PI / 180
+  const cos = Math.abs(Math.cos(angle))
+  const sin = Math.abs(Math.sin(angle))
+  if (!(imageWidth > 0) || !(imageHeight > 0)) return { cx: box.x + box.width / 2, cy: box.y + box.height / 2, width: box.width, height: box.height, rotation: 0 }
+  const boundsWidth = imageWidth * cos + imageHeight * sin
+  const boundsHeight = imageWidth * sin + imageHeight * cos
+  const scale = Math.min(box.width / boundsWidth, box.height / boundsHeight)
+  const size = scale * clampScale(zoom)
+  return { cx: box.x + box.width / 2, cy: box.y + box.height / 2, width: imageWidth * size, height: imageHeight * size, rotation: ((Number(degrees) || 0) % 360 + 360) % 360 }
+}
+// Size multiplier applied after fitting; 1 = fits the floor area exactly.
+export const clampScale = (value) => Math.min(3, Math.max(0.5, Number(value) || 1))
+export const clampRotation = (value) => ((Number(value) || 0) % 360 + 360) % 360
+export const clampOpacity = (value) => Math.min(1, Math.max(0.1, Number(value) || 1))

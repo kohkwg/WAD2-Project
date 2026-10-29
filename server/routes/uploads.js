@@ -49,7 +49,9 @@ router.post('/cover', requireAuth, async (req, res) => {
 });
 
 router.post('/floor-plan', requireAuth, async (req, res) => {
-  const { eventId, floorPlanId } = req.body || {};
+  const { eventId, floorPlanId, kind } = req.body || {};
+  // A plan background is an editor image: organisers may add it before the event is published.
+  const background = kind === 'background';
   if (!UUID.test(eventId) || !UUID.test(floorPlanId) || !validFile(req.body, true)) {
     return res.status(400).json({ error: 'An event, floor plan and JPEG, PNG or WebP image up to 10 MiB are required.' });
   }
@@ -58,13 +60,15 @@ router.post('/floor-plan', requireAuth, async (req, res) => {
     const { data: organiser, error: roleError } = await client.rpc('is_event_organiser', { p_event_id: eventId });
     if (roleError) throw roleError;
     if (organiser !== true) return res.status(403).json({ error: 'Only event organisers can upload a floor plan.' });
-    const { data: event, error: eventError } = await client.from('events').select('id').eq('id', eventId).eq('status', 'published').maybeSingle();
-    if (eventError) throw eventError;
-    if (!event) return res.status(404).json({ error: 'Published event not found.' });
+    if (!background) {
+      const { data: event, error: eventError } = await client.from('events').select('id').eq('id', eventId).eq('status', 'published').maybeSingle();
+      if (eventError) throw eventError;
+      if (!event) return res.status(404).json({ error: 'Published event not found.' });
+    }
     const { data: plan, error: planError } = await client.from('floor_plans').select('id').eq('id', floorPlanId).eq('event_id', eventId).maybeSingle();
     if (planError) throw planError;
     if (!plan) return res.status(404).json({ error: 'Floor plan not found for this event.' });
-    return signImage(req, res, `floorplans/${eventId}/${floorPlanId}`);
+    return signImage(req, res, `floorplans/${eventId}/${floorPlanId}${background ? '/background' : ''}`);
   } catch {
     return res.status(503).json({ error: 'Unable to check floor-plan permissions. Please try again.' });
   }

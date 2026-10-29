@@ -9,22 +9,27 @@ const empty = () => ({ id: null, title: '', description: '', starts_at: '', ends
 const draft = ref(empty())
 let generation = 0
 onBeforeUnmount(() => { generation++ })
-watch(() => props.eventId, load, { immediate: true })
+watch(() => [props.eventId, props.planId], load, { immediate: true })
 async function load() {
   const token = ++generation; items.value = []; error.value = ''; editing.value = false; pendingDelete.value = null; busy.value = false; loading.value = true
-  try { const rows = await getProgramme(props.eventId); if (token === generation) { items.value = rows; emit('loaded', rows.length) } }
+  try { const rows = await getProgramme(props.eventId, props.planId); if (token === generation) { items.value = rows; emit('loaded', rows.length) } }
   catch (e) { if (token === generation) error.value = e.message }
   finally { if (token === generation) loading.value = false }
 }
 const ordered = computed(() => [...items.value].sort((a, b) => a.starts_at.localeCompare(b.starts_at) || a.position - b.position))
 function edit(item) { draft.value = item ? { ...item, starts_at: singaporeInput(item.starts_at), ends_at: singaporeInput(item.ends_at) } : empty(); editing.value = true; error.value = '' }
+// New items join the open plan; an existing item keeps its plan (or stays event-level
+// unless it now points at a zone, which belongs to the open plan).
+const planFor = (payload) => draft.value.id
+  ? (draft.value.floor_plan_id || (payload.zone_key ? props.planId : null) || null)
+  : (props.planId || null)
 async function save() {
   if (busy.value || !props.canEdit) return
   const token = generation, eid = props.eventId
   error.value = ''; busy.value = true
   try {
     const payload = programmePayload(draft.value, props.zones)
-    const row = await saveProgrammeItem(eid, { ...payload, id: draft.value.id, floor_plan_id: payload.zone_key ? props.planId : null, position: items.value.length })
+    const row = await saveProgrammeItem(eid, { ...payload, id: draft.value.id, floor_plan_id: planFor(payload), position: items.value.length })
     if (token !== generation) return
     items.value = [...items.value.filter(x => x.id !== row.id), row]; editing.value = false
   } catch (e) { if (token === generation) error.value = e.message }
