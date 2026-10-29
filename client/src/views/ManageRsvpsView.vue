@@ -285,7 +285,7 @@ async function demoExpireOffers() {
 </script>
 
 <template>
-  <div class="d-flex justify-content-between flex-wrap gap-2"><RouterLink to="/organiser/events" class="rsvp-back">&larr; My events</RouterLink><RouterLink class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage`">Event tools</RouterLink></div>
+  <div class="d-flex justify-content-between flex-wrap gap-2"><RouterLink to="/organiser/events" class="rsvp-back">&larr; My events</RouterLink><div class="d-flex flex-wrap gap-2"><RouterLink v-if="isMyEvent && new Date(event.startTime) > new Date()" class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/edit`">Edit event</RouterLink><RouterLink class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage`">Event tools</RouterLink></div></div>
 
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status">

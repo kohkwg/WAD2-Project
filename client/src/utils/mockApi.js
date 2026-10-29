@@ -255,6 +255,60 @@ export async function createEvent(eventData) {
   return event
 }
 
+// The organiser edits a published event (Create Event in edit mode).
+// Same rules as supabaseApi.updateEvent; raising capacity offers the new places to the waitlist.
+export async function updateEvent(eventId, changes) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = findEvent(db, eventId)
+  if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('You can only edit events you organise.')
+  if (new Date(event.startTime).getTime() <= Date.now()) {
+    throw new Error('This event has already started, so it can no longer be edited.')
+  }
+  if (new Date(changes.endTime) <= new Date(changes.startTime)) throw new Error('The end time must be after the start time.')
+  if (new Date(changes.startTime).getTime() <= Date.now()) throw new Error('The start time cannot be in the past.')
+
+  const taken = spotsTaken(db, eventId)
+  if (changes.capacity != null && changes.capacity < taken) {
+    throw new Error(`Capacity can't be lower than ${taken}: that many people are already confirmed or offered a place.`)
+  }
+  const venueKey = (venue) => JSON.stringify(venue ? [venue.name, venue.address || '', venue.lat ?? null, venue.lng ?? null] : null)
+  const venuesChanged = venueKey(event.venue) !== venueKey(changes.venue)
+    || Boolean(event.isOutdoor) !== Boolean(changes.isOutdoor)
+    || venueKey(event.backupVenue) !== venueKey(changes.backupVenue)
+  if (event.usingBackup && venuesChanged) {
+    throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.')
+  }
+  // Removing a question (or changing its answer type) would lose answers people already gave
+  if (db.rsvps.some((rsvp) => rsvp.eventId === eventId)) {
+    for (const old of event.questions || []) {
+      const kept = changes.questions.find((question) => question.id === old.id)
+      if (!kept) throw new Error('Questions can’t be removed after people have RSVP’d, because their answers would be lost.')
+      if (kept.type !== old.type) throw new Error('A question’s answer type can’t change after people have RSVP’d.')
+    }
+  }
+
+  const raisedCapacity = changes.capacity != null && changes.capacity > event.capacity
+  Object.assign(event, {
+    title: changes.title,
+    description: changes.description,
+    coverImageUrl: changes.coverImageUrl || '',
+    tags: [...changes.tags],
+    startTime: changes.startTime,
+    endTime: changes.endTime,
+    capacity: changes.capacity,
+    requiresApproval: changes.requiresApproval,
+    isOutdoor: changes.isOutdoor,
+    venue: changes.venue,
+    backupVenue: changes.isOutdoor ? changes.backupVenue : null,
+    questions: changes.questions.map(({ id, text, type, required }) => ({ id, text, type, required })),
+    updatedAt: new Date().toISOString(),
+  })
+  if (raisedCapacity) fillFreeSpots(db, eventId) // new places go to the waitlist first, like the database trigger
+  saveDb(db)
+  return withCounts(db, event)
+}
+
 // ---------------------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------------------

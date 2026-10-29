@@ -53,6 +53,8 @@ const router = createRouter({
     { path: '/my-rsvps', component: MyRsvpsView, meta: { title: 'My RSVPs' } },
     { path: '/organiser/events', component: OrganiserEventsView, meta: { title: 'My events' } },
     { path: '/organiser/events/new', component: CreateEventView, meta: { title: 'Create event' } },
+    // Same wizard, pre-filled, for changing a published event (Feature 2)
+    { path: '/organiser/events/:id/edit', component: CreateEventView, meta: { title: 'Edit event' } },
     { path: '/organiser/events/:id/rsvps', component: ManageRsvpsView, meta: { title: 'Manage RSVPs' } },
     { path: '/organiser/events/:id/manage', component: ManageEventView, meta: { title: 'Manage event' } },
 

@@ -265,6 +265,135 @@ export async function createEvent(eventData) {
   return createEventWith(supabase, eventData)
 }
 
+// ---------------------------------------------------------------------------
+// Editing a published event (Create Event in edit mode)
+// ---------------------------------------------------------------------------
+// No new SQL: Row Level Security already lets an event's organiser update the event, add
+// venues and manage its tags and questions. Writes happen in an order where an early failure
+// changes nothing (new venue rows first, then the event row in ONE update, then tags, then
+// questions). Every step is safe to repeat, so the page simply calls this again to retry:
+// new questions carry their own ids and tags/questions are compared with what is saved.
+// The database itself offers newly added capacity to the waitlist (events_after_update trigger).
+
+const sameVenue = (a, b) => Boolean(a && b) && a.name === b.name && (a.address || '') === (b.address || '')
+  && (a.lat ?? null) === (b.lat ?? null) && (a.lng ?? null) === (b.lng ?? null)
+const toQuestionType = (type) => (type === 'yesno' ? 'yes_no' : 'short_text')
+
+async function insertVenueWith(client, venue, isIndoor) {
+  const row = check(await client.from('venues').insert({
+    name: venue.name,
+    address: venue.address || null,
+    postal_code: venue.postal || null,
+    latitude: venue.lat ?? null,
+    longitude: venue.lng ?? null,
+    is_indoor: isIndoor,
+  }).select('id').single())
+  return row.id
+}
+
+async function saveEventTagsWith(client, eventId, before, after) {
+  const added = after.filter((slug) => !before.includes(slug))
+  const removed = before.filter((slug) => !after.includes(slug))
+  if (added.length === 0 && removed.length === 0) return
+  const interests = check(await client.from('interests').select('id,slug').in('slug', [...added, ...removed]))
+  const idOf = (slug) => interests.find((interest) => interest.slug === slug)?.id
+  if (added.some((slug) => idOf(slug) == null)) throw new Error('One of the chosen tags is unknown.')
+  if (added.length) {
+    check(await client.from('event_interests').upsert(
+      added.map((slug) => ({ event_id: eventId, interest_id: idOf(slug) })),
+      { onConflict: 'event_id,interest_id', ignoreDuplicates: true },
+    ))
+  }
+  const removedIds = removed.map(idOf).filter((id) => id != null)
+  if (removedIds.length) check(await client.from('event_interests').delete().eq('event_id', eventId).in('interest_id', removedIds))
+}
+
+async function saveEventQuestionsWith(client, eventId, before, after) {
+  const beforeById = new Map(before.map((question) => [question.id, question]))
+  // Only send what changed: the database has more question types than the pages show
+  for (const question of after) {
+    const old = beforeById.get(question.id)
+    if (!old) continue
+    const patch = {}
+    if (old.text !== question.text) patch.prompt = question.text
+    if (old.required !== question.required) patch.required = question.required
+    if (old.type !== question.type) patch.type = toQuestionType(question.type)
+    if (Object.keys(patch).length) check(await client.from('event_questions').update(patch).eq('event_id', eventId).eq('id', question.id))
+  }
+  const added = after.map((question, position) => ({ question, position })).filter(({ question }) => !beforeById.has(question.id))
+  if (added.length) {
+    check(await client.from('event_questions').upsert(
+      added.map(({ question, position }) => ({
+        id: question.id, event_id: eventId, prompt: question.text,
+        type: toQuestionType(question.type), required: question.required, position,
+      })),
+      { onConflict: 'id', ignoreDuplicates: true },
+    ))
+  }
+  const afterIds = new Set(after.map((question) => question.id))
+  const removedIds = before.filter((question) => !afterIds.has(question.id)).map((question) => question.id)
+  if (removedIds.length) check(await client.from('event_questions').delete().eq('event_id', eventId).in('id', removedIds))
+}
+
+// current = getEvent(eventId) as loaded just before saving; rsvpCount = how many RSVPs it has
+export async function updateEventWith(client, { current, myId, rsvpCount }, changes) {
+  const eventId = current.id
+  if (current.organiserId !== myId) throw new Error('You can only edit events you organise.')
+  if (new Date(current.startTime).getTime() <= Date.now()) {
+    throw new Error('This event has already started, so it can no longer be edited.')
+  }
+  if (new Date(changes.endTime) <= new Date(changes.startTime)) throw new Error('The end time must be after the start time.')
+  if (new Date(changes.startTime).getTime() <= Date.now()) throw new Error('The start time cannot be in the past.')
+  const taken = (current.confirmedCount || 0) + (current.offeredCount || 0)
+  if (changes.capacity != null && changes.capacity < taken) {
+    throw new Error(`Capacity can't be lower than ${taken}: that many people are already confirmed or offered a place.`)
+  }
+  if (rsvpCount > 0) {
+    for (const old of current.questions) {
+      const kept = changes.questions.find((question) => question.id === old.id)
+      if (!kept) throw new Error('Questions can’t be removed after people have RSVP’d, because their answers would be lost.')
+      if (kept.type !== old.type) throw new Error('A question’s answer type can’t change after people have RSVP’d.')
+    }
+  }
+
+  const update = {
+    title: changes.title,
+    description: changes.description,
+    starts_at: changes.startTime,
+    ends_at: changes.endTime,
+    capacity: changes.capacity,
+    requires_approval: changes.requiresApproval,
+    cover_image_url: changes.coverImageUrl || null,
+  }
+  // isOutdoor is stored on the venue row, so changing it also needs a new venue row
+  const outdoorChanged = Boolean(current.isOutdoor) !== Boolean(changes.isOutdoor)
+  const mainChanged = !sameVenue(current.venue, changes.venue) || outdoorChanged
+  const backupChanged = changes.isOutdoor ? !sameVenue(current.backupVenue, changes.backupVenue) : Boolean(current.backupVenue)
+  if (current.usingBackup && (mainChanged || backupChanged)) {
+    throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.')
+  }
+  if (mainChanged) update.venue_id = await insertVenueWith(client, changes.venue, !changes.isOutdoor)
+  if (backupChanged) update.backup_venue_id = changes.isOutdoor ? await insertVenueWith(client, changes.backupVenue, true) : null
+
+  const rows = check(await client.from('events').update(update).eq('id', eventId).select('id'))
+  if (!rows?.length) throw new Error('You can only edit events you organise.')
+
+  try {
+    await saveEventTagsWith(client, eventId, current.tags || [], changes.tags)
+    await saveEventQuestionsWith(client, eventId, current.questions || [], changes.questions)
+  } catch (error) {
+    throw new Error(`The main event details were saved, but not everything: ${error.message} Press Save again to retry.`)
+  }
+}
+
+export async function updateEvent(eventId, changes) {
+  const myId = await requireUserId()
+  const current = await getEvent(eventId)
+  const rsvps = current.organiserId === myId ? await getRsvpsForEvent(eventId) : []
+  await updateEventWith(supabase, { current, myId, rsvpCount: rsvps.length }, changes)
+  return getEvent(eventId)
+}
+
 // Deleting the event also deletes its RSVPs, questions and tags (on delete cascade in the database)
 export async function deleteEvent(eventId) {
   const rows = check(await supabase.from('events').delete().eq('id', eventId).select('id'))

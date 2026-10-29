@@ -20,6 +20,10 @@ const failedCovers = ref(new Set())
 
 // After publishing, Create Event sends us here as /organiser/events?created=<id>
 const justCreatedId = computed(() => route.query.created)
+// After saving an edit, Edit event sends us here as ?updated=<id> (plus &announced=1 if it posted one)
+const justUpdatedId = computed(() => route.query.updated)
+// Events can be edited until they start
+const isUpcoming = (event) => new Date(event.startTime).getTime() > Date.now()
 
 async function loadEvents() {
   loading.value = true
@@ -65,6 +69,9 @@ function fillPercent(event) {
   <div v-if="justCreatedId" class="alert alert-success">
     Event published. Participants can now find it and RSVP.
   </div>
+  <div v-if="justUpdatedId" class="alert alert-success" role="status">
+    Changes saved. {{ route.query.announced ? 'An announcement about them is now on the event page.' : 'No announcement was posted.' }}
+  </div>
   <div v-if="statusMessage" class="alert alert-success" role="status">{{ statusMessage }}</div>
   <div v-if="errorMessage && events.length" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
 
@@ -95,7 +102,16 @@ function fillPercent(event) {
         </div>
 
         <div class="card-body organiser-event-body">
-          <div class="event-title-row"><h2 class="h5 card-title mb-1">{{ event.title }}</h2><span v-if="event.id === justCreatedId" class="status-pill status-pill--new">Just published</span></div>
+          <div class="event-title-row">
+            <h2 class="h5 card-title mb-1">{{ event.title }}</h2>
+            <div class="event-title-tools">
+              <span v-if="event.id === justCreatedId" class="status-pill status-pill--new">Just published</span>
+              <!-- Editing sits by the name so the footer keeps one row on every card; hidden once the event starts -->
+              <RouterLink v-if="isUpcoming(event)" :to="'/organiser/events/' + event.id + '/edit'" class="edit-link">
+                <span aria-hidden="true">✎</span> Edit<span class="visually-hidden"> {{ event.title }}</span>
+              </RouterLink>
+            </div>
+          </div>
           <p class="event-meta small text-secondary mb-3">
             <span>{{ formatEventTime(event) }}</span><span>{{ event.venue.name }}</span>
           </p>
@@ -149,6 +165,11 @@ function fillPercent(event) {
 .organiser-event-cover > img, .organiser-event-cover > :deep(.event-artwork) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .organiser-event-body { display: flex; flex-direction: column; }
 .event-title-row { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .5rem; }
+.event-title-row h2 { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
+.event-title-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.edit-link { display: inline-flex; align-items: center; gap: .35rem; min-height: 44px; padding: 0 .85rem; border: 1px solid var(--bookedz-border); border-radius: 999px; color: var(--bookedz-primary-dark); font-size: .85rem; font-weight: 650; text-decoration: none; transition: background-color var(--bookedz-motion-fast) ease; }
+.edit-link:hover { color: var(--bookedz-primary-dark); background: var(--bookedz-glass-hover); }
+@media (prefers-reduced-motion: reduce) { .edit-link { transition: none; } }
 .event-meta { display: grid; gap: .2rem; margin-top: .2rem; }
 .capacity-copy { display: flex; align-items: baseline; gap: .35rem; margin-top: auto; color: var(--bookedz-muted, #63665e); font-size: .9rem; }
 .capacity-copy strong { color: var(--bookedz-ink, #292d32); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
