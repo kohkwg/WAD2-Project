@@ -390,6 +390,31 @@ not persist. These are dated observations, not permanent database invariants.
   outline-button disabled colours unset; noted for Huxley.
 
 
+### 25 October — Aishani F1 design branch
+
+- Verified clean `aish` ownership, repository URL, single worktree and no open aish
+  PRs. Published and verified both backups before the one-time replacement:
+  `backup/design-baseline/aish/20261025-220000-local` and
+  `backup/design-baseline/aish/20261025-220000-remote`, both preserving
+  `c5b7a7a586ad06859ca8cde66ec68f39cb985062`.
+- Verified Denzel's dev tip and replaced only aish with
+  `86c026516690cc6f5e0f7c5bdbdde2093273fc02` using the explicit original-tip lease;
+  fetched and confirmed local/remote baseline equality before edits. Backups remain.
+- Refined only F1 Profile and Discover presentation: themed form/selection/focus,
+  semantic fieldsets, saving state and draft-safe retry, mobile actions, 44px view
+  controls, mobile toolbar, semantic hosting colours and reduced-motion hover.
+  No shared shell/theme/router/package, ranking, API or schema edits.
+- Locked client dependencies installed under Node 22/pnpm 10; lockfiles unchanged.
+  Targeted Chromium checks pass: two F1 profile/discovery cases plus the existing
+  pending-search/view-switch case. Both themes and 375/575/768/1280px covered;
+  profile keyboard selection/failure/retry, learned weights, no overflow, one main,
+  selected-chip contrast and console assertions pass. See the
+  [F1 review](docs/design/design-review.md#f1-owner-refinement-25-october) for captures.
+- No full suite/production build, hosted writes, deployments or PR creation/merge.
+  Safari, physical devices and signed-in hosted profile writes remain unverified.
+  Denzel owns subsequent PR review/integration into dev.
+
+
 ### 28 October — event covers cropped to 16:9 (`gregory`)
 
 - After reporting unequal My events cards: a card without a photo showed its fallback artwork at 3:2 (548×365) while photo cards were cropped to 16:7

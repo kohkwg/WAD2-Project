@@ -122,3 +122,30 @@ condition for data correctness or completing an action.
 A final one-case public/My RSVPs check also passed after making offer actions
 theme-aware; it verifies normal-text contrast of at least 4.5:1 on Confirm my spot
 at desktop and mobile sizes. The latest participant captures include that fix.
+
+## F1 owner refinement, 25 October
+
+Aishani's branch refines only Profile and Discover, with scoped CSS and existing
+fonts/tokens. Profile's fixed light surface and white selected-chip text were
+replaced with semantic tokens. Fieldset hierarchy, selection checks/count,
+saving feedback, retry draft retention and mobile actions improve the form.
+Discover receives 44px view buttons, mobile toolbar wrapping, semantic hosting
+colours and reduced-motion hover handling. Shared shell/theme files are unchanged.
+
+Targeted Chromium evidence (Node 22, isolated demo server on 5183):
+
+- `f1-profile-design.spec.js`: two cases covering both themes at
+  375/575/768/1280px, profile save failure/retry, keyboard selection, retained learned
+  weights, one main, touch-target height, no overflow and no console warnings/errors.
+  Selected-interest text contrast is asserted at 4.5:1 or higher.
+- Existing `design-polish.spec.js --grep 'search stays'`: pending search survives
+  the view change; existing responsive hero/map assertions pass.
+- Profile captures: [mobile light](previews/profile-f1-mobile-light.png) and
+  [desktop dark](previews/profile-f1-desktop-dark.png). These use a synthetic
+  profile fixture; no hosted account was read or written.
+
+The initial Profile colour assertion ran before theme application; explicitly
+waiting for the theme attribute/CSS resolved the test timing issue. The browser
+plugin had no connected browser; the existing project Playwright stack supplied
+captures. macOS sandbox process/network restrictions required an approved local
+server/browser run. No full suite/build, Safari/device test or live write ran.

@@ -96,11 +96,13 @@ async function save() {
       <div class="spinner-border" role="status"><span class="visually-hidden">Loading profile</span></div>
     </div>
 
-    <form v-else-if="userId" class="profile-form" @submit.prevent="save">
+    <form v-else-if="userId" class="profile-form" :aria-busy="saving" @submit.prevent="save">
       <div v-if="success" class="alert alert-success" role="status">{{ success }}</div>
       <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
 
-      <section class="profile-section">
+      <fieldset class="profile-section" :disabled="saving" aria-describedby="profile-details-help">
+        <legend>Make yourself at home</legend>
+        <p id="profile-details-help" class="profile-help">A name to go by, and a starting point for nearby plans.</p>
         <div class="mb-4">
           <label for="name" class="form-label">Name</label>
           <input id="name" v-model="displayName" class="form-control" autocomplete="name" />
@@ -109,30 +111,39 @@ async function save() {
         <div class="mb-3">
           <label for="postal" class="form-label">Postal code</label>
           <input id="postal" v-model="postalCode" class="form-control" inputmode="numeric"
-                 maxlength="6" pattern="\d{6}" placeholder="e.g. 188065" autocomplete="postal-code" />
-          <div class="form-text">Used to show events near you. Only the area is used for ranking.</div>
+                 maxlength="6" pattern="\d{6}" placeholder="e.g. 188065" autocomplete="postal-code" aria-describedby="postal-help" />
+          <div id="postal-help" class="form-text">Optional. Used to find events near you.</div>
         </div>
 
-      </section>
-
-      <fieldset class="profile-section profile-interests mb-4">
-        <legend class="form-label fs-6">Interests</legend>
-        <div class="d-flex flex-wrap gap-2">
-          <template v-for="i in INTEREST_OPTIONS" :key="i">
-            <input :id="`int-${i}`" v-model="selected" type="checkbox" class="btn-check" :value="i" />
-            <label :for="`int-${i}`" class="btn btn-outline-primary btn-sm text-capitalize">{{ i }}</label>
-          </template>
-        </div>
-        <div class="form-text">Your picks improve as you RSVP to and attend events.</div>
       </fieldset>
 
-      <button class="btn btn-primary" :disabled="saving">
-        <span v-if="saving" class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
-        Save profile
-      </button>
+      <fieldset class="profile-section profile-interests" :disabled="saving" aria-describedby="interests-help">
+        <legend>Follow your interests</legend>
+        <p id="interests-help" class="profile-help">Choose what you enjoy. Your picks improve as you RSVP to and attend events.</p>
+        <p class="interest-count" role="status" aria-atomic="true">{{ selected.length }} {{ selected.length === 1 ? 'interest' : 'interests' }} selected</p>
+        <div class="interest-options">
+          <template v-for="i in INTEREST_OPTIONS" :key="i">
+            <input :id="`int-${i}`" v-model="selected" type="checkbox" class="btn-check" :value="i" />
+            <label :for="`int-${i}`" class="btn btn-outline-primary text-capitalize"><span class="interest-check" aria-hidden="true"></span>{{ i }}</label>
+          </template>
+        </div>
+      </fieldset>
+
+      <div class="profile-actions">
+        <button type="submit" class="btn btn-primary" :disabled="saving">
+          <span v-if="saving" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+          {{ saving ? 'Saving profile…' : 'Save profile' }}
+        </button>
+        <RouterLink to="/discover" class="btn btn-outline-secondary">Back to Discover</RouterLink>
+        <p>Save your changes before heading back to explore.</p>
+      </div>
     </form>
 
-    <div v-else class="alert alert-warning" :role="USING_SUPABASE ? 'alert' : 'status'">{{ error }}<button v-if="USING_SUPABASE" type="button" class="btn btn-outline-secondary btn-sm ms-2" @click="loadProfile">Retry profile</button></div>
+    <div v-else class="profile-unavailable alert alert-warning" :role="USING_SUPABASE ? 'alert' : 'status'">
+      <p>{{ error }}</p>
+      <button v-if="USING_SUPABASE" type="button" class="btn btn-outline-secondary" @click="loadProfile">Retry profile</button>
+      <RouterLink v-else to="/discover" class="btn btn-outline-secondary">Explore demo events</RouterLink>
+    </div>
   </div>
 </template>
 
@@ -142,12 +153,20 @@ async function save() {
 .profile-kicker { margin: 0 0 .55rem; color: var(--bookedz-ink-soft, #62676b); font-size: .9rem; }
 .profile-title { margin: 0; color: var(--bookedz-ink, #292d32); font: 500 clamp(2.2rem, 5vw, 3.25rem)/1.05 var(--bookedz-heading); letter-spacing: -.04em; }
 .profile-lede { max-width: 48ch; margin: .85rem 0 0; color: var(--bookedz-ink-soft, #62676b); line-height: 1.6; }
-.profile-form { padding: clamp(1.1rem, 4vw, 2rem); border: 1px solid var(--bookedz-border, #e5ded2); border-radius: 22px; background: #fffdf9; box-shadow: 0 14px 36px rgba(41, 45, 50, .06); }
-.profile-section { margin-bottom: 1.4rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--bookedz-border, #e5ded2); }
-.profile-interests { border: 0; padding-bottom: 0; }
-:deep(.form-control) { min-height: 46px; border-color: var(--bookedz-border, #e5ded2); border-radius: 11px; }
-:deep(.form-control:focus) { border-color: var(--bookedz-primary, #e9725c); box-shadow: 0 0 0 .2rem rgba(233, 114, 92, .18); }
-:deep(.btn-check:checked + .btn-outline-primary) { color: #fff; border-color: var(--bookedz-primary-dark, #aa3e2c); background: var(--bookedz-primary-dark, #aa3e2c); }
-:deep(.btn-primary) { border-color: var(--bookedz-primary-dark, #aa3e2c); background: var(--bookedz-primary-dark, #aa3e2c); }
-:deep(:focus-visible) { outline: 3px solid #292d32; outline-offset: 3px; }
+.profile-form { padding: clamp(1.1rem, 4vw, 2rem); border: 1px solid var(--bookedz-border); border-radius: var(--bookedz-radius-card); background: var(--bookedz-surface); box-shadow: var(--bookedz-shadow); }
+.profile-section { min-width: 0; margin: 0 0 1.75rem; padding: 0 0 1.5rem; border: 0; border-bottom: 1px solid var(--bookedz-border); }
+.profile-section legend { float: none; width: auto; margin-bottom: .5rem; font-family: var(--bookedz-heading); font-size: 1.35rem; font-weight: 650; }
+.profile-help { max-width: 55ch; margin-bottom: 1.25rem; color: var(--bookedz-muted); }
+.profile-interests { padding-bottom: 0; border: 0; }
+.interest-count { color: var(--bookedz-muted); font-size: .875rem; margin-bottom: .75rem; font-variant-numeric: tabular-nums; }
+.interest-options { display: flex; flex-wrap: wrap; gap: .65rem; }
+.interest-options label { gap: .6rem; text-align: left; overflow-wrap: anywhere; max-width: 100%; }
+.interest-check { display: inline-block; flex: 0 0 1rem; width: 1rem; height: 1rem; border: 1px solid currentColor; border-radius: 50%; }
+.btn-check:checked + label .interest-check::after { content: ''; display: block; width: .3rem; height: .55rem; margin: .1rem auto 0; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.btn-check:checked + .btn-outline-primary { color: var(--bookedz-on-action); border-color: var(--bookedz-primary-dark); background: var(--bookedz-primary-dark); }
+.btn-check:focus-visible + label { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 4px; box-shadow: var(--bookedz-focus-glow); }
+.profile-actions { display: flex; flex-wrap: wrap; gap: .75rem; padding-top: 1.5rem; border-top: 1px solid var(--bookedz-border); }
+.profile-actions p { flex-basis: 100%; margin: 0; font-size: .875rem; color: var(--bookedz-muted); }
+.profile-unavailable,.profile-form .alert { overflow-wrap: anywhere; }
+@media(max-width:575px) { .profile-actions .btn { flex: 1 1 100%; } }
 </style>
