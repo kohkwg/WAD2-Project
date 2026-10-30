@@ -98,6 +98,10 @@ function saveItem(action) {
   mutate('budget', action, id => api.saveBudgetItem(id, input), item => { workspace.value.budget.items = action.input.id ? workspace.value.budget.items.map(row => row.id === item.id ? item : row) : [...workspace.value.budget.items, item] }, 'Expense saved.')
 }
 function deleteItem(action) { mutate('budget', action, id => api.deleteBudgetItem(id, action.id), () => { workspace.value.budget.items = workspace.value.budget.items.filter(item => item.id !== action.id) }, 'Expense deleted.') }
+function saveCategory(action) { mutate('budget', action, id => api.createBudgetCategory(id, action.name), categories => { workspace.value.budgetCategories = categories }, 'Category added.') }
+function deleteCategory(action) {
+  mutate('budget', action, id => api.deleteBudgetCategory(id, action.name), ({ categories, items }) => { workspace.value.budgetCategories = categories; workspace.value.budget.items = items }, 'Category deleted. Its expenses moved to Other.')
+}
 async function refreshWeather() {
   const ticket = ++weatherRequest
   const page = epoch
@@ -149,7 +153,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
     </div>
     <TaskBoard v-show="activeTab === 'tasks'" :key="'tasks-' + workspace.event.id" :tasks="workspace.tasks" :pending="pending.tasks" :action-error="errors.tasks" @create="saveTask($event, 'create')" @update="saveTask($event, 'update')" @delete="saveTask($event, 'delete')" @save-board="saveBoard" @cancel-action="cancelDestructiveAction('tasks')" />
     <AnnouncementManager v-show="activeTab === 'announcements'" :key="'posts-' + workspace.event.id" :posts="workspace.announcements" :pending="pending.announcements" :action-error="errors.announcements" @create="saveAnnouncement($event, 'create')" @update="saveAnnouncement($event, 'update')" @delete="saveAnnouncement($event, 'delete')" @cancel-action="cancelDestructiveAction('announcements')" />
-    <BudgetTracker v-show="activeTab === 'budget'" :key="'budget-' + workspace.event.id" :budget="workspace.budget" :pending="pending.budget" :action-error="errors.budget" @save-limit="saveLimit" @save-item="saveItem" @delete-item="deleteItem" @cancel-action="cancelDestructiveAction('budget')" />
+    <BudgetTracker v-show="activeTab === 'budget'" :key="'budget-' + workspace.event.id" :budget="workspace.budget" :custom-categories="workspace.budgetCategories || []" :pending="pending.budget" :action-error="errors.budget" @save-limit="saveLimit" @save-item="saveItem" @delete-item="deleteItem" @save-category="saveCategory" @delete-category="deleteCategory" @cancel-action="cancelDestructiveAction('budget')" />
     <WeatherTool v-show="activeTab === 'weather'" :key="'weather-' + workspace.event.id" :event="workspace.event" :forecast="forecast" :areas="areas" :area-override="workspace.forecastAreaOverride" :loading="weatherLoading" :pending="pending.weather" :action-error="errors.weather" :error="weatherError" :areas-error="areasError" @refresh="refreshWeather" @save-area="saveArea" @switch-venue="switchVenue" @cancel-action="cancelDestructiveAction('weather')" />
   </template>
 </template>

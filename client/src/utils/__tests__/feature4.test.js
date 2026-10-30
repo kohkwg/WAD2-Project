@@ -179,6 +179,42 @@ test('budget persists separate limit and integer nonnegative expense rows', asyn
   assert.deepEqual((await api.getEventOperations('e1')).budget, { limitCents: null, items: [] })
 })
 
+test('custom budget categories are per event and deleting one moves its expenses to Other', async () => {
+  seed()
+  assert.deepEqual((await api.getEventOperations('e1')).budgetCategories, [])
+  assert.deepEqual(await api.createBudgetCategory('e1', '  Transport   costs '), ['Transport costs'])
+  for (const bad of ['', '   ', 'transport COSTS', 'venue', 'x'.repeat(41)]) {
+    await assert.rejects(api.createBudgetCategory('e1', bad), /category/i)
+  }
+  await assert.rejects(api.createBudgetCategory('e3', 'Prizes'), /owner/i)
+  const moved = await api.saveBudgetItem('e1', { name: 'Bus', category: 'Transport costs', plannedCents: 500, actualCents: 0 })
+  const kept = await api.saveBudgetItem('e1', { name: 'Hall', category: 'Venue', plannedCents: 900, actualCents: 0 })
+  assert.deepEqual((await api.getEventOperations('e2')).budgetCategories, [])
+  await assert.rejects(api.saveBudgetItem('e2', { name: 'Bus', category: 'Transport costs', plannedCents: 1, actualCents: 0 }), /category/i)
+  await assert.rejects(api.deleteBudgetCategory('e1', 'Venue'), /custom/i)
+  assert.deepEqual(await api.deleteBudgetCategory('e1', 'Transport costs'), { categories: [], items: [{ ...moved, category: 'Other' }, kept] })
+  const workspace = await api.getEventOperations('e1')
+  assert.deepEqual(workspace.budgetCategories, [])
+  assert.deepEqual(workspace.budget.items, [{ ...moved, category: 'Other' }, kept])
+  await assert.rejects(api.saveBudgetItem('e1', { name: 'Taxi', category: 'Transport costs', plannedCents: 1, actualCents: 0 }), /category/i)
+  await api.deleteEvent('e1')
+  assert.equal(db().feature4.budgetCategories.e1, undefined)
+})
+
+test('expense quantity stores whole-cent line totals and older items default to one', async () => {
+  seed((value) => { value.feature4 = { version: 1, tasks: [], announcements: [], forecastAreas: {},
+    budgets: { e1: { limitCents: null, items: [{ id: 'old', eventId: 'e1', name: 'Hall', category: 'Venue', plannedCents: 900, actualCents: 0 }] } } } })
+  assert.equal((await api.getEventOperations('e1')).budget.items[0].quantity, 1)
+  const input = { name: 'Lanyards', category: 'Marketing', quantity: 3, plannedCents: 3000, actualCents: 2997 }
+  const item = await api.saveBudgetItem('e1', input)
+  assert.equal(item.quantity, 3)
+  for (const patch of [{ quantity: 0 }, { quantity: 1.5 }, { quantity: 100_001 }, { plannedCents: 1000 }, { actualCents: 1 }]) {
+    await assert.rejects(api.saveBudgetItem('e1', { ...input, ...patch }), /quantity|whole-cent/i)
+  }
+  const items = (await api.getEventOperations('e1')).budget.items
+  assert.deepEqual(items.map(entry => entry.quantity), [1, 3])
+})
+
 test('forecast reads actual snake_case payload, nearest area, and saved manual fallback', async () => {
   seed()
   mockWeather()

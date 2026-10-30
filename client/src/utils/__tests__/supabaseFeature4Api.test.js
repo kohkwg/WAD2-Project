@@ -142,7 +142,7 @@ test('task creation uses its atomic position-assignment RPC and maps the task DT
 })
 
 function retryClient() {
-  const rows = { tasks: [], announcements: [], budget_items: [] }
+  const rows = { tasks: [], announcements: [], budget_items: [], event_operation_settings: [] }
   const calls = []
   return {
     rows, calls,
@@ -201,6 +201,25 @@ test('manual announcement and budget creates reconcile repeated IDs and reject m
   await assert.rejects(api.saveBudgetItem('e1', { ...item, actualCents: 1 }), /duplicate key/)
   assert.equal(client.rows.announcements.length, 1)
   assert.equal(client.rows.budget_items.length, 1)
+})
+
+test('budget categories use atomic RPCs and expenses send quantity with line totals', async () => {
+  const client = fakeClient({ rpcResults: { add_feature4_budget_category: ['Transport'], delete_feature4_budget_category: [] } })
+  const api = createSupabaseFeature4Api(client, async () => ({ isMine: true }))
+  assert.deepEqual(await api.createBudgetCategory('e1', '  Transport '), ['Transport'])
+  assert.deepEqual(client.calls.find(call => call.rpc === 'add_feature4_budget_category').args, { p_event_id: 'e1', p_name: 'Transport' })
+  await assert.rejects(api.createBudgetCategory('e1', 'venue'), /already a category/)
+  assert.deepEqual(await api.deleteBudgetCategory('e1', 'Transport'), { categories: [], items: [] })
+  assert.deepEqual(client.calls.find(call => call.rpc === 'delete_feature4_budget_category').args, { p_event_id: 'e1', p_name: 'Transport' })
+
+  const store = retryClient()
+  const live = createSupabaseFeature4Api(store, async () => ({ isMine: true }))
+  const item = { name: 'Lanyards', category: 'Marketing', quantity: 3, plannedCents: 3000, actualCents: 2997 }
+  assert.equal((await live.saveBudgetItem('e1', item)).quantity, 3)
+  const row = store.rows.budget_items[0]
+  assert.deepEqual([row.quantity, row.estimated_amount, row.actual_amount], [3, '30.00', '29.97'])
+  await assert.rejects(live.saveBudgetItem('e1', { ...item, plannedCents: 1000 }), /whole-cent/)
+  await assert.rejects(live.saveBudgetItem('e1', { ...item, category: 'Transport' }), /valid budget category/)
 })
 
 test('permission and validation failures do not reconcile into apparent success', async () => {

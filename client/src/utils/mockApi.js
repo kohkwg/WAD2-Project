@@ -8,7 +8,7 @@
 import { createSeedData } from './mockData.js'
 import { calculateWaitlistScore } from './waitlistScore.js'
 import { OFFER_HOURS, ACTIVE_STATUSES } from './helpers.js'
-import { TASK_STATUSES, BUDGET_CATEGORIES, validateCents, summariseBudget } from './feature4.js'
+import { TASK_STATUSES, FALLBACK_BUDGET_CATEGORY, budgetCategoryOptions, validateCategoryName, validateCents, validateExpenseAmounts, summariseBudget } from './feature4.js'
 import { fetchForecastData, forecastAreas, eventForecast } from './feature4Weather.js'
 
 // Who is "logged in" for the demo. In Supabase mode this comes from the login session instead.
@@ -225,6 +225,7 @@ export async function deleteEvent(eventId) {
   db.feature4.tasks = db.feature4.tasks.filter((task) => task.eventId !== eventId)
   db.feature4.announcements = db.feature4.announcements.filter((post) => post.eventId !== eventId)
   delete db.feature4.budgets[eventId]
+  if (db.feature4.budgetCategories) delete db.feature4.budgetCategories[eventId]
   delete db.feature4.forecastAreas[eventId]
   saveDb(db)
 }
@@ -505,7 +506,8 @@ export async function expireOffersNow(eventId) {
 
 /** @typedef {{id:string,eventId:string,title:string,notes:string,status:string,position:number}} Task */
 /** @typedef {{id:string,eventId:string,body:string,kind:'manual'|'venue-switch',createdAt:string,updatedAt:string|null}} Announcement */
-/** @typedef {{id:string,eventId:string,name:string,category:string,plannedCents:number,actualCents:number}} BudgetItem */
+/** plannedCents/actualCents are line totals (unit cost × quantity). */
+/** @typedef {{id:string,eventId:string,name:string,category:string,quantity:number,plannedCents:number,actualCents:number}} BudgetItem */
 
 function ownedEvent(db, eventId) {
   const event = findEvent(db, eventId)
@@ -553,13 +555,22 @@ function eventBudget(db, eventId) {
   return Object.hasOwn(db.feature4.budgets, eventId) ? db.feature4.budgets[eventId] : { limitCents: null, items: [] }
 }
 
-/** Private event workspace: { event, tasks, announcements, budget, forecastAreaOverride }. */
+// Older saved demo data has no budgetCategories key or expense quantities.
+function customCategories(db, eventId) {
+  return db.feature4.budgetCategories?.[eventId] ?? []
+}
+
+function budgetDto(budget) {
+  return { ...budget, items: budget.items.map((item) => ({ ...item, quantity: item.quantity ?? 1 })) }
+}
+
+/** Private event workspace: { event, tasks, announcements, budget, budgetCategories, forecastAreaOverride }. */
 export async function getEventOperations(eventId) {
   const db = loadDb()
   const event = ownedEvent(db, eventId)
   return {
     event: withCounts(db, event), tasks: orderedTasks(db, eventId), announcements: publicAnnouncements(db, eventId),
-    budget: eventBudget(db, eventId), forecastAreaOverride: db.feature4.forecastAreas[eventId] || null,
+    budget: budgetDto(eventBudget(db, eventId)), budgetCategories: [...customCategories(db, eventId)], forecastAreaOverride: db.feature4.forecastAreas[eventId] || null,
   }
 }
 
@@ -674,9 +685,10 @@ export async function saveBudgetItem(eventId, input) {
   const existing = input?.id ? eventRecord(budget.items, eventId, input.id, 'Budget item') : null
   const item = {
     id: existing?.id || operationId('expense'), eventId, name: text(input?.name, 'Item name'),
-    category: input?.category, plannedCents: validateCents(input?.plannedCents), actualCents: validateCents(input?.actualCents),
+    category: input?.category, quantity: input?.quantity ?? 1, plannedCents: validateCents(input?.plannedCents), actualCents: validateCents(input?.actualCents),
   }
-  if (!BUDGET_CATEGORIES.includes(item.category)) throw new Error('Choose a valid budget category.')
+  validateExpenseAmounts(item)
+  if (!budgetCategoryOptions(customCategories(db, eventId)).includes(item.category)) throw new Error('Choose a valid budget category.')
   const items = [...budget.items.filter((entry) => entry.id !== item.id), item]
   // Reject totals that cannot be represented as exact integer cents.
   summariseBudget({ ...budget, items })
@@ -694,6 +706,31 @@ export async function deleteBudgetItem(eventId, id) {
   budget.items.splice(budget.items.indexOf(item), 1)
   db.feature4.budgets[eventId] = budget
   saveDb(db)
+}
+
+/** @returns {Promise<string[]>} the event's custom categories after adding one. */
+export async function createBudgetCategory(eventId, name) {
+  const db = loadDb()
+  ownedEvent(db, eventId)
+  const categories = [...customCategories(db, eventId), validateCategoryName(name, customCategories(db, eventId))]
+  db.feature4.budgetCategories = { ...db.feature4.budgetCategories, [eventId]: categories }
+  saveDb(db)
+  return [...categories]
+}
+
+/** Remove a custom category and move its expenses to the fallback category in the same write. */
+export async function deleteBudgetCategory(eventId, name) {
+  const db = loadDb()
+  ownedEvent(db, eventId)
+  const existing = customCategories(db, eventId)
+  if (!existing.includes(name)) throw new Error('Only custom categories can be deleted.')
+  const categories = existing.filter((entry) => entry !== name)
+  const budget = eventBudget(db, eventId)
+  budget.items = budget.items.map((item) => item.category === name ? { ...item, category: FALLBACK_BUDGET_CATEGORY } : item)
+  db.feature4.budgets[eventId] = budget
+  db.feature4.budgetCategories = { ...db.feature4.budgetCategories, [eventId]: categories }
+  saveDb(db)
+  return { categories: [...categories], items: budgetDto(budget).items }
 }
 
 export async function getForecastAreas() {
