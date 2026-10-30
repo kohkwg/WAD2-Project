@@ -231,3 +231,12 @@ ignore patterns and permissions were not the cause. A project-scoped server
 rescan indexed both files successfully. Use the server GUI's Rescan when this
 recurs, then check transfer/receipt on Windows before restarting Vite and refreshing.
 Do not delete caches, overwrite files or reset data as a first response.
+
+For F1's profile layout, selection feedback and saving states, run
+`pnpm --dir client test:e2e e2e/f1-profile-design.spec.js`. It substitutes only the
+Profile data boundary with a synthetic fixture, exercises failure/retry and learned
+weight retention without hosted writes, and checks both themes at the four target
+widths. The existing `design-polish.spec.js --grep 'search stays'` covers discovery
+search/view-switch regression. On 25 October, these ran against an owned demo Vite
+server on 5183 using a temporary config overriding baseURL/output paths because
+5173 was occupied; the repository's default config remains unchanged.

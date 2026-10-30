@@ -141,3 +141,18 @@ was retested after each refinement. Use [the review](design-review.md),
 Only targeted checks run by default; full suites and production builds await
 explicit user instruction. Physical camera/GPS, Safari/iOS and live write flows
 remain separately verified concerns.
+
+## F1 profile and discovery refinement, 25 October
+
+Profile uses the shared surface, action-foreground, border and focus tokens in
+both themes. Details and interests are labelled fieldsets; selected interests
+have a checkmark and an announced count. Saving disables editable fieldsets and
+shows an explicit saving label; errors retain the draft for retry. The existing
+profile persistence, postal geocoding and learned interest weights are unchanged.
+Actions stack at mobile widths, with a return to Discover and an explicit demo
+browsing link when profile editing is unavailable.
+
+Discover's Island/Map/List controls have 44px minimum height and occupy a separate
+row below the title at 575px and below. Hosting surfaces/borders/stamp use shared
+tokens. Category lift and neighbourhood image zoom stop under reduced motion.
+See [review evidence](design-review.md#f1-owner-refinement-25-october).
