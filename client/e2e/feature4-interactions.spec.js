@@ -88,7 +88,7 @@ test('cancelled task, announcement and expense deletes invalidate their failed r
 
   await openTool(page, 'budget')
   await page.getByLabel('Item name', { exact: true }).fill('Retry target expense')
-  await page.getByLabel('Planned cost (SGD)', { exact: true }).fill('12.00')
+  await page.getByLabel('Planned unit cost (SGD)', { exact: true }).fill('12.00')
   await page.getByRole('button', { name: 'Save item', exact: true }).click()
   const expenseDelete = page.getByRole('button', { name: 'Delete expense: Retry target expense', exact: true })
   await expenseDelete.click()

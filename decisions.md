@@ -89,6 +89,11 @@ product decisions or claims that Denzel personally specified every implementatio
 - Store/edit/display money as exact integer SGD cents. Separate optional positive
   limit; nonnegative planned/actual expenses; blank actual means zero; warn at 90%,
   reached at 100%, over above 100%. No wider accounting/assignment scope implied.
+- Budget owners can add/delete their own per-event categories in demo and live
+  (27 October). Built-ins stay; deleting a custom category moves its expenses to
+  `Other` atomically. Expenses have a quantity; planned/actual are stored as line
+  totals (unit cost × quantity). Live needs migration `20261027120000`, not yet
+  deployed; coordinate with Timothy before applying it to Bookerz.
 - Weather uses original venue coordinates and fresh NEA two-hour data. Manual
   area is display-only for live authorisation. Missing/unknown/stale/failed data
   never authorises a switch. Upcoming/ongoing outdoor event and valid backup required.
