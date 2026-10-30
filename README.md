@@ -344,3 +344,33 @@ Event's disabled buttons and RSVP validation messages now follow the shared
 light/dark theme, and one more stale browser test was updated. Gregory's logic and
 other teammates' work keep their authorship. No libraries or backend changes were
 added. Details: [status](status.md#25-october--gregorys-f2-design-branch-gregory).
+
+On 28 October 2026,
+
+Went ahead to make every event card cover the same 16:9 shape: photos and the fallback artwork are
+centre-cropped on screen on My events, Discover's event cards (Aishani's `EventCard`)
+and the Create Event previews. Uploaded images are unchanged. 
+
+Details: [status](status.md#28-october--event-covers-cropped-to-169-gregory).
+
+On 29 October 2026, Organisers can now edit a published event and announce the changes.
+
+- New "Edit event" page (`/organiser/events/:id/edit`) reuses the Create Event steps,
+  pre-filled with the event's details. Only the organiser can edit, and only before the
+  event starts.
+- Opened from a small Edit link beside the event name on My events (hidden once the
+  event starts) and an "Edit event" button on Manage RSVPs.
+- Before saving, a pop-up lists what changed (time, venue, capacity, RSVP questions, etc.)
+  and offers to post it as an announcement on the event page (on by default, title and
+  message can be edited).
+- Safety rules: capacity can't go below people already confirmed/offered; once people have
+  RSVP'd, questions can be reworded or added but not removed, venues are locked after the
+  rain switch to the backup venue. Raising capacity offers the new places to the waitlist.
+- New files: `utils/eventChanges.js` (builds the change list) and
+  `components/rsvp/AnnounceChangesDialog.vue` (the pop-up). Changed: `CreateEventView`,
+  `OrganiserEventsView`, `ManageRsvpsView`, `mockApi.js`, `supabaseApi.js`, `api.js` and one
+  route in `router/index.js`.
+
+All of it uses Denzel's existing announcement and confirmation dialog code unchanged. No new libraries
+and no database migration. The live saving uses the existing tables and permissions.
+

@@ -388,3 +388,24 @@ not persist. These are dated observations, not permanent database invariants.
   buttons (3.6:1, the shared disabled colours; WCAG exempts disabled controls).
   Shared `main.css` still leaves `.btn-primary` text white in dark mode and
   outline-button disabled colours unset; noted for Huxley.
+
+
+### 28 October — event covers cropped to 16:9 (`gregory`)
+
+- After reporting unequal My events cards: a card without a photo showed its fallback artwork at 3:2 (548×365) while photo cards were cropped to 16:7
+  (548×240). 
+  
+- Discover's `EventCard` let a portrait photo stretch its card (356×712).
+- Every event card cover is now one 16:9 box with the photo or artwork absolutely
+  positioned and centre-cropped (`object-fit: cover`): My events, Discover list
+  cards (Aishani's `EventCard`; To review) and Create Event's cover preview
+  and live preview. Uploaded originals are unchanged; the event-page banner keeps
+  its fixed-height crop. My events also falls back to the artwork if a photo fails.
+
+- Checks: the three changed SFCs compile; `tests/event-card.test.mjs` 5/5. A scratch
+  script seeded portrait, landscape and missing covers and measured every cover box
+  at 375/575/768/1280px in light and dark: all 16:9 (1.77–1.79 after rounding) and
+  equal per row, versus 24 failing checks before the change. Targeted demo Chromium:
+  `workspace-design`, `immersive-discovery`, creation preview, My events deletion and
+  public list cards passed; `design-polish` failed its navbar Escape-focus case once
+  (untouched code), then passed 2/2 when rerun. No full suite or production build.

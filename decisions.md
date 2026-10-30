@@ -228,3 +228,11 @@ a normal push to `gregory`. PR creation and merging stay with Denzel. This does 
 authorise changes to dev/main, other owners' branches, shared shell/theme files,
 dependencies, schema or hosted data. Results are recorded in
 [status](status.md#25-october--gregorys-f2-design-branch-gregory).
+
+### Event cover cropping, 27 October
+
+We chose one on-screen 16:9 crop for every event card cover (My events, the
+Create Event previews and Discover's `EventCard`), keeping uploaded originals rather
+than cropping files on upload. `EventCard` is Aishani's Feature 1 component, so she
+should review that change. Details:
+[status](status.md#28-october--event-covers-cropped-to-169-gregory).
