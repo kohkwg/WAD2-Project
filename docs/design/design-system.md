@@ -96,6 +96,11 @@ RSVPs. Confirm steps focus the safe choice first, return focus when kept and mov
 focus to the outcome message when a card or row disappears. Offer actions stack
 on phones. Multi-day events show their end date.
 
+Event card covers on Discover, My events and the Create Event previews share one
+16:9 box: uploaded photos and the fallback artwork are centre-cropped on screen to
+fill it, so every card's picture is the same size. Uploaded originals are unchanged.
+The event-page banner keeps its own fixed-height crop.
+
 ## Creation and organiser operations
 
 Create Event is a four-step studio: progress indication, direction-aware step

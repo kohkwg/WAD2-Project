@@ -1,17 +1,21 @@
 <script setup>
-import { ref, computed, nextTick, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, nextTick, onBeforeUnmount, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import StepIndicator from '../components/rsvp/StepIndicator.vue'
 import AddressSearch from '../components/rsvp/AddressSearch.vue'
 import VenueMap from '../components/VenueMap.vue'
 import EventSummary from '../components/rsvp/EventSummary.vue'
+import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue'
 import { uploadCover } from '../lib/uploadCover.js'
-import { createEvent, USING_SUPABASE } from '../utils/api.js'
+import { createEvent, getEvent, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
+import { describeEventChanges, formatAnnouncement } from '../utils/eventChanges.js'
 
 // Multi-step form (progressive disclosure): one small chunk at a time instead of one long page.
+// The same wizard edits a published event at /organiser/events/:id/edit (edit mode).
 
 const router = useRouter()
+const route = useRoute()
 
 const steps = ['Basics', 'Venue', 'RSVP questions', 'Review']
 const step = ref(1)
@@ -47,20 +51,91 @@ async function chooseCover(event) {
 }
 
 // Everything the organiser fills in, across all steps
-const form = ref({
-  title: '',
-  coverImageUrl: '',
-  description: '',
-  tags: [],
-  startTime: '', // from <input type="datetime-local">, e.g. "2026-10-20T19:00"
-  endTime: '',
-  capacity: 30,
-  venue: null, // { name, address, postal, lat, lng } from OneMap
-  isOutdoor: false,
-  backupVenue: null, // used by Denzel's rain check
-  requiresApproval: false,
-  questions: [], // [{ id, text, type: 'text' | 'yesno', required }]
-})
+function blankForm() {
+  return {
+    title: '',
+    coverImageUrl: '',
+    description: '',
+    tags: [],
+    startTime: '', // from <input type="datetime-local">, e.g. "2026-10-20T19:00"
+    endTime: '',
+    capacity: 30,
+    venue: null, // { name, address, postal, lat, lng } from OneMap
+    isOutdoor: false,
+    backupVenue: null, // used by Denzel's rain check
+    requiresApproval: false,
+    questions: [], // [{ id, text, type: 'text' | 'yesno', required }]
+  }
+}
+const form = ref(blankForm())
+
+// ---------- Edit mode: change a published event ----------
+
+const editId = computed(() => (route.params.id ? String(route.params.id) : ''))
+const isEditing = computed(() => Boolean(editId.value))
+const original = ref(null) // the event as loaded, in form shape, to compare against when saving
+const editLoading = ref(false)
+const editBlocked = ref('') // why this event can't be edited (not yours, already started, not found)
+const minCapacity = ref(1) // can't go below the people already confirmed or offered a place
+const hasRsvps = ref(false) // once anyone has RSVP'd, existing questions can't be removed
+const venueLocked = ref(false) // the rain switch already moved the event to its backup venue
+
+const venueCopy = (venue) => (venue ? { name: venue.name, address: venue.address || '', postal: venue.postal || '', lat: venue.lat ?? null, lng: venue.lng ?? null } : null)
+function formFromEvent(event) {
+  return {
+    title: event.title || '',
+    coverImageUrl: event.coverImageUrl || '',
+    description: event.description || '',
+    tags: [...(event.tags || [])],
+    startTime: toDateTimeInputValue(new Date(event.startTime)),
+    endTime: toDateTimeInputValue(new Date(event.endTime)),
+    capacity: event.capacity ?? '', // '' = no capacity limit (older events only)
+    venue: venueCopy(event.venue),
+    isOutdoor: Boolean(event.isOutdoor),
+    backupVenue: venueCopy(event.backupVenue),
+    requiresApproval: Boolean(event.requiresApproval),
+    questions: (event.questions || []).map(({ id, text, type, required }) => ({ id, text, type, required: Boolean(required) })),
+  }
+}
+
+// Load (or reset) whenever the route changes between /new and /:id/edit; the page can be reused
+let editRequest = 0
+watch(editId, async (id) => {
+  const request = ++editRequest
+  step.value = 1
+  showErrors.value = false
+  errorMessage.value = ''
+  editBlocked.value = ''
+  original.value = null
+  if (!id) {
+    form.value = blankForm()
+    return
+  }
+  editLoading.value = true
+  try {
+    const event = await getEvent(id)
+    if (request !== editRequest) return
+    if (!event.isMine) editBlocked.value = 'You can only edit events you organise.'
+    else if (new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
+    else {
+      const rsvps = await getRsvpsForEvent(id)
+      if (request !== editRequest) return
+      form.value = formFromEvent(event)
+      original.value = formFromEvent(event)
+      minCapacity.value = Math.max(1, (event.confirmedCount || 0) + (event.offeredCount || 0))
+      hasRsvps.value = rsvps.length > 0
+      venueLocked.value = Boolean(event.usingBackup)
+    }
+  } catch (error) {
+    if (request === editRequest) editBlocked.value = 'Could not load this event: ' + error.message
+  } finally {
+    if (request === editRequest) editLoading.value = false
+  }
+}, { immediate: true })
+
+const isExistingQuestion = (question) => Boolean(original.value?.questions.some((old) => old.id === question.id))
+// Removing a question people already answered would delete their answers
+const canRemoveQuestion = (question) => !(isEditing.value && hasRsvps.value && isExistingQuestion(question))
 
 // The question currently being typed in step 3
 const newQuestion = ref({ text: '', type: 'text', required: false })
@@ -107,8 +182,11 @@ function errorsForStep(f, stepNumber, now = new Date()) {
     } else if (new Date(f.startTime) < now) {
       errors.push('The start time cannot be in the past.')
     }
-    if (!Number.isInteger(f.capacity) || f.capacity < 1) {
+    const keepsNoLimit = isEditing.value && original.value?.capacity === '' && f.capacity === ''
+    if (!keepsNoLimit && (!Number.isInteger(f.capacity) || f.capacity < 1)) {
       errors.push('Capacity must be a whole number, at least 1.')
+    } else if (isEditing.value && !keepsNoLimit && f.capacity < minCapacity.value) {
+      errors.push(`Capacity can't be lower than ${minCapacity.value}: that many people are already confirmed or offered a place.`)
     }
     if (f.tags.length === 0) {
       errors.push('Pick at least one tag (used for recommendations and waitlist scoring).')
@@ -126,6 +204,10 @@ function errorsForStep(f, stepNumber, now = new Date()) {
     if (USING_SUPABASE && f.backupVenue && !hasCoordinates(f.backupVenue)) {
       errors.push('Choose a backup venue result with map coordinates for live events.')
     }
+  }
+
+  if (stepNumber === 3 && f.questions.some((question) => question.text.trim() === '')) {
+    errors.push('Every RSVP question needs some wording.')
   }
 
   return errors
@@ -213,7 +295,7 @@ function changeBackupVenue() {
 function addQuestion() {
   if (newQuestion.value.text.trim() === '') return
   form.value.questions.push({
-    id: 'q' + Date.now(),
+    id: crypto.randomUUID(), // a real id up front, so a retried live save can't add it twice
     text: newQuestion.value.text.trim(),
     type: newQuestion.value.type,
     required: newQuestion.value.required,
@@ -226,7 +308,82 @@ function removeQuestion(index) {
   focusById('q-text') // its Remove button is gone; continue where the next question is typed
 }
 
-// ---------- Step 4: publish ----------
+// ---------- Step 4: publish (or save changes in edit mode) ----------
+
+// The form, cleaned up for saving (shared by Publish and Save changes)
+function eventDataFromForm() {
+  const f = form.value
+  return {
+    ...f,
+    title: f.title.trim(),
+    description: f.description.trim(),
+    startTime: new Date(f.startTime).toISOString(), // store one standard date format
+    endTime: new Date(f.endTime).toISOString(),
+    capacity: f.capacity === '' ? null : f.capacity,
+    backupVenue: f.isOutdoor ? f.backupVenue : null,
+    questions: f.questions.map((question) => ({ ...question, text: question.text.trim() })),
+  }
+}
+
+const pendingChanges = ref([]) // what changed, shown in the pop-up and used for the announcement
+const showAnnounceDialog = ref(false)
+const savingChanges = ref(false)
+const saveError = ref('')
+const changesSaved = ref(false) // already saved; only the announcement is left (retry)
+let announceAttempt = null
+
+async function reviewChanges() {
+  if (savingChanges.value || uploadingCover.value) return
+  const invalidStep = [1, 2, 3].find((stepNumber) => errorsForStep(form.value, stepNumber).length > 0)
+  if (invalidStep) {
+    direction.value = invalidStep < step.value ? -1 : 1
+    step.value = invalidStep
+    showErrors.value = true
+    await focusStep()
+    return
+  }
+  pendingChanges.value = describeEventChanges(original.value, form.value)
+  if (pendingChanges.value.length === 0) {
+    errorMessage.value = 'Nothing has changed yet, so there is nothing to save.'
+    return
+  }
+  errorMessage.value = ''
+  saveError.value = ''
+  changesSaved.value = false
+  showAnnounceDialog.value = true
+}
+
+async function saveChanges({ announce, title, message }) {
+  if (savingChanges.value) return
+  savingChanges.value = true
+  saveError.value = ''
+  try {
+    if (!changesSaved.value) {
+      await updateEvent(editId.value, eventDataFromForm())
+      changesSaved.value = true
+    }
+    if (announce) {
+      const body = formatAnnouncement(title, message)
+      // A retried post reuses its id, so the same announcement can't appear twice
+      if (!announceAttempt || announceAttempt.body !== body) announceAttempt = { body, requestId: crypto.randomUUID() }
+      await createAnnouncement(editId.value, body, announceAttempt.requestId)
+    }
+    showAnnounceDialog.value = false
+    await router.push({ path: '/organiser/events', query: { updated: editId.value, ...(announce ? { announced: '1' } : {}) } })
+  } catch (error) {
+    saveError.value = changesSaved.value
+      ? `Your changes are saved, but the announcement couldn't be posted: ${error.message}`
+      : `Your changes couldn't be saved: ${error.message}`
+  } finally {
+    savingChanges.value = false
+  }
+}
+
+function closeAnnounceDialog() {
+  showAnnounceDialog.value = false
+  // Saved already and the organiser skipped the failed announcement: carry on to My events
+  if (changesSaved.value) router.push({ path: '/organiser/events', query: { updated: editId.value } })
+}
 
 async function publish() {
   if (publishing.value || uploadingCover.value) return
@@ -245,15 +402,7 @@ async function publish() {
   publishing.value = true
   errorMessage.value = ''
   try {
-    const f = form.value
-    const eventData = {
-      ...f,
-      title: f.title.trim(),
-      description: f.description.trim(),
-      startTime: new Date(f.startTime).toISOString(), // store one standard date format
-      endTime: new Date(f.endTime).toISOString(),
-      backupVenue: f.isOutdoor ? f.backupVenue : null,
-    }
+    const eventData = eventDataFromForm()
     if (USING_SUPABASE) {
       const fingerprint = JSON.stringify(eventData)
       if (!createAttempt || createAttempt.fingerprint !== fingerprint) {
@@ -278,7 +427,21 @@ async function publish() {
 
 <template>
   <div class="create-event-page col-12 col-xl-11 mx-auto">
-    <header class="create-heading"><h1>Create an event</h1><p>Start with the essentials. You can review everything before it goes live.</p></header>
+    <header class="create-heading">
+      <h1>{{ isEditing ? 'Edit event' : 'Create an event' }}</h1>
+      <p>{{ isEditing ? 'Update the details below. Saving changes the live event straight away.' : 'Start with the essentials. You can review everything before it goes live.' }}</p>
+    </header>
+
+    <!-- Edit mode: still loading the event, or the reason it can't be edited -->
+    <div v-if="isEditing && editLoading" class="text-center my-5" role="status">
+      <div class="spinner-border text-primary" aria-hidden="true"></div>
+      <span class="visually-hidden">Loading the event…</span>
+    </div>
+    <div v-else-if="isEditing && editBlocked" class="alert alert-warning" role="alert">
+      {{ editBlocked }} <RouterLink to="/organiser/events">Back to My events</RouterLink>
+    </div>
+
+    <template v-else>
     <StepIndicator :steps="steps" :current="step" />
 
     <div class="creation-layout">
@@ -320,7 +483,7 @@ async function publish() {
             <p v-if="coverError" class="text-danger" role="alert">{{ coverError }}</p>
             <figure v-if="form.coverImageUrl" class="cover-preview">
               <img :src="form.coverImageUrl" alt="Event cover preview" />
-              <figcaption>Cover image preview</figcaption>
+              <figcaption>How your cover is cropped on event cards</figcaption>
               <button type="button" class="btn btn-outline-secondary btn-sm" @click="form.coverImageUrl = ''">Remove cover</button>
             </figure>
           </div>
@@ -399,6 +562,9 @@ async function publish() {
         <!-- ================= STEP 2: VENUE ================= -->
         <div v-else-if="step === 2" aria-labelledby="step-content-heading">
           <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">Venue</h2>
+          <p v-if="venueLocked" class="alert alert-info small">
+            This event has already switched to its rain backup venue, so its venues can't be changed here.
+          </p>
           <h3 class="h5 step-subheading">Main venue</h3>
           <!-- Theme-aware chosen-venue card; it receives focus after a search result is picked -->
           <div v-if="form.venue" class="venue-choice">
@@ -410,10 +576,10 @@ async function publish() {
               Map position: {{ form.venue.lat.toFixed(4) }}, {{ form.venue.lng.toFixed(4) }}
             </p>
             <template v-if="form.venue.lat">
-              <VenueMap :lat="form.venue.lat" :lng="form.venue.lng" draggable class="my-2" @move="moveVenuePin" />
-              <p class="form-text mb-2">Drag the pin or click the map to mark the exact spot.</p>
+              <VenueMap :lat="form.venue.lat" :lng="form.venue.lng" :draggable="!venueLocked" class="my-2" @move="moveVenuePin" />
+              <p v-if="!venueLocked" class="form-text mb-2">Drag the pin or click the map to mark the exact spot.</p>
             </template>
-            <button type="button" class="btn btn-link btn-sm p-0" @click="changeVenue">
+            <button v-if="!venueLocked" type="button" class="btn btn-link btn-sm p-0" @click="changeVenue">
               Change venue
             </button>
           </div>
@@ -431,6 +597,7 @@ async function publish() {
               role="switch"
               id="outdoor"
               v-model="form.isOutdoor"
+              :disabled="venueLocked"
             />
             <label class="form-check-label" for="outdoor">This is an outdoor event</label>
             <div class="form-text">
@@ -446,7 +613,7 @@ async function publish() {
                 <span class="visually-hidden">Chosen backup venue: </span>{{ form.backupVenue.name }}
               </p>
               <p class="venue-choice-meta">{{ form.backupVenue.address }}</p>
-              <button type="button" class="btn btn-link btn-sm p-0" @click="changeBackupVenue">
+              <button v-if="!venueLocked" type="button" class="btn btn-link btn-sm p-0" @click="changeBackupVenue">
                 Change backup venue
               </button>
             </div>
@@ -482,6 +649,9 @@ async function publish() {
           <p class="form-text mt-0">
             Optional. Use these to screen sign-ups, e.g. "Which year are you in?"
           </p>
+          <p v-if="isEditing && hasRsvps && original?.questions.length" class="form-text mt-0">
+            People have already RSVP'd, so existing questions can be reworded but not removed.
+          </p>
 
           <ul v-if="form.questions.length > 0" class="list-group mb-3">
             <li
@@ -490,17 +660,24 @@ async function publish() {
               class="list-group-item d-flex justify-content-between align-items-center gap-2"
             >
               <div class="question-summary">
-                <span class="question-text">{{ question.text }}</span>
+                <!-- Edit mode: questions that are already saved can be reworded in place -->
+                <template v-if="isEditing && isExistingQuestion(question)">
+                  <label class="visually-hidden" :for="'q-edit-' + question.id">Wording of question {{ index + 1 }}</label>
+                  <input :id="'q-edit-' + question.id" v-model="question.text" class="form-control form-control-sm question-reword" />
+                </template>
+                <span v-else class="question-text">{{ question.text }}</span>
                 <span class="question-chip">{{ question.type === 'yesno' ? 'Yes / No' : 'Short answer' }}</span>
                 <span v-if="question.required" class="question-chip question-chip--required">Required</span>
               </div>
               <button
+                v-if="canRemoveQuestion(question)"
                 type="button"
                 class="btn btn-outline-danger btn-sm"
                 @click="removeQuestion(index)"
               >
                 Remove<span class="visually-hidden"> question: {{ question.text }}</span>
               </button>
+              <span v-else class="question-locked">Kept: people have RSVP'd</span>
             </li>
           </ul>
           <p v-else class="text-secondary small">No questions yet.</p>
@@ -551,7 +728,9 @@ async function publish() {
         <div v-else aria-labelledby="step-content-heading">
           <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">Review</h2>
           <p class="text-secondary">
-            Check everything before publishing. Use Back to change anything; nothing is lost.
+            {{ isEditing
+              ? 'Check your changes. Saving updates the live event straight away; use Back to change anything.'
+              : 'Check everything before publishing. Use Back to change anything; nothing is lost.' }}
           </p>
           <p v-if="questionNotice" class="question-notice" role="status">{{ questionNotice }}</p>
           <EventSummary :event="form">
@@ -602,6 +781,15 @@ async function publish() {
           Next
         </button>
         <button
+          v-else-if="isEditing"
+          type="button"
+          class="btn btn-success"
+          :disabled="savingChanges"
+          @click="reviewChanges"
+        >
+          Save changes
+        </button>
+        <button
           v-else
           type="button"
           class="btn btn-success"
@@ -631,6 +819,19 @@ async function publish() {
       <p class="preview-note">This is a guide to how your event details come together.</p>
     </aside>
     </div>
+    </template>
+
+    <!-- Edit mode: what changed + optional announcement, shown before saving -->
+    <AnnounceChangesDialog
+      v-if="showAnnounceDialog"
+      :event-title="form.title.trim()"
+      :changes="pendingChanges"
+      :pending="savingChanges"
+      :error="saveError"
+      :saved="changesSaved"
+      @confirm="saveChanges"
+      @cancel="closeAnnounceDialog"
+    />
   </div>
 </template>
 
@@ -652,7 +853,8 @@ async function publish() {
 .preview-heading { display: flex; align-items: center; gap: .55rem; margin: 0 0 .85rem; color: var(--bookedz-muted); font-size: .78rem; font-weight: 650; }
 .preview-pulse { width: .5rem; height: .5rem; border-radius: 50%; background: var(--bookedz-success); box-shadow: 0 0 0 .25rem var(--bookedz-glass-active); }
 .preview-card { overflow: hidden; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); }
-.preview-art { position: relative; display: grid; min-height: 8rem; place-items: center; overflow: hidden; background: var(--bookedz-glass-active); background-position: center; background-size: cover; }
+/* Same 16:9 crop as the event cards, so the preview shows what participants will see */
+.preview-art { position: relative; display: grid; aspect-ratio: 16 / 9; place-items: center; overflow: hidden; background: var(--bookedz-glass-active); background-position: center; background-size: cover; }
 .preview-art-mark svg { width: 80px; height: 60px; }
 .preview-art-mark { color: var(--bookedz-primary-dark); font-size: 3.3rem; line-height: 1; }
 .preview-tag { position: absolute; bottom: .65rem; left: .7rem; max-width: calc(100% - 1.4rem); overflow: hidden; padding: .25rem .55rem; border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
@@ -671,10 +873,10 @@ async function publish() {
 .step-back-enter-from { opacity: 0; transform: translateX(-1.1rem); }
 .step-back-leave-to { opacity: 0; transform: translateX(.65rem); }
 /* Phones: the form comes first so the current step's fields are visible without scrolling; the preview follows it */
-@media (max-width: 767.98px) { .creation-layout { grid-template-columns: minmax(0, 1fr); } .event-preview { position: static; } .preview-art { min-height: 6rem; } }
+@media (max-width: 767.98px) { .creation-layout { grid-template-columns: minmax(0, 1fr); } .event-preview { position: static; } }
 @media (max-width: 575.98px) { .create-heading { margin-top: .5rem; } }
 .cover-preview { display: grid; justify-items: start; gap: .5rem; margin: 1rem 0 0; }
-.cover-preview img { display: block; width: min(100%, 32rem); max-height: 15rem; aspect-ratio: 16 / 8; object-fit: cover; border: 1px solid var(--bookedz-border); border-radius: 14px; }
+.cover-preview img { display: block; width: min(100%, 32rem); aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--bookedz-border); border-radius: 14px; }
 .cover-preview figcaption { color: var(--bookedz-muted); font-size: .85rem; }
 /* Venue and question boxes use theme tokens (Bootstrap's bg-light stays white in dark mode) */
 .step-subheading { margin: 0 0 .75rem; color: var(--bookedz-ink); font-weight: 650; }
@@ -686,6 +888,8 @@ async function publish() {
 .question-text { color: var(--bookedz-ink); overflow-wrap: anywhere; }
 .question-chip { display: inline-flex; align-items: center; padding: .2rem .6rem; border: 1px solid var(--bookedz-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-hover); font-size: .75rem; font-weight: 650; }
 .question-chip--required { color: var(--bookedz-primary-dark); }
+.question-reword { flex: 1 1 14rem; min-width: 0; }
+.question-locked { flex: 0 0 auto; color: var(--bookedz-muted); font-size: .8rem; }
 .question-notice { margin: 0 0 1rem; padding: .7rem .9rem; border-radius: 12px; color: var(--bookedz-ink); background: color-mix(in srgb, var(--bookedz-mint) 30%, var(--bookedz-surface)); font-size: .9rem; }
 /* Disabled outline buttons (Back on step 1, an empty "Add question") use the theme's disabled
    colours instead of Bootstrap's default grey/blue, matching disabled .event-cta buttons */

@@ -39,6 +39,7 @@ export const getEvents = () => backend.getEvents()
 export const getEvent = (eventId) => backend.getEvent(eventId)
 export const getOrganiserEvents = () => backend.getOrganiserEvents() // the signed-in organiser's
 export const createEvent = (eventData) => backend.createEvent(eventData)
+export const updateEvent = (eventId, changes) => backend.updateEvent(eventId, changes) // organiser edits a published event
 export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
 
 
