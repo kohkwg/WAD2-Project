@@ -50,6 +50,7 @@ const router = createRouter({
     { path: '/login', component: LoginView, meta: { title: 'Sign in' } },
     { path: '/events', redirect: to => ({ path: '/discover', query: to.query, hash: to.hash }) },
     { path: '/events/:id/rsvp', component: RsvpView, meta: { title: 'Event RSVP' } },
+    { path: '/community', component: () => import('../views/CommunityView.vue'), meta: { title: 'Community' } },
     { path: '/my-rsvps', component: MyRsvpsView, meta: { title: 'My RSVPs' } },
     { path: '/organiser/events', component: OrganiserEventsView, meta: { title: 'My events' } },
     { path: '/organiser/events/new', component: CreateEventView, meta: { title: 'Create event' } },

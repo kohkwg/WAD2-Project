@@ -58,6 +58,7 @@ function resetDemo() {
       <div id="mainNav" class="collapse navbar-collapse" :class="{ show: menuOpen }">
         <ul class="navbar-nav me-auto">
           <li class="nav-item"><RouterLink class="nav-link" active-class="active" to="/discover">Discover</RouterLink></li>
+          <li class="nav-item"><RouterLink class="nav-link" active-class="active" to="/community">Community</RouterLink></li>
           <template v-if="hasSession">
             <li class="nav-item"><RouterLink class="nav-link" active-class="active" to="/my-rsvps">My RSVPs</RouterLink></li>
             <li class="nav-item"><RouterLink class="nav-link" active-class="" :class="{ active: route.path.startsWith('/organiser/events') && route.path !== '/organiser/events/new' }" to="/organiser/events">My events</RouterLink></li>

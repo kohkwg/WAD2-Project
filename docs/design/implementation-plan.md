@@ -21,6 +21,8 @@ ownership. No release, Git or cloud operation is implied by these changes.
 - [x] Add an actual-data capacity/status visual and responsive Manage RSVP tables.
 - [x] Apply requested design skills and preserve audit limitations.
 - [x] Record focused verification and refresh representative captures.
+- [x] Refine Vivienne's floor-plan/programme/image presentation on the `vivi`
+      branch without changing live storage or organiser-role contracts.
 
 ## Verification checkpoints
 
@@ -32,6 +34,7 @@ ownership. No release, Git or cloud operation is implied by these changes.
 | Organiser/participant follow-up | Seven scoped browser checks passed | Desktop/mobile layout, real capacity counts, task focus, exact budgets, weather failure, RSVP submission, offer refresh |
 | Final capture/contrast correction | Only two affected views rerun; 2/2 passed | Loaded public form, dark badge contrast, creation preview |
 | Offer-action contrast correction | Only affected participant flow rerun; 1/1 passed | Desktop/mobile contrast assertion and refreshed captures |
+| Vivienne branch F6 polish | Floor-plan model tests, edited SFC compilation and whitespace checks passed | UI-only floor-plan/programme/image presentation; no live writes or browser rerun |
 
 Changed Vue components/styles compile; whitespace checks pass. No production
 build/full suite was run for the 24 October refinements. No fresh live writes,

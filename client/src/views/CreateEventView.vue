@@ -9,6 +9,8 @@ import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue'
 import { uploadCover } from '../lib/uploadCover.js'
 import { createEvent, getEvent, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
+import { PLANNER_AVAILABLE, searchEventTitles, fetchPlanSuggestion, addPlanToEvent } from '../utils/planSuggestions.js'
+import { normalizeTitle } from '../utils/planSuggestModel.js'
 import { describeEventChanges, formatAnnouncement } from '../utils/eventChanges.js'
 
 // Multi-step form (progressive disclosure): one small chunk at a time instead of one long page.
@@ -28,7 +30,7 @@ let createdEventId = null
 const uploadingCover = ref(false)
 const coverError = ref('')
 let active = true
-onBeforeUnmount(() => { active = false })
+onBeforeUnmount(() => { active = false; clearTimeout(suggestTimer); suggestController?.abort(); planController?.abort() })
 async function chooseCover(event) {
   const file = event.target.files?.[0]
   if (!file || uploadingCover.value) return
@@ -161,6 +163,176 @@ const previewDate = computed(() => {
 
 function addTag(tag) {
   form.value.tags.push(tag)
+}
+
+// ---------- Event title suggestions (search as you type) ----------
+
+const titleSuggestions = ref([]) // [{ title, kind: 'own' | 'community' }]
+const titleListOpen = ref(false)
+const activeSuggestion = ref(-1)
+let suggestTimer
+let suggestToken = 0
+let suggestController
+
+function closeSuggestions() {
+  suggestToken++
+  titleSuggestions.value = []
+  titleListOpen.value = false
+  activeSuggestion.value = -1
+}
+
+function onTitleInput(event) {
+  clearTimeout(suggestTimer)
+  suggestController?.abort()
+  const query = event.target.value.trim()
+  if (!PLANNER_AVAILABLE || query.length < 2) { closeSuggestions(); return }
+  const token = ++suggestToken
+  suggestTimer = setTimeout(async () => {
+    suggestController = new AbortController()
+    try {
+      const rows = await searchEventTitles(query, suggestController.signal)
+      if (!active || token !== suggestToken) return // a newer search or a closed list wins
+      titleSuggestions.value = rows
+      activeSuggestion.value = -1
+      titleListOpen.value = rows.length > 0
+    } catch {
+      if (token === suggestToken) closeSuggestions() // suggestions are optional; typing still works
+    }
+  }, 200)
+}
+
+function chooseSuggestion(suggestion) {
+  form.value.title = suggestion.title
+  closeSuggestions()
+}
+
+function onTitleKeydown(event) {
+  const count = titleSuggestions.value.length
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    if (!count) return
+    event.preventDefault()
+    titleListOpen.value = true
+    const step = event.key === 'ArrowDown' ? 1 : -1
+    activeSuggestion.value = (activeSuggestion.value + step + count) % count
+  } else if (event.key === 'Enter' && titleListOpen.value && activeSuggestion.value >= 0) {
+    event.preventDefault()
+    chooseSuggestion(titleSuggestions.value[activeSuggestion.value])
+  } else if (event.key === 'Escape' && titleListOpen.value) {
+    event.preventDefault()
+    titleListOpen.value = false
+    activeSuggestion.value = -1
+  }
+}
+
+// ---------- Automatic plan: programme + tasks from similar past events ----------
+
+const planBusy = ref(false)
+const planError = ref('')
+const planOffer = ref(null) // the server's suggestion, shown for review
+const planTicks = ref({ programme: [], tasks: [] }) // which suggested items stay ticked
+const acceptedPlan = ref(null) // { programme, tasks, basedOn } the organiser chose; added after publishing
+const planForTitle = ref('') // normalised title the suggestion was generated for
+const planPanel = ref(null)
+const eventCreated = ref(false)
+let planController
+let planToken = 0
+let planProgress = { programme: 0, tasks: 0 }
+let createdDates = null
+
+const canGenerate = computed(() => PLANNER_AVAILABLE && form.value.title.trim().length > 0 && !planBusy.value && !publishing.value && !eventCreated.value)
+const planHint = computed(() => {
+  if (!PLANNER_AVAILABLE) return 'Plan suggestions need a live connection.'
+  return form.value.title.trim() ? '' : 'Enter an event title to generate a plan.'
+})
+const planStale = computed(() => Boolean(planOffer.value || acceptedPlan.value) && normalizeTitle(form.value.title) !== planForTitle.value)
+
+async function generatePlan() {
+  if (!canGenerate.value) return
+  planController?.abort()
+  planController = new AbortController()
+  const token = ++planToken
+  planBusy.value = true
+  planError.value = ''
+  planOffer.value = null
+  planForTitle.value = normalizeTitle(form.value.title)
+  const f = form.value
+  const iso = (value) => (value && Number.isFinite(new Date(value).getTime()) ? new Date(value).toISOString() : null)
+  try {
+    const result = await fetchPlanSuggestion({
+      title: f.title.trim(),
+      description: f.description.trim(),
+      tags: f.tags,
+      capacity: Number.isInteger(f.capacity) ? f.capacity : null,
+      startsAt: iso(f.startTime),
+      endsAt: iso(f.endTime),
+    }, planController.signal)
+    if (!active || token !== planToken) return // dismissed or replaced while waiting
+    planOffer.value = result
+    planTicks.value = { programme: result.programme.map(() => true), tasks: result.tasks.map(() => true) }
+  } catch (error) {
+    if (active && token === planToken && error.name !== 'AbortError') planError.value = error.message
+  } finally {
+    if (active && token === planToken) planBusy.value = false
+  }
+  if (active && token === planToken) {
+    await nextTick()
+    planPanel.value?.focus()
+  }
+}
+
+function usePlan() {
+  const offer = planOffer.value
+  if (!offer || eventCreated.value) return
+  const programme = offer.programme.filter((_, index) => planTicks.value.programme[index])
+  const tasks = offer.tasks.filter((_, index) => planTicks.value.tasks[index]).map((task) => ({ ...task, requestId: crypto.randomUUID() }))
+  acceptedPlan.value = programme.length || tasks.length ? { programme, tasks, basedOn: offer.basedOn } : null
+  planProgress = { programme: 0, tasks: 0 }
+  planOffer.value = null
+}
+
+function dismissPlan() {
+  planController?.abort()
+  planToken++
+  planBusy.value = false
+  planOffer.value = null
+  planError.value = ''
+}
+
+function removePlan() {
+  if (eventCreated.value) return
+  acceptedPlan.value = null
+  planProgress = { programme: 0, tasks: 0 }
+}
+
+function planSource(offer) {
+  const named = offer.basedOn.map((item) => `${item.title} (${item.kind === 'own' ? 'your event' : 'community'})`)
+  if (offer.source === 'exact') return `Copied from ${named.join(' and ')}.`
+  return `Based on ${offer.basedOn.length} similar past event${offer.basedOn.length === 1 ? '' : 's'}: ${named.slice(0, 3).join(', ')}${named.length > 3 ? '…' : ''}.`
+}
+
+function offsetLabel(item) {
+  const total = (Date.parse(form.value.endTime) - Date.parse(form.value.startTime)) / 60000
+  if (!Number.isFinite(total) || total <= 0) return `about ${Math.round(item.startFraction * 100)}% through`
+  const minutes = Math.round((item.startFraction * total) / 5) * 5
+  if (minutes === 0) return 'at the start'
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return `${hours ? `${hours}h` : ''}${hours && rest ? ' ' : ''}${rest ? `${rest}m` : ''} in`
+}
+
+// Adds the accepted plan to the event just created. false = stop and let the organiser retry.
+async function finishPlan(eventId) {
+  const plan = acceptedPlan.value
+  if (!plan) return true
+  try {
+    await addPlanToEvent(eventId, plan, createdDates, planProgress)
+    acceptedPlan.value = null
+    return true
+  } catch (error) {
+    const total = plan.programme.length + plan.tasks.length
+    errorMessage.value = `The event was created, but only ${planProgress.programme + planProgress.tasks} of ${total} plan items were added (${error.message}). Press Publish to retry.`
+    return false
+  }
 }
 
 // ---------- Checking each step before moving on ----------
@@ -396,6 +568,13 @@ async function publish() {
     return
   }
   if (createdEventId) {
+    publishing.value = true
+    errorMessage.value = ''
+    try {
+      if (!(await finishPlan(createdEventId))) return
+    } finally {
+      publishing.value = false
+    }
     await router.push('/organiser/events?created=' + createdEventId)
     return
   }
@@ -412,7 +591,10 @@ async function publish() {
     }
     const created = await createEvent(eventData)
     createdEventId = created.id
+    createdDates = { startsAt: eventData.startTime, endsAt: eventData.endTime }
+    eventCreated.value = true
     createAttempt = null
+    if (!(await finishPlan(created.id))) return
     const navigationFailure = await router.push('/organiser/events?created=' + created.id)
     if (navigationFailure) errorMessage.value = 'Event was created, but could not open its organiser page. Press Publish to continue.'
   } catch (error) {
@@ -454,14 +636,41 @@ async function publish() {
           <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">Basics</h2>
           <div class="mb-3">
             <label for="title" class="form-label">Event title</label>
-            <input
-              id="title"
-              class="form-control"
-              :aria-describedby="showErrors && stepErrors.length ? 'validation-error-list' : undefined"
-              :aria-invalid="showErrors && stepErrors.some((error) => error.includes('title')) || undefined"
-              v-model="form.title"
-              placeholder="e.g. Acoustic Night at the Campus Green"
-            />
+            <div class="title-combobox">
+              <input
+                id="title"
+                class="form-control"
+                role="combobox"
+                aria-autocomplete="list"
+                autocomplete="off"
+                aria-controls="title-suggestions"
+                :aria-expanded="titleListOpen"
+                :aria-activedescendant="activeSuggestion >= 0 ? `title-option-${activeSuggestion}` : undefined"
+                :aria-describedby="showErrors && stepErrors.length ? 'validation-error-list' : undefined"
+                :aria-invalid="showErrors && stepErrors.some((error) => error.includes('title')) || undefined"
+                v-model="form.title"
+                placeholder="e.g. Acoustic Night at the Campus Green"
+                @input="onTitleInput"
+                @keydown="onTitleKeydown"
+                @focus="titleListOpen = titleSuggestions.length > 0"
+                @blur="titleListOpen = false"
+              />
+              <ul v-show="titleListOpen" id="title-suggestions" class="title-suggestions" role="listbox" aria-label="Event name suggestions">
+                <li
+                  v-for="(suggestion, index) in titleSuggestions"
+                  :id="`title-option-${index}`"
+                  :key="suggestion.title"
+                  role="option"
+                  :aria-selected="index === activeSuggestion"
+                  :class="{ active: index === activeSuggestion }"
+                  @mousedown.prevent="chooseSuggestion(suggestion)"
+                >
+                  <span class="title-suggestion-text">{{ suggestion.title }}</span>
+                  <span class="title-suggestion-kind">{{ suggestion.kind === 'own' ? 'Your event' : 'Community' }}</span>
+                </li>
+              </ul>
+              <p class="visually-hidden" role="status">{{ titleListOpen ? `${titleSuggestions.length} event name suggestions available` : '' }}</p>
+            </div>
           </div>
 
           <div class="mb-3">
@@ -757,6 +966,53 @@ async function publish() {
 
         </div>
         </Transition>
+        <!-- Suggested plan (programme + tasks from similar past events) -->
+        <section v-if="planBusy || planOffer || planError || acceptedPlan" ref="planPanel" class="plan-panel" tabindex="-1" aria-labelledby="plan-panel-heading">
+          <div class="plan-panel-head">
+            <h3 id="plan-panel-heading" class="h6 mb-0">Suggested plan</h3>
+            <button v-if="planOffer || planError || planBusy" type="button" class="btn-close" aria-label="Dismiss suggested plan" @click="dismissPlan"></button>
+          </div>
+          <p v-if="planBusy" class="mb-0 mt-2" role="status">Looking at similar past events…</p>
+          <div v-else-if="planError" class="alert alert-danger mt-2 mb-0" role="alert">
+            {{ planError }} <button type="button" class="btn btn-sm btn-outline-danger ms-1" :disabled="!canGenerate" @click="generatePlan">Try again</button>
+          </div>
+          <template v-else-if="planOffer">
+            <p v-if="!planOffer.programme.length && !planOffer.tasks.length" class="mb-0 mt-2" role="status">
+              No similar past events with a programme or tasks yet. You can still add them after publishing.
+            </p>
+            <template v-else>
+              <p class="small text-secondary mt-2" role="status">{{ planSource(planOffer) }}</p>
+              <p v-if="planStale" class="small text-danger">The title changed since this was generated. Generate again to refresh it.</p>
+              <fieldset v-if="planOffer.programme.length" class="plan-group">
+                <legend class="h6">Programme</legend>
+                <label v-for="(item, index) in planOffer.programme" :key="`programme-${index}`" class="plan-item">
+                  <input v-model="planTicks.programme[index]" type="checkbox" class="form-check-input" />
+                  <span><strong>{{ item.title }}</strong> <span class="text-secondary">· {{ offsetLabel(item) }}</span></span>
+                </label>
+              </fieldset>
+              <fieldset v-if="planOffer.tasks.length" class="plan-group">
+                <legend class="h6">Tasks</legend>
+                <label v-for="(task, index) in planOffer.tasks" :key="`task-${index}`" class="plan-item">
+                  <input v-model="planTicks.tasks[index]" type="checkbox" class="form-check-input" />
+                  <span><strong>{{ task.title }}</strong><span v-if="task.notes" class="d-block small text-secondary">{{ task.notes }}</span></span>
+                </label>
+              </fieldset>
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                <button type="button" class="btn btn-primary btn-sm" @click="usePlan">Use these</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" @click="dismissPlan">Dismiss</button>
+              </div>
+            </template>
+          </template>
+          <div v-else-if="acceptedPlan" class="plan-summary">
+            <p class="mb-0">
+              {{ acceptedPlan.programme.length }} programme item{{ acceptedPlan.programme.length === 1 ? '' : 's' }} and
+              {{ acceptedPlan.tasks.length }} task{{ acceptedPlan.tasks.length === 1 ? '' : 's' }} will be added when you publish.
+              <span v-if="planStale" class="text-danger">The title changed since this was generated.</span>
+            </p>
+            <button v-if="!eventCreated" type="button" class="btn btn-sm btn-outline-secondary" @click="removePlan">Remove</button>
+          </div>
+        </section>
+
         <!-- Errors for the current step -->
         <div v-if="showErrors && stepErrors.length > 0" class="alert alert-danger mt-4 mb-0" role="alert" aria-labelledby="validation-summary-heading">
           <h3 id="validation-summary-heading" class="h6">Fix these items before continuing</h3>
@@ -777,28 +1033,39 @@ async function publish() {
         >
           Back
         </button>
-        <button v-if="step < steps.length" type="button" class="btn btn-primary" @click="nextStep">
-          Next
-        </button>
-        <button
-          v-else-if="isEditing"
-          type="button"
-          class="btn btn-success"
-          :disabled="savingChanges"
-          @click="reviewChanges"
-        >
-          Save changes
-        </button>
-        <button
-          v-else
-          type="button"
-          class="btn btn-success"
-          :disabled="publishing"
-          @click="publish"
-        >
-          <span v-if="publishing" class="spinner-border spinner-border-sm me-2"></span>
-          {{ publishing ? 'Publishing…' : 'Publish event' }}
-        </button>
+        <div class="d-flex gap-2 creation-actions-end">
+          <!-- Plans are only added by publish(), so editing an event doesn't offer one -->
+          <template v-if="!isEditing">
+            <span :title="planHint || undefined">
+              <button type="button" class="btn btn-outline-primary" :disabled="!canGenerate" :aria-describedby="planHint ? 'plan-hint' : undefined" @click="generatePlan">
+                <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" class="me-1" aria-hidden="true"><path d="M10 1.5l1.7 4.8 4.8 1.7-4.8 1.7L10 14.5l-1.7-4.8-4.8-1.7 4.8-1.7zM16 12l.8 2.2L19 15l-2.2.8L16 18l-.8-2.2L13 15l2.2-.8z"/></svg>Generate plan
+              </button>
+            </span>
+            <span v-if="planHint" id="plan-hint" class="visually-hidden">{{ planHint }}</span>
+          </template>
+          <button v-if="step < steps.length" type="button" class="btn btn-primary" @click="nextStep">
+            Next
+          </button>
+          <button
+            v-else-if="isEditing"
+            type="button"
+            class="btn btn-success"
+            :disabled="savingChanges"
+            @click="reviewChanges"
+          >
+            Save changes
+          </button>
+          <button
+            v-else
+            type="button"
+            class="btn btn-success"
+            :disabled="publishing"
+            @click="publish"
+          >
+            <span v-if="publishing" class="spinner-border spinner-border-sm me-2"></span>
+            {{ publishing ? 'Publishing…' : 'Publish event' }}
+          </button>
+        </div>
       </div>
     </div>
     <aside class="event-preview" aria-label="Live event preview">
@@ -841,6 +1108,22 @@ async function publish() {
 .create-heading p:last-child { margin: 0; color: var(--bookedz-muted); }
 .create-kicker { margin: 0 0 .35rem; color: var(--bookedz-primary-dark); font-size: .875rem; font-weight: 650; }
 .creation-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(15rem, .85fr); align-items: start; gap: 1.25rem; }
+.plan-panel { margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 14px; background: var(--bookedz-surface); }
+.plan-panel:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
+.plan-panel-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.plan-group { margin: .75rem 0 0; padding: 0; border: 0; }
+.plan-group legend { float: none; width: auto; margin-bottom: .35rem; padding: 0; }
+.plan-item { display: flex; align-items: flex-start; gap: .65rem; min-height: 44px; padding: .4rem 0; cursor: pointer; }
+.plan-item .form-check-input { flex: none; margin-top: .3rem; }
+.plan-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .5rem; }
+.creation-actions { align-items: flex-end; }
+.creation-actions-end { flex-wrap: wrap; justify-content: flex-end; }
+.title-combobox { position: relative; }
+.title-suggestions { position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + 4px); max-height: 16rem; margin: 0; padding: .25rem; overflow-y: auto; list-style: none; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
+.title-suggestions li { display: flex; align-items: center; justify-content: space-between; gap: .75rem; min-height: 44px; padding: .45rem .75rem; border-radius: 8px; cursor: pointer; }
+.title-suggestions li:hover, .title-suggestions li.active { background: var(--bookedz-border); }
+.title-suggestion-text { min-width: 0; overflow-wrap: anywhere; }
+.title-suggestion-kind { flex: none; color: var(--bookedz-muted); font-size: .78rem; font-weight: 700; }
 .create-event-page :deep(.card) { border: 1px solid var(--bookedz-border); border-radius: 20px; box-shadow: var(--bookedz-card-shadow) !important; }
 .create-event-page :deep(.card-body) { padding: clamp(1rem, 3vw, 2rem) !important; }
 .create-event-page :deep(.card-footer) { position: sticky; bottom: 0; z-index: 2; padding: .85rem clamp(1rem, 3vw, 2rem); border-color: var(--bookedz-border); background: var(--bookedz-glass-solid) !important; backdrop-filter: blur(14px); }
