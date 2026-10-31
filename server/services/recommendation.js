@@ -20,8 +20,6 @@ const BASE_WEIGHTS = {
 };
 
 const DIVERSITY_PENALTY = 0.8; // each repeat of a category multiplies score by this
-const MAX_INTEREST_WEIGHT = 5;
-const INTERACTION_BOOST = { rsvp: 0.5, attend: 1.0 };
 
 // ---------- helpers ----------
 
@@ -170,17 +168,5 @@ function recommend(events, profile, opts = {}) {
   return diversify(scoreEvents(events, profile, opts), limit);
 }
 
-/**
- * Adaptive weights: RSVPing / attending raises weights of the event's tags.
- * Returns a NEW weights object.
- */
-function bumpInterestWeights(weights, tags, type = "rsvp") {
-  const boost = INTERACTION_BOOST[type] ?? 0;
-  const next = { ...(weights || {}) };
-  for (const tag of tags || []) {
-    next[tag] = Math.min(MAX_INTEREST_WEIGHT, (next[tag] || 0) + boost);
-  }
-  return next;
-}
 
-module.exports = { recommend, scoreEvents, diversify, bumpInterestWeights, haversineKm };
+module.exports = { recommend, scoreEvents, diversify, haversineKm };

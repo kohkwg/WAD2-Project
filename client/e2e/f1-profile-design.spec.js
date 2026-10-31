@@ -12,14 +12,15 @@ async function profileFixture(page) {
         auth: { getUser: async () => ({ data: { user: { id: 'profile-fixture' } } }) },
         from: () => ({
           select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: {
-            display_name: 'Test Explorer', postal_code: '', interest_weights: { music: 3 }
+            display_name: 'Test Explorer', postal_code: '', interest_weights: { sports: 5 }, profile_interests: [{ interests: { slug: 'music' } }]
           } }) }) }),
-          update: payload => ({ eq: () => ({ select: () => ({ single: async () => {
-            window.profilePayload = payload;
-            await new Promise(resolve => setTimeout(resolve, 250));
-            return ++attempts === 1 ? { error: { message: 'Could not save. Try again.' } } : { data: { id: 'profile-fixture' } };
-          } }) }) })
-        })
+        }),
+        rpc: async (_name, payload) => {
+          window.profilePayload = payload;
+          await new Promise(resolve => setTimeout(resolve, 250));
+          return ++attempts === 1 ? { error: { message: 'Could not save. Try again.' } } : { error: null };
+        }
+
       };
     `,
   }))
@@ -64,6 +65,18 @@ test('profile reflows in both themes and preserves interest drafts through save 
         return (Math.max(a, b) + .05) / (Math.min(a, b) + .05)
       })
       expect(contrast).toBeGreaterThanOrEqual(4.5)
+      const legendContrast = await page.locator('.profile-section legend').first().evaluate(el => {
+        const luminance = color => {
+          const values = color.match(/\d+/g).slice(0, 3).map(Number).map(v => {
+            const c = v / 255; return c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4
+          })
+          return values[0] * .2126 + values[1] * .7152 + values[2] * .0722
+        }
+        const a = luminance(getComputedStyle(el).color)
+        const b = luminance(getComputedStyle(el.closest('form')).backgroundColor)
+        return (Math.max(a, b) + .05) / (Math.min(a, b) + .05)
+      })
+      expect(legendContrast).toBeGreaterThanOrEqual(4.5)
       const chip = await page.locator('label[for="int-music"]').boundingBox()
       expect(chip.height).toBeGreaterThanOrEqual(44)
       await page.screenshot({ path: testInfo.outputPath(`profile-${scheme}-${width}.png`), fullPage: true })
@@ -83,7 +96,7 @@ test('profile reflows in both themes and preserves interest drafts through save 
   await expect(page.getByLabel('Name', { exact: true })).toHaveValue('Updated Explorer')
   await page.getByRole('button', { name: 'Save profile', exact: true }).click()
   await expect(page.getByText('Profile saved.', { exact: true })).toBeVisible()
-  expect(await page.evaluate(() => window.profilePayload.interest_weights)).toEqual({ music: 3, arts: 1 })
+  expect(await page.evaluate(() => window.profilePayload.p_interests)).toEqual(['music', 'arts'])
   await page.getByRole('link', { name: 'Back to Discover', exact: true }).click()
   await expect(page).toHaveURL(/\/discover$/)
   expect(errors).toEqual([])

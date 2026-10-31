@@ -1,5 +1,77 @@
 # Decisions
 
+Aishani requests the illustrated Singapore hero as a separate landing page rather
+than part of Discover. Bookedz logos must return to it from any page. Use `/` for
+the public landing page and retain `/discover` for recommendations/event browsing;
+reuse the existing hero, filters, artwork and map with working search handoff.
+
+Aishani requests removing the sidebar promotional card, including its Create event
+button. Keep the other navigation and account controls.
+
+Aishani requests Profile at the bottom of the left navigation, the existing
+dark/light control below Settings, and Sign out beneath Profile. Reuse the current
+sidebar, routes, theme selection and sign-out behavior; preserve unrelated edits.
+
+Aishani requests a clearer map action directly beneath Discover search, activating
+the existing Map view with filters retained. Keep full homepage picks, compact
+matching picks in filtered results/Map/List and explicit access to other picks
+when filters do not match. Preserve scores, explanations and preference/RSVP
+actions; no new map implementation, routes, backend, SQL or algorithms. She also
+requests a detailed inventory distinguishing completed features from live limits.
+
+Aishani requests Discover search and card refinements only: more visible hero
+search with existing-category shortcuts, removable filters/clear search, browsing
+state retained across views and return visits, and readable cards using supplied
+descriptions, dates, venues and availability. Preserve section order, recommendation
+scores/explanations/actions, existing routes, RSVP/authentication and data contracts.
+No new pages, backend services, database changes or dependencies.
+
+Aishani requests a focused category UI refinement: larger pastel directory cards,
+clear removable category chips near search, cohesive results layout and no event-view
+toggle on the category directory. Preserve existing filtering/navigation/cards/RSVP;
+no backend, database, scoring, route definitions or recommendation-section changes.
+
+Aishani authorises the Discover frontend layout in this order: Picked for you,
+existing mood cards, factual Closing soon (maximum three), compact Explore
+categories, then the existing timeline. Reuse the current category catalog, cards
+and tag filters, with one reusable category directory/result view. No scoring,
+database/RLS/migration, backend architecture or dependency changes.
+
+Aishani approves implementing the simplified recommendation MVP locally: explicit
+interest persistence in Profile, V1 pipeline reads in the existing Express route,
+and For You scores/reasons/save/dismiss actions. Reuse existing utilities; no new
+data-loader service. Keep `{ events: [...] }`, authentication, eligibility and
+errors. Prepare SQL/application code and test against mocks, but do not execute
+SQL, apply migrations or modify shared Supabase without further approval.
+
+Aishani finalises V1 persistence locally: only confirmed registrations earn the
+10-point RSVP stage. Pending, waitlisted and active offered states block duplicate
+recommendations without earning RSVP points. Preserve the first confirmation
+through cancellation/reconfirmation and the first save through unsave/resave;
+reactivation does not refresh ageing. Add `first_confirmed_at` and trusted capture
+to the review-only SQL draft, including direct confirmed inserts. Explicit choices
+come from `profile_interests`, never legacy `interest_weights`. Authorises local
+fixtures/tests/docs alignment only; no SQL execution, hosted access, deployed
+migration, route, frontend or core algorithm/pipeline changes.
+
+Aishani approves the pure local recommendation pipeline with conservative
+eligibility and labelled general-discovery fallback (actual compatibility,
+null ranking). Reuse evidence dismissal/ageing, reject conflicting duplicate
+snapshots, use the actual registration `offer_expires_at`, and validate one
+shared supplied time. Authorises implementation and mock-data end-to-end tests;
+no Supabase, SQL, migration, route, frontend or live ranking changes.
+
+Aishani approves standalone V1 greedy diversity using maximum Jaccard similarity,
+penalty 0.3, input-order ties, duplicate-ID suppression and exclusion of zero-match
+events. Keep compatibility unchanged and return a separate ranking score. General
+discovery fallback and eligibility filtering remain separate. Authorises the local
+implementation and focused tests; preserve `rankEvents.js` and live behaviour.
+
+Aishani's subsequent 27 October compatibility decision: accept the mean of
+`points / (points + 10)` across unique event tags, multiplied by 100, with unmatched
+tags included. Explicit 10-point interests start at 50/100. Authorise the isolated
+implementation and local checks; no SQL, routes, frontend or live ranking changes.
+
 Denzel's recorded instructions and approvals, consolidated on 23 October and
 updated through 31 October 2026.
 Dates identify the decision, not a blanket approval for later work. Team decisions
@@ -223,6 +295,39 @@ use explicit force-with-lease only on the owner's feature branch. Subsequent wor
 uses normal feature pushes; Denzel will create/review/merge PRs into dev later.
 This authority does not reset teammates' branches now, force-push dev/main, deploy,
 or mutate hosted application data. See `design-branches.md`.
+
+## 26 October 2026 — F1 interest formula
+
+Aishani requests Step 1 first: blend matched preference share and saturating
+match strength equally, expose `interestScore`, and add console-based numeric
+checks. Preserve the existing test files, updating affected expected scores only.
+The later steps were initially pending; Step 2 is authorised below.
+
+## 26 October 2026 — F1 tag diversity
+
+Aishani requests maximum Jaccard tag similarity against already selected events,
+with adjusted score = original score × (1 − 0.3 × maximum similarity). The 0.3
+is a tunable heuristic; empty tags imply zero similarity. Category penalties
+are replaced. Add console checks and commit with the supplied message.
+
+## 27 October 2026 — recommendation V1 evidence foundation
+
+Aishani accepts the simplified evidence → preferences → compatibility → diversity
+plan, keeps Supabase, and requests proceeding after reviewing the existing schema.
+One event contributes at most 15 positive points, with stage precedence and UTC
+30/90-day ageing. Dismissal suppresses that event's positive evidence and its
+recommendation eligibility without cancelling registration or deleting history;
+undo restores the original positive stage date. No category-level negative
+learning in V1. Preserve the earlier mentoring constraint against generating the
+whole core engine. Begin with source-schema mapping and isolated evidence tests;
+coordinate later schema integration with Timothy. See
+[recommendation design](docs/recommendation-design.md).
+
+Aishani then authorises continuing the persistence adapter without connecting it
+to live ranking, reusing authoritative registration/check-in records. She requests
+no `assert` usage: recommendation tests now use explicit checks and thrown errors.
+Prepare SQL for review without applying it; hosted schema/history and PostgreSQL
+permission/concurrency checks remain necessary before migration or integration.
 
 ## Decisions recorded for the `vivi` branch (Feature 6 owner), 27–31 October
 

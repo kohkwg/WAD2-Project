@@ -42,11 +42,11 @@ const router = createRouter({
       const target = document.getElementById(id)
       if (target) return { el: target, behavior: 'instant' }
     }
-    if (to.path !== from.path) return { top: 0, behavior: 'instant' }
+    if (to.path === '/' || to.path !== from.path) return { top: 0, behavior: 'instant' }
     return false
   },
   routes: [
-    { path: '/', redirect: '/discover' },
+    { path: '/', name: 'home', component: () => import('../views/LandingView.vue'), meta: { title: 'Welcome' } },
     { path: '/login', component: LoginView, meta: { title: 'Sign in' } },
     { path: '/events', redirect: to => ({ path: '/discover', query: to.query, hash: to.hash }) },
     { path: '/events/:id/rsvp', component: RsvpView, meta: { title: 'Event RSVP' } },
@@ -103,6 +103,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
+  if (to.path === '/') return true
   if (!USING_SUPABASE) return to.path === '/login' ? '/events' : true
   const user = await getCurrentUser()
   if (to.path === '/login') return user ? '/events' : true
