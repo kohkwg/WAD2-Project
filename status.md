@@ -1,6 +1,6 @@
 # Project status and timeline
 
-Consolidated 23 October; updated 24 October 2026. Dates use Singapore time; same-day entries are ordered
+Consolidated 23 October; updated 26 October 2026. Dates use Singapore time; same-day entries are ordered
 by milestone because exact times are not consistently recorded. This replaces
 separate handoffs/merge/fix reports. [Decisions](decisions.md) records authority and
 superseded choices; [testing](docs/testing.md) explains reproducible checks;
@@ -413,6 +413,27 @@ not persist. These are dated observations, not permanent database invariants.
 - No full suite/production build, hosted writes, deployments or PR creation/merge.
   Safari, physical devices and signed-in hosted profile writes remain unverified.
   Denzel owns subsequent PR review/integration into dev.
+
+
+### 26 October — Vivienne branch F6 floor-plan polish
+
+- Vivienne's `vivi` branch was backed up and replaced once from Denzel's published
+  design baseline `86c026516690cc6f5e0f7c5bdbdde2093273fc02`, following
+  `design-branches.md`. Durable backups were pushed for the previous local and
+  remote tips:
+  `backup/design-baseline/vivi/20261026-170045-local` and
+  `backup/design-baseline/vivi/20261026-170045-remote`.
+- Refine only Feature 6 presentation: the floor-plan editor/viewer, programme flow
+  and public finished-image panel now use shared Bookedz typography/tokens, clearer
+  active-venue and helper-placement hierarchy, actual zone/marker/placement counts,
+  responsive helper rows and theme-aware surfaces/actions. Live Supabase/R2 calls,
+  organiser-role checks, programme validation, helper placement semantics and public
+  image rules were not changed.
+- Targeted checks: `git diff --check` passed; `NODE_ENV=test node --test
+  client/src/utils/__tests__/floorPlanModel.test.js` passed **4/4**; edited SFCs
+  (`editor.vue`, `ProgrammeFlow.vue`, `FloorPlanImages.vue`) compiled with
+  `vue/compiler-sfc`. No production build, full suite, live write, browser capture,
+  Safari/iOS or physical-device check was run for this branch polish.
 
 
 ### 28 October — event covers cropped to 16:9 (`gregory`)

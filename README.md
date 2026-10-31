@@ -315,6 +315,13 @@ not reset teammates' branches or create/merge their PRs; those steps remain with
 each owner and Denzel. Private source resources and local credentials/tools remain
 excluded; deployable art/fonts/licences and design documentation are included.
 
+On 26 October 2026, at Vivienne's request under the shared design-branch workflow,
+Codex backed up and replaced only the `vivi` branch from Denzel's published design
+baseline, then authored a scoped Feature 6 UI polish for the floor-plan editor,
+programme flow and public finished-image panel. The pass changed presentation and
+documentation only; live storage, organiser roles, programme validation, helper
+placement semantics and public image rules retain their existing contracts.
+
 On 25 October 2026, at Aishani's request, Codex refined F1 Profile's theme-aware
 form, interest-selection feedback, saving states and Discover's responsive view
 controls, semantic hosting colours and reduced-motion hover behaviour. Codex

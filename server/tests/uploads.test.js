@@ -77,6 +77,17 @@ test('floor-plan signing checks organiser, publication and matching plan before 
   assert.equal(h.queries[0].name, 'is_event_organiser');
   assert.ok(h.queries.find(q => q.table === 'floor_plans').filters.some(([key, value]) => key === 'event_id' && value === eventId));
 });
+test('background signing needs an organiser and plan but not publication, and is filed under background/', async () => {
+  const body = { ...valid, kind: 'background' };
+  for (const options of [{ owner: false, published: false }, { plan: false, published: false }]) {
+    const h = harness(options); const res = await h.run('/floor-plan', body);
+    assert.ok([403, 404].includes(res.statusCode)); assert.equal(h.signed.length, 0);
+  }
+  const h = harness({ published: false }); const res = await h.run('/floor-plan', body);
+  assert.equal(res.statusCode, 200); assert.match(res.body.key, new RegExp(`^floorplans/${eventId}/${floorPlanId}/background/`));
+  assert.equal(h.queries.some(q => q.table === 'events'), false);
+  assert.equal((await harness({ published: false }).run('/floor-plan', valid)).statusCode, 404);
+});
 test('floor-plan signing requires IDs and bounded size', async () => {
   for (const body of [{ ...valid, size: undefined }, { ...valid, eventId: 'bad' }, { ...valid, floorPlanId: null }]) {
     assert.equal((await harness().run('/floor-plan', body)).statusCode, 400);

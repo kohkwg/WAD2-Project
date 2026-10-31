@@ -14,6 +14,8 @@ app.get("/health", (req, res) => {
 // Feature 1: recommendations + cover image uploads
 app.use("/api/recommendations", require("./routes/recommendations"));
 app.use("/api/uploads", require("./routes/uploads"));
+// Automatic event planner: programme + task suggestions from past events
+app.use("/api/plan-suggestions", require("./routes/planSuggestions"));
 
 if (require.main === module) {
   const port = Number(process.env.PORT || 3000);
