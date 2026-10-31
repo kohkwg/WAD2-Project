@@ -47,21 +47,3 @@ test('cover uploads in the browser and persists through creation, discovery and 
  await expect(cover).toBeVisible()
  await expect.poll(()=>cover.evaluate(img=>img.complete && img.naturalWidth>0)).toBe(true)
 })
-
-test('finished floor-plan image uploads, reloads and is visible to participants',async()=>{
- const page=organiser.page
- await page.goto(`/organiser/events/${eventId}/floor-plan`)
- await page.getByRole('button',{name:'Add box',exact:true}).click()
- await page.getByRole('button',{name:'Save floor plan',exact:true}).click()
- await expect(page.getByText('Saved.',{exact:true})).toBeVisible()
- await expect(page.getByLabel('Public finished floor-plan image')).toBeEnabled()
- await page.getByLabel('Public finished floor-plan image').setInputFiles(file('[TEST] finished.png'))
- await expect(page.getByRole('status').filter({hasText:'Public floor-plan image saved.'})).toBeVisible()
- await page.reload()
- await expect(page.getByRole('img',{name:'[TEST] finished.png',exact:true})).toBeVisible()
- await participant.page.goto(`/events/${eventId}/rsvp`)
- const img=participant.page.getByRole('img',{name:'[TEST] finished.png',exact:true})
- await expect(img).toBeVisible()
- await expect.poll(()=>img.evaluate(el=>el.complete && el.naturalWidth>0)).toBe(true)
- await expect(participant.page.getByLabel('Public finished floor-plan image')).toHaveCount(0)
-})

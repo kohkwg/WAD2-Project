@@ -58,7 +58,8 @@ test('organiser adds a zone and a helper spot, then saves', async () => {
   await page.getByRole('button', { name: 'Add box' }).click()
   await page.getByRole('button', { name: 'Add box' }).click()
   await page.getByRole('button', { name: 'Add person' }).click()
-  await page.getByLabel('Box name: New Box 1').fill('Stage')
+  await page.getByRole('group', { name: 'Elements on this plan' }).getByRole('button', { name: 'New Box 1' }).click()
+  await page.getByRole('group', { name: 'Selected element' }).getByLabel('Name', { exact: true }).fill('Stage')
   await expect(page.getByText('Unsaved changes')).toBeVisible()
 
   await page.getByRole('button', { name: 'Save floor plan' }).click()
@@ -73,7 +74,9 @@ test('organiser adds a zone and a helper spot, then saves', async () => {
 test('the saved plan survives a reload, and edits update the same plan', async () => {
   const { page } = organiser
   await page.reload()
-  await expect(page.getByLabel('Box name: Stage')).toHaveValue('Stage')
+  const elements = page.getByRole('group', { name: 'Elements on this plan' })
+  await expect(elements.getByRole('button', { name: 'Stage' })).toBeVisible()
+  await elements.getByRole('button', { name: 'New Box 2' }).click()
   await page.getByRole('button', { name: 'Remove New Box 2' }).click()
   await page.getByRole('button', { name: 'Save floor plan' }).click()
   await expect(page.getByText('Saved.')).toBeVisible()
