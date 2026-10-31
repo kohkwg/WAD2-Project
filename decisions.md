@@ -1,7 +1,7 @@
 # Decisions
 
 Denzel's recorded instructions and approvals, consolidated on 23 October and
-updated through 24 October 2026.
+updated through 31 October 2026.
 Dates identify the decision, not a blanket approval for later work. Team decisions
 and implementation contracts are attributed separately. The [status timeline](status.md)
 records delivery and evidence; [README](README.md#ai-assistance-disclosure) retains
@@ -110,9 +110,10 @@ product decisions or claims that Denzel personally specified every implementatio
   Participants get a read-only plan/programme for events they can see.
 - Free labelled markers are separate from actual team-member placements.
   Account-linked placements remain team-only and support saved keyboard coordinates.
-- The current R2 bucket is public. Implemented image UI deliberately offers public
-  finished plans for published events, not misleading private object uploads.
-  Private object-image storage and automated cleanup remain explicit limits.
+- The current R2 bucket is public. The plan background is a public R2 object; do not
+  represent it as private storage. Private object-image storage and automated cleanup
+  remain explicit limits. The earlier public finished-image panel was removed on 29 October
+  (see the `vivi` decisions below); the background replaces it.
 
 ## Decisions recorded for other teammates
 
@@ -222,6 +223,28 @@ use explicit force-with-lease only on the owner's feature branch. Subsequent wor
 uses normal feature pushes; Denzel will create/review/merge PRs into dev later.
 This authority does not reset teammates' branches now, force-push dev/main, deploy,
 or mutate hosted application data. See `design-branches.md`.
+
+## Decisions recorded for the `vivi` branch (Feature 6 owner), 27–31 October
+
+Given by the branch owner in conversation; not Denzel's decisions and not faculty approval.
+
+- **Plan background:** store it as an R2 editor image and keep its key in the plan layout so
+  participants can see it; no migration. Participants see the same canvas read-only. This
+  makes the background effectively public, which differs from the database's "editor images
+  are never public" intent, and is documented rather than hidden.
+- **Remove the public finished-image panel**, and replace the Plan zones side panel with a
+  full-width Canva-style canvas (toolbar, double-click rename, selection bar).
+- **Event planner, first slice = programme + tasks.** Allowed sources are events published by
+  other organisers and the organiser's own past events only. An identical title copies the
+  best past event's programme and, for the organiser's own events, its tasks; other
+  organisers' tasks are private and never used. Otherwise community patterns need at least
+  three events. The button sits left of Next in the create-event wizard, is disabled without
+  a title, and the title field suggests existing event names as you type.
+- **Sample data:** write an opt-in seed script (default accounts come from
+  `client/e2e-live/accounts.mjs`); running it needs separate approval because it writes to the
+  hosted project.
+- **Community tab:** a public feed that stores posts in the browser until a shared table is
+  approved (it would need a migration coordinated with Timothy).
 
 
 ### Gregory's F2 design branch, 25 October

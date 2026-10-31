@@ -56,3 +56,18 @@ export function fitRotated(imageWidth, imageHeight, box, degrees = 0, zoom = 1) 
 export const clampScale = (value) => Math.min(3, Math.max(0.5, Number(value) || 1))
 export const clampRotation = (value) => ((Number(value) || 0) % 360 + 360) % 360
 export const clampOpacity = (value) => Math.min(1, Math.max(0.1, Number(value) || 1))
+
+// Where a new box or person goes: the first free spot, scanning left to right then
+// top to bottom, that does not overlap anything already on the plan. null when the
+// plan is too full, so callers can fall back to their old grid.
+export const personFootprint = (person) => ({ x: person.x - 50, y: person.y - (person.radius || 20), width: 100, height: (person.radius || 20) * 2 + 30 })
+export function findFreeSpot(size, occupied, bounds, { step = 20, gap = 8 } = {}) {
+  const overlaps = (a, b) => a.x < b.x + b.width + gap && a.x + a.width + gap > b.x && a.y < b.y + b.height + gap && a.y + a.height + gap > b.y
+  for (let y = bounds.y; y + size.height <= bounds.y + bounds.height; y += step) {
+    for (let x = bounds.x; x + size.width <= bounds.x + bounds.width; x += step) {
+      const candidate = { x, y, width: size.width, height: size.height }
+      if (!occupied.some((item) => overlaps(candidate, item))) return { x, y }
+    }
+  }
+  return null
+}

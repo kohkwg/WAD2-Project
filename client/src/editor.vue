@@ -3,11 +3,11 @@
 // Organisers drag boxes (zones) and labelled people markers, then Save; the layout
 // is stored in public.floor_plans (see utils/floorPlan.js). Everyone else, and the
 // public event page (read-only prop), sees the saved plan without editing controls.
-import { computed, nextTick, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { canEditFloorPlan, getFloorPlans, saveFloorPlan, getPlanMembers, getHelperPlacements, saveHelperPlacement, deleteHelperPlacement, uploadPlanBackground, deleteFloorAsset } from '@/utils/floorPlan'
 import { USING_SUPABASE, getEvent } from '@/utils/api'
-import { clampPosition, backgroundUrl, fitRotated, clampOpacity, clampRotation, clampScale, validateFloorImage } from '@/utils/floorPlanModel'
+import { clampPosition, backgroundUrl, fitRotated, clampOpacity, clampRotation, clampScale, validateFloorImage, findFreeSpot, personFootprint } from '@/utils/floorPlanModel'
 import ProgrammeFlow from '@/components/floor-plan/ProgrammeFlow.vue'
 
 const props = defineProps({
@@ -93,13 +93,6 @@ const boxColourPresets = [
     '#0f766e', '#a16207', '#111827', '#6b7280',
 ]
 const personColours = ['#111827', '#0f766e', '#7c3aed', '#be123c', '#1d4ed8', '#a16207']
-const boxSizePresets = [
-    { label: 'Booth', width: 100, height: 60 },
-    { label: 'Standard', width: 130, height: 70 },
-    { label: 'Wide', width: 210, height: 70 },
-    { label: 'Tall', width: 120, height: 130 },
-    { label: 'Large', width: 220, height: 120 },
-]
 const nextBoxNumber = ref(1)
 const nextPersonNumber = ref(1)
 
@@ -117,13 +110,21 @@ const helperError = ref('')
 const helperMessage = ref('')
 const helperDirty = ref(false)
 const venueDraft = ref({ name: '', address: '' })
-const activeBoxColourId = ref(null)
 
 // Canva-style resizing: click a box to get handles on its corners and edges.
 const selectedBoxId = ref(null)
+const selectedPersonId = ref(null)
+const textEdit = ref(null) // in-place rename: { kind, id, field, value, maxlength, label, style }
+const textEditor = ref(null)
 const stageRef = ref(null)
 const transformerRef = ref(null)
 const selectedBox = computed(() => floorObjects.value.find(item => item.id === selectedBoxId.value) || null)
+const selectedPerson = computed(() => people.value.find(person => person.id === selectedPersonId.value) || null)
+// Every element, so keyboard and screen-reader users can select one without the canvas
+const layers = computed(() => [
+    ...floorObjects.value.map(item => ({ kind: 'box', id: item.id, label: item.label, colour: item.fill })),
+    ...people.value.map(person => ({ kind: 'person', id: person.id, label: person.name, colour: person.fill })),
+])
 const MIN_BOX_WIDTH = 60
 const MIN_BOX_HEIGHT = 40
 const transformerConfig = {
@@ -208,8 +209,9 @@ function applyPlan(plan, index, markClean = true) {
     selectedMember.value = ''
     helperMessage.value = ''
     helperError.value = ''
-    activeBoxColourId.value = null
     selectedBoxId.value = null
+    selectedPersonId.value = null
+    textEdit.value = null
     nextBoxNumber.value = floorObjects.value.length + 1
     nextPersonNumber.value = people.value.length + 1
     savedPlan.value = clone(source)
@@ -285,7 +287,9 @@ async function load() {
     helperMessage.value = ''
     saveMessage.value = ''
     planSwitchMessage.value = ''
-    activeBoxColourId.value = null
+    selectedBoxId.value = null
+    selectedPersonId.value = null
+    textEdit.value = null
     if (!USING_SUPABASE) { loading.value = false; return }
     try {
         const [loadedPlans, organiser, event] = await Promise.all([
@@ -322,7 +326,7 @@ function observeStage() {
     resizeObserver?.disconnect()
     if (!stageHost.value) return
     resizeObserver = new ResizeObserver(([entry]) => {
-        const width = Math.max(1, Math.min(900, entry.contentRect.width))
+        const width = Math.max(1, entry.contentRect.width)
         cancelAnimationFrame(resizeFrame)
         resizeFrame = requestAnimationFrame(() => { if (Math.abs(stageWidth.value - width) > 0.5) stageWidth.value = width })
     })
@@ -333,7 +337,7 @@ watch(planName, (name) => {
     if (plans.value[activePlanIndex.value]) plans.value[activePlanIndex.value] = { ...plans.value[activePlanIndex.value], name }
     venueDraft.value = { ...venueDraft.value, name }
 })
-onUnmounted(() => { requestGeneration++; resizeObserver?.disconnect(); cancelAnimationFrame(resizeFrame) })
+onUnmounted(() => { requestGeneration++; resizeObserver?.disconnect(); cancelAnimationFrame(resizeFrame); window.removeEventListener('keydown', onEditorKeydown) })
 async function addHelper() {
     if (!layoutEditable.value || !planId.value || !selectedMember.value || helperBusy.value) return
     const token = requestGeneration
@@ -490,7 +494,12 @@ function removeItem(list, item) {
     if (!layoutEditable.value) return
     const index = list.indexOf(item)
     if (index >= 0) list.splice(index, 1)
-    if (activeBoxColourId.value === item.id) activeBoxColourId.value = null
+    if (selectedBoxId.value === item.id) selectedBoxId.value = null
+    if (selectedPersonId.value === item.id) selectedPersonId.value = null
+}
+function removeSelected() {
+    if (selectedBox.value) removeItem(floorObjects.value, selectedBox.value)
+    else if (selectedPerson.value) removeItem(people.value, selectedPerson.value)
 }
 
 function applyBoxColour(item, colour) {
@@ -499,13 +508,81 @@ function applyBoxColour(item, colour) {
 }
 
 function selectBox(item) {
-    if (layoutEditable.value) selectedBoxId.value = item.id
+    if (!layoutEditable.value) return
+    selectedBoxId.value = item.id
+    selectedPersonId.value = null
 }
-function deselectBox(event) {
-    const target = event.target
-    if (target.findAncestor('Transformer', true) || target.findAncestor('.box-group', true)) return
+function selectPerson(person) {
+    if (!layoutEditable.value || person.user_id) return // team placements are managed in their own panel
+    selectedPersonId.value = person.id
     selectedBoxId.value = null
 }
+function selectLayer(layer) {
+    if (layer.kind === 'box') selectBox({ id: layer.id })
+    else selectPerson({ id: layer.id })
+}
+function deselectAll(event) {
+    const target = event.target
+    if (target.findAncestor('Transformer', true) || target.findAncestor('.box-group', true) || target.findAncestor('.person-group', true)) return
+    selectedBoxId.value = null
+    selectedPersonId.value = null
+}
+// In-place rename: a text field laid over the double-clicked element, like Canva
+function startTextEdit(kind, item, event) {
+    if (!layoutEditable.value || saving.value || item.user_id) return
+    const group = event.currentTarget
+    if (!group) return
+    const scale = stageWidth.value / 900
+    const area = { skipStroke: true, skipShadow: true }
+    let frame, field, value, maxlength, label, look
+    if (kind === 'box') {
+        const rect = group.findOne('Rect').getClientRect(area)
+        frame = { left: rect.x + 4, top: rect.y + rect.height / 2 - 17, width: Math.max(rect.width - 8, 60), height: 34 }
+        field = 'label'; value = item.label; maxlength = 24; label = 'Box name'
+        look = { background: item.fill, color: '#ffffff', fontSize: 15 * scale }
+        selectBox(item)
+    } else {
+        const text = group.findOne('.name-text').getClientRect(area)
+        frame = { left: text.x - 6, top: text.y - 5, width: Math.max(text.width + 12, 90), height: text.height + 10 }
+        field = 'name'; value = item.name; maxlength = 18; label = 'Person name'
+        look = { background: '#ffffff', color: '#111827', fontSize: 14 * scale }
+        selectPerson(item)
+    }
+    textEdit.value = {
+        kind, id: item.id, field, value, maxlength, label,
+        style: { left: `${frame.left}px`, top: `${frame.top}px`, width: `${frame.width}px`, height: `${frame.height}px`, fontSize: `${Math.max(12, look.fontSize)}px`, background: look.background, color: look.color },
+    }
+    nextTick(() => { textEditor.value?.focus(); textEditor.value?.select() })
+}
+function commitTextEdit() {
+    const edit = textEdit.value
+    if (!edit) return
+    textEdit.value = null // first, so the blur caused by removing the field does nothing
+    const value = edit.value.trim()
+    if (!value || !layoutEditable.value) return // an empty name keeps the old one
+    const item = (edit.kind === 'box' ? floorObjects.value : people.value).find(entry => entry.id === edit.id)
+    if (item) item[edit.field] = value
+}
+function cancelTextEdit() { textEdit.value = null }
+watch([stageWidth, layoutEditable], cancelTextEdit)
+
+// Delete removes, Escape deselects, arrows nudge (Shift = bigger steps), when no form field has focus
+function onEditorKeydown(event) {
+    if (!layoutEditable.value || textEdit.value) return
+    const target = event.target
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName) || target?.isContentEditable) return
+    const item = selectedBox.value || selectedPerson.value
+    if (!item) return
+    if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); removeSelected(); return }
+    if (event.key === 'Escape') { selectedBoxId.value = null; selectedPersonId.value = null; return }
+    const step = event.shiftKey ? 20 : 5
+    const move = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[event.key]
+    if (move) {
+        event.preventDefault()
+        Object.assign(item, clampPosition(item, item.x + move[0], item.y + move[1]))
+    }
+}
+onMounted(() => window.addEventListener('keydown', onEditorKeydown))
 // The transformer scales the group; turn that scale into a real width/height.
 function onBoxTransform(item, event) {
     if (!layoutEditable.value) return
@@ -533,7 +610,11 @@ function syncTransformer() {
     transformer.getLayer()?.batchDraw()
 }
 watch([selectedBoxId, layoutEditable, loading, () => floorObjects.value.length, () => selectedBox.value?.width, () => selectedBox.value?.height, () => selectedBox.value?.x, () => selectedBox.value?.y],
-    () => { if (selectedBoxId.value && !selectedBox.value) selectedBoxId.value = null; syncTransformer() },
+    () => {
+        if (selectedBoxId.value && !selectedBox.value) selectedBoxId.value = null
+        if (selectedPersonId.value && !selectedPerson.value) selectedPersonId.value = null
+        syncTransformer()
+    },
     { flush: 'post' })
 
 function updatePosition(item, event) {
@@ -550,24 +631,6 @@ function resizeBox(item, width, height) {
     item.width = nextWidth
     item.height = nextHeight
     item.sizeMode = 'Custom'
-    Object.assign(item, clampPosition(item, item.x, item.y))
-}
-
-function boxSizeLabel(item) {
-    if (item.sizeMode === 'Custom') return 'Custom'
-    return boxSizePresets.find(preset => preset.width === item.width && preset.height === item.height)?.label || 'Custom'
-}
-
-function applyBoxSize(item, label) {
-    if (label === 'Custom') {
-        item.sizeMode = 'Custom'
-        return
-    }
-    const preset = boxSizePresets.find(option => option.label === label)
-    if (!preset || !layoutEditable.value) return
-    item.width = preset.width
-    item.height = preset.height
-    delete item.sizeMode
     Object.assign(item, clampPosition(item, item.x, item.y))
 }
 
@@ -591,13 +654,20 @@ function safeGridPosition(index, options) {
     }
 }
 
+// New items go to the first free spot so they never land on top of something else
+const spotBounds = { x: floorBounds.x + 16, y: floorBounds.y + 16, width: floorBounds.width - 32, height: floorBounds.height - 32 }
+const occupiedRects = () => [
+    ...floorObjects.value.map(item => ({ x: item.x, y: item.y, width: item.width, height: item.height })),
+    ...[...people.value, ...helperMarkers.value].map(personFootprint),
+]
 function addBox() {
     if (!layoutEditable.value) return
 
     const boxNumber = nextBoxNumber.value
+    const boxId = `box-${crypto.randomUUID()}`
     const width = 130
     const height = 70
-    const position = safeGridPosition(boxNumber - 1, {
+    const position = findFreeSpot({ width, height }, occupiedRects(), spotBounds) || safeGridPosition(boxNumber - 1, {
         padding: 36,
         columnWidth: 150,
         rowHeight: 90,
@@ -606,7 +676,7 @@ function addBox() {
     })
 
     floorObjects.value.push({
-        id: `box-${crypto.randomUUID()}`,
+        id: boxId,
         type: 'rect',
         label: `New Box ${boxNumber}`,
         x: Math.min(position.x, floorBounds.x + floorBounds.width - width),
@@ -617,15 +687,19 @@ function addBox() {
     })
 
     nextBoxNumber.value += 1
+    selectedBoxId.value = boxId
+    selectedPersonId.value = null
 }
 
 function addPerson() {
     if (!layoutEditable.value) return
 
     const personNumber = nextPersonNumber.value
+    const personId = `person-${crypto.randomUUID()}`
     const radius = 20
     const labelHeight = 34
-    const position = safeGridPosition(personNumber - 1, {
+    const spot = findFreeSpot({ width: 100, height: radius * 2 + 30 }, occupiedRects(), spotBounds) // the marker plus its labels
+    const position = spot ? { x: spot.x + 50, y: spot.y + radius } : safeGridPosition(personNumber - 1, {
         padding: radius + 42,
         columnWidth: 92,
         rowHeight: 86,
@@ -634,7 +708,7 @@ function addPerson() {
     })
 
     people.value.push({
-        id: `person-${crypto.randomUUID()}`,
+        id: personId,
         name: `Person ${personNumber}`,
         role: 'Helper',
         x: Math.min(position.x, floorBounds.x + floorBounds.width - radius),
@@ -644,6 +718,8 @@ function addPerson() {
     })
 
     nextPersonNumber.value += 1
+    selectedPersonId.value = personId
+    selectedBoxId.value = null
 }
 
 </script>
@@ -715,159 +791,19 @@ function addPerson() {
                 <p v-if="planSwitchMessage" class="small text-danger mb-0" role="alert">{{ planSwitchMessage }}</p>
             </div>
             <div class="floor-editor-layout" :class="{ 'viewer-layout': readOnly }">
-                <aside v-if="canEdit" class="floor-tools">
-                    <p v-if="canEdit && !floorObjects.length && !people.length" class="text-muted small">
-                        No floor plan yet. Add boxes for areas (stage, booths, entrance) and people for helper spots,
-                        drag them into place, then save.
-                    </p>
-
-                    <section v-if="canEdit" class="edit-panel">
-                        <div>
-                            <div class="edit-heading">
-                                <div>
-                                    <span class="panel-kicker">Plan zones</span>
-                                    <h2 class="h6 mb-0">Boxes</h2>
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary" type="button" :disabled="!layoutEditable"
-                                    @click="addBox">
-                                    Add box
-                                </button>
-                            </div>
-
-                            <div class="edit-grid item-scroll-list box-scroll-list"
-                                :class="{ 'is-scrollable': floorObjects.length > 2 }">
-                                <div v-for="item in floorObjects" :key="item.id" class="edit-field edit-field--box">
-                                    <button class="colour-dot colour-dot-button" type="button"
-                                        :style="{ backgroundColor: item.fill }"
-                                        :aria-label="`Choose colour for ${item.label}`"
-                                        :aria-expanded="activeBoxColourId === item.id"
-                                        :disabled="!layoutEditable"
-                                        @click="activeBoxColourId = activeBoxColourId === item.id ? null : item.id"></button>
-                                    <input v-model="item.label" class="form-control form-control-sm box-name-input" maxlength="24"
-                                        :aria-label="`Box name: ${item.label}`" :disabled="!layoutEditable">
-                                    <div class="box-size-tools">
-                                        <select class="form-select form-select-sm box-size-chip" :value="boxSizeLabel(item)"
-                                            :aria-label="`Size preset for ${item.label}`" :disabled="!layoutEditable"
-                                            @change="applyBoxSize(item, $event.target.value)">
-                                            <option v-for="preset in boxSizePresets" :key="preset.label"
-                                                :value="preset.label">{{ preset.label }}</option>
-                                            <option value="Custom">Custom</option>
-                                        </select>
-                                        <div v-if="boxSizeLabel(item) === 'Custom'" class="box-dimension-chip">
-                                            <input :value="item.width" type="number" min="60" :max="floorBounds.width"
-                                                class="form-control form-control-sm dimension-input"
-                                                :aria-label="`Width for ${item.label}`" :disabled="!layoutEditable"
-                                                @change="resizeBox(item, $event.target.value, item.height)">
-                                            <span aria-hidden="true">&times;</span>
-                                            <input :value="item.height" type="number" min="40" :max="floorBounds.height"
-                                                class="form-control form-control-sm dimension-input"
-                                                :aria-label="`Height for ${item.label}`" :disabled="!layoutEditable"
-                                                @change="resizeBox(item, item.width, $event.target.value)">
-                                        </div>
-                                        <span v-else class="box-dim-readout">{{ item.width }}&times;{{ item.height }}</span>
-                                    </div>
-                                    <div v-if="activeBoxColourId === item.id" class="box-colour-picker"
-                                        :aria-label="`Colour options for ${item.label}`">
-                                        <button v-for="colour in boxColourPresets" :key="colour" class="box-colour-swatch"
-                                            type="button" :style="{ backgroundColor: colour }"
-                                            :class="{ active: item.fill === colour }"
-                                            :aria-label="`Use ${colour} for ${item.label}`"
-                                            :disabled="!layoutEditable"
-                                            @click="applyBoxColour(item, colour)"></button>
-                                        <label class="box-custom-colour">Custom
-                                            <input v-model="item.fill" type="color" :disabled="!layoutEditable"
-                                                :aria-label="`Custom colour for ${item.label}`">
-                                        </label>
-                                    </div>
-                                    <button class="btn btn-sm btn-outline-danger" type="button"
-                                        :aria-label="`Remove ${item.label}`"
-                                        :disabled="!layoutEditable"
-                                        @click.prevent="removeItem(floorObjects, item)">&times;</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="edit-heading">
-                                <div>
-                                    <span class="panel-kicker">Free markers</span>
-                                    <h2 class="h6 mb-0">People</h2>
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary" type="button" :disabled="!layoutEditable"
-                                    @click="addPerson">
-                                    Add person
-                                </button>
-                            </div>
-
-                            <div class="edit-grid people-grid item-scroll-list person-scroll-list"
-                                :class="{ 'is-scrollable': people.length > 2 }">
-                                <div v-for="person in people" :key="person.id" class="person-edit-row">
-                                    <span class="colour-dot" :style="{ backgroundColor: person.fill }"></span>
-                                    <input :aria-label="`Person name: ${person.name}`" v-model="person.name"
-                                        class="form-control form-control-sm" maxlength="18" :disabled="!layoutEditable">
-                                    <select v-model="person.role" class="form-select form-select-sm"
-                                        :aria-label="`Role for ${person.name}`" :disabled="!layoutEditable">
-                                        <option>Organiser</option>
-                                        <option>Helper</option>
-                                    </select>
-                                    <button class="btn btn-sm btn-outline-danger" type="button"
-                                        :aria-label="`Remove ${person.name}`"
-                                        :disabled="!layoutEditable"
-                                        @click="removeItem(people, person)">&times;</button>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section v-if="canEdit || placements.length" class="helper-panel"
-                        aria-label="Team helper placements">
-                        <div class="panel-heading">
-                            <div>
-                                <span class="panel-kicker">Team-only</span>
-                                <h2 class="h6">Helper placements</h2>
-                            </div>
-                            <span class="status-pill">{{ placements.length }} placed</span>
-                        </div>
-                        <p class="small text-muted">Real event team members. These placements are visible to the event
-                            team only.</p>
-                        <p v-if="!planId" class="small">Save the floor plan before placing a helper.</p>
-                        <div v-if="canEdit" class="d-flex flex-wrap gap-2 mb-2">
-                            <label class="flex-grow-1">Team member<select aria-label="Team member"
-                                    v-model="selectedMember" class="form-select" :disabled="helperBusy || !planId || canvasLocked">
-                                    <option value="">Choose a team member</option>
-                                    <option v-for="member in availableMembers" :key="member.user_id"
-                                        :value="member.user_id">{{ member.profiles?.display_name || 'Team member' }} ({{
-                                        member.member_role }})</option>
-                                </select></label>
-                            <button class="btn btn-outline-primary align-self-end"
-                                :disabled="helperBusy || !planId || !selectedMember || canvasLocked" @click="addHelper">Add
-                                helper</button>
-                        </div>
-                        <div v-for="spot in placements" :key="spot.id" class="helper-row">
-                            <span class="helper-name">{{ memberLabel(spot.user_id) }}</span>
-                            <label>X<input :value="spot.x" type="number" min="40" max="860"
-                                    class="form-control coordinate-input" :disabled="!layoutEditable || helperBusy"
-                                    @change="moveHelper(spot.id, $event.target.value, spot.y)" /></label>
-                            <label>Y<input :value="spot.y" type="number" min="40" max="486"
-                                    class="form-control coordinate-input" :disabled="!layoutEditable || helperBusy"
-                                    @change="moveHelper(spot.id, spot.x, $event.target.value)" /></label>
-                            <button v-if="canEdit" class="btn btn-outline-danger" :disabled="helperBusy || canvasLocked"
-                                @click="removeHelper(spot.id)">Remove helper {{ memberLabel(spot.user_id) }}</button>
-                        </div>
-                        <button v-if="canEdit" class="btn btn-primary" :disabled="helperBusy || !helperDirty"
-                            @click="saveHelpers">Save helper positions</button>
-                        <p v-if="helperMessage" role="status" class="text-success mt-2">{{ helperMessage }}</p>
-                        <p v-if="helperError" role="alert" class="text-danger mt-2">{{ helperError }}</p>
-                    </section>
-                </aside>
                 <section ref="stageHost" class="editor-shell" aria-label="Floor plan canvas">
-                    <div v-if="!readOnly" class="workspace-caption">
-                        <div>
-                            <span class="panel-kicker">Layout canvas</span>
-                            <h2 class="h5 mb-1">Canvas</h2>
-                            <p class="small mb-0">{{ canvasLocked ? 'Layout is locked. Unlock it to move or edit zones and people.' : 'Drag zones and people into place. Click a zone to resize it by its handles. Use the fields alongside the canvas for precise labels and coordinates.' }}</p>
-                        </div>
-                        <button v-if="canEdit" class="btn btn-sm lock-toggle" type="button"
+                    <div v-if="!readOnly" class="canvas-toolbar">
+                        <h2 class="visually-hidden">Layout canvas</h2>
+                        <template v-if="canEdit">
+                            <button class="btn btn-sm btn-outline-primary" type="button" :disabled="!layoutEditable" @click="addBox">
+                                <span aria-hidden="true">+</span> Add box
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" type="button" :disabled="!layoutEditable" @click="addPerson">
+                                <span aria-hidden="true">+</span> Add person
+                            </button>
+                        </template>
+                        <p class="canvas-hint small mb-0">{{ canvasLocked ? 'Layout is locked. Unlock it to edit zones and people.' : 'Double-click a box or person to rename it. Drag to move; drag a box\u2019s handles to resize.' }}</p>
+                        <button v-if="canEdit" class="btn btn-sm lock-toggle ms-auto" type="button"
                             :class="{ 'lock-toggle--locked': canvasLocked }"
                             :aria-pressed="canvasLocked"
                             :aria-label="canvasLocked ? 'Unlock layout canvas' : 'Lock layout canvas'"
@@ -878,6 +814,48 @@ function addPerson() {
                             </svg>
                             {{ canvasLocked ? 'Locked' : 'Lock' }}
                         </button>
+                    </div>
+                    <div v-if="canEdit" class="canvas-selection" role="group" aria-label="Selected element">
+                        <p v-if="!selectedBox && !selectedPerson" class="selection-empty small mb-0">Select a box or person to change its name, colour or size.</p>
+                        <template v-if="selectedBox">
+                            <label class="selection-field">Name
+                                <input v-model="selectedBox.label" class="form-control form-control-sm" maxlength="24" :disabled="!layoutEditable">
+                            </label>
+                            <div class="selection-swatches" role="group" aria-label="Colour">
+                                <button v-for="colour in boxColourPresets" :key="colour" class="box-colour-swatch" type="button"
+                                    :style="{ backgroundColor: colour }" :class="{ active: selectedBox.fill === colour }"
+                                    :aria-label="`Use colour ${colour}`" :aria-pressed="selectedBox.fill === colour"
+                                    :disabled="!layoutEditable" @click="applyBoxColour(selectedBox, colour)"></button>
+                                <label class="box-custom-colour">Custom
+                                    <input v-model="selectedBox.fill" type="color" :disabled="!layoutEditable" aria-label="Custom colour">
+                                </label>
+                            </div>
+                            <div class="selection-size">
+                                <label>Width
+                                    <input :value="selectedBox.width" type="number" min="60" :max="floorBounds.width" class="form-control form-control-sm dimension-input"
+                                        :disabled="!layoutEditable" @change="resizeBox(selectedBox, $event.target.value, selectedBox.height)">
+                                </label>
+                                <label>Height
+                                    <input :value="selectedBox.height" type="number" min="40" :max="floorBounds.height" class="form-control form-control-sm dimension-input"
+                                        :disabled="!layoutEditable" @change="resizeBox(selectedBox, selectedBox.width, $event.target.value)">
+                                </label>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger ms-auto" type="button" :aria-label="`Remove ${selectedBox.label}`"
+                                :disabled="!layoutEditable" @click="removeSelected">Remove</button>
+                        </template>
+                        <template v-else-if="selectedPerson">
+                            <label class="selection-field">Name
+                                <input v-model="selectedPerson.name" class="form-control form-control-sm" maxlength="18" :disabled="!layoutEditable">
+                            </label>
+                            <label class="selection-field">Role
+                                <select v-model="selectedPerson.role" class="form-select form-select-sm" :disabled="!layoutEditable">
+                                    <option>Organiser</option>
+                                    <option>Helper</option>
+                                </select>
+                            </label>
+                            <button class="btn btn-sm btn-outline-danger ms-auto" type="button" :aria-label="`Remove ${selectedPerson.name}`"
+                                :disabled="!layoutEditable" @click="removeSelected">Remove</button>
+                        </template>
                     </div>
                     <div v-if="canEdit" class="background-controls">
                         <input ref="bgInput" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp"
@@ -907,7 +885,7 @@ function addPerson() {
                     </div>
                     <p v-if="bgError" class="small text-danger mb-2" role="alert">{{ bgError }}</p>
                     <div class="stage-wrap">
-                        <v-stage ref="stageRef" :config="{ ...scaledStage, onMousedown: deselectBox, onTouchstart: deselectBox }">
+                        <v-stage ref="stageRef" :config="{ ...scaledStage, onMousedown: deselectAll, onTouchstart: deselectAll }">
                             <v-layer>
                                 <v-rect :config="{
                                     x: 0,
@@ -957,6 +935,8 @@ function addPerson() {
                                     opacity: layoutEditable || readOnly ? 1 : 0.75,
                                     onMousedown: () => selectBox(item),
                                     onTouchstart: () => selectBox(item),
+                                    onDblclick: (event) => startTextEdit('box', item, event),
+                                    onDbltap: (event) => startTextEdit('box', item, event),
                                     onTransform: (event) => onBoxTransform(item, event),
                                     onDragend: (event) => updatePosition(item, event),
                                 }">
@@ -985,12 +965,26 @@ function addPerson() {
                                 </v-group>
 
                                 <v-group v-for="person in [...people, ...helperMarkers]" :key="person.id" :config="{
+                                    id: `marker-${person.id}`,
+                                    name: 'person-group',
+                                    onMousedown: () => selectPerson(person),
+                                    onTouchstart: () => selectPerson(person),
+                                    onDblclick: (event) => startTextEdit('person', person, event),
+                                    onDbltap: (event) => startTextEdit('person', person, event),
                                     x: person.x,
                                     y: person.y,
                                     draggable: layoutEditable && !saving && !helperBusy,
                                     opacity: layoutEditable || readOnly ? 1 : 0.75,
                                     onDragend: (event) => person.user_id ? updateHelperPosition(person, event) : updatePosition(person, event),
                                 }">
+                                    <v-circle v-if="selectedPersonId === person.id" :config="{
+                                        radius: person.radius + 6,
+                                        stroke: '#aa3e2c',
+                                        strokeWidth: 2,
+                                        dash: [5, 4],
+                                        listening: false,
+                                    }" />
+
                                     <v-circle :config="{
                                         x: 0,
                                         y: 0,
@@ -1020,6 +1014,7 @@ function addPerson() {
                                         x: -50,
                                         y: person.radius + 8,
                                         width: 100,
+                                        name: 'name-text',
                                         text: person.name,
                                         align: 'center',
                                         fill: '#111827',
@@ -1027,7 +1022,6 @@ function addPerson() {
                                         fontStyle: 'bold',
                                         wrap: 'none',
                                         ellipsis: true,
-                                        listening: false,
                                     }" />
 
                                     <v-text :config="{
@@ -1044,8 +1038,61 @@ function addPerson() {
                                 <v-transformer ref="transformerRef" :config="transformerConfig" />
                             </v-layer>
                         </v-stage>
+                        <input v-if="textEdit" ref="textEditor" v-model="textEdit.value" class="canvas-text-editor" :style="textEdit.style"
+                            :maxlength="textEdit.maxlength" :aria-label="textEdit.label" autocomplete="off"
+                            @keydown.enter.prevent="commitTextEdit" @keydown.esc.prevent="cancelTextEdit" @blur="commitTextEdit">
+                    </div>
+                    <div v-if="canEdit && layers.length" class="layer-chips" role="group" aria-label="Elements on this plan">
+                        <span class="layer-chips-label">Elements</span>
+                        <button v-for="layer in layers" :key="layer.id" type="button" class="layer-chip"
+                            :aria-pressed="layer.id === selectedBoxId || layer.id === selectedPersonId"
+                            :disabled="!layoutEditable" @click="selectLayer(layer)">
+                            <span class="layer-dot" :style="{ backgroundColor: layer.colour }" aria-hidden="true"></span>{{ layer.label }}
+                        </button>
                     </div>
                 </section>
+                <aside v-if="canEdit" class="floor-tools">
+                    <section v-if="canEdit || placements.length" class="helper-panel"
+                        aria-label="Team helper placements">
+                        <div class="panel-heading">
+                            <div>
+                                <span class="panel-kicker">Team-only</span>
+                                <h2 class="h6">Helper placements</h2>
+                            </div>
+                            <span class="status-pill">{{ placements.length }} placed</span>
+                        </div>
+                        <p class="small text-muted">Real event team members. These placements are visible to the event
+                            team only.</p>
+                        <p v-if="!planId" class="small">Save the floor plan before placing a helper.</p>
+                        <div v-if="canEdit" class="d-flex flex-wrap gap-2 mb-2">
+                            <label class="flex-grow-1">Team member<select aria-label="Team member"
+                                    v-model="selectedMember" class="form-select" :disabled="helperBusy || !planId || canvasLocked">
+                                    <option value="">Choose a team member</option>
+                                    <option v-for="member in availableMembers" :key="member.user_id"
+                                        :value="member.user_id">{{ member.profiles?.display_name || 'Team member' }} ({{
+                                        member.member_role }})</option>
+                                </select></label>
+                            <button class="btn btn-outline-primary align-self-end"
+                                :disabled="helperBusy || !planId || !selectedMember || canvasLocked" @click="addHelper">Add
+                                helper</button>
+                        </div>
+                        <div v-for="spot in placements" :key="spot.id" class="helper-row">
+                            <span class="helper-name">{{ memberLabel(spot.user_id) }}</span>
+                            <label>X<input :value="spot.x" type="number" min="40" max="860"
+                                    class="form-control coordinate-input" :disabled="!layoutEditable || helperBusy"
+                                    @change="moveHelper(spot.id, $event.target.value, spot.y)" /></label>
+                            <label>Y<input :value="spot.y" type="number" min="40" max="486"
+                                    class="form-control coordinate-input" :disabled="!layoutEditable || helperBusy"
+                                    @change="moveHelper(spot.id, spot.x, $event.target.value)" /></label>
+                            <button v-if="canEdit" class="btn btn-outline-danger" :disabled="helperBusy || canvasLocked"
+                                @click="removeHelper(spot.id)">Remove helper {{ memberLabel(spot.user_id) }}</button>
+                        </div>
+                        <button v-if="canEdit" class="btn btn-primary" :disabled="helperBusy || !helperDirty"
+                            @click="saveHelpers">Save helper positions</button>
+                        <p v-if="helperMessage" role="status" class="text-success mt-2">{{ helperMessage }}</p>
+                        <p v-if="helperError" role="alert" class="text-danger mt-2">{{ helperError }}</p>
+                    </section>
+                </aside>
             </div>
         </template>
     </div>
@@ -1069,64 +1116,6 @@ function addPerson() {
     margin-top: 1.5rem;
 }
 
-.edit-panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    padding: 14px;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    background: #ffffff;
-}
-
-.edit-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-}
-
-.edit-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.edit-field,
-.person-edit-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-}
-
-.people-grid {
-    grid-template-columns: 1fr;
-}
-
-.colour-dot {
-    width: 12px;
-    height: 12px;
-    flex: 0 0 12px;
-    border-radius: 999px;
-}
-
-.colour-dot-button {
-    width: 20px;
-    height: 20px;
-    flex-basis: 20px;
-    padding: 0;
-    border: 2px solid rgba(255, 255, 255, .65);
-    box-shadow: 0 0 0 1px var(--floor-line);
-    cursor: pointer
-}
-
-.colour-dot-button:disabled {
-    cursor: not-allowed;
-    opacity: .65
-}
-
 .stage-wrap {
     width: fit-content;
     line-height: 0;
@@ -1142,15 +1131,6 @@ function addPerson() {
     width: 6rem;
 }
 
-@media (max-width: 767.98px) {
-    .edit-panel {
-        grid-template-columns: 1fr;
-    }
-
-    .edit-grid {
-        grid-template-columns: 1fr;
-    }
-}
 </style>
 
 <style scoped>
@@ -1272,10 +1252,6 @@ function addPerson() {
     border-radius: 10px
 }
 
-
-
-
-
 .floor-editor-layout {
     display: grid;
     grid-template-columns: minmax(320px, 1fr) repeat(2, minmax(0, 1fr));
@@ -1293,8 +1269,6 @@ function addPerson() {
 .editor-shell {
     grid-column: 2 / -1
 }
-
-.edit-panel,
 .helper-panel {
     min-width: 0;
     padding: 1rem;
@@ -1311,9 +1285,7 @@ function addPerson() {
     gap: .75rem;
     margin-bottom: .65rem
 }
-
-.panel-heading h2,
-.edit-panel h2 {
+.panel-heading h2 {
     margin: 0
 }
 
@@ -1339,159 +1311,10 @@ function addPerson() {
     font-weight: 700;
     white-space: nowrap
 }
-
-.edit-panel h2,
 .helper-panel h2 {
     font-family: var(--bookedz-heading, 'Bricolage Grotesque', sans-serif);
     font-weight: 700;
     letter-spacing: -.02em
-}
-
-.edit-panel {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 1rem
-}
-
-.edit-grid {
-    grid-template-columns: 1fr;
-    gap: .55rem
-}
-
-.people-grid {
-    grid-template-columns: 1fr
-}
-
-.item-scroll-list.is-scrollable {
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding-right: .35rem;
-    scrollbar-gutter: stable
-}
-
-.box-scroll-list.is-scrollable {
-    max-height: 14.5rem
-}
-
-.person-scroll-list.is-scrollable {
-    max-height: 7.75rem
-}
-
-.item-scroll-list::-webkit-scrollbar {
-    width: 7px
-}
-
-.item-scroll-list::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: var(--floor-line)
-}
-
-.item-scroll-list::-webkit-scrollbar-track {
-    background: transparent
-}
-
-.edit-heading {
-    margin-bottom: .65rem
-}
-
-.edit-heading .btn {
-    min-height: 38px
-}
-
-.edit-field,
-.person-edit-row {
-    gap: .5rem;
-    padding: .35rem;
-    border-radius: 10px;
-    background: var(--floor-paper)
-}
-
-.edit-field--box {
-    display: grid;
-    grid-template-columns: 24px minmax(6rem, 1fr) auto;
-    grid-template-areas:
-        "dot name remove"
-        ". tools tools"
-        ". palette palette";
-    align-items: center
-}
-
-.edit-field--box .colour-dot {
-    grid-area: dot
-}
-
-.edit-field--box>input:first-of-type {
-    grid-area: name
-}
-
-.box-name-input {
-    min-width: 0
-}
-
-.box-size-tools {
-    grid-area: tools;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: .35rem;
-    min-width: 0
-}
-
-.box-size-chip {
-    width: auto;
-    min-width: 8.75rem;
-    max-width: 100%;
-    padding-right: 2.5rem;
-    border-radius: 999px;
-    font-weight: 700
-}
-
-.box-dimension-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: .25rem;
-    min-height: 34px;
-    padding: .2rem .35rem;
-    border: 1px solid var(--floor-line);
-    border-radius: 999px;
-    color: var(--floor-muted);
-    background: var(--floor-surface);
-    font-weight: 700
-}
-
-.box-dimension-chip .dimension-input {
-    width: 4rem;
-    min-height: 30px;
-    padding: .15rem .35rem;
-    border: 0;
-    background: transparent;
-    color: var(--floor-ink);
-    text-align: center
-}
-
-.box-dim-readout {
-    display: inline-flex;
-    align-items: center;
-    min-height: 34px;
-    padding: .25rem .6rem;
-    border: 1px solid var(--floor-line);
-    border-radius: 999px;
-    color: var(--floor-muted);
-    background: var(--floor-surface);
-    font-size: .82rem;
-    font-weight: 700;
-    white-space: nowrap
-}
-
-.box-colour-picker {
-    grid-area: palette;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: .35rem;
-    padding: .15rem 0 .05rem
 }
 
 .box-colour-swatch {
@@ -1530,36 +1353,11 @@ function addPerson() {
     border-radius: 999px;
     background: transparent
 }
-
-.edit-field--box .form-select,
-.edit-field--box .dimension-input {
-    min-width: 0
-}
-
-.edit-field--box .btn {
-    grid-area: remove
-}
-
-.edit-field .form-control,
-.edit-field .form-select,
-.person-edit-row .form-control,
-.person-edit-row .form-select,
 .helper-panel .form-control,
 .helper-panel .form-select {
     min-height: 40px;
     border-color: var(--floor-line);
     border-radius: 9px
-}
-
-.edit-field--box .box-size-chip {
-    min-height: 34px;
-    padding-block: .2rem
-}
-
-.edit-field--box .box-dimension-chip .dimension-input {
-    min-height: 30px;
-    border: 0;
-    border-radius: 999px
 }
 
 .helper-panel {
@@ -1632,24 +1430,6 @@ function addPerson() {
     color: var(--floor-muted);
     font-size: .86rem;
     font-weight: 700
-}
-
-.workspace-caption {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: .2rem .25rem 1rem
-}
-
-.workspace-caption h2 {
-    font-family: var(--bookedz-heading, 'Bricolage Grotesque', sans-serif);
-    font-weight: 700
-}
-
-.workspace-caption p {
-    color: var(--floor-muted);
-    max-width: 60ch
 }
 
 .lock-toggle {
@@ -1777,10 +1557,6 @@ function addPerson() {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: start
     }
-
-    .edit-panel {
-        grid-template-columns: repeat(2, minmax(0, 1fr))
-    }
 }
 
 @media(max-width:575.98px) {
@@ -1788,22 +1564,13 @@ function addPerson() {
         padding-inline: 1rem
     }
 
-
     .floor-tools {
-        grid-template-columns: 1fr
-    }
-
-    .edit-panel {
         grid-template-columns: 1fr
     }
 
     .editor-shell {
         padding: .6rem;
         border-radius: 16px
-    }
-
-    .workspace-caption {
-        flex-direction: column
     }
 
     .helper-panel {
@@ -1826,5 +1593,158 @@ function addPerson() {
         width: 100%;
         justify-content: space-between
     }
+}
+/* Canva-style canvas: full width, toolbar on top, helper placements below */
+.floor-editor-layout {
+    grid-template-columns: minmax(0, 1fr)
+}
+
+.floor-tools,
+.editor-shell {
+    grid-column: 1
+}
+
+.stage-wrap {
+    position: relative
+}
+
+.canvas-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem .75rem;
+    padding: 0 0 .75rem
+}
+
+.canvas-hint {
+    flex: 1 1 14rem;
+    min-width: 0;
+    color: var(--floor-muted)
+}
+
+/* The shell stacks its parts so the bar can move below the canvas on small screens */
+.editor-shell {
+    display: flex;
+    flex-direction: column
+}
+
+/* From 1200px the bar is one row and its space is always reserved, so selecting
+   something never shifts the canvas between the two clicks of a double-click. Below
+   that it wraps, so it moves under the canvas instead. */
+.canvas-selection {
+    min-height: 5.7rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: .5rem 1rem;
+    margin-bottom: .75rem;
+    padding: .6rem .75rem;
+    border: 1px solid var(--floor-line);
+    border-radius: 14px;
+    background: var(--floor-surface)
+}
+
+.selection-empty {
+    align-self: center;
+    color: var(--floor-muted)
+}
+
+@media (max-width: 1199.98px) {
+    .canvas-selection {
+        order: 5;
+        min-height: 0;
+        margin: .75rem 0 0
+    }
+
+    .layer-chips {
+        order: 4
+    }
+}
+
+.selection-field,
+.selection-size label {
+    display: grid;
+    gap: .2rem;
+    color: var(--floor-muted);
+    font-size: .76rem;
+    font-weight: 700
+}
+
+.selection-field .form-control,
+.selection-field .form-select {
+    min-width: 9rem
+}
+
+.selection-size {
+    display: flex;
+    gap: .5rem
+}
+
+.selection-size .dimension-input {
+    width: 5rem
+}
+
+.selection-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem
+}
+
+.selection-swatches .box-colour-swatch {
+    width: 28px;
+    height: 28px
+}
+
+.canvas-text-editor {
+    position: absolute;
+    z-index: 3;
+    box-sizing: border-box;
+    padding: 0 .35rem;
+    border: 0;
+    border-radius: 6px;
+    outline: 2px solid var(--floor-coral);
+    font-weight: 700;
+    text-align: center
+}
+
+.layer-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .75rem
+}
+
+.layer-chips-label {
+    color: var(--floor-muted);
+    font-size: .76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em
+}
+
+.layer-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    min-height: 32px;
+    padding: .2rem .7rem;
+    border: 1px solid var(--floor-line);
+    border-radius: 999px;
+    background: var(--floor-surface);
+    color: var(--floor-ink);
+    font-size: .82rem
+}
+
+.layer-chip[aria-pressed='true'] {
+    border-color: var(--floor-coral);
+    box-shadow: 0 0 0 1px var(--floor-coral)
+}
+
+.layer-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%
 }
 </style>

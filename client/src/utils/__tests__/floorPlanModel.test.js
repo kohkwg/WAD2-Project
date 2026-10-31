@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { programmePayload, singaporeInput, clampPosition, validateFloorImage, backgroundUrl, fitContain, clampOpacity, fitRotated, clampRotation, clampScale } from '../floorPlanModel.js'
+import { programmePayload, singaporeInput, clampPosition, validateFloorImage, backgroundUrl, fitContain, clampOpacity, fitRotated, clampRotation, clampScale, findFreeSpot, personFootprint } from '../floorPlanModel.js'
 test('programme uses explicit Singapore times and trims optional content', () => {
   const row = programmePayload({ title: ' Opening ', starts_at: '2026-11-01T09:00', ends_at: '2026-11-01T10:00', description: ' ', zone_key: 'stage' }, [{ id: 'stage' }])
   assert.equal(row.starts_at, '2026-11-01T01:00:00.000Z')
@@ -63,4 +63,27 @@ test('background size scales about the floor centre and is bounded', () => {
   assert.equal(big.cx, base.cx); assert.equal(big.cy, base.cy)
   assert.equal(fitRotated(800, 400, box, 0, undefined).width, base.width)
   assert.equal(clampScale(0.1), 0.5); assert.equal(clampScale(10), 3); assert.equal(clampScale('x'), 1); assert.equal(clampScale(1.5), 1.5)
+})
+
+test('a new item goes to the first free spot and never overlaps, with a gap', () => {
+  const bounds = { x: 36, y: 36, width: 828, height: 488 }
+  const size = { width: 130, height: 70 }
+  assert.deepEqual(findFreeSpot(size, [], bounds), { x: 36, y: 36 })
+  const first = findFreeSpot(size, [], bounds)
+  const second = findFreeSpot(size, [{ ...first, ...size }], bounds)
+  assert.ok(second.x >= first.x + size.width + 8 || second.y >= first.y + size.height + 8, 'clear of the first box')
+  assert.equal(second.y, first.y) // fills the row before starting a new one
+  const person = personFootprint({ x: 96, y: 96, radius: 20 })
+  assert.deepEqual(person, { x: 46, y: 76, width: 100, height: 70 })
+  const spot = findFreeSpot(size, [person], bounds)
+  assert.ok(spot.x >= 46 + 100 + 8 || spot.y >= 76 + 70 + 8)
+})
+
+test('placement honours the bounds and reports a full plan', () => {
+  const bounds = { x: 36, y: 36, width: 300, height: 150 }
+  const wall = { x: 0, y: 0, width: 1000, height: 1000 }
+  assert.equal(findFreeSpot({ width: 130, height: 70 }, [wall], bounds), null)
+  assert.equal(findFreeSpot({ width: 400, height: 70 }, [], bounds), null) // wider than the area
+  const spot = findFreeSpot({ width: 130, height: 70 }, [], bounds)
+  assert.ok(spot.x + 130 <= 336 && spot.y + 70 <= 186)
 })
