@@ -17,7 +17,8 @@ pnpm --dir server dev
 Vite defaults to `http://127.0.0.1:5173`; Express health is
 `http://127.0.0.1:3000/health`. Server `dev`/`start` load `server/.env` via
 `--env-file`; `PORT` defaults to 3000. Express serves health, caller-JWT
-recommendations and signed image-upload routes, not parallel Feature 4 CRUD.
+recommendations, caller-JWT plan suggestions and signed image-upload routes, not
+parallel Feature 4 CRUD.
 
 | File | Names / purpose |
 | --- | --- |
@@ -59,7 +60,7 @@ pnpm --dir client test:e2e
 `test:unit` uses Node's runner, including the existing waitlist scoring cases and
 F6 model tests. No Vitest runner is required. F1/client tests also use Node, with
 Vue component/composable harnesses. The server suite exercises ranking,
-interactions and upload validation/permissions.
+interactions, upload validation/permissions and the event planner.
 
 Chromium installation is normally one-time. Demo Playwright starts/reuses Vite on
 5173, forces mock mode and a test-only weather seed, isolates storage, controls
@@ -100,7 +101,7 @@ sessions require another manual sign-in; don't repeatedly run headless login wai
 | `checkin-journey.spec.mjs` | Creation, RSVP, QR/barcode, staff search/manual check-in, Realtime, CSV permission, interest bump and SQL/UI refusal rules |
 | `floor-plan.spec.mjs` | Saved plan/programme/real placements, reload, participant visibility and write denial, viewport/console checks |
 | `integration.spec.mjs` | Recommendations per identity, profile save/restore, approval, owner tasks/feed/exact budget, real NEA outcome and responsive pages |
-| `uploads.spec.mjs` | Actual browser cover/finished-plan uploads and public reads; deletes its own R2 objects using server-only credentials on the Node test host |
+| `uploads.spec.mjs` | Actual browser cover uploads and public reads; deletes its own R2 objects using server-only credentials on the Node test host. The finished-plan upload case was removed with that panel. |
 
 Live specs create `[TEST]` events, delete them afterward and restore modified test
 profile weights/values. Never change existing published events. Check cleanup,
@@ -124,6 +125,26 @@ local environment; privileged credentials never enter browser code.
 - If Node subprocess isolation is blocked, use
   `NODE_ENV=test node --experimental-test-isolation=none --test client/src/utils/__tests__/*.test.js client/src/utils/__tests__/waitlistScore.spec.js`.
   Report this fallback and individual counts rather than file-level summaries.
+
+## Event planner and floor-plan canvas checks
+
+```sh
+node --test server/tests/planSuggest.test.js server/tests/planSuggestions.test.js server/tests/planSeed.test.js
+NODE_ENV=test node --test client/src/utils/__tests__/planSuggestModel.test.js client/src/utils/__tests__/floorPlanModel.test.js
+pnpm --dir client test:e2e e2e/feature6.spec.js
+```
+
+`feature6.spec.js` replaces the floor-plan module with a browser-local fixture and covers
+the Canva-style canvas (toolbar, in-place rename, selection bar, keyboard, locking,
+placement, layout breakpoints). Playwright reuses a server already on 5173; if yours is in
+live mode the pages redirect to sign-in. Run on another port with your own demo-mode
+server (`VITE_USE_MOCK=true`) instead of stopping yours.
+
+`pnpm --dir server seed:planner` adds sample past events for the planner and `--reset`
+removes them; `--plain-titles` drops the `[TEST] ` prefix. It writes to the hosted project
+with the server-only key, uses the two development accounts in `client/e2e-live/accounts.mjs`
+unless `--own-email` / `--community-email` are given, and needs explicit approval. Do not
+run it from automation.
 
 ## Database checks and acceptance limits
 

@@ -1,6 +1,6 @@
 # Project status and timeline
 
-Consolidated 23 October; updated 26 October 2026. Dates use Singapore time; same-day entries are ordered
+Consolidated 23 October; updated 31 October 2026. Dates use Singapore time; same-day entries are ordered
 by milestone because exact times are not consistently recorded. This replaces
 separate handoffs/merge/fix reports. [Decisions](decisions.md) records authority and
 superseded choices; [testing](docs/testing.md) explains reproducible checks;
@@ -20,11 +20,11 @@ are not changed by the publication. See [branch workflow](design-branches.md) an
 | Feature / owner | Working functionality | Remaining limits / acceptance |
 | --- | --- | --- |
 | F1 — Aishani | Public Discover in demo/live; tag/search/date filters; personalised reasons under user JWT; live profile load/save; R2 event covers. One browser client and refresh per identity. | Profile editing requires live mode. Legacy EventDetailsDialog is unmounted; RecommendationCard is used inside PickedForYou. Ranking remains Aishani's. |
-| F2 — Gregory | Atomic four-step creation/OneMap; approval; RSVP, waitlist and offers; My RSVPs/tickets; UI+SQL own-team/check-in guards; matching demo offer deadlines. | Full production concurrency/response-loss coverage is not established. Waitlist scoring is Gregory's; its nine former Vitest cases now run under Node. |
+| F2 — Gregory | Atomic four-step creation/OneMap; approval; RSVP, waitlist and offers; My RSVPs/tickets; UI+SQL own-team/check-in guards; matching demo offer deadlines. Create-event wizard also has a title name-suggestion dropdown and a **Generate plan** button (programme + tasks from past events, live mode only; added from the `vivi` branch, Gregory to review). | Full production concurrency/response-loss coverage is not established. Waitlist scoring is Gregory's; its nine former Vitest cases now run under Node. |
 | F3 — Huxley | QR/CODE128 tickets; staff camera/manual/name/email search; venue QR/self check-in; Realtime ticket/dashboard; CSV/fraud fields; attendance interest trigger. | Physical camera/geolocation testing remains. Automated check-in uses typed codes/search; it does not prove real-phone scanning. |
 | F4 — Denzel | Owner tasks/keyboard order; public/manual announcements; exact-cent budget/90% warning; real NEA reads; server-verified one-way venue switching. | Latest live NEA check correctly refused dry weather. Successful rainy switching remains weather-dependent; no claim of exhaustive concurrency testing. Historical three browser failures did not reproduce in the final runs. |
 | F5 — Timothy | Supabase/RLS; Express health/recommendations/upload presigning; five-minute waitlist cron; validated public R2 uploads; future-created venue cleanup. | Existing SECURITY DEFINER warnings need owner review; leaked-password protection is off. Storage cleanup queue has no deployed drain worker; old unmarked venue orphans are intentionally untouched. |
-| F6 — Vivienne | Per-event saved responsive plan and read-only viewer; programme CRUD/zone links; active venue map; real team placements and keyboard coordinates; public finished images. Route/image/drag-bound guards. | Explicitly live-only; private object-image storage is not implemented against a public bucket. Multi-row helper saves can partially succeed and report retry; no transaction is promised. |
+| F6 — Vivienne | Per-event saved responsive plan and read-only viewer; programme CRUD/zone links; active venue map; real team placements and keyboard coordinates. Full-width Canva-style canvas (toolbar, in-place rename, resize handles, selection bar, keyboard); plan background (upload, opacity/rotate/size) that participants also see; route/drag-bound guards. | Explicitly live-only. The public finished-image panel was removed on 29 October; its stored files and rows are untouched but no longer shown. The background is a public R2 object (public bucket), not private storage. Multi-row helper saves can partially succeed and report retry; no transaction is promised. |
 
 Bookerz development history contains the initial migration plus ten later versions
 (**11 total**), through `20261023062011_event_cover_and_venue_cleanup`, and the
@@ -358,3 +358,41 @@ not persist. These are dated observations, not permanent database invariants.
   (`editor.vue`, `ProgrammeFlow.vue`, `FloorPlanImages.vue`) compiled with
   `vue/compiler-sfc`. No production build, full suite, live write, browser capture,
   Safari/iOS or physical-device check was run for this branch polish.
+
+### 27–31 October — Community tab, floor-plan canvas and event planner (`vivi` branch)
+
+- **Community tab** (`/community`, public): an X-style feed with search above the posts,
+  a composer, likes, replies, photo/video attachments and three sample posts. Posts live
+  in the viewing browser only (localStorage, with IndexedDB for media); there is no shared
+  table, so nothing is visible to other people yet.
+- **F6 plan background:** organisers upload a JPEG/PNG/WebP (10 MiB) through Express
+  (`POST /api/uploads/floor-plan` with `kind: 'background'`, allowed before publication);
+  the file is an editor-image asset in R2 and its key, opacity, rotation and size are saved
+  in the plan layout, so participants see the same background. No migration. Replaced or
+  removed backgrounds are deleted on Save; the cleanup worker limitation still applies.
+  `VITE_R2_PUBLIC_URL` is required in `client/.env` for the image to display.
+- **F6 canvas redesign (31 October):** the canvas fills the page width; the Plan zones panel
+  is gone. A toolbar holds Add box, Add person and Lock; double-click renames in place; a
+  selection bar sets name, colour, size and role; an Elements row, Delete/Escape/arrow keys
+  cover keyboard use; boxes resize by their handles. New items go to the first free spot.
+  Participants see the same canvas read-only, with plan tabs when an event has several plans.
+  Programme items without a plan now show on every plan.
+- **Event planner:** `POST /api/plan-suggestions` (caller JWT, RLS) suggests programme items
+  and tasks. Sources are other organisers' published/completed past events (programme only)
+  and the caller's own past events (programme and tasks); drafts, cancelled events, budgets
+  and other people's tasks are never read. An identical title copies the best past event;
+  otherwise weighted similarity with support thresholds (community patterns need at least
+  three events). `seed:planner` writes sample past events to the hosted project; it was
+  written but **not run**.
+- **Verification (targeted only):** server suite **51/51** (includes 4 planner files);
+  client utility tests for the floor-plan model and planner helpers **18/18**;
+  `e2e/feature6.spec.js` **10/10** and the create-wizard preview case **1/1** on a throwaway
+  demo-mode Vite server (the running dev server on 5173 is live mode, so Playwright must not
+  reuse it). Edited SFCs compile. Screenshots at 375 and 1280px were inspected.
+- **Not run:** the full suites, a production build, the live specs (they need a human
+  sign-in), signed-in use of the planner, the hosted seed, Safari/iOS and touch-device
+  checks. The live specs `floor-plan.spec.mjs` and `uploads.spec.mjs` were edited for the new
+  controls and only syntax-checked.
+- **Limits:** planner data is thin (about seven published events before seeding); the
+  planner and Generate plan are live-only; a lost reply while adding a plan's programme can
+  duplicate one item (tasks are retry-safe); the Community feed is single-browser.
