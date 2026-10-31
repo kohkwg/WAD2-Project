@@ -23,7 +23,8 @@ blanket permission for later Git/cloud mutations.
 
 - Keep Vue 3 Composition API, JavaScript templates/ES modules, Vue Router,
   Bootstrap 5 and the established shell/theme. The shell supplies the only `main`.
-  Discover is public in demo/live; `/events` redirects there. Event-detail/RSVP
+  `/` is the public illustrated landing page; Bookedz logos link there. Discover
+  remains public in demo/live; `/events` redirects there. Event-detail/RSVP
   URLs remain `/events/:id/rsvp`; protected check-in routes still require auth.
 - Preserve `client/src/utils/api.js`'s async demo/live contracts. Share the guarded
   browser Supabase client; user-scoped SDK/RPC retains RLS. No administrative

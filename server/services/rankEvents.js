@@ -4,8 +4,8 @@
  *
  * Hydrate event tags from event_interests/interests before calling (tags are slug
  * strings). A profile can supply interests as slug strings (weight 1 each), plus
- * optional interest_weights. Interest is the fraction of the user's total
- * positive tag weight matched by this event. Duplicate tags count only once.
+ * optional interest_weights. Interest blends the share of positive weight
+ * matched with match strength. Duplicate tags count only once.
  *
  * Distance requires pre-geocoded profile and venue coordinates: { lat, lng }
  * or { latitude, longitude }, with event.venue also accepted. A postal code by
@@ -22,7 +22,7 @@ const RANKING_CONFIG = Object.freeze({
   }),
   recencyDays: 14,
   distanceKm: 5,
-  categoryPenalty: 0.7,
+  diversityPenalty: 0.3, // Tunable heuristic for maximum tag similarity.
 });
 
 const DAY_MS = 86400000;
@@ -33,12 +33,31 @@ function tagNames(tags) {
   return [...new Set((Array.isArray(tags) ? tags : []).filter(tag => typeof tag === "string" && tag.trim()).map(tag => tag.trim()))];
 }
 
+function tagSimilarity(a, b) {
+  const A = new Set(tagNames(a));
+  const B = new Set(tagNames(b));
+  if (A.size === 0 || B.size === 0) return 0;
+  let both = 0;
+  for (const tag of A) if (B.has(tag)) both++;
+  return both / (A.size + B.size - both);
+}
+
 function profileWeights(profile) {
   const weights = new Map(tagNames(profile.interests).map(tag => [tag, 1]));
   for (const [tag, weight] of Object.entries(profile.interest_weights || {})) {
     if (tag.trim() && validNumber(weight)) weights.set(tag.trim(), Math.max(0, weight));
   }
   return weights;
+}
+
+function interestScore(weights, tags) {
+  const interests = profileWeights({ interest_weights: weights });
+  const total = [...interests.values()].reduce((sum, weight) => sum + weight, 0);
+  if (total <= 0) return 0;
+  const matched = tagNames(tags).reduce((sum, tag) => sum + (interests.get(tag) || 0), 0);
+  const share = matched / total;
+  const strength = 1 - Math.exp(-matched / 2);
+  return 0.5 * share + 0.5 * strength;
 }
 
 function coordinates(value) {
@@ -88,7 +107,8 @@ function reasonFor(signals, weights, matched) {
  *                          excludeEventIds?: Set|Array }
  * @returns {Array<{event: Object, score: number, reason: string}>}
  * score is the normalized signal score BEFORE diversity, for explainability.
- * Returned order applies 0.7 for each earlier selection of the same category.
+ * Returned order penalises maximum tag overlap with earlier selections by up
+ * to 30%, using a tunable heuristic. Missing tags receive no penalty.
  * Ties retain input order. Neither input events nor the profile are modified.
  * Unknown/unlimited capacity contributes 0 popularity/spots rather than a
  * fabricated ratio. Cold starts use only recency and popularity, renormalized.
@@ -104,6 +124,7 @@ function rankEvents(events, userProfile = {}, options = {}) {
   const interests = profileWeights(profile);
   const maximumInterest = [...interests.values()].reduce((sum, weight) => sum + weight, 0);
   const hasInterests = maximumInterest > 0;
+  const interestWeights = Object.fromEntries(interests);
   const userLocation = coordinates(profile);
   const pool = [];
 
@@ -115,7 +136,7 @@ function rankEvents(events, userProfile = {}, options = {}) {
     const venueLocation = coordinates(event.venue) || coordinates(event);
     const hasDistance = !!(userLocation && venueLocation);
     const signals = {
-      interest: hasInterests ? clamp(matched.reduce((sum, tag) => sum + interests.get(tag), 0) / maximumInterest) : 0,
+      interest: hasInterests ? interestScore(interestWeights, event.tags) : 0,
       recency: Math.exp(-((startsAt - now) / DAY_MS) / RANKING_CONFIG.recencyDays),
       popularity: positiveRatio(event.confirmed_count, event.capacity),
       distance: hasDistance ? 1 / (1 + distanceKm(userLocation, venueLocation) / RANKING_CONFIG.distanceKm) : 0,
@@ -130,21 +151,22 @@ function rankEvents(events, userProfile = {}, options = {}) {
     pool.push({ event, score: clamp(score), reason: reasonFor(signals, weights, matched) });
   }
 
-  const categoryCounts = new Map();
   const ranked = [];
   while (pool.length && ranked.length < limit) {
     let bestIndex = 0;
     let bestScore = -1;
     pool.forEach((candidate, index) => {
-      const repeats = candidate.event.category ? categoryCounts.get(candidate.event.category) || 0 : 0;
-      const adjusted = candidate.score * RANKING_CONFIG.categoryPenalty ** repeats;
+      let maxSimilarity = 0;
+      for (const chosen of ranked) {
+        maxSimilarity = Math.max(maxSimilarity, tagSimilarity(candidate.event.tags, chosen.event.tags));
+      }
+      const adjusted = candidate.score * (1 - RANKING_CONFIG.diversityPenalty * maxSimilarity);
       if (adjusted > bestScore) { bestScore = adjusted; bestIndex = index; }
     });
     const [chosen] = pool.splice(bestIndex, 1);
-    if (chosen.event.category) categoryCounts.set(chosen.event.category, (categoryCounts.get(chosen.event.category) || 0) + 1);
     ranked.push(chosen);
   }
   return ranked;
 }
 
-module.exports = { rankEvents, RANKING_CONFIG };
+module.exports = { rankEvents, interestScore, tagSimilarity, RANKING_CONFIG };

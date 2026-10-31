@@ -9,7 +9,6 @@ const userId = ref(null)
 const displayName = ref('')
 const postalCode = ref('')
 const selected = ref([])          // interest names the user ticks
-const existingWeights = ref({})   // keep adapted weights for interests that stay selected
 
 const loading = ref(true)
 const saving = ref(false)
@@ -31,15 +30,16 @@ async function loadProfile() {
     if (authError) throw authError
     if (!active) return
     if (!auth.user) throw new Error('Please log in to edit your profile.')
-    const { data, error: profileError } = await supabase.from('profiles').select('*').eq('id', auth.user.id).maybeSingle()
+    const { data, error: profileError } = await supabase.from('profiles')
+      .select('id, display_name, postal_code, profile_interests(interests(slug))').eq('id', auth.user.id).maybeSingle()
     if (profileError) throw profileError
     if (!active) return
     if (!data) throw new Error('Your profile could not be found. Please contact the organiser.')
     userId.value = auth.user.id
     displayName.value = data.display_name || ''
     postalCode.value = data.postal_code || ''
-    existingWeights.value = data.interest_weights || {}
-    selected.value = Object.keys(existingWeights.value).filter(i => INTEREST_OPTIONS.includes(i))
+    selected.value = (data.profile_interests || []).map(link => link.interests.slug)
+      .filter(interest => INTEREST_OPTIONS.includes(interest))
   } catch (failure) {
     if (active) error.value = failure.message || 'Could not load your profile.'
   } finally {
@@ -59,22 +59,15 @@ async function save() {
       ;({ lat, lng } = await geocodePostalCode(postalCode.value.trim()))
     }
 
-    // Keep learned weights for kept interests; new interests start at 1; removed ones are dropped
-    const weights = {}
-    for (const i of selected.value) weights[i] = existingWeights.value[i] || 1
-
-    // update, not upsert: the sign-up trigger creates the row, and RLS only lets a user
-    // update their own profile (there is no INSERT policy)
-    const { error: err } = await supabase.from('profiles').update({
-      display_name: displayName.value.trim(),
-      postal_code: postalCode.value.trim() || null,
-      lat, lng,
-      interest_weights: weights,
-    }).eq('id', userId.value).select('id').single()
+    // One transaction saves details and replaces only explicit interest links.
+    const { error: err } = await supabase.rpc('update_recommendation_profile', {
+      p_display_name: displayName.value.trim(),
+      p_postal_code: postalCode.value.trim() || null,
+      p_lat: lat, p_lng: lng, p_interests: [...selected.value],
+    })
     if (!active) return
     if (err) throw err
 
-    existingWeights.value = weights
     success.value = 'Profile saved.'
   } catch (e) {
     error.value = e.message || 'Could not save your profile.'
@@ -156,6 +149,7 @@ async function save() {
 .profile-form { padding: clamp(1.1rem, 4vw, 2rem); border: 1px solid var(--bookedz-border); border-radius: var(--bookedz-radius-card); background: var(--bookedz-surface); box-shadow: var(--bookedz-shadow); }
 .profile-section { min-width: 0; margin: 0 0 1.75rem; padding: 0 0 1.5rem; border: 0; border-bottom: 1px solid var(--bookedz-border); }
 .profile-section legend { float: none; width: auto; margin-bottom: .5rem; font-family: var(--bookedz-heading); font-size: 1.35rem; font-weight: 650; }
+.profile-section legend, .profile-section .form-label { color: var(--bookedz-ink, #292d32); }
 .profile-help { max-width: 55ch; margin-bottom: 1.25rem; color: var(--bookedz-muted); }
 .profile-interests { padding-bottom: 0; border: 0; }
 .interest-count { color: var(--bookedz-muted); font-size: .875rem; margin-bottom: .75rem; font-variant-numeric: tabular-nums; }
