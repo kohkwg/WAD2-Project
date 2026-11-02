@@ -1,5 +1,112 @@
 # Testing and local operation
 
+For shared typography, compare Discover, My RSVPs and My events at the same
+browser zoom and viewport. At 100% zoom, page titles must match font family,
+weight, size, line height and letter spacing. Ordinary event cards use 20px/650,
+body uses DM Sans at 16px, buttons use 14px/600; featured titles use their own token.
+Check both themes at 375/575/768/1280px, including card wrapping and page overflow.
+
+On 2 November, one temporary Chromium comparison passed all 24 page/theme/width
+combinations and saved computed values/screenshots under
+`/tmp/wad2-typography-results`. Titles measured 32/35.5/39.36/48px at those widths.
+Four existing targeted cases also passed:
+
+```sh
+pnpm --dir client exec playwright test e2e/recommendation-mvp.spec.js --grep 'filtered and map|recommendation MVP'
+pnpm --dir client exec playwright test e2e/my-rsvps.spec.js --grep 'offers expire'
+pnpm --dir client exec playwright test e2e/organiser-events.spec.js --grep 'empty states and mobile'
+```
+
+These use controlled demo/mocked data, not live accounts. The isolated runs used
+port 5187 with temporary configs and results under `/tmp`; the comparison script
+is not a new permanent regression suite. Vue source/template and stylesheet
+compilation passed. No production build or full suite was run.
+
+For organiser My events, run:
+
+```sh
+node --test client/tests/organiser-events.test.mjs
+pnpm --dir client exec playwright test e2e/organiser-events.spec.js
+pnpm --dir client exec playwright test e2e/feature4-public-weather.spec.js --grep 'public list cards and loading'
+```
+
+On 2 November, five Node cases and seven unique browser cases passed across
+targeted runs. Tests cover time/status grouping, tabs/search/sort retention,
+pending-request aggregation/filter/deep links, old-dated draft editing without
+publication, draft exclusion from public demo lists, state-specific links,
+empty states, deletion confirmation/focus and organiser approval/rejection/removal
+appearing correctly in participant My RSVPs after focus refresh. The existing
+loading/heading semantics regression was updated for cards under a section heading.
+Four affected Vue files compiled without template errors. No full suite/build.
+
+The organiser/participant journey uses two pages sharing a synthetic demo store,
+not separate hosted identities. Draft-form navigation is exercised in the browser;
+its persistence check calls the normal demo update adapter. Node's live-adapter
+test substitutes its database client; it does not call Supabase. Light/dark and
+375/575/768/1280px layouts pass; final screenshots are under
+`/tmp/wad2-organiser-events-final-results`. An isolated server/config on 5187 was
+used to avoid existing servers. Live RLS/persistence and attendee results remain
+unverified. Existing draft rows are supported, but no new draft creation/publishing,
+event duplication or event cancellation operation was introduced.
+
+For the current My RSVPs redesign, run these focused checks from the root:
+
+```sh
+node --test client/tests/rsvp-overview.test.mjs client/tests/saved-events.test.mjs client/tests/rsvp-rules.test.mjs
+pnpm --dir client exec playwright test e2e/my-rsvps.spec.js
+pnpm --dir client exec playwright test e2e/legacy-review-fixes.spec.js --grep 'My RSVPs refreshes|closed RSVP tab'
+```
+
+On 2 November, ten Node cases and ten unique browser cases passed across targeted
+runs. Checks cover time/status grouping, ongoing events, earliest confirmation,
+saved read/unsave and pagination, failure/retry, verified attendance, tabs/keyboard,
+calendar download, directions, ticket-route navigation, offer expiry/accept/decline,
+cancellation/focus, empty states, periodic refresh and focus refresh. Light/dark
+and 375/575/768/1280px layouts were checked. Six affected Vue components also
+compiled without template errors; no production build or full suite was run.
+
+The browser runs used demo localStorage and controlled page-adapter overrides,
+including a ticket-enabled fixture that checks navigation without real ticket/QR
+data. Supabase calls were blocked. Node adapter tests substitute Supabase and
+Express, so these are not hosted persistence/RLS verification. The actual live
+Saved tab requires the existing `user_event_preferences` schema and preference
+endpoint; missing setup produces a retryable error without hiding registrations.
+Demo saved rows use `eventPreferences` entries with `userId`, `eventId`,
+`saveActive`, `savedAt`; unsave preserves the stored date and deactivates the row.
+The isolated run used port 5187 and a temporary config under `/tmp`; final layout
+screenshots are under `/tmp/wad2-my-rsvps-layout-results`.
+
+For the current recommendation browser regression, run:
+
+```sh
+pnpm --dir client exec playwright test e2e/recommendation-mvp.spec.js
+```
+
+On 2 November, all three mocked Chromium cases pass. They cover save exclusion,
+learning explanations for a different event, refresh of fixture state, dismiss/undo,
+action retry, backend-error retry and empty states. Two themes and four widths are
+checked. Supabase requests are blocked and recommendation responses are mocked;
+these tests do not prove database persistence. Bookmark targets are now 44px.
+This run used an isolated temporary config/server on port 5187; screenshots and
+the explicitly mocked response are under `/tmp/wad2-recommendation-quality-results`.
+The [journey log](testing/recommendation-journey.yaml) separates these passing cases
+from pending live cases. [Twelve event drafts](testing/recommendation-events.json)
+are fictional, scheduled 9–21 November, and require actual existing venue selection
+and creation through the event form. None have been written to the hosted database.
+Live browser access is unavailable; account resets and live tests remain pending.
+
+For organiser/team learning exclusions and evidence-based explanations, run from
+the repository root:
+
+```sh
+node --test server/tests/recommendation-quality.test.js server/tests/recommendations-route.test.js server/tests/recommendation-interactions.test.js
+```
+
+All 22 cases passed on 2 November 2026. They use the unchanged route fixture and
+existing check helpers; no real Supabase calls or browser verification are included.
+The interaction case now also verifies saved-event exclusion, learning across
+events, dismissal/undo, and restored eligibility after unsaving.
+
 For the landing-page split, run the focused browser files `landing-page.spec.js`,
 `discover-browse.spec.js`, `recommendation-mvp.spec.js` and `navbar-account.spec.js`
 through the existing client `test:e2e` script. Eleven journeys passed across focused

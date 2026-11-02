@@ -79,7 +79,7 @@ function view(event) {
     :aria-busy="loading"
   >
     <header class="picks-header">
-      <h2 id="picked-for-you-title">Picked for you</h2>
+      <h2 id="picked-for-you-title" class="section-title">Picked for you</h2>
 
       <button
         v-if="!loading && !error && canToggle"
@@ -211,13 +211,7 @@ function view(event) {
   margin-bottom: 18px;
 }
 
-.picks-header h2 {
-  margin: 0;
-  font-family: var(--bookedz-heading);
-  color: var(--bookedz-ink);
-  font-size: 28px;
-  letter-spacing: 0;
-}
+.picks-header h2 { margin: 0; color: var(--bookedz-ink); }
 
 .see-all {
   min-height: 40px;
@@ -226,8 +220,9 @@ function view(event) {
   border-radius: 5px;
   background: var(--bookedz-surface);
   color: var(--bookedz-ink);
-  font: inherit;
-  font-size: 13px;
+  font-family: var(--bookedz-body);
+  font-weight: 600;
+  font-size:var(--text-button);
   cursor: pointer;
 }
 
@@ -240,7 +235,7 @@ function view(event) {
 .picks-context p,
 .picks-message {
   color: var(--bookedz-muted);
-  font-size: 14px;
+  font-size: var(--text-small);
 }
 
 .picks-note {
@@ -302,11 +297,6 @@ function view(event) {
   padding: 20px;
 }
 
-.picks-grid :deep(.pick-title) {
-  font-size: 20px;
-  letter-spacing: 0;
-}
-
 .picks-grid :deep(.pick-title a) {
   min-height: 0;
 }
@@ -314,12 +304,12 @@ function view(event) {
 .picks-grid :deep(.pick-source) {
   display: block;
   margin: 0 0 6px;
-  font-size: 14px;
+  font-size: var(--text-small);
 }
 
 .picks-grid :deep(.pick-reason) {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size:var(--text-small);
 }
 
 .picks-grid :deep(.pick-explanation) {
@@ -367,10 +357,6 @@ function view(event) {
   .picks-grid,
   .picks-loading {
     grid-template-columns: minmax(0, 360px);
-  }
-
-  .picks-header h2 {
-    font-size: 24px;
   }
 }
 

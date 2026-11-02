@@ -1,5 +1,60 @@
 # Project status and timeline
 
+2 November — shared typography tokens/classes now align Discover, My RSVPs and
+My events, including their recommendation, ordinary, saved, next-event and
+organiser cards. Profile and Community page titles also adopt the shared role.
+Conflicting scoped font declarations and mobile overrides removed; original fonts
+retained. At 100% zoom, a temporary Chromium probe measured matching page titles
+at 375/575/768/1280px in both themes (32/35.5/39.36/48px, weight 700), 20px/650
+ordinary card titles, 16px DM Sans body and 14px/600 buttons. No page overflow or
+runtime errors. Four existing focused layout/action checks also pass; affected
+Vue templates and styles compile. No full suite/build or behaviour/hosted changes.
+
+2 November — organiser My events now has Upcoming/Drafts/Past/All tabs, search,
+date sorting and session-retained view state. Mint header, date-led cards,
+pending-request summary/filter and direct pending-approval links use existing
+counts and routes. Past results link to attendance; existing drafts remain hidden
+and can be rescheduled even when their old planned date elapsed. No new draft
+creation/publishing workflow. Deletion confirmation and keyboard focus retained;
+event counts refresh every 30 seconds and on focus. Five focused Node and seven
+unique browser cases pass across targeted runs, including approval/rejection/
+removal propagating to the participant My RSVPs on focus. Mobile/light/dark layout
+checked at 375/575/768/1280px. All browser data is synthetic demo state; hosted
+identity/RLS/persistence remains unverified. No SQL or scoring changes.
+
+2 November — My RSVPs redesigned with a peach header, counts, accessible tabs,
+next confirmed event, compact registration rows and independent saved-event cards.
+Four focused components keep data/actions in the page. Existing offer accept/
+decline, expiry, cancellation confirmation/focus and 30-second/focus refresh remain.
+Directions use actual venue data; calendar downloads actual event times; live
+ticket links retain `/events/:id/ticket`. Saved-event reads are caller-scoped,
+paginated and use existing event mapping; unsave uses the preference endpoint.
+Read failures remain separate from registration failures. Past attendance labels
+require an explicitly unflagged check-in. Ten focused Node and ten unique mocked/
+demo browser cases pass across targeted runs. Light/dark layouts checked at
+375/575/768/1280px. No hosted persistence, SQL, scoring or dependency changes.
+
+2 November — recommendation browser evidence: three updated mocked Chromium
+journeys pass, including saved-event exclusion, different related-event reasons,
+refresh, dismissal/undo, failure/retry and empty states. Light/dark and
+375/575/768/1280px checks pass; bookmark target increased to 44px. Twelve synthetic
+event drafts are prepared, not created. Local Express health responds successfully.
+Live verification remains pending: Computer Use permissions are not granted and
+there are no saved test sessions. No hosted mutations or participant resets.
+See [separate mocked/live log](docs/testing/recommendation-journey.yaml).
+
+2 November — active saves are excluded from both personalised and discovery
+picks, while their evidence still supports other events. Applied the supplied
+interaction test unchanged; all 22 focused interaction/quality/route tests pass.
+Evidence snapshots and route fixture are unchanged. Hosted behaviour is unverified.
+
+2 November — applied the supplied recommendation-quality update locally.
+Historical/current organiser and team activity no longer supplies learned taste;
+reasons identify supporting saves, registrations or attendance. Temporary event
+debug logging was removed. Existing scoring changes and route fixture are retained.
+All 22 focused quality/route/interaction tests pass with mocked data. No hosted
+verification, database change, commit or deployment was performed.
+
 27 October — separate public landing page: the illustrated hero is now at `/`,
 and sidebar/mobile/footer Bookedz links return there. Discover retains its search,
 recommendations, categories, Closing soon, timeline and Map/List browsing without

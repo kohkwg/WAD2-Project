@@ -14,6 +14,7 @@
 // result through check(): it throws on error, which the pages' try/catch then shows.
 
 import { supabase } from './supabase.js'
+import { api as recommendationApi } from '../lib/api.js'
 
 function check({ data, error }) {
   if (error) throw new Error(error.message)
@@ -339,7 +340,7 @@ async function saveEventQuestionsWith(client, eventId, before, after) {
 export async function updateEventWith(client, { current, myId, rsvpCount }, changes) {
   const eventId = current.id
   if (current.organiserId !== myId) throw new Error('You can only edit events you organise.')
-  if (new Date(current.startTime).getTime() <= Date.now()) {
+  if (current.status !== 'draft' && new Date(current.startTime).getTime() <= Date.now()) {
     throw new Error('This event has already started, so it can no longer be edited.')
   }
   if (new Date(changes.endTime) <= new Date(changes.startTime)) throw new Error('The end time must be after the start time.')
@@ -435,15 +436,44 @@ export async function getMyRsvps() {
   const rows = check(
     await supabase
       .from('registrations')
-      .select(`*, registration_answers(question_id, answer), check_ins(checked_in_at), event:events(${EVENT_COLUMNS})`)
+      .select(`*, registration_answers(question_id, answer), check_ins(checked_in_at,fraud_flag), event:events(${EVENT_COLUMNS})`)
       .eq('user_id', myId),
   )
   const withEvent = rows.filter((row) => row.event) // skip events we can no longer see
   const events = await toEventsWithCounts(withEvent.map((row) => row.event))
 
   return withEvent
-    .map((row, i) => ({ ...toRsvp(row), checkedInAt: (Array.isArray(row.check_ins) ? row.check_ins[0] : row.check_ins)?.checked_in_at || null, event: events[i] }))
+    .map((row, i) => {
+      const attendance = Array.isArray(row.check_ins) ? row.check_ins[0] : row.check_ins
+      return { ...toRsvp(row), checkedInAt: attendance?.checked_in_at || null,
+        attendanceVerified: !!attendance?.checked_in_at && attendance.fraud_flag === false, event: events[i] }
+    })
     .sort((a, b) => new Date(a.event.startTime) - new Date(b.event.startTime))
+}
+
+// Caller-scoped bookmarks, including past events and events excluded from picks.
+export async function getSavedEvents() {
+  const myId = await requireUserId()
+  const rows = []
+  for (let offset = 0; ; ) {
+    const page = check(await supabase.from('user_event_preferences')
+      .select(`event_id,saved_at,event:events(${EVENT_COLUMNS})`)
+      .eq('user_id', myId).eq('save_active', true).order('event_id')
+      .range(offset, offset + 199))
+    if (!Array.isArray(page)) throw new Error('Could not read saved events.')
+    if (!page.length) break
+    rows.push(...page)
+    offset += page.length
+  }
+  const visible = rows.filter(row => row.event)
+  const events = await toEventsWithCounts(visible.map(row => row.event))
+  return events.map((event, index) => ({ ...event, saved: true, savedAt: visible[index].saved_at }))
+    .sort((a, b) => Date.parse(b.savedAt) - Date.parse(a.savedAt) || a.id.localeCompare(b.id))
+}
+
+export async function unsaveEvent(eventId) {
+  await requireUserId()
+  await recommendationApi.post(`/api/recommendations/${encodeURIComponent(eventId)}/preferences`, { action: 'unsave' })
 }
 
 // The SQL function register_for_event decides confirmed / pending / waitlisted,

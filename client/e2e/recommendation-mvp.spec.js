@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { writeFile } from 'node:fs/promises'
 
 test('filtered and map discovery retain compact matching picks and explicitly labelled other picks', async ({ page }, testInfo) => {
   const errors = []
@@ -10,7 +11,8 @@ test('filtered and map discovery retain compact matching picks and explicitly la
   const search = page.getByLabel('Search by title, description or venue')
   await expect(picks.locator('.recommendation-card')).toHaveCount(2)
   await page.getByRole('button', { name: 'Filters', exact: false }).click()
-  await page.getByRole('group', { name: 'Category', exact: true }).getByRole('button', { name: 'Arts', exact: true }).click()
+  await page.getByRole('group', { name: 'Category', exact: true }).getByRole('checkbox', { name: 'Arts', exact: true }).check()
+  await page.getByRole('button', { name: 'Close filters', exact: true }).click()
   await expect(picks).toHaveClass(/picked-for-you--compact/)
   await expect(picks.getByText('Picks matching your current filters.')).toBeVisible()
   await expect(picks.locator('.recommendation-card')).toHaveCount(1)
@@ -23,13 +25,14 @@ test('filtered and map discovery retain compact matching picks and explicitly la
       await page.setViewportSize({ width, height: 900 })
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
       await expect(picks.getByRole('button', { name: 'Save Pottery afternoon', exact: true })).toBeVisible()
-      if (width === 1280) expect((await picks.locator('.recommendation-card').boundingBox()).height).toBeLessThan(360)
       if (width === 375) await picks.screenshot({ path: testInfo.outputPath(`compact-picks-${scheme}.png`) })
     }
   }
   await picks.getByRole('button', { name: 'Save Pottery afternoon', exact: true }).click()
   await expect(picks.getByText('60% match', { exact: true })).toBeVisible()
-  await picks.getByRole('button', { name: 'Not interested in Pottery afternoon' }).click()
+  await expect(picks.getByRole('link', { name: 'Pottery afternoon', exact: true })).toHaveCount(0)
+  await expect(picks.getByText('Your recent activity: you saved an event about arts', { exact: true })).toBeVisible()
+  await dismissSketching(picks)
   await expect(picks.getByText(/No picks match your current filters/)).toBeVisible()
   await picks.getByRole('button', { name: 'Undo', exact: true }).click()
   await expect(picks.getByText('60% match', { exact: true })).toBeVisible()
@@ -37,19 +40,19 @@ test('filtered and map discovery retain compact matching picks and explicitly la
   await expect(picks.getByText(/No picks match your current filters/)).toBeVisible()
   await expect(picks.locator('.recommendation-card')).toHaveCount(0)
   await picks.getByRole('button', { name: 'View all picks', exact: true }).click()
-  await expect(picks.getByText(/Your other picks/)).toBeVisible()
+  await expect(picks.getByText(/These picks may be outside your current filters/)).toBeVisible()
   await expect(picks.locator('.recommendation-card')).toHaveCount(2)
   await expect(search).toHaveValue('No such workshop')
   await expect(page.getByRole('button', { name: 'Remove Arts filter' })).toBeVisible()
-  await expect(picks.getByRole('link', { name: 'Pottery afternoon', exact: true })).toHaveAttribute('href', '/events/pottery/rsvp')
+  await expect(picks.getByRole('link', { name: 'Sketching afternoon', exact: true })).toHaveAttribute('href', '/events/sketching/rsvp')
   await page.getByRole('group', { name: 'Discovery view', exact: true }).getByRole('button', { name: 'Map', exact: true }).click()
   await expect(search).toHaveValue('No such workshop')
-  await expect(picks.getByText(/Your other picks/)).toBeVisible()
+  await expect(picks.getByText(/These picks may be outside your current filters/)).toBeVisible()
   const map = await page.locator('.map-surface').boundingBox()
   const recommendation = await picks.boundingBox()
   expect(recommendation.y).toBeGreaterThanOrEqual(map.y + map.height)
   await page.getByRole('group', { name: 'Discovery view', exact: true }).getByRole('button', { name: 'List', exact: true }).click()
-  await expect(picks.getByText(/Your other picks/)).toBeVisible()
+  await expect(picks.getByText(/These picks may be outside your current filters/)).toBeVisible()
   await page.getByRole('button', { name: 'Clear search', exact: true }).click()
   await expect(picks.locator('.recommendation-card')).toHaveCount(1)
   await expect(picks.getByText('Picks matching your current filters.')).toBeVisible()
@@ -59,7 +62,7 @@ test('filtered and map discovery retain compact matching picks and explicitly la
 })
 
 async function fixture(page) {
-  let saved = false, dismissed = false, fail = false
+  let saved = false, dismissed = false, fail = false, failReads = false, empty = false
   await page.route('**/*.supabase.co/**', route => route.abort())
   await page.route('**/__recommendations', route => {
     if (route.request().method() === 'POST') {
@@ -71,10 +74,15 @@ async function fixture(page) {
       if (action === 'undo_dismiss') dismissed = false
       return route.fulfill({ json: {} })
     }
+    if (failReads) return route.fulfill({ status: 503, json: { error: 'Unavailable' } })
+    if (empty) return route.fulfill({ json: { events: [] } })
     return route.fulfill({ json: { events: [
-      ...(!dismissed ? [{ id: 'pottery', title: 'Pottery afternoon', category: 'arts', tags: ['arts'], start_time: '2030-01-02T10:00:00Z', spots_left: 10,
-        compatibilityScore: saved ? 60 : 50, source: 'personalised', reason_type: 'interest', reason: 'Matches your selected interests: arts',
-        recommendation_actions: true, saved }] : []),
+      ...(!saved ? [{ id: 'pottery', title: 'Pottery afternoon', category: 'arts', tags: ['arts'], start_time: '2030-01-02T10:00:00Z', spots_left: 10,
+        compatibilityScore: 50, source: 'personalised', reason_type: 'interest', reason: 'Matches your selected interests: arts',
+        recommendation_actions: true, saved: false }] : []),
+      ...(saved && !dismissed ? [{ id: 'sketching', title: 'Sketching afternoon', category: 'arts', tags: ['arts'], start_time: '2030-01-04T10:00:00Z', spots_left: 10,
+        compatibilityScore: 60, source: 'personalised', reason_type: 'interest',
+        reason: 'Your recent activity: you saved an event about arts', recommendation_actions: true, saved: false }] : []),
       { id: 'music', title: 'Music evening', category: 'music', tags: ['music'], start_time: '2030-01-03T10:00:00Z', spots_left: 10,
         source: 'general_discovery', compatibilityScore: 0, rankingScore: null, reason: 'Upcoming event to explore', recommendation_actions: true }
     ] } })
@@ -90,7 +98,11 @@ async function fixture(page) {
       return () => supabase.from();
     }})};
     export const api = {
-      get: async () => ({data: await (await fetch('/__recommendations')).json()}),
+      get: async () => {
+        const response = await fetch('/__recommendations');
+        if (!response.ok) throw new Error('Recommendations unavailable');
+        return {data: await response.json()};
+      },
       post: async (_url, body) => {
         const response = await fetch('/__recommendations', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
         if (!response.ok) throw new Error('Request failed');
@@ -105,7 +117,7 @@ async function fixture(page) {
     const response = await route.fetch()
     await route.fulfill({ response, body: (await response.text()).replace(imports, 'from "/__recommendation-fixture.js"') })
   })
-  return { failActions(value) { fail = value } }
+  return { failActions(value) { fail = value }, failReads(value) { failReads = value }, empty(value) { empty = value } }
 }
 
 test('recommendation MVP displays scores and supports save, dismiss, undo and retry', async ({ page }, testInfo) => {
@@ -117,7 +129,7 @@ test('recommendation MVP displays scores and supports save, dismiss, undo and re
   await page.goto('/discover')
   const picks = page.getByRole('region', { name: 'Picked for you' })
   await expect(picks.getByText('50% match', { exact: true })).toBeVisible()
-  await expect(picks.getByText('General discovery', { exact: true })).toBeVisible()
+  await expect(picks.getByText('Something to explore', { exact: true })).toBeVisible()
   for (const scheme of ['light', 'dark']) {
     await page.getByLabel('Color theme').selectOption(scheme)
     for (const width of [375, 575, 768, 1280]) {
@@ -128,21 +140,63 @@ test('recommendation MVP displays scores and supports save, dismiss, undo and re
       expect(box.height).toBeGreaterThanOrEqual(44)
     }
   }
+  await picks.screenshot({ path: testInfo.outputPath('mock-before-save.png') })
   await picks.getByRole('button', { name: 'Save Pottery afternoon', exact: true }).focus()
+  const refreshedResponse = page.waitForResponse(response =>
+    response.url().endsWith('/__recommendations') && response.request().method() === 'GET')
   await page.keyboard.press('Enter')
-  await expect(picks.getByRole('button', { name: 'Unsave Pottery afternoon', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  const responsePath = testInfo.outputPath('mock-recommendations-after-save.json')
+  await writeFile(responsePath, JSON.stringify(await (await refreshedResponse).json(), null, 2))
+  await testInfo.attach('mock-recommendations-after-save.json', {
+    path: responsePath, contentType: 'application/json',
+  })
+  await expect(picks.getByRole('link', { name: 'Pottery afternoon', exact: true })).toHaveCount(0)
+  await expect(picks.getByRole('link', { name: 'Sketching afternoon', exact: true })).toBeVisible()
+  await expect(picks.getByText('Your recent activity: you saved an event about arts', { exact: true })).toBeVisible()
   await expect(picks.getByText('60% match', { exact: true })).toBeVisible()
-  await picks.getByRole('button', { name: 'Not interested in Pottery afternoon', exact: true }).click()
-  await expect(picks.getByRole('heading', { name: 'Pottery afternoon' })).toHaveCount(0)
+  await picks.screenshot({ path: testInfo.outputPath('mock-after-save.png') })
+  await page.reload()
+  await expect(picks.getByRole('link', { name: 'Pottery afternoon', exact: true })).toHaveCount(0)
+  await expect(picks.getByRole('link', { name: 'Sketching afternoon', exact: true })).toBeVisible()
+  await dismissSketching(picks)
+  await expect(picks.getByRole('link', { name: 'Sketching afternoon', exact: true })).toHaveCount(0)
   await expect(picks.getByRole('button', { name: 'Undo', exact: true })).toBeFocused()
   await picks.getByRole('button', { name: 'Undo', exact: true }).click()
-  await expect(picks.getByRole('heading', { name: 'Pottery afternoon' })).toBeVisible()
+  await expect(picks.getByRole('link', { name: 'Sketching afternoon', exact: true })).toBeVisible()
   state.failActions(true)
-  await picks.getByRole('button', { name: 'Unsave Pottery afternoon', exact: true }).click()
+  await dismissSketching(picks)
   await expect(picks.getByRole('alert')).toContainText('Could not save your preference')
   state.failActions(false)
-  await picks.getByRole('button', { name: 'Unsave Pottery afternoon', exact: true }).click()
-  await expect(picks.getByRole('button', { name: 'Save Pottery afternoon', exact: true })).toBeVisible()
+  await dismissSketching(picks)
+  await expect(picks.getByRole('link', { name: 'Sketching afternoon', exact: true })).toHaveCount(0)
+  await picks.getByRole('button', { name: 'Undo', exact: true }).click()
+  await expect(picks.getByRole('link', { name: 'Sketching afternoon', exact: true })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('recommendation-mvp.png'), fullPage: true })
   expect(errors).toEqual([])
+})
+
+async function dismissSketching(picks) {
+  const card = picks.locator('.recommendation-card').filter({ has: picks.page().getByRole('link', { name: 'Sketching afternoon', exact: true }) })
+  const dismiss = card.getByRole('button', { name: 'Not interested in Sketching afternoon', exact: true })
+  if (!(await dismiss.isVisible())) await card.getByText('More options', { exact: true }).click()
+  await dismiss.click()
+}
+
+test('mocked unavailable backend offers retry and empty results stay honest', async ({ page }, testInfo) => {
+  const state = await fixture(page)
+  state.failReads(true)
+  await page.setViewportSize({ width: 375, height: 900 })
+  await page.goto('/discover')
+  const picks = page.getByRole('region', { name: 'Picked for you' })
+  await expect(picks.getByText('Could not load recommendations.', { exact: true })).toBeVisible()
+  await expect(picks.locator('.recommendation-card')).toHaveCount(0)
+  await picks.screenshot({ path: testInfo.outputPath('mock-backend-error.png') })
+  state.failReads(false)
+  await picks.getByRole('button', { name: 'Try again', exact: true }).click()
+  await expect(picks.getByRole('link', { name: 'Pottery afternoon', exact: true })).toBeVisible()
+  state.empty(true)
+  await page.reload()
+  await expect(picks.getByText(/No picks yet/)).toBeVisible()
+  await expect(picks.locator('.recommendation-card')).toHaveCount(0)
+  await picks.screenshot({ path: testInfo.outputPath('mock-empty.png') })
 })

@@ -2,6 +2,14 @@ const test = require('node:test');
 const { checkEqual, checkDeepEqual, checkTrue, checkThrows } = require('./checks');
 const { buildRecommendationPipeline } = require('../services/recommendationPipeline');
 
+
+function checkClose(actual, expected) {
+  if (!Number.isFinite(actual) || Math.abs(actual - expected) > 1e-10) {
+    throw new Error(`Expected approximately ${expected}, received ${actual}`);
+  }
+}
+const aged = (points, days) => points * 2 ** (-days / 45);
+
 const NOW = Date.parse('2026-10-27T12:00:00Z');
 const DAY = 86_400_000;
 const iso = offset => new Date(NOW + offset).toISOString();
@@ -37,10 +45,11 @@ test('two historical pottery experiences create drift without recommending histo
     candidateEvents: [candidate('tech'), candidate('workshop')],
     limit: 1,
   });
-  checkEqual(result.preferences.learnedPreferences.pottery, 30);
+  const expectedPoints = aged(15, 1) + aged(15, 15);
+  checkClose(result.preferences.learnedPreferences.pottery, expectedPoints);
   checkEqual(result.preferences.explicitPreferences.technology, 10);
   checkDeepEqual(ids(result), ['workshop']);
-  checkEqual(result.recommendations[0].compatibilityScore, 75);
+  checkClose(result.recommendations[0].compatibilityScore, 100 * expectedPoints / (expectedPoints + 10));
 });
 
 test('canonical save → RSVP → attendance evidence and identical duplicate snapshots count once', () => {
@@ -49,7 +58,7 @@ test('canonical save → RSVP → attendance evidence and identical duplicate sn
     rsvp: { active: true, timestamp: iso(-3 * DAY) },
   };
   const result = run({ evidenceSnapshots: [snapshot, structuredClone(snapshot)], eventInterestsById: { past: ['pottery'] } });
-  checkEqual(result.preferences.learnedPreferences.pottery, 15);
+  checkClose(result.preferences.learnedPreferences.pottery, aged(15, 1));
 });
 
 test('conflicting duplicate evidence, candidates and registration records are rejected', () => {
@@ -71,16 +80,18 @@ test('dismissal removes positive evidence and blocks both feeds; undo restores o
   checkEqual(restored.recommendations[0].source, 'personalised');
 });
 
-test('ageing uses the supplied time and evidence over 90 days loses influence', () => {
+test('ageing uses supplied time and older evidence retains a smaller positive influence', () => {
   const input = {
     evidenceSnapshots: [attended('past')], eventInterestsById: { past: ['pottery'], future: ['pottery'] },
     candidateEvents: [candidate('future', { starts_at: iso(200 * DAY) })],
   };
   checkEqual(run(input).recommendations[0].source, 'personalised');
   const later = run({ ...input, now: NOW + 100 * DAY });
-  checkDeepEqual(later.preferences.learnedPreferences, {});
-  checkEqual(later.recommendations[0].source, 'general_discovery');
-  checkEqual(later.recommendations[0].compatibilityScore, 0);
+  checkClose(later.preferences.learnedPreferences.pottery, aged(15, 101));
+  checkTrue(later.preferences.learnedPreferences.pottery < run(input).preferences.learnedPreferences.pottery);
+  checkEqual(later.recommendations[0].source, 'personalised');
+  checkTrue(later.recommendations[0].compatibilityScore > 0);
+  checkTrue(later.recommendations[0].compatibilityScore < run(input).recommendations[0].compatibilityScore);
 });
 
 test('active registration statuses block both feeds; expired offers use actual offer_expires_at', () => {
@@ -171,8 +182,14 @@ test('real compatibility feeds diversity, preserving scores and avoiding duplica
     candidateEvents: [candidate('a'), candidate('b'), candidate('a'), candidate('c')],
   });
   checkDeepEqual(ids(result), ['a', 'c', 'b']);
-  checkDeepEqual(result.recommendations.map(event => event.compatibilityScore), [80, 60, 80]);
-  checkDeepEqual(result.recommendations.map(event => event.rankingScore), [80, 60, 56]);
+  const potteryPoints = 10 + 2 * aged(15, 1);
+  const musicPoints = 10 + aged(5, 1);
+  const potteryFit = 100 * potteryPoints / (potteryPoints + 10);
+  const musicFit = 100 * musicPoints / (musicPoints + 10);
+  [potteryFit, musicFit, potteryFit].forEach((expected, i) =>
+    checkClose(result.recommendations[i].compatibilityScore, expected));
+  [potteryFit, musicFit, potteryFit * 0.7].forEach((expected, i) =>
+    checkClose(result.recommendations[i].rankingScore, expected));
 });
 
 test('now is required and validated even on empty input; equivalent zones agree', () => {
@@ -211,4 +228,40 @@ test('inputs are not mutated and unrelated candidates do not change compatibilit
   checkEqual(first.recommendations[0].compatibilityScore, extended.recommendations[0].compatibilityScore);
   checkDeepEqual(input, original);
   checkDeepEqual(first, run(input));
+});
+
+test('distance ranks equally relevant nearby events first without changing topic fit', () => {
+  const input = {
+    selectedInterests: ['music'], diversityPenalty: 0,
+    userLocation: { lat: 1.3, lng: 103.8 },
+    candidateEvents: [
+      candidate('a-far', { lat: 1.4, lng: 103.8 }),
+      candidate('z-near', { lat: 1.3, lng: 103.8 }),
+    ],
+    eventInterestsById: { 'a-far': ['music'], 'z-near': ['music'] },
+  };
+  const result = run(input);
+  checkDeepEqual(ids(result), ['z-near', 'a-far']);
+  checkEqual(result.recommendations[0].distance_km, 0);
+  checkTrue(result.recommendations[1].distance_km > 10);
+  checkClose(result.recommendations[0].relevanceScore, 57.5);
+  checkTrue(result.recommendations[0].relevanceScore > result.recommendations[1].relevanceScore);
+  for (const event of result.recommendations) checkEqual(event.compatibilityScore, 50);
+  // No location: revert to topic fit, with deterministic ID tie-breaking.
+  const noLocation = run({ ...input, userLocation: null });
+  checkDeepEqual(ids(noLocation), ['a-far', 'z-near']);
+  for (const event of noLocation.recommendations) {
+    checkEqual(event.distance_km, null);
+    checkEqual(event.relevanceScore, event.compatibilityScore);
+  }
+});
+
+test('missing or invalid event coordinates preserve topic-only relevance', () => {
+  for (const fields of [{}, { lat: null, lng: 103.8 }, { lat: 100, lng: 103.8 }]) {
+    const result = run({ selectedInterests: ['music'],
+      userLocation: { lat: 1.3, lng: 103.8 }, candidateEvents: [candidate('a', fields)],
+      eventInterestsById: { a: ['music'] } });
+    checkEqual(result.recommendations[0].relevanceScore, 50);
+    checkEqual(result.recommendations[0].distance_km, null);
+  }
 });

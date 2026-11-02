@@ -87,7 +87,7 @@ const action = computed(() => {
   border: 1px solid var(--bookedz-primary-dark);
   border-radius: 6px;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-button);
   font-weight: 600;
   text-decoration: none;
   text-align: center;
@@ -156,8 +156,8 @@ const action = computed(() => {
   min-height: 44px;
   padding: 10px 14px;
   border-radius: 6px;
-  font-family: inherit;
-  font-size: 14px;
+  font-family: var(--bookedz-body);
+  font-size: var(--text-button);
   font-weight: 600;
   line-height: 1.4;
   text-align: center;
