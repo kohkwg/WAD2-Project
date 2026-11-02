@@ -129,7 +129,6 @@ function initials(attendee) {
 .availability-chip--full { border-color: #e4c7a5; background: #fbebd9; color: #714a2d; }
 .event-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 .event-actions .btn { display: inline-flex; align-items: center; justify-content: center; min-width: 76px; min-height: 44px; border-radius: 14px 24px 24px 14px; padding: 12px 54px 12px 18px; }
-.event-actions .btn-primary { --bs-btn-bg: var(--bookedz-primary-dark, #aa3e2c); --bs-btn-border-color: var(--bookedz-primary-dark, #aa3e2c); --bs-btn-hover-bg: #8f3022; --bs-btn-hover-border-color: #8f3022; }
 .event-actions .btn-outline-secondary { --bs-btn-color: #4f5656; --bs-btn-border-color: #bdc3bc; --bs-btn-hover-bg: #f4f0e7; --bs-btn-hover-color: #292d32; --bs-btn-hover-border-color: #aeb4ad; }
 @media (max-width: 575px) {
   .event-card { grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: .8rem; border-radius: 18px; }

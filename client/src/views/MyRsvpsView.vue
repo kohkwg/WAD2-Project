@@ -253,14 +253,10 @@ async function cancel(rsvpId) {
           <p class="small text-secondary mb-2">
             {{ formatEventTime(rsvp.event) }} · {{ rsvp.event.venue.name }}
           </p>
-          <RsvpStatusBadge :status="rsvp.status" />
-          <span v-if="rsvp.checkedInAt" class="badge text-bg-success ms-2">Checked in</span>
-          <!-- Feature 3: personal QR ticket for check-in (live Supabase only) -->
-          <RouterLink
-            v-if="USING_SUPABASE && rsvp.status === 'confirmed'"
-            :to="`/events/${rsvp.event.id}/ticket`"
-            class="btn event-cta ticket-action"
-          >My ticket</RouterLink>
+          <div class="rsvp-status-row">
+            <RsvpStatusBadge :status="rsvp.status" />
+            <span v-if="rsvp.checkedInAt" class="badge text-bg-success">Checked in</span>
+          </div>
           <p v-if="rsvp.status === 'waitlisted'" class="small mb-0 mt-2">
             If a spot opens up, you'll see a banner here and have 24 hours to confirm.
           </p>
@@ -269,13 +265,20 @@ async function cancel(rsvpId) {
           </p>
         </div>
 
-        <!-- Cancel with a second "are you sure?" step instead of a browser pop-up -->
-        <div v-if="!rsvp.checkedInAt" class="text-md-end flex-shrink-0">
-          <template v-if="confirmCancelId === rsvp.id">
-            <p class="small mb-2">Cancel this RSVP?</p>
+        <!-- One action column: the ticket first, then cancel, at a matching size -->
+        <div v-if="(USING_SUPABASE && rsvp.status === 'confirmed') || !rsvp.checkedInAt" class="rsvp-actions">
+          <!-- Feature 3: personal QR ticket for check-in (live Supabase only) -->
+          <RouterLink
+            v-if="USING_SUPABASE && rsvp.status === 'confirmed'"
+            :to="`/events/${rsvp.event.id}/ticket`"
+            class="btn event-cta ticket-action"
+          >My ticket</RouterLink>
+          <!-- Cancel with a second "are you sure?" step instead of a browser pop-up -->
+          <div v-if="!rsvp.checkedInAt && confirmCancelId === rsvp.id" class="cancel-confirm">
+            <p class="small mb-0">Cancel this RSVP?</p>
             <button
               type="button"
-              class="btn btn-danger btn-sm me-2"
+              class="btn btn-danger btn-sm"
               :disabled="busyId === rsvp.id"
               @click="cancel(rsvp.id)"
             >
@@ -290,12 +293,12 @@ async function cancel(rsvpId) {
             >
               Keep it
             </button>
-          </template>
+          </div>
           <button
-            v-else
+            v-else-if="!rsvp.checkedInAt"
             :id="`cancel-${rsvp.id}`"
             type="button"
-            class="btn btn-outline-danger btn-sm"
+            class="btn btn-outline-danger cancel-action"
             @click="askCancel(rsvp.id)"
           >
             Cancel RSVP<span class="visually-hidden"> for {{ rsvp.event.title }}</span>
@@ -341,7 +344,21 @@ async function cancel(rsvpId) {
 .plans-summary dt { color: var(--bookedz-muted); font-size: .8rem; font-weight: 500; }.plans-summary dd { margin: 4px 0 0; font: 650 1.8rem/1 var(--bookedz-heading); font-variant-numeric: tabular-nums; }
 .date-ticket { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; width: 64px; min-height: 76px; border: 1px solid var(--bookedz-border); border-radius: 16px; background: var(--bookedz-glass-active); color: var(--bookedz-primary-dark); }
 .date-ticket span { font-size: .8rem; }.date-ticket strong { font: 650 1.9rem/1.2 var(--bookedz-heading); }
-.rsvp-plan-copy { min-width: 0; flex: 1; }.ticket-action { margin: 10px 0; }
+.rsvp-plan-copy { min-width: 0; flex: 1; }
+.rsvp-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* Ticket and cancel share one column, one width and one 44px height. */
+.rsvp-actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; flex-shrink: 0; min-width: 10.5rem; }
+.rsvp-actions .ticket-action { min-height: 44px; padding: 10px 44px 10px 18px; font-size: .9rem; border-radius: 12px 20px 20px 12px; }
+.rsvp-actions .ticket-action::before { right: 32px; top: 9px; bottom: 9px; }
+.rsvp-actions .ticket-action::after { right: 15px; }
+.cancel-action { min-height: 44px; border-radius: var(--bookedz-radius-control); }
+.cancel-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.cancel-confirm p { flex-basis: 100%; }
+.cancel-confirm .btn { flex: 1; min-height: 40px; white-space: nowrap; }
+@media (max-width: 767.98px) {
+  /* Equal halves on phones whatever each button's padding; a lone button fills the row. */
+  .rsvp-actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); width: auto; }
+}
 .rsvp-list-enter-active,.rsvp-list-leave-active,.rsvp-list-move { transition: opacity .25s ease, transform .3s ease; }.rsvp-list-enter-from,.rsvp-list-leave-to { opacity: 0; transform: translateY(12px); }
 @media(max-width:575px) { .plans-summary { gap: 8px; }.plans-summary > div { padding: 12px 10px; }.plans-summary dt { font-size: .75rem; }.date-ticket { width: 60px; min-height: 64px; flex-direction: row; gap: 6px; }.date-ticket strong { font-size: 1.3rem; } }
 @media(prefers-reduced-motion:reduce) { .rsvp-list-enter-active,.rsvp-list-leave-active,.rsvp-list-move { transition: none; } }
@@ -356,7 +373,6 @@ async function cancel(rsvpId) {
 .rsvp-event-title { margin: 0 0 .4rem; color: var(--bookedz-ink, #292d32); font: 500 1.35rem/1.2 var(--bookedz-heading); }
 .empty-rsvps { padding: clamp(1.5rem, 6vw, 3rem); border: 1px dashed var(--bookedz-border); border-radius: 22px; background: var(--bookedz-glass-solid); text-align: center; }
 .empty-title { margin: 0 0 .5rem; color: var(--bookedz-ink, #292d32); font: 500 1.45rem var(--bookedz-heading); }
-:deep(.btn-primary) { border-color: var(--bookedz-primary-dark, #aa3e2c); background: var(--bookedz-primary-dark, #aa3e2c); }
 :deep(:focus-visible) { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
 @media (min-width: 768px) { .rsvp-card-main { flex-direction: row; align-items: center; padding: 1.35rem 1.5rem; } }
 .closed-rsvp { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; }

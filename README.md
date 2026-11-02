@@ -53,6 +53,46 @@ limits. Keep the disclosure and library credits in submission/presentation mater
 
 ## AI assistance disclosure
 
+On 3 November 2026, at the request of a team member who asked not to be named
+(team approval to restyle all pages is user-reported), Claude Code (Anthropic Claude
+Opus 5.5) began integrating OpenJio's design handoff (UI only) and outing-planning
+specification. Claude Code authored the Hawker Glow token values in `main.css`,
+removed per-page button overrides, and wrote `EventMap.vue`, `MapPreview.vue`,
+`lib/onemapTiles.js`, the rewritten `utils/discoveryMap.js` helpers and tests, the
+neighbourhood-card change and the updated map/hero browser tests.
+`SingaporeMap.vue` and `IslandArtwork.vue` were removed; the island art files are
+retained but unused. Map data are real Bookedz venues only. No backend, SQL,
+dependency or hosted change was made. [Nunito](https://github.com/googlefonts/nunito)
+is self-hosted under the SIL Open Font License (`client/src/assets/fonts/Nunito-OFL.txt`).
+Basemap tiles come from [OneMap](https://www.onemap.gov.sg/) © contributors |
+Singapore Land Authority, attributed on every map. The existing Leaflet, Motion for
+Vue and GSAP attributions below still apply. Teammates' business logic keeps its
+authorship. Details: [status](status.md).
+
+In the same session Claude Code authored the Create event template picker
+(`NewEventView.vue`) and the demo-mode Hangout template: `utils/hangouts.js` and
+tests, `components/hangout/*`, the `/j/:token` invite view, the RsvpView branch for
+hangout events, demo join-mode and invite handling in `mockApi.js`, the live-mode
+refusal in `supabaseApi.js`, and the `?template=official` test updates. Gregory's
+Official wizard is unchanged. It then authored the group Time tools:
+`utils/hangoutSlots.js` (an implementation of the OpenJio specification's slot
+algorithm) with tests, `TimePanel.vue`, `AvailabilityGrid.vue` and the demo
+availability/lock functions in `mockApi.js`. It then authored the plan tools:
+`utils/itinerary.js` (the specification's beam-search itinerary adapted to
+fixed-time Bookedz events, plus a "meet later" relaxation) with tests,
+`PlanPanel.vue`, and the demo plan, vote and confirmation functions in `mockApi.js`.
+For On the day it authored `GoPanel.vue`, `utils/lateJoin.js`, `utils/calendar.js`,
+`lib/hangoutWeather.js` (NEA data.gov.sg forecasts), `lib/routing.js`, and the
+Express OneMap routing proxy (`server/routes/route.js`,
+`server/services/onemapRoute.js`) with tests. Route data © OneMap contributors |
+Singapore Land Authority; forecasts from NEA via data.gov.sg. Finally it authored
+the hangout migration `supabase/migrations/20261103120000_hangouts.sql` (promoted
+from a review draft on the team member's approval) and its isolated PGlite check
+`server/checks/hangouts-db.check.mjs`. It changes Gregory's `register_for_event` only
+at the two marked points; Timothy should review it. For live mode it authored
+`utils/supabaseHangoutsApi.js`, `utils/hangoutPlan.js`, the hangout wiring in
+`supabaseApi.js`, and the Express `/api/hangouts` routes with tests.
+
 For Aishani's landing-page request, Codex moved the existing illustrated hero into
 `LandingView.vue` at `/`, linked all Bookedz brands home and retained event browsing
 at `/discover`. Existing filters carry search/category/map actions into Discover.

@@ -14,6 +14,7 @@
 // result through check(): it throws on error, which the pages' try/catch then shows.
 
 import { supabase } from './supabase.js'
+import * as hangouts from './supabaseHangoutsApi.js'
 
 function check({ data, error }) {
   if (error) throw new Error(error.message)
@@ -116,6 +117,9 @@ function toEvent(row, counts, myId) {
     endTime: row.ends_at,
     capacity: row.capacity,
     requiresApproval: row.requires_approval,
+    // Present once migration 20261103120000_hangouts is applied; older rows are Official
+    kind: row.kind || 'official',
+    joinMode: row.join_mode || null,
     // The database stores indoor/outdoor on the venue, not the event
     isOutdoor: row.venue ? !row.venue.is_indoor : false,
     // If the venue was deleted, show a placeholder instead of breaking every page
@@ -188,6 +192,7 @@ export async function getEvent(eventId) {
   const [event] = await toEventsWithCounts([row])
   const user = await getCurrentUser()
   event.isOnTeam = user ? Boolean(check(await supabase.rpc('is_event_staff', { p_event_id: eventId }))) : false
+  if (event.kind === 'hangout') event.hangout = await hangouts.hangoutDetails(eventId, event.isMine)
   return event
 }
 
@@ -262,8 +267,33 @@ export async function createEventWith(client, eventData) {
 
 export async function createEvent(eventData) {
   await requireUserId()
+  if (eventData.kind === 'hangout') return hangouts.createHangout(eventData, getEvent)
+  // The Official wizard doesn't offer Open yet; refuse rather than silently auto-confirm.
+  if (eventData.joinMode === 'open') throw new Error('The Open join mode is only available for hangouts so far.')
   return createEventWith(supabase, eventData)
 }
+
+// ---------------------------------------------------------------------------
+// Hangouts (supabaseHangoutsApi.js; needs migration 20261103120000_hangouts)
+export const getHangoutInvite = hangouts.getHangoutInvite
+export const joinHangout = (target) => hangouts.joinHangout(target, createRsvp)
+export const getHangoutTime = hangouts.getHangoutTime
+export const saveHangoutAvailability = hangouts.saveHangoutAvailability
+export const clearHangoutAvailability = hangouts.clearHangoutAvailability
+export const setHangoutRequired = hangouts.setHangoutRequired
+export const previewHangoutSlot = hangouts.previewHangoutSlot
+export const lockHangoutSlot = (eventId, slot) => hangouts.lockHangoutSlot(eventId, slot, getEvent)
+export const unlockHangoutSlot = (eventId) => hangouts.unlockHangoutSlot(eventId, getEvent)
+export const getHangoutPlan = hangouts.getHangoutPlan
+export const generateHangoutPlan = hangouts.generateHangoutPlan
+export const previewHangoutStops = hangouts.previewHangoutStops
+export const setHangoutStops = hangouts.setHangoutStops
+export const addHangoutPlace = hangouts.addHangoutPlace
+export const getHangoutAlternatives = hangouts.getHangoutAlternatives
+export const voteHangoutStop = hangouts.voteHangoutStop
+export const finalizeHangoutPlan = hangouts.finalizeHangoutPlan
+export const reopenHangoutPlan = hangouts.reopenHangoutPlan
+export const setHangoutMeetingPoint = hangouts.setHangoutMeetingPoint
 
 // ---------------------------------------------------------------------------
 // Editing a published event (Create Event in edit mode)

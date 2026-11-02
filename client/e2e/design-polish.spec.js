@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 test('search stays with its hero and preserves pending text when views change', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
-  await expect(page.locator('.hero-illustration')).toHaveAttribute('data-loaded', 'true')
+  await expect(page.locator('.hero-map')).toBeVisible()
   for (const width of [375, 575, 768, 1280]) {
     await page.setViewportSize({ width, height: 800 })
     await expect(page.locator('.hero-copy [role="search"]')).toBeVisible()
@@ -18,13 +18,11 @@ test('search stays with its hero and preserves pending text when views change', 
   // Freeze the debounce timer so switching views exercises the pending draft.
   await page.clock.install()
   await page.getByLabel('Search by title, description or venue').fill('no-such-event-XYZ')
-  await page.getByRole('button', { name: 'Map', exact: true }).click()
+  await page.getByRole('button', { name: 'Explore the map' }).click()
   await page.clock.runFor(400)
   await expect(page.getByLabel('Search by title, description or venue')).toHaveValue('no-such-event-XYZ')
   await expect(page.getByRole('heading', { name: 'No events found' })).toBeVisible()
-  const artwork = page.locator('image[data-map-artwork]')
-  await expect(artwork).toBeVisible()
-  expect(await artwork.evaluate(el => getComputedStyle(el).maskImage)).not.toBe('none')
+  await expect(page.locator('.map-bottomline')).toContainText('0 events on the map')
 })
 
 test('live navigation hides personal links until a session arrives', async ({ page }) => {

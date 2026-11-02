@@ -1,31 +1,43 @@
 # Bookedz visual system
 
-Current working-tree direction, 24 October 2026. Denzel authorised the redesign
+Current working-tree direction, 24 October 2026, with the Hawker Glow tokens and
+OneMap discovery adopted on 3 November 2026. Denzel authorised the original redesign
 and subsequent motion/layout refinements. This document describes presentation;
 backend, registration, weather and privacy contracts remain in [decisions](../../decisions.md).
 
 ## Visual direction and tokens
 
-An illustrated Singapore field guide, with quiet controls and more structured
-organiser tools. Bricolage Grotesque supplies headings/wordmark; DM Sans supplies
-body text, navigation and forms. Both are self-hosted with adjacent OFL licences.
-Page headings use responsive scales; the discovery display headline is larger.
-Shared colour, control, shadow and motion tokens live in `client/src/assets/main.css`.
+Hawker Glow (adopted 3 November 2026 from the OpenJio design handoff; UI only).
+Warm, social and locally grounded: a cream or warm-charcoal canvas, bright orange
+actions, and teal, mango and pink accents. Nunito (700–900) supplies headings and
+the wordmark; DM Sans supplies body text, navigation and forms. Both are self-hosted
+with adjacent OFL licences (`Nunito-OFL.txt`, `DM-Sans-OFL.txt`). Bricolage
+Grotesque remains bundled but is no longer used. Shared colour, control, shadow and
+motion tokens live in `client/src/assets/main.css`; existing `--bookedz-*` names
+were kept so every page picked up the new values.
 
 | Role | Light | Dark |
 | --- | --- | --- |
-| Canvas | #fff8ec | #141b22 |
-| Surface | #fffdfa | #1e2932 |
-| Ink | #34334a | #f3eee4 |
-| Supporting text | #63665e | #b7c2c5 |
-| Action/accent | #aa3e2c | #ffad97 |
-| Border | #e5ded2 | #3b4a54 |
+| Canvas | #fff8f1 | #1c1917 |
+| Surface | #ffffff | #292524 |
+| Ink | #1f2937 | #fafaf9 |
+| Supporting text | #636975 | #a8a29e |
+| Bright fill (`--bookedz-fill`) | #ff6b35 | #ff8a5b |
+| Orange text/links (`--bookedz-primary-dark`) | #9a3412 | #ffb79a |
+| Teal / mango / pink | #14b8a6 / #f59e0b / #ec4899 | #2dd4bf / #fbbf24 / #f472b6 |
+| Focus ring | #0f766e | #5eead4 |
+| Border | #e9ded3 | #57534e |
 
-Action foregrounds use `--bookedz-on-action`, rather than assuming white works in
-both themes. Cards and controls have distinct radii; interactive targets are at
-least 44px. Visible focus, text status labels, balanced headings and wrapping user
-content take precedence over decoration. Exact cents, attendance figures and
-waitlist rankings retain their existing meaning.
+Primary buttons and ticket CTAs use the bright fill with dark `--bookedz-on-fill`
+text (5.2:1 light, 7.5:1 dark); small white text never sits on orange, teal or
+mango. Every button rests on a soft shadow (orange glow for primary, neutral for
+others) that deepens with a 1px lift on hover and settles on press; reduced motion
+drops the lift. Controls use 14px radii and cards 20px. Motion tokens: 100ms
+feedback, 160ms quick, 240ms standard, 250ms slip, 420ms reveal, soft ease-out and
+a stamp ease reserved for one-off feedback. Pages no longer override
+`.btn-primary` locally. Visible focus, text status labels, balanced headings and
+wrapping user content take precedence over decoration. Exact cents, attendance
+figures and waitlist rankings retain their existing meaning.
 
 ## Theme and shell
 
@@ -41,36 +53,33 @@ follow the current session. Demo retains its existing built-in fixture identity;
 it is not an anonymous live session. Mobile navigation closes on route changes
 or Escape, returning focus to the toggle on Escape. The shell owns the only main.
 
-## Discovery and island
+## Discovery and OneMap
 
-Island view leads with headline, description and search in one copy column.
-Category/date/availability/sort choices appear inside the Filters disclosure;
-active choices are reflected in its count. Pending typed text is flushed before
-switching views. Below 992px, copy/search and artwork stack.
+The illustrated island was replaced by OneMap on 3 November 2026. The landing hero
+keeps the headline, description and search in one copy column beside a still OneMap
+preview (`MapPreview.vue`) showing real upcoming venues only; "Explore the map"
+opens Discover’s Map view. Below 992px copy/search and the preview stack.
+Category/date/availability/sort choices stay inside the Filters disclosure.
 
-Both hero and interactive map use `singapore-animated-plate.webp` through
-`IslandArtwork.vue`; neighbourhood thumbnails share that plate. The older
-`singapore-clean.webp` and Natural Earth terrain are historical references, not
-the current discovery map. The replacement retains its actual place labels.
+Discover’s Map view (`EventMap.vue`) is Leaflet with OneMap tiles: Default in light
+theme, Night in dark, switched live through `lib/onemapTiles.js`. OneMap/SLA
+attribution is always shown. Pins use each venue’s real coordinates; events without
+valid Singapore coordinates remain in the list and are counted. Pins pair a category
+colour with a letter, “Picked for you” pins are orange stars, and nearby or
+overlapping pins merge into a count bubble (starred when it contains a pick), so no
+44px hit area covers another. Clusters zoom apart; co-located events open a list.
 
-The image and live event markers share a 1200×900 coordinate system. A documented
-regional warp derives positions from real venue coordinates; displayed locations
-are approximate. Collision connectors retain anchors. Unknown/out-of-canvas
-locations remain in List; exact venue details remain on the event page. Raster
-edge masks and corner mist blend the sea into either theme without masking event
-markers or shrinking their targets. Mobile map controls sit below the artwork.
+“Near me” asks for the browser location once, recentres, and never stores or sends
+it. After any visitor pan or zoom, “Search this area” narrows the result rail to the
+visible bounds until cleared. The rail (beside the map on desktop, below it on
+mobile) and the selected-event preview open the same event; Escape and Close return
+focus to the pin. Wheel zoom only engages after the visitor clicks or focuses the
+map. Neighbourhood cards are tinted pin tiles with factual counts of upcoming events
+within 3 km. The island art files remain in `client/src/assets/illustrations/` but are
+unused; see [asset provenance](assets.md) for their history.
 
-Map motion is deliberately sparse: a rotating Flyer with upright cabins, one-way
-speedboat travel and wake, a small ferry, two birds and an occasional plain plane.
-Ships fade at route endpoints instead of reversing direction. Harbour ships,
-background plane, buildings, trees and MRT remain baked into the plate. Ambient
-layers pause offscreen, in hidden tabs, by the visible pause control and under
-reduced motion. These are illustrations, not live transport data.
-
-Island/Map/List changes use interruptible native view transitions when supported,
-with ordinary Vue rendering and a short entrance fallback. Reduced motion uses
-immediate updates. Focus/scroll targets remain intentional; no blank out-in
-interlude or pinned scrolling is required.
+Map/List changes keep interruptible native view transitions when supported, and
+immediate updates under reduced motion.
 
 ## Participant pages and actions
 

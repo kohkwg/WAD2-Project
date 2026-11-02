@@ -1130,8 +1130,8 @@ async function publish() {
 .create-event-page :deep(.card-footer .btn) { min-width: 6.5rem; min-height: 44px; }
 .create-event-page :deep(.form-control), .create-event-page :deep(.form-select) { border-radius: 10px; transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease; }
 .create-event-page :deep(.form-control:focus), .create-event-page :deep(.form-select:focus) { border-color: var(--bookedz-primary-dark); box-shadow: var(--bookedz-focus-glow); }
-.create-event-page :deep(.btn-primary), .create-event-page :deep(.btn-success) { background: var(--bookedz-primary-dark); border-color: var(--bookedz-primary-dark); color: var(--bookedz-surface); }
-.create-event-page :deep(.btn-primary:hover), .create-event-page :deep(.btn-success:hover) { background: var(--bookedz-primary-hover); border-color: var(--bookedz-primary-hover); }
+.create-event-page :deep(.btn-success) { --bs-btn-color: var(--bookedz-on-fill); --bs-btn-hover-color: var(--bookedz-on-fill); --bs-btn-active-color: var(--bookedz-on-fill); --bs-btn-bg: var(--bookedz-fill); --bs-btn-border-color: var(--bookedz-fill); --bs-btn-hover-bg: var(--bookedz-fill); --bs-btn-hover-border-color: var(--bookedz-fill); --bs-btn-active-bg: var(--bookedz-fill-active); --bs-btn-active-border-color: var(--bookedz-fill-active); font-weight: 700; box-shadow: var(--bookedz-button-shadow); }
+.create-event-page :deep(.btn-success:not(:disabled):hover) { box-shadow: var(--bookedz-button-shadow-hover); }
 .event-preview { position: sticky; top: 1rem; padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 1.25rem; background: var(--bookedz-glass-solid); box-shadow: var(--bookedz-card-shadow); }
 .preview-heading { display: flex; align-items: center; gap: .55rem; margin: 0 0 .85rem; color: var(--bookedz-muted); font-size: .78rem; font-weight: 650; }
 .preview-pulse { width: .5rem; height: .5rem; border-radius: 50%; background: var(--bookedz-success); box-shadow: 0 0 0 .25rem var(--bookedz-glass-active); }

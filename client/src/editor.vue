@@ -1233,12 +1233,6 @@ function addPerson() {
 
 .floor-page-heading .btn-primary,
 .floor-editor .btn-primary {
-    --bs-btn-bg: var(--floor-coral);
-    --bs-btn-border-color: var(--floor-coral);
-    --bs-btn-color: var(--bookedz-on-action, #fffdfa);
-    --bs-btn-hover-bg: var(--bookedz-primary-hover, #8f3022);
-    --bs-btn-hover-border-color: var(--bookedz-primary-hover, #8f3022);
-    --bs-btn-hover-color: var(--bookedz-on-action, #fffdfa);
     border-radius: 12px;
     min-height: 42px
 }
@@ -1497,13 +1491,6 @@ function addPerson() {
 .floor-aux-panel :deep(.btn) {
     border-radius: 10px;
     min-height: 38px
-}
-
-.floor-aux-panel :deep(.btn-primary) {
-    --bs-btn-bg: var(--floor-coral);
-    --bs-btn-border-color: var(--floor-coral);
-    --bs-btn-hover-bg: var(--bookedz-primary-hover, #8f3022);
-    --bs-btn-hover-border-color: var(--bookedz-primary-hover, #8f3022)
 }
 
 .floor-aux-panel :deep(.btn-outline-primary) {

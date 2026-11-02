@@ -1,3 +1,4 @@
+import { isPrivateHangout } from '../utils/hangouts.js'
 // Refresh discovery only when the signed-in identity changes. Supabase also emits
 // SIGNED_IN on tab focus and TOKEN_REFRESHED; neither needs another ranking query.
 export function observeDiscoverySession(client, onSession, onError) {
@@ -51,6 +52,7 @@ export function demoDiscoveryEvents(events, filters = {}, now = new Date()) {
     spots_left: event.spotsLeft, venue_name: event.venue?.name,
     venue_address: event.venue?.address, attendees: [],
   })).filter(event => new Date(event.start_time) > now)
+    .filter(event => !isPrivateHangout(event))
     .filter(event => matchesDiscoveryFilters(event, filters))
     .sort((a,b) => (filters.sort === 'popular' ? (b.confirmed_count || 0) - (a.confirmed_count || 0) : 0)
       || new Date(a.start_time) - new Date(b.start_time) || a.id.localeCompare(b.id))

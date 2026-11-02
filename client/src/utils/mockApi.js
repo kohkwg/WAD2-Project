@@ -8,6 +8,10 @@
 import { createSeedData } from './mockData.js'
 import { calculateWaitlistScore } from './waitlistScore.js'
 import { OFFER_HOURS, ACTIVE_STATUSES } from './helpers.js'
+import { joinOutcome } from './hangouts.js'
+import { rankSlots, heatmap, previewSlot, rescueSuggestions, normaliseIntervals, rangeBounds } from './hangoutSlots.js'
+import { retime, generatePlan, swapAlternatives, eventListing, placeListing, memberWeights, MAX_STOPS } from './itinerary.js'
+import { buildPlanView, resolveRefs } from './hangoutPlan.js'
 import { TASK_STATUSES, FALLBACK_BUDGET_CATEGORY, budgetCategoryOptions, validateCategoryName, validateCents, validateExpenseAmounts, summariseBudget } from './feature4.js'
 import { fetchForecastData, forecastAreas, eventForecast } from './feature4Weather.js'
 
@@ -85,9 +89,11 @@ function findRsvp(db, rsvpId) {
 
 // A spot is "taken" by someone confirmed OR someone who has been offered it (they have 24h)
 function spotsTaken(db, eventId) {
-  return db.rsvps.filter(
+  const held = db.rsvps.filter(
     (r) => r.eventId === eventId && (r.status === 'confirmed' || r.status === 'offered'),
   ).length
+  // A hangout's capacity includes its host, who holds a place without an RSVP
+  return held + (db.events.find((e) => e.id === eventId)?.kind === 'hangout' ? 1 : 0)
 }
 
 // Adds live numbers to an event: how many confirmed, waiting, spots left, etc.
@@ -231,6 +237,343 @@ export async function deleteEvent(eventId) {
 }
 
 
+// A private hangout's invite preview, found by its random token (no joining happens here).
+export async function getHangoutInvite(token) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = db.events.find((e) => e.kind === 'hangout' && token && e.hangout?.inviteToken === token)
+  if (!event) throw new Error('This invite link isn’t valid any more. Ask the host for a new one.')
+  return withCounts(db, event)
+}
+
+// ---------------------------------------------------------------------------
+// Hangout time: availability, ranked slots and locking (group hangouts)
+// Raw free times go only to their owner; the group sees aggregate counts.
+// ---------------------------------------------------------------------------
+
+function hangoutEvent(db, eventId) {
+  const event = findEvent(db, eventId)
+  if (event.kind !== 'hangout') throw new Error('This isn’t a hangout.')
+  return event
+}
+// Demo has one browser identity: it acts as the host on its own hangouts.
+const hangoutActor = (event) => (event.organiserId === CURRENT_ORGANISER_ID ? event.organiserId : CURRENT_USER_ID)
+function hangoutMembers(db, event) {
+  const ids = [...new Set([event.organiserId, ...db.rsvps.filter((r) => r.eventId === event.id && r.status === 'confirmed').map((r) => r.userId)])]
+  const availability = db.hangoutAvailability || []
+  return ids.map((id) => {
+    const saved = availability.find((a) => a.eventId === event.id && a.userId === id)
+    return {
+      id,
+      name: db.users.find((u) => u.id === id)?.name || 'Member',
+      role: id === event.organiserId ? 'host' : 'member',
+      required: id === event.organiserId || Boolean(event.hangout.required?.[id]),
+      responded: Boolean(saved),
+      intervals: saved?.intervals || [],
+    }
+  })
+}
+function requireMember(db, event) {
+  const actor = hangoutActor(event)
+  const members = hangoutMembers(db, event)
+  if (!members.some((m) => m.id === actor)) throw new Error('Join this hangout to see and share times.')
+  return { actor, members, isHost: actor === event.organiserId }
+}
+const publicMember = ({ intervals, ...member }) => member
+const publicPeople = (result) => ({ ...result, available: result.available.map(publicMember), cannot: result.cannot.map(publicMember), noReply: result.noReply.map(publicMember) })
+
+export async function getHangoutTime(eventId, options = {}) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = hangoutEvent(db, eventId)
+  if (!event.hangout.dateRange) throw new Error('This hangout already has a fixed time.')
+  const { actor, members, isHost } = requireMember(db, event)
+  const me = members.find((m) => m.id === actor)
+  const ranking = rankSlots(members, event.hangout.dateRange, options.minMinutes ? { minMinutes: options.minMinutes } : {})
+  return {
+    isHost,
+    me: publicMember(me),
+    myIntervals: me.intervals,
+    members: members.map(publicMember),
+    heatmap: heatmap(members, event.hangout.dateRange),
+    options: ranking.options.map(publicPeople),
+    pendingRequired: ranking.pendingRequired.map(publicMember),
+    rescue: isHost ? rescueSuggestions(members, event.hangout.dateRange, event.organiserId) : [],
+    dateRange: event.hangout.dateRange,
+    lockedSlot: event.hangout.lockedSlot,
+    stage: event.hangout.stage,
+  }
+}
+
+export async function saveHangoutAvailability(eventId, intervals) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = hangoutEvent(db, eventId)
+  if (event.hangout.stage !== 'collecting') throw new Error('The time is locked, so free times can’t change. Ask the host to unlock it.')
+  const { actor } = requireMember(db, event)
+  if (!Array.isArray(intervals) || intervals.some((i) => !Number.isFinite(i?.start) || !Number.isFinite(i?.end) || i.end <= i.start)) throw new Error('Those free times aren’t valid.')
+  const clean = normaliseIntervals(intervals, rangeBounds(event.hangout.dateRange))
+  db.hangoutAvailability = (db.hangoutAvailability || []).filter((a) => !(a.eventId === eventId && a.userId === actor))
+  db.hangoutAvailability.push({ eventId, userId: actor, intervals: clean, respondedAt: new Date().toISOString() })
+  saveDb(db)
+  return clean
+}
+
+export async function clearHangoutAvailability(eventId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = hangoutEvent(db, eventId)
+  if (event.hangout.stage !== 'collecting') throw new Error('The time is locked, so free times can’t change.')
+  const { actor } = requireMember(db, event)
+  db.hangoutAvailability = (db.hangoutAvailability || []).filter((a) => !(a.eventId === eventId && a.userId === actor))
+  saveDb(db)
+}
+
+function hostHangout(db, eventId) {
+  const event = hangoutEvent(db, eventId)
+  if (hangoutActor(event) !== event.organiserId) throw new Error('Only the host can do that.')
+  return event
+}
+
+export async function setHangoutRequired(eventId, userId, required) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = hostHangout(db, eventId)
+  if (userId === event.organiserId) throw new Error('The host is always required.')
+  if (!hangoutMembers(db, event).some((m) => m.id === userId)) throw new Error('That person isn’t in this hangout.')
+  event.hangout.required = { ...(event.hangout.required || {}), [userId]: Boolean(required) }
+  saveDb(db)
+}
+
+export async function previewHangoutSlot(eventId, slot) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = hangoutEvent(db, eventId)
+  const { members } = requireMember(db, event)
+  return publicPeople(previewSlot(members, event.hangout.dateRange, slot))
+}
+
+export async function lockHangoutSlot(eventId, slot) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = hostHangout(db, eventId)
+  if (event.hangout.stage !== 'collecting') throw new Error('A time is already locked.')
+  // Revalidated here, not just in the browser.
+  const preview = previewSlot(hangoutMembers(db, event), event.hangout.dateRange, slot)
+  if (!preview.ok) throw new Error(preview.blockers.join(' '))
+  const startTime = new Date(slot.start).toISOString()
+  const endTime = new Date(slot.end).toISOString()
+  event.hangout = { ...event.hangout, lockedSlot: { startTime, endTime }, stage: 'voting' }
+  event.startTime = startTime
+  event.endTime = endTime
+  saveDb(db)
+  return withCounts(db, event)
+}
+
+export async function unlockHangoutSlot(eventId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = hostHangout(db, eventId)
+  if (!event.hangout.dateRange || !event.hangout.lockedSlot) throw new Error('There’s no locked time to release.')
+  const { start, end } = rangeBounds(event.hangout.dateRange)
+  event.hangout = { ...event.hangout, lockedSlot: null, stage: 'collecting' }
+  event.startTime = new Date(start).toISOString()
+  event.endTime = new Date(end - 60000).toISOString()
+  saveDb(db)
+  return withCounts(db, event)
+}
+
+// ---------------------------------------------------------------------------
+// Hangout plan: itinerary from real Official events plus host-entered places,
+// versioned Keep/Swap votes and explicit host confirmation (never a booking).
+// ---------------------------------------------------------------------------
+
+function planContext(db, event) {
+  const locked = event.hangout.lockedSlot
+  if (!locked) throw new Error('Lock a time first; the plan is built inside it.')
+  const plan = event.hangout.plan || { stops: [], places: [] }
+  const members = hangoutMembers(db, event).map((m) => ({ ...m, weights: memberWeights(db.users.find((u) => u.id === m.id)?.interests, event.tags) }))
+  const events = db.events.filter((e) => e.kind !== 'hangout').map((e) => eventListing(withCounts(db, e)))
+  const places = plan.places.map(placeListing)
+  const byRef = new Map([...events, ...places].map((l) => [l.id, l]))
+  return {
+    plan, members, events, byRef,
+    input: { slot: { start: Date.parse(locked.startTime), end: Date.parse(locked.endTime) }, origin: event.venue, members },
+  }
+}
+function planView(db, event, actor) {
+  const ctx = planContext(db, event)
+  const votes = (db.hangoutVotes || []).filter((v) => v.eventId === event.id)
+  return buildPlanView({
+    stage: event.hangout.stage, plan: ctx.plan, events: ctx.events, places: ctx.plan.places.map(placeListing), input: ctx.input, memberCount: ctx.members.length,
+    voteCounts: (stop) => {
+      const current = votes.filter((v) => v.stopId === stop.id && v.version === stop.version)
+      return { keep: current.filter((v) => v.value === 1).length, swap: current.filter((v) => v.value === -1).length, mine: current.find((v) => v.userId === actor)?.value || 0 }
+    },
+  })
+}
+
+function planAccess(db, eventId, { host = false } = {}) {
+  const event = hangoutEvent(db, eventId)
+  const access = requireMember(db, event)
+  if (host && !access.isHost) throw new Error('Only the host can change the plan.')
+  if (['ended', 'cancelled'].includes(event.hangout.stage)) throw new Error('This hangout has ended.')
+  return { event, ...access }
+}
+
+// Save a new order. Stops keep their id; a stop whose position changes gets a new
+// version, which makes earlier Keep/Swap votes on it stale. A final plan reopens to voting.
+function saveStops(event, refs, method) {
+  const plan = event.hangout.plan || { stops: [], places: [] }
+  const old = plan.stops
+  const stops = refs.map((ref, index) => {
+    const previous = old.find((s) => s.ref === ref)
+    if (!previous) return { id: newId('s'), ref, version: 1 }
+    return old.indexOf(previous) === index ? previous : { ...previous, version: previous.version + 1 }
+  })
+  const changed = stops.length !== old.length || stops.some((s, i) => s !== old[i])
+  const now = new Date().toISOString()
+  event.hangout.plan = { ...plan, stops, method: method || plan.method || 'manual', createdAt: plan.createdAt || now, changedAt: changed ? now : plan.changedAt, finalizedAt: changed ? null : plan.finalizedAt }
+  if (changed && event.hangout.stage === 'final') event.hangout.stage = 'voting'
+}
+
+export async function getHangoutPlan(eventId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const { event, actor, isHost } = planAccess(db, eventId)
+  return { isHost, ...planView(db, event, actor) }
+}
+
+export async function generateHangoutPlan(eventId, options = {}) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const { event, actor } = planAccess(db, eventId, { host: true })
+  const ctx = planContext(db, event)
+  const outcome = generatePlan(ctx.events, ctx.input, options)
+  if (!outcome.ok) return { ok: false, reason: outcome.reason, suggestions: outcome.suggestions }
+  const keepPlaces = ctx.plan.stops.filter((s) => s.ref.startsWith('place:')).map((s) => s.ref)
+  saveStops(event, [...outcome.listings.map((l) => l.id), ...keepPlaces].slice(0, MAX_STOPS), 'beam')
+  // A chosen relaxation stays with the plan so later edits are timed the same way.
+  event.hangout.plan.options = { flexibleStart: Boolean(options.flexibleStart) }
+  saveDb(db)
+  return { ok: true, plan: planView(db, event, actor) }
+}
+
+export async function previewHangoutStops(eventId, refs) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const { event } = planAccess(db, eventId, { host: true })
+  const ctx = planContext(db, event)
+  const result = retime(resolveRefs(ctx.byRef, refs), ctx.input, ctx.plan.options)
+  return { issues: result.issues, times: result.stops.map((s) => ({ start: s.start, end: s.end })), travelMinutes: result.travelMinutes }
+}
+
+export async function setHangoutStops(eventId, refs) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const { event, actor } = planAccess(db, eventId, { host: true })
+  const ctx = planContext(db, event)
+  if (!Array.isArray(refs) || refs.length > MAX_STOPS || new Set(refs).size !== refs.length) throw new Error(`A plan has up to ${MAX_STOPS} different stops.`)
+  if (refs.some((ref) => !ctx.byRef.has(ref))) throw new Error('One of those stops isn’t available any more. Refresh and try again.')
+  saveStops(event, refs)
+  saveDb(db)
+  return planView(db, event, actor)
+}
+
+export async function addHangoutPlace(eventId, place) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const { event, actor } = planAccess(db, eventId, { host: true })
+  planContext(db, event)
+  const name = String(place?.name || '').trim()
+  const minutes = Number(place?.minutes)
+  if (!name || name.length > 80) throw new Error('Give the place a name (up to 80 characters).')
+  if (!Number.isFinite(place?.lat) || !Number.isFinite(place?.lng)) throw new Error('Choose the place from the OneMap suggestions so it has a map location.')
+  if (!Number.isInteger(minutes) || minutes < 15 || minutes > 360) throw new Error('Choose a stay between 15 minutes and 6 hours.')
+  const hhmm = /^([01]\d|2[0-3]):[0-5]\d$/
+  const hours = place.hours?.open && place.hours?.close ? place.hours : null
+  if (hours && (!hhmm.test(hours.open) || !hhmm.test(hours.close) || hours.close <= hours.open)) throw new Error('Opening hours need a closing time after the opening time.')
+  const plan = event.hangout.plan || { stops: [], places: [] }
+  if (plan.stops.length >= MAX_STOPS) throw new Error(`A plan has up to ${MAX_STOPS} stops.`)
+  const saved = { id: newId('p'), name, address: String(place.address || '').slice(0, 200), lat: place.lat, lng: place.lng, minutes, kind: place.kind === 'meal' ? 'meal' : 'activity', hours }
+  event.hangout.plan = { ...plan, places: [...plan.places, saved] }
+  saveStops(event, [...plan.stops.map((s) => s.ref), `place:${saved.id}`])
+  saveDb(db)
+  return planView(db, event, actor)
+}
+
+export async function getHangoutAlternatives(eventId, stopId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const { event } = planAccess(db, eventId, { host: true })
+  const ctx = planContext(db, event)
+  const index = ctx.plan.stops.findIndex((s) => s.id === stopId)
+  if (index < 0) throw new Error('That stop isn’t in the plan any more.')
+  const sequence = resolveRefs(ctx.byRef, ctx.plan.stops.map((s) => s.ref))
+  return swapAlternatives(ctx.events, index, sequence, ctx.input, ctx.plan.options)
+    .map((a) => ({ ref: a.listing.id, title: a.listing.title, venueName: a.listing.venueName, start: a.listing.fixed?.start, end: a.listing.fixed?.end, reasons: a.reasons, better: a.better }))
+}
+
+export async function voteHangoutStop(eventId, stopId, value) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const { event, actor } = planAccess(db, eventId)
+  if (event.hangout.stage !== 'voting') throw new Error('Voting is closed right now.')
+  if (![1, 0, -1].includes(value)) throw new Error('Vote Keep, Swap or clear.')
+  const stop = (event.hangout.plan?.stops || []).find((s) => s.id === stopId)
+  if (!stop) throw new Error('That stop isn’t in the plan any more.')
+  db.hangoutVotes = (db.hangoutVotes || []).filter((v) => !(v.eventId === eventId && v.stopId === stopId && v.userId === actor))
+  if (value) db.hangoutVotes.push({ eventId, stopId, userId: actor, version: stop.version, value, at: new Date().toISOString() })
+  saveDb(db)
+  return planView(db, event, actor)
+}
+
+export async function finalizeHangoutPlan(eventId, { acceptSoft = false } = {}) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const { event, actor } = planAccess(db, eventId, { host: true })
+  const view = planView(db, event, actor)
+  if (!view.stops.length) throw new Error('Add at least one stop before confirming.')
+  const all = [...view.planIssues, ...view.stops.flatMap((s) => s.issues)]
+  const blocking = all.filter((i) => i.blocking)
+  if (blocking.length) throw new Error(`Fix these first: ${blocking.map((i) => i.message).join(' ')}`)
+  if (all.length && !acceptSoft) throw new Error('Accept the remaining concerns to confirm.')
+  const now = new Date().toISOString()
+  event.hangout.plan = { ...event.hangout.plan, finalizedAt: now, everFinal: true, timings: view.stops.map((s) => ({ stopId: s.id, start: s.start, end: s.end })) }
+  event.hangout.stage = 'final'
+  saveDb(db)
+  return planView(db, event, actor)
+}
+
+// On the day: the host's exact meeting point, shown to members with the plan.
+export async function setHangoutMeetingPoint(eventId, text) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const { event } = planAccess(db, eventId, { host: true })
+  const value = String(text || '').trim()
+  if (value.length > 120) throw new Error('Keep the meeting point to 120 characters or fewer.')
+  event.hangout.meetingPoint = value
+  saveDb(db)
+  return value
+}
+
+export async function reopenHangoutPlan(eventId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const { event, actor } = planAccess(db, eventId, { host: true })
+  if (event.hangout.stage !== 'final') throw new Error('The plan isn’t confirmed.')
+  event.hangout.stage = 'voting'
+  event.hangout.plan = { ...event.hangout.plan, finalizedAt: null, changedAt: new Date().toISOString() }
+  saveDb(db)
+  return planView(db, event, actor)
+}
+
+// Joining a hangout. The demo has no invite enforcement; live checks the token.
+export async function joinHangout({ eventId }) {
+  const user = await getUser()
+  return createRsvp({ eventId, name: user.name, email: user.email, answers: {} })
+}
+
 // Events the logged-in organiser runs
 export async function getOrganiserEvents() {
   await fakeDelay()
@@ -347,11 +690,10 @@ export async function createRsvp({ eventId, name, email, answers }) {
   )
   if (alreadyIn) throw new Error('You already have an RSVP for this event.')
 
-  // Needs approval → pending. Otherwise confirmed if there's space, else waitlisted.
-  let status
-  if (event.requiresApproval) status = 'pending'
-  else if (spotsTaken(db, eventId) < event.capacity) status = 'confirmed'
-  else status = 'waitlisted'
+  // Approval → pending. Open joins are confirmed while places last and refused when full;
+  // auto-confirm RSVPs fall back to the waitlist.
+  const status = joinOutcome(event, spotsTaken(db, eventId))
+  if (status === 'full') throw new Error('This event is full, so it isn’t taking new joins.')
 
   const rsvp = {
     id: newId('r'),

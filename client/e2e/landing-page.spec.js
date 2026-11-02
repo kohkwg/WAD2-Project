@@ -7,7 +7,7 @@ test('landing is separate from Discover and Bookedz logos return home from other
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
   await expect(page.locator('.discovery-hero')).toBeVisible()
-  await expect(page.locator('.hero-illustration')).toHaveAttribute('data-loaded', 'true')
+  await expect(page.locator('.hero-map')).toBeVisible()
   await expect(page.getByRole('region', { name: 'Picked for you' })).toHaveCount(0)
   await expect(page.locator('main')).toHaveCount(1)
   for (const scheme of ['light', 'dark']) {
