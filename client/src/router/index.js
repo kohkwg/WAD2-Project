@@ -53,7 +53,8 @@ const router = createRouter({
     { path: '/community', component: () => import('../views/CommunityView.vue'), meta: { title: 'Community' } },
     { path: '/my-rsvps', component: MyRsvpsView, meta: { title: 'My RSVPs' } },
     { path: '/organiser/events', component: OrganiserEventsView, meta: { title: 'My events' } },
-    { path: '/organiser/events/new', component: CreateEventView, meta: { title: 'Create event' } },
+    { path: '/organiser/events/new', component: () => import('../views/NewEventView.vue'), meta: { title: 'Create event' } },
+    { path: '/j/:token', component: () => import('../views/HangoutInviteView.vue'), meta: { title: 'Hangout invite' } },
     // Same wizard, pre-filled, for changing a published event (Feature 2)
     { path: '/organiser/events/:id/edit', component: CreateEventView, meta: { title: 'Edit event' } },
     { path: '/organiser/events/:id/rsvps', component: ManageRsvpsView, meta: { title: 'Manage RSVPs' } },

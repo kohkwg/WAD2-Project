@@ -93,7 +93,7 @@ const time = (value) => new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', 
 .programme-flow .border.rounded{border-color:var(--bookedz-border,#e5ded2)!important;border-radius:14px!important}
 .programme-flow .form-control,.programme-flow .form-select{min-height:42px;border-color:var(--bookedz-border,#e5ded2);border-radius:10px}
 .programme-flow .btn{border-radius:10px;min-height:38px}
-.programme-flow .btn-primary{--bs-btn-bg:var(--bookedz-primary-dark,#aa3e2c);--bs-btn-border-color:var(--bookedz-primary-dark,#aa3e2c);--bs-btn-color:var(--bookedz-on-action,#fffdfa);--bs-btn-hover-bg:var(--bookedz-primary-hover,#8f3022);--bs-btn-hover-border-color:var(--bookedz-primary-hover,#8f3022)}
+
 .programme-empty{margin:0;color:var(--bookedz-muted,#63665e)}
 .programme-list{display:grid;gap:.7rem;margin:0;padding:0;list-style:none}
 .programme-item{display:grid;grid-template-columns:minmax(9rem,13rem) minmax(0,1fr);gap:1rem;padding:1rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:14px;background:var(--bookedz-cream,#fff8ec)}

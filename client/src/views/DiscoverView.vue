@@ -8,13 +8,13 @@ import { useEvents, useRecommendations } from '@/composables/useEvents'
 import EventCard from '@/components/EventCard.vue'
 import EventFilters from '@/components/EventFilters.vue'
 import PickedForYou from '@/components/PickedForYou.vue'
-import SingaporeMap from '@/components/discovery/SingaporeMap.vue'
+import EventMap from '@/components/discovery/EventMap.vue'
 import EventArtwork from '@/components/EventArtwork.vue'
 import CategoryGrid from '@/components/discovery/CategoryGrid.vue'
 import { useDiscoveryMotion } from '@/composables/useDiscoveryMotion'
 import { CATEGORIES } from '@/lib/constants'
 import { normalizeDiscoveryFilters, discoveryEventQuery, discoveryUrlQuery, discoveryFiltersFromQuery } from '@/lib/discoveryFilters'
-import islandArt from '@/assets/illustrations/singapore-animated-plate.webp'
+import { eventsNear } from '@/utils/discoveryMap'
 
 const defaults = () => normalizeDiscoveryFilters()
 const route = useRoute()
@@ -46,11 +46,13 @@ const liveStage = ref(null)
 const mapRegion = ref(null)
 useDiscoveryMotion(pageRoot)
 const neighbourhoods = [
-  { name: 'Marina Bay', note: 'A different kind of city escape', lat: 1.282, lng: 103.855, position: '60% 65%' },
-  { name: 'Tampines', note: 'Good things in the east', lat: 1.355, lng: 103.945, position: '85% 35%' },
-  { name: 'Jurong', note: 'Make a little room for the west', lat: 1.34, lng: 103.7, position: '15% 45%' },
-  { name: 'Woodlands', note: 'Take your curiosity north', lat: 1.435, lng: 103.79, position: '45% 12%' },
+  { name: 'Marina Bay', note: 'A different kind of city escape', lat: 1.282, lng: 103.855, tone: 'orange' },
+  { name: 'Tampines', note: 'Good things in the east', lat: 1.355, lng: 103.945, tone: 'teal' },
+  { name: 'Jurong', note: 'Make a little room for the west', lat: 1.34, lng: 103.7, tone: 'mango' },
+  { name: 'Woodlands', note: 'Take your curiosity north', lat: 1.435, lng: 103.79, tone: 'pink' },
 ]
+// Real upcoming events within 3 km of each neighbourhood centre.
+const neighbourhoodCounts = computed(() => Object.fromEntries(neighbourhoods.map(region => [region.name, eventsNear(mapEvents.value, region, 3).length])))
 let modeTransition
 async function changeMode(mode) {
   searchControl.value?.flushSearch()
@@ -219,7 +221,7 @@ function goToPage(nextPage) {
           </div>
         </div>
         <div v-if="viewMode !== 'categories'" class="discovery-search"><EventFilters ref="searchControl" v-model="filters" v-model:search="search" :total="total" :loading="loading" :error="error" show-active @show="showList" @retry="refreshDiscovery" /></div>
-        <SingaporeMap v-if="viewMode === 'map'" :events="mapEvents" :region="mapRegion" :prominent-ids="discoveryPicks.map(event => event.id)" :loading="mapLoading" :error="mapError" @retry="refreshDiscovery" @list="showList" />
+        <EventMap v-if="viewMode === 'map'" :events="mapEvents" :region="mapRegion" :prominent-ids="discoveryPicks.map(event => event.id)" :loading="mapLoading" :error="mapError" @retry="refreshDiscovery" @list="showList" />
       </div>
     </div>
     <div ref="resultList" class="container discover-content" id="event-directory" tabindex="-1">
@@ -300,7 +302,7 @@ function goToPage(nextPage) {
         </nav>
       </section>
       <section v-if="viewMode === 'list'" class="neighbourhood-section" aria-labelledby="neighbourhood-title" data-scroll-reveal>
-        <div class="section-intro"><div><p class="discovery-eyebrow">Familiar places. Fresh possibilities.</p><h2 id="neighbourhood-title">Find your corner of the island.</h2></div><span>Open a neighbourhood on the live map.</span></div>
+        <div class="section-intro"><div><p class="discovery-eyebrow">Familiar places. Fresh possibilities.</p><h2 id="neighbourhood-title">Find your corner of the island.</h2></div><span>Open a neighbourhood on the live OneMap.</span></div>
         <div class="neighbourhood-grid">
           <button
             v-for="region in neighbourhoods"
@@ -308,23 +310,14 @@ function goToPage(nextPage) {
             type="button"
             @click="exploreNeighbourhood(region)"
           >
-            <div class="neighbourhood-preview">
-              <img
-                :src="islandArt"
-                alt=""
-                loading="lazy"
-                width="360"
-                height="220"
-                :style="{
-                  objectPosition: region.position,
-                  transformOrigin: region.position
-                }"
-              >
+            <div class="neighbourhood-preview" :class="`neighbourhood-preview--${region.tone}`" aria-hidden="true">
+              <svg viewBox="0 0 48 60" class="neighbourhood-pin"><path d="M24 2C12 2 3 11 3 23c0 15 21 34 21 34s21-19 21-34C45 11 36 2 24 2Z" /><circle cx="24" cy="23" r="8" /></svg>
             </div>
             <span class="neighbourhood-name">
               {{ region.name }} <span aria-hidden="true">↗</span>
             </span>
             <span class="neighbourhood-note">{{ region.note }}</span>
+            <span class="neighbourhood-count">{{ mapLoading ? 'Checking events…' : `${neighbourhoodCounts[region.name]} upcoming within 3 km` }}</span>
           </button>
         </div>
       </section>
@@ -380,36 +373,23 @@ function goToPage(nextPage) {
 @media(prefers-reduced-motion:reduce) { .discovery-mode-host > * { animation: none; } }
 .section-intro { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }.section-intro h2 { margin: 0; font-size: clamp(1.6rem,2.8vw,2.2rem); }.section-intro > span { font-size: .75rem; color: var(--bookedz-muted); }
 .curiosity-section,.neighbourhood-section { margin: 64px 0; }.category-experiences { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 14px; }.category-experiences button { border: 1px solid var(--bookedz-border); padding: 0; background: var(--bookedz-surface); border-radius: 22px; overflow: hidden; text-align: left; transition: transform var(--bookedz-motion-fast) ease,box-shadow var(--bookedz-motion-fast) ease; }.category-experiences button > span { padding: 14px; display: flex; justify-content: space-between; font-size: .85rem; font-weight: 650; color: var(--bookedz-ink); }.category-experiences :deep(svg) { width: 100%; height: 125px; display: block; }.category-experiences button:hover { transform: translateY(-5px); box-shadow: var(--bookedz-shadow); }
-.neighbourhood-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 18px; }.neighbourhood-grid button { display: flex; flex-direction: column; border: 1px solid var(--bookedz-border); background: var(--bookedz-surface); border-radius: 22px; padding: 0 0 18px; overflow: hidden; text-align: left; color: var(--bookedz-ink); }.neighbourhood-grid img { width: 100%; height: 170px; object-fit: cover; margin-bottom: 16px; transition: transform .45s ease; }.neighbourhood-grid button:hover img { transform: scale(1.045); }.neighbourhood-name { display: flex; justify-content: space-between; width: 100%; padding: 0 18px; font-family: var(--bookedz-heading); font-size: 1.3rem; font-weight: 650; }.neighbourhood-note { margin-top: 5px; padding: 0 18px; font-size: .75rem; color: var(--bookedz-muted); }
+.neighbourhood-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 18px; }.neighbourhood-grid button { display: flex; flex-direction: column; border: 1px solid var(--bookedz-border); background: var(--bookedz-surface); border-radius: var(--bookedz-radius-card); padding: 0 0 18px; overflow: hidden; text-align: left; color: var(--bookedz-ink); box-shadow: var(--bookedz-card-shadow); transition: transform var(--bookedz-motion-normal) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease); }.neighbourhood-grid button:hover { transform: translateY(-4px); box-shadow: var(--bookedz-shadow); }.neighbourhood-name { display: flex; justify-content: space-between; width: 100%; padding: 0 18px; font-family: var(--bookedz-heading); font-size: 1.3rem; font-weight: 650; }.neighbourhood-note { margin-top: 5px; padding: 0 18px; font-size: .75rem; color: var(--bookedz-muted); }
 .hosting-invitation { display: grid; grid-template-columns: 1.1fr 1fr; align-items: center; gap: 30px; padding: 48px; margin: 70px 0 10px; border-radius: 32px; background: var(--bookedz-hover); border: 1px solid var(--bookedz-border); overflow: hidden; }.hosting-invitation h2 { font-size: clamp(2rem,3.5vw,3rem); line-height: 1.05; }.hosting-invitation p:not(.discovery-eyebrow) { font-size: .9rem; max-width: 360px; color: var(--bookedz-muted); margin: 18px 0 24px; }.hosting-art { position: relative; }.hosting-art :deep(svg) { width: 100%; height: auto; border-radius: 50%; transform: rotate(-5deg); }.hosting-stamp { position: absolute; right: -10px; bottom: 0; display: grid; place-content: center; width: 115px; height: 115px; border-radius: 50%; color: var(--bookedz-ink); background: var(--bookedz-yellow); border: 1px dashed var(--bookedz-control-border); font-family: var(--bookedz-heading); font-size: 1rem; text-align: center; transform: rotate(10deg); }
 @media(max-width:991px) { .category-experiences { grid-template-columns: repeat(3,minmax(0,1fr)); }.neighbourhood-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.hosting-invitation { padding: 30px; } }
-@media(max-width:575px) { .category-experiences { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }.curiosity-section,.neighbourhood-section { margin: 44px 0; }.neighbourhood-grid { gap: 12px; }.neighbourhood-grid img { height: 125px; }.neighbourhood-name { font-size: 1.1rem; padding: 0 12px; }.neighbourhood-note { padding: 0 12px; font-size: .65rem; }.hosting-invitation { grid-template-columns: 1fr; padding: 28px; margin-top: 48px; }.hosting-art { max-width: 300px; margin: 0 auto; }.hosting-stamp { width: 95px; height: 95px; }.section-intro > span { font-size: .7rem; } }
+@media(max-width:575px) { .category-experiences { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }.curiosity-section,.neighbourhood-section { margin: 44px 0; }.neighbourhood-grid { gap: 12px; }.neighbourhood-preview { height: 110px; }.neighbourhood-name { font-size: 1.1rem; padding: 0 12px; }.neighbourhood-note { padding: 0 12px; font-size: .65rem; }.hosting-invitation { grid-template-columns: 1fr; padding: 28px; margin-top: 48px; }.hosting-art { max-width: 300px; margin: 0 auto; }.hosting-stamp { width: 95px; height: 95px; }.section-intro > span { font-size: .7rem; } }
 @media(max-width:575px) { .discovery-topbar { flex-wrap: wrap; align-items: flex-start; }.discovery-top-actions { width: 100%; }.view-switch { width: 100%; }.view-switch button { flex: 1; } }
-@media(prefers-reduced-motion:reduce) { .category-experiences button,.neighbourhood-grid img { transition: none; }.category-experiences button:hover,.neighbourhood-grid button:hover img { transform: none; } }
+@media(prefers-reduced-motion:reduce) { .category-experiences button,.neighbourhood-grid button,.neighbourhood-pin { transition: none; }.category-experiences button:hover,.neighbourhood-grid button:hover,.neighbourhood-grid button:hover .neighbourhood-pin { transform: none; } }
 
-/* Clip the enlarged island within each neighbourhood preview. */
-.neighbourhood-preview {
-  position: relative;
-  width: 100%;
-  height: 180px;
-  height: 200px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-.neighbourhood-grid .neighbourhood-preview img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  max-height: none;
-  margin: 0;
-  object-fit: cover;
-  transform: scale(2.8);
-  transform: scale(2.3);
-  transition: none;
-}
-.neighbourhood-grid button:hover .neighbourhood-preview img {
-  transform: scale(2.8);
-  transform: scale(2.3);
-}
+/* Neighbourhood tiles: a tinted stationery card with one pin, counts come from real events. */
+.neighbourhood-preview { display: grid; place-items: center; width: 100%; height: 150px; margin-bottom: 16px; border-bottom: 1px dashed var(--bookedz-border); }
+.neighbourhood-preview--orange { background: var(--bookedz-orange-soft); color: var(--bookedz-fill); }
+.neighbourhood-preview--teal { background: var(--bookedz-teal-soft); color: var(--bookedz-teal); }
+.neighbourhood-preview--mango { background: var(--bookedz-mango-soft); color: var(--bookedz-mango); }
+.neighbourhood-preview--pink { background: var(--bookedz-pink-soft); color: var(--bookedz-pink); }
+.neighbourhood-pin { width: 46px; height: 58px; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp); }
+.neighbourhood-pin path { fill: currentColor; }
+.neighbourhood-pin circle { fill: var(--bookedz-surface); }
+.neighbourhood-grid button:hover .neighbourhood-pin { transform: translateY(-4px) scale(1.06); }
+.neighbourhood-count { margin-top: 10px; padding: 0 18px; font-size: .75rem; font-weight: 700; color: var(--bookedz-primary-dark); font-variant-numeric: tabular-nums; }
+@media(max-width:575px) { .neighbourhood-count { padding: 0 12px; font-size: .68rem; } }
 </style>

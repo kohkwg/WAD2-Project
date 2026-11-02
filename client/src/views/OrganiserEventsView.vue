@@ -153,8 +153,6 @@ function fillPercent(event) {
 /* Grey text-secondary was 3.9:1 on the light mint heading; ink reads clearly in both themes */
 .organiser-lede { color: var(--bookedz-ink); }
 /* on-action is the coral button's text colour in both themes (white on peach failed in dark mode) */
-.organiser-heading :deep(.btn-primary), .empty-events :deep(.btn-primary) { background: var(--bookedz-primary-dark, #aa3e2c); border-color: var(--bookedz-primary-dark, #aa3e2c); color: var(--bookedz-on-action); }
-.organiser-heading :deep(.btn-primary):hover, .empty-events :deep(.btn-primary):hover { background: var(--bookedz-primary-hover); border-color: var(--bookedz-primary-hover); color: var(--bookedz-on-action); }
 .empty-events { max-width: 42rem; margin: 3rem auto; padding: clamp(2rem, 6vw, 4rem) 1.5rem; border: 1px dashed var(--bookedz-border, #e5ded2); border-radius: 24px; background: var(--bookedz-surface, #fffdfa); }
 .empty-events-mark { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem; border-radius: 50%; background: var(--bookedz-yellow, #f6cf77); color: var(--bookedz-ink); font-size: 1.8rem; }
 .empty-events p { max-width: 30rem; margin: 0 auto 1.5rem; }
@@ -185,7 +183,6 @@ function fillPercent(event) {
 /* The footer follows the theme (bg-white stayed white in dark mode) */
 .event-card-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; border-color: var(--bookedz-border, #e5ded2); background: var(--bookedz-surface); }
 .event-primary-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
-.event-primary-actions :deep(.btn-primary) { background: var(--bookedz-primary-dark, #aa3e2c); border-color: var(--bookedz-primary-dark, #aa3e2c); color: var(--bookedz-on-action); }
 .event-delete-action { margin-left: auto; }
 @media (max-width: 575.98px) {
   .organiser-heading { align-items: stretch !important; }

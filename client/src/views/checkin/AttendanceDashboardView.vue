@@ -213,7 +213,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
 .attendance-stat{padding:1.4rem 1.5rem;border:1px solid var(--checkin-line);border-radius:22px;background:var(--checkin-mint)}
 .attendance-stat .display-6{font-family:var(--bookedz-heading);font-size:3.6rem;color:var(--checkin-ink);line-height:1}
 .attendance-stat .progress{height:.7rem;border-radius:2rem;background:#c8d9cd}.attendance-stat .progress-bar{background:#397456!important;border-radius:2rem}
-.attendance-page .btn-primary,.staff-page .btn-primary,.ticket-page .btn-primary,.self-checkin-page .btn-primary,.venue-qr-page .btn-primary{--bs-btn-bg:var(--checkin-coral);--bs-btn-border-color:var(--checkin-coral);--bs-btn-hover-bg:#8f3022;--bs-btn-hover-border-color:#8f3022;--bs-btn-color:#fff;--bs-btn-hover-color:#fff}
+
 .attendance-page .btn-outline-primary,.staff-page .btn-outline-primary,.ticket-page .btn-outline-primary,.self-checkin-page .btn-outline-primary,.venue-qr-page .btn-outline-primary{--bs-btn-color:var(--checkin-coral);--bs-btn-border-color:var(--checkin-coral);--bs-btn-hover-bg:var(--checkin-coral);--bs-btn-hover-border-color:var(--checkin-coral)}
 .attendance-section-title{font-family:var(--bookedz-heading);font-weight:700;letter-spacing:-.02em}
 .attendance-list{border:1px solid var(--checkin-line);border-radius:16px;overflow:hidden}.attendance-list .list-group-item{padding:.9rem 1rem;border-color:var(--checkin-line);background:#fffdfa;gap:.75rem}.attendance-list .list-group-item>span:last-child{text-align:right;white-space:normal!important}

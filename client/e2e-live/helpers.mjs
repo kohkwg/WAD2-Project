@@ -14,7 +14,7 @@ export const db = (page, fn, arg) => page.evaluate(fn, arg)
 
 // Organiser creates a published [TEST] event (starts in 1 h, at SMU SCIS) and returns its id
 export async function createTestEvent(page, { title, tag, coverFile }) {
-  await page.goto('/organiser/events/new')
+  await page.goto('/organiser/events/new?template=official')
   const { start, end } = await page.evaluate(() => {
     const p = (n) => String(n).padStart(2, '0')
     const f = (d) => `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`

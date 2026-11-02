@@ -150,7 +150,7 @@ async function submit() {
 .auth-tabs .nav-link.active { color: #fff; background: var(--bookedz-primary-dark, #aa3e2c); }
 :deep(.form-control) { min-height: 46px; border-color: var(--bookedz-border, #e5ded2); border-radius: 12px; }
 :deep(.form-control:focus) { border-color: var(--bookedz-primary, #e9725c); box-shadow: 0 0 0 .2rem rgba(233, 114, 92, .18); }
-:deep(.btn-primary) { min-height: 46px; border-color: var(--bookedz-primary-dark, #aa3e2c); border-radius: 12px; background: var(--bookedz-primary-dark, #aa3e2c); }
+:deep(.btn-primary) { min-height: 46px; border-radius: 12px; }
 :deep(:focus-visible) { outline: 3px solid #292d32; outline-offset: 3px; }
 @media (max-width: 700px) { .auth-wrap { max-width: 480px; grid-template-columns: 1fr; gap: 1.5rem; margin: 1.25rem auto; } .auth-title { font-size: clamp(2.3rem, 12vw, 3.2rem); } .auth-copy { margin-top: .8rem; } }
 </style>
