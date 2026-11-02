@@ -1,5 +1,44 @@
 # Decisions
 
+2 November 2026 — Aishani requests central typography roles in `main.css`, keeping
+Bricolage Grotesque for headings and DM Sans for body/buttons. Page titles use
+32–48px/700; section headings 22–28px/650; ordinary card titles 20px/650; body 16px;
+metadata/buttons 14px; captions 12px. Featured event titles may use a distinct
+larger shared role. Remove conflicting scoped rules, including breakpoint rules,
+instead of adding `!important`; compare pages at equal zoom and mobile widths.
+
+2 November 2026 — Aishani prioritises organiser My events tabs/search, pending
+counts with direct Review requests, state-specific Edit draft/Manage event/View
+results, empty states/mobile layout and organiser-to-participant consistency.
+Use existing management, edit and attendance routes. Drafts lists persisted draft
+events; do not imply a new save-as-draft or publish-draft workflow. Preserve real
+status/availability counts and deletion confirmation; no invented attendance,
+duplication or cancellation controls from the reference image.
+
+2 November 2026 — Aishani requests the My RSVPs redesign with separate
+Upcoming/Saved/Past/Cancelled tabs, earliest upcoming confirmed plan, independent
+saved-event retrieval and component extraction. Keep offers above the tabs,
+existing cancellation/offer refresh and actual ticket navigation. Directions and
+calendar actions must work; no decorative QR, invented waitlist position or photo
+sharing. Closed registrations retain their specific status labels; verified
+attendance requires a check-in without a fraud flag. Recommendation scoring is
+outside this change.
+
+2 November 2026 — Aishani requests twelve fictional [TEST] events created through
+the live event form and a two-participant recommendation journey, with a separate
+organiser. The user authorises resets of the two dedicated test participants.
+Keep mocked UI evidence separate from browser/Express/Supabase evidence; event
+draft preparation is not event creation or live verification.
+
+2 November 2026 — Aishani requests excluding active saves from recommendation
+candidates while preserving their learning evidence. Unsave restores candidate
+eligibility subject to existing filters; evidence snapshots remain unchanged.
+
+2 November 2026 — apply Aishani's supplied recommendation-quality update:
+exclude organiser/team behavioural evidence while retaining explicit interests and
+bookmark storage; explain recommendations using supporting actions. Preserve the
+existing route fixture and current topic, distance and diversity scoring.
+
 Aishani requests the illustrated Singapore hero as a separate landing page rather
 than part of Discover. Bookedz logos must return to it from any page. Use `/` for
 the public landing page and retain `/discover` for recommendations/event browsing;

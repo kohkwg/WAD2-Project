@@ -229,7 +229,7 @@ function ago(ts) {
 <template>
   <div class="container community-page">
     <div class="community-feed">
-      <h1 class="h3 mb-3 community-title">Community</h1>
+      <h1 class="page-title mb-3 community-title">Community</h1>
 
       <div class="community-side">
       <form class="community-search" role="search" @submit.prevent>

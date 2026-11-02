@@ -1,198 +1,152 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { getOrganiserEvents, deleteEvent } from '../utils/api.js'
-import { formatEventTime } from '../utils/helpers.js'
-import EventArtwork from '../components/EventArtwork.vue'
-
-// The organiser's list of events. (This may later merge into Denzel's organiser dashboard.)
+import OrganiserEventCard from '../components/organiser/OrganiserEventCard.vue'
+import { organiserEventState, organiserEventCounts, filterOrganiserEvents } from '../utils/organiserEvents.js'
 
 const route = useRoute()
-
 const events = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
 const statusMessage = ref('')
 const confirmDeleteId = ref(null)
 const busyId = ref(null)
-// Cover URLs that failed to load; those cards fall back to the category artwork
-const failedCovers = ref(new Set())
-
-// After publishing, Create Event sends us here as /organiser/events?created=<id>
+const now = ref(Date.now())
+const statusAlert = ref(null)
+const errorAlert = ref(null)
+const resultsHeading = ref(null)
+const storageKey = 'bookedz-organiser-events-view-v1'
+let stored = {}
+try { stored = JSON.parse(sessionStorage.getItem(storageKey) || '{}') || {} } catch { /* unavailable or obsolete state */ }
+const activeTab = ref(['upcoming', 'drafts', 'past', 'all'].includes(stored.tab) ? stored.tab : 'upcoming')
+const search = ref(typeof stored.search === 'string' ? stored.search : '')
+const sort = ref(stored.sort === 'newest' ? 'newest' : 'soonest')
+const pendingOnly = ref(stored.pendingOnly === true)
+watch([activeTab, search, sort, pendingOnly], () => {
+  try { sessionStorage.setItem(storageKey, JSON.stringify({ tab: activeTab.value, search: search.value, sort: sort.value, pendingOnly: pendingOnly.value })) } catch { /* browsing still works without storage */ }
+})
 const justCreatedId = computed(() => route.query.created)
-// After saving an edit, Edit event sends us here as ?updated=<id> (plus &announced=1 if it posted one)
 const justUpdatedId = computed(() => route.query.updated)
-// Events can be edited until they start
-const isUpcoming = (event) => new Date(event.startTime).getTime() > Date.now()
-
+const counts = computed(() => organiserEventCounts(events.value, now.value))
+const tabs = computed(() => [
+  { id: 'upcoming', label: 'Upcoming' }, { id: 'drafts', label: 'Drafts' },
+  { id: 'past', label: 'Past' }, { id: 'all', label: 'All' },
+])
+const pendingEvents = computed(() => events.value.filter(event => organiserEventState(event, now.value) === 'upcoming' && event.pendingCount > 0))
+const pendingCount = computed(() => pendingEvents.value.reduce((sum, event) => sum + event.pendingCount, 0))
+const visibleEvents = computed(() => filterOrganiserEvents(events.value, { tab: activeTab.value, search: search.value, sort: sort.value, pendingOnly: pendingOnly.value, now: now.value }))
+const sectionTitle = computed(() => ({ upcoming: 'Today and upcoming', drafts: 'Your drafts', past: 'Past events', all: 'All your events' })[activeTab.value])
+const emptyTitle = computed(() => search.value.trim() ? `No events match “${search.value.trim()}”` : pendingOnly.value ? 'All caught up on requests.' : ({ upcoming: 'Your next gathering starts here.', drafts: 'No drafts waiting in the wings.', past: 'Your hosting memories start here.', all: 'You haven’t hosted anything yet.' })[activeTab.value])
+const emptyCopy = computed(() => search.value.trim() ? 'Check the spelling, or clear your search to see your events again.' : pendingOnly.value ? 'There are no upcoming events waiting for your approval.' : ({ upcoming: 'Create your next event and bring people together.', drafts: 'Any unpublished events will appear here, ready for you to keep editing.', past: 'Results and attendance will appear here after your events end.', all: 'Create your first event and give your community something to look forward to.' })[activeTab.value])
+let mounted = false, requestId = 0, refreshing = false, timer
 async function loadEvents() {
-  loading.value = true
+  if (!mounted || refreshing || busyId.value) return
+  refreshing = true
+  const request = ++requestId
+  now.value = Date.now()
   errorMessage.value = ''
   try {
-    events.value = await getOrganiserEvents()
+    const rows = await getOrganiserEvents()
+    if (mounted && request === requestId) events.value = rows
   } catch (error) {
-    errorMessage.value = 'Could not load your events: ' + error.message
+    if (mounted && request === requestId) errorMessage.value = 'Could not load your events: ' + error.message
   } finally {
-    loading.value = false
+    if (mounted && request === requestId) { loading.value = false; refreshing = false }
   }
 }
-onMounted(loadEvents)
-
+onMounted(() => {
+  mounted = true
+  if (justCreatedId.value) { activeTab.value = 'upcoming'; search.value = ''; pendingOnly.value = false }
+  loadEvents()
+  timer = setInterval(loadEvents, 30000)
+  window.addEventListener('focus', loadEvents)
+})
+onUnmounted(() => { mounted = false; requestId++; clearInterval(timer); window.removeEventListener('focus', loadEvents) })
+function selectTab(id) {
+  activeTab.value = id
+  pendingOnly.value = false
+  sort.value = id === 'past' ? 'newest' : 'soonest'
+}
+async function moveTab(event, index) {
+  let target
+  if (event.key === 'ArrowRight') target = (index + 1) % tabs.value.length
+  else if (event.key === 'ArrowLeft') target = (index + tabs.value.length - 1) % tabs.value.length
+  else if (event.key === 'Home') target = 0
+  else if (event.key === 'End') target = tabs.value.length - 1
+  else return
+  event.preventDefault()
+  selectTab(tabs.value[target].id)
+  await nextTick()
+  document.getElementById(`organiser-tab-${activeTab.value}`)?.focus()
+}
+async function reviewAll() {
+  activeTab.value = 'upcoming'
+  pendingOnly.value = true
+  search.value = ''
+  await nextTick()
+  resultsHeading.value?.focus()
+}
+async function askDelete(id) {
+  confirmDeleteId.value = id
+  await nextTick()
+  document.getElementById(`keep-event-${id}`)?.focus()
+}
+async function keepEvent(id) {
+  confirmDeleteId.value = null
+  await nextTick()
+  document.getElementById(`delete-event-${id}`)?.focus()
+}
 async function removeEvent(eventId) {
   if (busyId.value) return
   busyId.value = eventId
   errorMessage.value = ''
   statusMessage.value = ''
+  // Invalidate an in-flight read so it cannot restore the deleted card.
+  requestId++
+  refreshing = false
   try {
     await deleteEvent(eventId)
+    if (!mounted) return
     confirmDeleteId.value = null
-    events.value = events.value.filter((event) => event.id !== eventId)
+    events.value = events.value.filter(event => event.id !== eventId)
     statusMessage.value = 'Event deleted, including its RSVPs and organiser records.'
+    await nextTick()
+    statusAlert.value?.focus()
   } catch (error) {
-    errorMessage.value = error.message
-  } finally {
-    busyId.value = null
-  }
-}
-
-function fillPercent(event) {
-  return event.capacity > 0 ? Math.min(100, Math.round((event.confirmedCount / event.capacity) * 100)) : 0
+    if (mounted) { errorMessage.value = error.message; await nextTick(); errorAlert.value?.focus() }
+  } finally { if (mounted) busyId.value = null }
 }
 </script>
 
 <template>
-  <header class="organiser-heading d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-    <div><p class="organiser-kicker mb-2">Your hosting space</p><h1 class="mb-1">My events</h1><p class="organiser-lede mb-0">Keep every gathering, guest list and detail in one place.</p></div>
-    <RouterLink to="/organiser/events/new" class="btn btn-primary">Create event</RouterLink>
-  </header>
-
-  <div v-if="justCreatedId" class="alert alert-success">
-    Event published. Participants can now find it and RSVP.
-  </div>
-  <div v-if="justUpdatedId" class="alert alert-success" role="status">
-    Changes saved. {{ route.query.announced ? 'An announcement about them is now on the event page.' : 'No announcement was posted.' }}
-  </div>
-  <div v-if="statusMessage" class="alert alert-success" role="status">{{ statusMessage }}</div>
-  <div v-if="errorMessage && events.length" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
-
-  <div v-if="loading" class="text-center my-5" role="status" aria-live="polite">
-    <div class="spinner-border text-primary" aria-hidden="true"></div>
-    <span class="visually-hidden">Loading your events…</span>
-  </div>
-
-  <div v-else-if="errorMessage" class="alert alert-danger" role="alert">
-    {{ errorMessage }}
-    <button type="button" class="btn btn-sm btn-outline-danger ms-2" @click="loadEvents">Retry loading events</button>
-  </div>
-
-  <div v-else-if="events.length === 0" class="empty-events text-center">
-    <span class="empty-events-mark" aria-hidden="true">✳</span>
-    <h2 class="h4">Your first event starts here</h2>
-    <p class="text-secondary">Create a gathering and Bookedz will give you a home for its RSVPs and organiser tools.</p>
-    <RouterLink to="/organiser/events/new" class="btn btn-primary">Create your first event</RouterLink>
-  </div>
-
-  <div v-else class="row row-cols-1 row-cols-md-2 g-3">
-    <div class="col" v-for="event in events" :key="event.id">
-      <article class="card organiser-event-card h-100" :class="{ 'border-success': event.id === justCreatedId }">
-        <!-- One fixed 16:9 box for every cover: photos and the fallback artwork are both centre-cropped to fill it -->
-        <div class="organiser-event-cover">
-          <img v-if="event.coverImageUrl && !failedCovers.has(event.coverImageUrl)" :src="event.coverImageUrl" :alt="'Cover image for ' + event.title" loading="lazy" @error="failedCovers.add(event.coverImageUrl)" />
-          <EventArtwork v-else :category="event.tags?.[0] || 'community'" />
-        </div>
-
-        <div class="card-body organiser-event-body">
-          <div class="event-title-row">
-            <h2 class="h5 card-title mb-1">{{ event.title }}</h2>
-            <div class="event-title-tools">
-              <span v-if="event.id === justCreatedId" class="status-pill status-pill--new">Just published</span>
-              <!-- Editing sits by the name so the footer keeps one row on every card; hidden once the event starts -->
-              <RouterLink v-if="isUpcoming(event)" :to="'/organiser/events/' + event.id + '/edit'" class="edit-link">
-                <span aria-hidden="true">✎</span> Edit<span class="visually-hidden"> {{ event.title }}</span>
-              </RouterLink>
-            </div>
-          </div>
-          <p class="event-meta small text-secondary mb-3">
-            <span>{{ formatEventTime(event) }}</span><span>{{ event.venue.name }}</span>
-          </p>
-
-          <div class="capacity-copy"><strong>{{ event.confirmedCount }}</strong><span>{{ event.capacity == null ? 'confirmed · no capacity limit' : `of ${event.capacity} confirmed` }}</span></div>
-          <div v-if="event.capacity > 0" class="progress mb-3" role="progressbar" :aria-label="'Confirmed RSVPs for ' + event.title" :aria-valuenow="Math.min(event.confirmedCount, event.capacity)" aria-valuemin="0" :aria-valuemax="event.capacity">
-            <div class="progress-bar bg-success" :style="{ width: fillPercent(event) + '%' }"></div>
-          </div>
-
-          <div class="event-statuses" aria-label="Registration status">
-            <span v-if="event.offeredCount > 0" class="status-pill status-pill--offered">{{ event.offeredCount }} offers out</span>
-            <span v-if="event.pendingCount > 0" class="status-pill status-pill--pending">{{ event.pendingCount }} awaiting approval</span>
-            <span v-if="event.waitlistCount > 0" class="status-pill status-pill--waitlist">{{ event.waitlistCount }} on waitlist</span>
-          </div>
-        </div>
-        <footer class="card-footer event-card-actions">
-          <div class="event-primary-actions">
-            <RouterLink :to="'/organiser/events/' + event.id + '/manage?tab=tasks'" class="btn btn-primary btn-sm">Manage event</RouterLink>
-            <RouterLink :to="'/organiser/events/' + event.id + '/rsvps'" class="btn btn-outline-primary btn-sm">Manage RSVPs</RouterLink>
-            <RouterLink :to="'/events/' + event.id + '/rsvp'" class="btn btn-link btn-sm">View public page</RouterLink>
-          </div>
-          <div class="event-delete-action">
-            <template v-if="confirmDeleteId === event.id">
-              <button type="button" class="btn btn-danger btn-sm me-1" :disabled="busyId === event.id" @click="removeEvent(event.id)">Yes, delete event</button>
-              <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="busyId === event.id" @click="confirmDeleteId = null">Keep event</button>
-            </template>
-            <button v-else type="button" class="btn btn-outline-danger btn-sm" @click="confirmDeleteId = event.id">Delete event</button>
-          </div>
-        </footer>
-      </article>
-    </div>
+  <div class="organiser-events-page">
+    <header class="organiser-heading"><div><p class="organiser-kicker">Your hosting space</p><h1 class="page-title">My events</h1><p>{{ loading ? 'Your gatherings, all in one place.' : `${counts.all} events · ${counts.upcoming} upcoming · ${counts.drafts} drafts` }}</p></div><RouterLink to="/organiser/events/new" class="btn btn-primary">＋ Create event</RouterLink></header>
+    <div v-if="justCreatedId" class="alert alert-success" role="status">Event published. Participants can now find it and RSVP.</div>
+    <div v-if="justUpdatedId" class="alert alert-success" role="status">Changes saved. {{ route.query.announced ? 'An announcement about them is now on the event page.' : 'No announcement was posted.' }}</div>
+    <div v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success" role="status">{{ statusMessage }}</div>
+    <div v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }} <button type="button" class="btn btn-outline-secondary" :disabled="busyId !== null" @click="loadEvents">Retry loading events</button></div>
+    <div v-if="loading" class="text-center my-5" role="status"><span class="spinner-border text-primary" aria-hidden="true"></span><span class="visually-hidden">Loading your events…</span></div>
+    <template v-else>
+      <aside v-if="pendingCount > 0" class="pending-summary" aria-label="Pending RSVP requests"><p><span aria-hidden="true">!</span><strong>{{ pendingCount }}</strong> {{ pendingCount === 1 ? 'RSVP is' : 'RSVPs are' }} waiting for your approval across {{ pendingEvents.length }} {{ pendingEvents.length === 1 ? 'event' : 'events' }}.</p><button type="button" class="btn btn-primary" @click="reviewAll">Review all requests</button></aside>
+      <div class="events-controls">
+        <label class="event-search"><span class="visually-hidden">Search your events</span><input v-model="search" type="search" placeholder="Search your events" /></label>
+        <div class="event-tabs" role="tablist" aria-label="Organiser event sections"><button v-for="(tab, index) in tabs" :id="`organiser-tab-${tab.id}`" :key="tab.id" role="tab" type="button" :aria-selected="activeTab === tab.id" aria-controls="organiser-events-panel" :tabindex="activeTab === tab.id ? 0 : -1" @click="selectTab(tab.id)" @keydown="moveTab($event, index)">{{ tab.label }} <span>{{ counts[tab.id] }}</span></button></div>
+        <label class="event-sort">Sort by <select v-model="sort"><option value="soonest">Soonest first</option><option value="newest">Latest date first</option></select></label>
+      </div>
+      <p class="view-memory">We remember your search, tab and sort when you come back to this page.</p>
+      <div v-if="pendingOnly" class="request-filter">Showing events with pending requests. <button type="button" @click="pendingOnly = false">Show all {{ activeTab }} events</button></div>
+      <section id="organiser-events-panel" :key="activeTab" role="tabpanel" :aria-labelledby="`organiser-tab-${activeTab}`" tabindex="0">
+        <h2 ref="resultsHeading" tabindex="-1" class="events-section-title section-title">{{ sectionTitle }} <span>{{ visibleEvents.length }} {{ visibleEvents.length === 1 ? 'event' : 'events' }}</span></h2>
+        <div v-if="visibleEvents.length" class="organiser-grid"><OrganiserEventCard v-for="event in visibleEvents" :key="event.id" :event="event" :now="now" :confirming="confirmDeleteId === event.id" :busy="busyId === event.id" :disabled="busyId !== null" :just-created="event.id === justCreatedId" @ask-delete="askDelete" @keep="keepEvent" @delete="removeEvent" /></div>
+        <div v-else-if="!errorMessage" class="empty-events"><span aria-hidden="true">{{ search.trim() ? '⌕' : '✳' }}</span><h3 class="event-title">{{ emptyTitle }}</h3><p>{{ emptyCopy }}</p><button v-if="search.trim()" type="button" class="btn btn-outline-secondary" @click="search = ''">Clear search</button><button v-else-if="pendingOnly" type="button" class="btn btn-outline-secondary" @click="pendingOnly = false">Show all upcoming events</button><RouterLink v-else-if="activeTab !== 'past'" to="/organiser/events/new" class="btn btn-primary">{{ counts.all ? 'Create event' : 'Create your first event' }}</RouterLink><RouterLink v-else to="/discover" class="btn btn-outline-secondary">Explore events</RouterLink></div>
+      </section>
+      <div v-if="activeTab === 'upcoming' && counts.past > 0" class="past-shortcut"><p><strong>Past events · {{ counts.past }}</strong> Results and attendance for events that have ended.</p><button type="button" @click="selectTab('past')">Show past events</button></div>
+    </template>
   </div>
 </template>
-
 <style scoped>
-.organiser-heading { padding: 1.5rem clamp(1rem, 3vw, 2rem); border-radius: 22px; background: var(--bookedz-mint, #dceee3); }
-.organiser-heading h1 { color: var(--bookedz-ink, #292d32); font-size: clamp(1.7rem, 3vw, 2.35rem); font-weight: 700; letter-spacing: -.035em; }
-.organiser-kicker { color: var(--bookedz-forest); font-size: .875rem; font-weight: 650; }
-/* Grey text-secondary was 3.9:1 on the light mint heading; ink reads clearly in both themes */
-.organiser-lede { color: var(--bookedz-ink); }
-/* on-action is the coral button's text colour in both themes (white on peach failed in dark mode) */
-.organiser-heading :deep(.btn-primary), .empty-events :deep(.btn-primary) { background: var(--bookedz-primary-dark, #aa3e2c); border-color: var(--bookedz-primary-dark, #aa3e2c); color: var(--bookedz-on-action); }
-.organiser-heading :deep(.btn-primary):hover, .empty-events :deep(.btn-primary):hover { background: var(--bookedz-primary-hover); border-color: var(--bookedz-primary-hover); color: var(--bookedz-on-action); }
-.empty-events { max-width: 42rem; margin: 3rem auto; padding: clamp(2rem, 6vw, 4rem) 1.5rem; border: 1px dashed var(--bookedz-border, #e5ded2); border-radius: 24px; background: var(--bookedz-surface, #fffdfa); }
-.empty-events-mark { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem; border-radius: 50%; background: var(--bookedz-yellow, #f6cf77); color: var(--bookedz-ink); font-size: 1.8rem; }
-.empty-events p { max-width: 30rem; margin: 0 auto 1.5rem; }
-.organiser-event-card { overflow: hidden; border-color: var(--bookedz-border, #e5ded2); border-radius: 18px; box-shadow: var(--bookedz-shadow, 0 4px 18px rgb(41 45 50 / 5%)) !important; }
-/* Fixed 16:9 box; the photo or artwork is absolutely positioned so it can never resize the box
-   (the artwork used to stretch it to 3:2, making no-photo cards taller) */
-.organiser-event-cover { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: var(--bookedz-mint, #dceee3); }
-.organiser-event-cover > img, .organiser-event-cover > :deep(.event-artwork) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.organiser-event-body { display: flex; flex-direction: column; }
-.event-title-row { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .5rem; }
-.event-title-row h2 { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
-.event-title-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
-.edit-link { display: inline-flex; align-items: center; gap: .35rem; min-height: 44px; padding: 0 .85rem; border: 1px solid var(--bookedz-border); border-radius: 999px; color: var(--bookedz-primary-dark); font-size: .85rem; font-weight: 650; text-decoration: none; transition: background-color var(--bookedz-motion-fast) ease; }
-.edit-link:hover { color: var(--bookedz-primary-dark); background: var(--bookedz-glass-hover); }
-@media (prefers-reduced-motion: reduce) { .edit-link { transition: none; } }
-.event-meta { display: grid; gap: .2rem; margin-top: .2rem; }
-.capacity-copy { display: flex; align-items: baseline; gap: .35rem; margin-top: auto; color: var(--bookedz-muted, #63665e); font-size: .9rem; }
-.capacity-copy strong { color: var(--bookedz-ink, #292d32); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
-.organiser-event-card .progress { height: .5rem; overflow: hidden; border-radius: 99px; background: var(--bookedz-hover); }
-.organiser-event-card .progress-bar.bg-success { background: var(--bookedz-success) !important; }
-.event-statuses { display: flex; flex-wrap: wrap; gap: .4rem; min-height: 1.25rem; }
-/* Registration status pills use theme tokens (Bootstrap's text-bg-* colours ignore the dark theme) */
-.status-pill { display: inline-flex; align-items: center; padding: .3rem .65rem; border: 1px solid var(--bookedz-border); border-radius: 999px; color: var(--bookedz-ink); font-size: .78rem; font-weight: 650; line-height: 1.2; }
-.status-pill--offered { background: color-mix(in srgb, var(--bookedz-yellow) 40%, var(--bookedz-surface)); }
-.status-pill--pending { background: color-mix(in srgb, var(--bookedz-primary) 20%, var(--bookedz-surface)); }
-.status-pill--waitlist { background: color-mix(in srgb, var(--bookedz-mint) 45%, var(--bookedz-surface)); }
-.status-pill--new { background: color-mix(in srgb, var(--bookedz-success) 22%, var(--bookedz-surface)); }
-/* The footer follows the theme (bg-white stayed white in dark mode) */
-.event-card-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; border-color: var(--bookedz-border, #e5ded2); background: var(--bookedz-surface); }
-.event-primary-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
-.event-primary-actions :deep(.btn-primary) { background: var(--bookedz-primary-dark, #aa3e2c); border-color: var(--bookedz-primary-dark, #aa3e2c); color: var(--bookedz-on-action); }
-.event-delete-action { margin-left: auto; }
-@media (max-width: 575.98px) {
-  .organiser-heading { align-items: stretch !important; }
-  .organiser-heading :deep(.btn) { width: 100%; }
-  .event-card-actions { align-items: stretch; }
-  .event-primary-actions { display: grid; grid-template-columns: 1fr 1fr; }
-  .event-primary-actions :deep(.btn:first-child) { grid-column: 1 / -1; }
-  .event-delete-action { margin-left: 0; }
-}
+.organiser-events-page{max-width:1120px;margin:0 auto;padding:12px 0 48px;color:var(--bookedz-ink)}.organiser-heading{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:20px;padding:28px;border-radius:24px;background:color-mix(in srgb,var(--bookedz-mint) 80%,var(--bookedz-surface));margin-bottom:22px}.organiser-heading h1{ margin:7px 0 10px; }.organiser-heading p{font-size:var(--text-body);margin:0}.organiser-heading .organiser-kicker{font-size:var(--text-caption);font-weight:650}.btn-primary{background:var(--bookedz-primary-dark);border-color:var(--bookedz-primary-dark);color:var(--bookedz-on-action)}.organiser-heading .btn{ min-height:44px; }.pending-summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 18px;margin-bottom:22px;border:1px solid color-mix(in srgb,var(--bookedz-yellow) 60%,var(--bookedz-border));border-radius:16px;background:color-mix(in srgb,var(--bookedz-yellow) 18%,var(--bookedz-surface))}.pending-summary p{font-size:var(--text-small);margin:0}.pending-summary p>span{display:inline-grid;place-items:center;width:25px;height:25px;margin-right:8px;border-radius:50%;background:color-mix(in srgb,var(--bookedz-yellow) 65%,var(--bookedz-surface));font-weight:700}.pending-summary .btn{ flex-shrink:0; min-height:44px; }.events-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.event-search{flex:1 1 190px;min-width:0}.event-search input{width:100%;min-height:44px;border:1px solid var(--bookedz-border);border-radius:13px;padding:10px 14px;background:var(--bookedz-surface);color:var(--bookedz-ink);font-size:var(--text-small)}.event-tabs{display:flex;gap:6px;max-width:100%;overflow-x:auto}.event-tabs button{min-height:44px;border:1px solid var(--bookedz-border);border-radius:24px;background:var(--bookedz-surface);color:var(--bookedz-ink);padding:8px 12px;font-size:var(--text-button);white-space:nowrap}.event-tabs button[aria-selected=true]{background:var(--bookedz-ink);color:var(--bookedz-surface);border-color:var(--bookedz-ink)}.event-tabs span{font-size:var(--text-caption);margin-left:4px}.event-sort{display:flex;align-items:center;gap:6px;font-size:var(--text-small)}.event-sort select{min-height:44px;max-width:155px;border:1px solid var(--bookedz-border);border-radius:12px;padding:8px;background:var(--bookedz-surface);color:var(--bookedz-ink);font-size:var(--text-small)}.view-memory{font-size:var(--text-caption);color:var(--bookedz-muted);margin:10px 0 24px}.events-section-title{ margin:0 0 18px; }.events-section-title>span{font-size:var(--text-small);font-weight:400;color:var(--bookedz-muted);margin-left:5px}.organiser-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}.request-filter{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:var(--text-small);margin-bottom:18px}.request-filter button,.past-shortcut button{background:transparent;border:0;color:var(--bookedz-primary-dark);text-decoration:underline;min-height:44px;padding:6px;font-size:.8rem}.empty-events{max-width:650px;margin:24px auto;padding:42px 22px;border:1px dashed var(--bookedz-border);border-radius:22px;background:var(--bookedz-surface);text-align:center}.empty-events>span{display:inline-grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--bookedz-hover);font-size:1.8rem;color:var(--bookedz-primary-dark)}.empty-events h3{ margin:18px 0 12px; overflow-wrap:anywhere; }.empty-events p{font-size:var(--text-body);max-width:390px;margin:0 auto 20px;color:var(--bookedz-muted)}.empty-events .btn{ min-height:44px; }.past-shortcut{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--bookedz-border);margin-top:32px;padding-top:18px}.past-shortcut p{font-size:var(--text-small);color:var(--bookedz-muted);margin:0}.past-shortcut strong{color:var(--bookedz-ink);margin-right:8px}.alert{overflow-wrap:anywhere}.alert .btn{min-height:44px}:deep(:focus-visible){outline:3px solid var(--bookedz-primary-dark);outline-offset:3px}
+@media(max-width:1000px){.organiser-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.event-sort{margin-left:auto}}
+@media(max-width:575px){.organiser-heading{padding:24px 20px}.organiser-heading>.btn{width:100%}.pending-summary{align-items:stretch;flex-direction:column}.events-controls{gap:12px}.event-search{flex-basis:100%}.event-tabs{width:100%;gap:6px}.event-tabs button{flex:1;padding:8px 10px;font-size:.75rem}.organiser-grid{grid-template-columns:1fr}.event-sort{width:100%;margin-left:0;justify-content:space-between}.event-sort select{max-width:none;min-width:160px}.past-shortcut{align-items:flex-start;flex-direction:column}.organiser-events-page{padding-top:0}}
 </style>

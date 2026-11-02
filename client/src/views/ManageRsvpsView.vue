@@ -56,7 +56,8 @@ async function loadData(id = eventId.value) {
     if (mounted && request === loadRequest && version === routeVersion && id === eventId.value) {
       event.value = nextEvent
       rsvps.value = nextRsvps
-      if (nextEvent.requiresApproval) activeTab.value = 'pending'
+      if (['pending', 'confirmed', 'waitlist', 'closed'].includes(route.query.status)) activeTab.value = route.query.status
+      else if (nextEvent.requiresApproval) activeTab.value = 'pending'
       loading.value = false
       return true
     }
@@ -83,6 +84,10 @@ watch(eventId, (id) => {
   actionRequest++
   activeTab.value = 'confirmed'
   loadData(id)
+})
+
+watch(() => route.query.status, status => {
+  if (['pending', 'confirmed', 'waitlist', 'closed'].includes(status)) activeTab.value = status
 })
 
 onMounted(() => {

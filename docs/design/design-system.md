@@ -9,8 +9,28 @@ backend, registration, weather and privacy contracts remain in [decisions](../..
 An illustrated Singapore field guide, with quiet controls and more structured
 organiser tools. Bricolage Grotesque supplies headings/wordmark; DM Sans supplies
 body text, navigation and forms. Both are self-hosted with adjacent OFL licences.
-Page headings use responsive scales; the discovery display headline is larger.
+Page headings share one responsive scale; the landing display headline remains
+a separate promotional role.
 Shared colour, control, shadow and motion tokens live in `client/src/assets/main.css`.
+
+Typography roles (2 November update) also live in that stylesheet. Use the shared
+classes and remove conflicting scoped font declarations, including mobile rules;
+keep component spacing and layout local. Do not use `!important` to force the scale.
+
+| Role/class | Size at 16px root | Weight |
+| --- | --- | --- |
+| `.page-title` | 32–48px responsive | 700 |
+| `.section-title` | 22–28px responsive | 650 |
+| `.event-title` | 20px | 650 |
+| `.event-title.event-title--featured` | 22–28px responsive | 650 |
+| Body | 16px, line height 1.6 | Inherited body weight |
+| `.text-meta` | 14px, line height 1.5 | Inherited |
+| `.text-caption` | 12px, line height 1.5 | Inherited |
+| `.btn` / `.event-cta` | 14px | 600 |
+
+Discover, My RSVPs and My events share page/section/card roles, including their
+child cards and recommendation containers. Profile and Community also use the
+shared page-title class. Decorative date/count numerals retain their own roles.
 
 | Role | Light | Dark |
 | --- | --- | --- |

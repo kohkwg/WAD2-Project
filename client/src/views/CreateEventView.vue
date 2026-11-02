@@ -89,8 +89,8 @@ function formFromEvent(event) {
     coverImageUrl: event.coverImageUrl || '',
     description: event.description || '',
     tags: [...(event.tags || [])],
-    startTime: toDateTimeInputValue(new Date(event.startTime)),
-    endTime: toDateTimeInputValue(new Date(event.endTime)),
+    startTime: Number.isFinite(Date.parse(event.startTime)) ? toDateTimeInputValue(new Date(event.startTime)) : '',
+    endTime: Number.isFinite(Date.parse(event.endTime)) ? toDateTimeInputValue(new Date(event.endTime)) : '',
     capacity: event.capacity ?? '', // '' = no capacity limit (older events only)
     venue: venueCopy(event.venue),
     isOutdoor: Boolean(event.isOutdoor),
@@ -118,7 +118,7 @@ watch(editId, async (id) => {
     const event = await getEvent(id)
     if (request !== editRequest) return
     if (!event.isMine) editBlocked.value = 'You can only edit events you organise.'
-    else if (new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
+    else if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
     else {
       const rsvps = await getRsvpsForEvent(id)
       if (request !== editRequest) return

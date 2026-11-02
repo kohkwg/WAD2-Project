@@ -81,7 +81,7 @@ async function save() {
   <div class="container profile-page py-4 py-md-5">
     <header class="profile-heading">
       <p class="profile-kicker">Your Bookedz account</p>
-      <h1 class="profile-title">Your profile</h1>
+      <h1 class="profile-title page-title">Your profile</h1>
       <p class="profile-lede">Keep your details current and shape the events you discover.</p>
     </header>
 
@@ -144,7 +144,7 @@ async function save() {
 .profile-page { max-width: 760px; }
 .profile-heading { max-width: 600px; margin-bottom: 2rem; }
 .profile-kicker { margin: 0 0 .55rem; color: var(--bookedz-ink-soft, #62676b); font-size: .9rem; }
-.profile-title { margin: 0; color: var(--bookedz-ink, #292d32); font: 500 clamp(2.2rem, 5vw, 3.25rem)/1.05 var(--bookedz-heading); letter-spacing: -.04em; }
+.profile-title { margin: 0; color: var(--bookedz-ink, #292d32); }
 .profile-lede { max-width: 48ch; margin: .85rem 0 0; color: var(--bookedz-ink-soft, #62676b); line-height: 1.6; }
 .profile-form { padding: clamp(1.1rem, 4vw, 2rem); border: 1px solid var(--bookedz-border); border-radius: var(--bookedz-radius-card); background: var(--bookedz-surface); box-shadow: var(--bookedz-shadow); }
 .profile-section { min-width: 0; margin: 0 0 1.75rem; padding: 0 0 1.5rem; border: 0; border-bottom: 1px solid var(--bookedz-border); }

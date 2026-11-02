@@ -55,7 +55,11 @@ function selectDiverseEvents(scoredEvents, limit, diversityPenalty = 0.3) {
         maximumSimilarity = Math.max(maximumSimilarity, similarity);
       }
 
-      const rankingScore = candidate.compatibilityScore * (1 - diversityPenalty * maximumSimilarity);
+const relevance = candidate.relevanceScore
+  ?? candidate.compatibilityScore;
+
+const rankingScore =
+  relevance * (1 - diversityPenalty * maximumSimilarity);
       if (rankingScore > bestRankingScore) {
         bestIndex = index;
         bestRankingScore = rankingScore;

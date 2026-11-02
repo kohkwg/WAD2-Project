@@ -53,6 +53,55 @@ limits. Keep the disclosure and library credits in submission/presentation mater
 
 ## AI assistance disclosure
 
+For Aishani's shared-typography request on 2 November, Codex added central size
+tokens and page/section/card/metadata/caption/button roles, retaining Bricolage
+Grotesque and DM Sans. Codex removed conflicting scoped desktop/mobile declarations
+across Discover, My RSVPs, My events and their cards, and aligned Profile/Community
+page titles. A temporary Chromium comparison verified actual computed type values
+on the three primary pages at 100% zoom, four widths and both themes; four existing
+focused layout/action checks also pass. No new dependencies, behaviour or hosted
+changes. The comparison script and screenshot evidence remain under `/tmp`.
+
+For Aishani's 2 November organiser My events request, Codex authored the mint
+header, date-led cards, Upcoming/Drafts/Past/All tabs, search/sort retention,
+pending-request summary and direct review actions. State-specific links reuse
+existing edit, management and attendance/results routes. Existing draft events
+can be rescheduled without publishing; no new draft-creation/publishing flow was
+added. Codex preserved deletion confirmation/focus, added pending-status deep
+links and prevented demo drafts appearing in public lists. Five Node and seven
+unique focused demo browser cases pass across targeted runs, including organiser
+approval/rejection/removal reflected in participant My RSVPs. No live database,
+SQL, recommendation-scoring or dependency changes; hosted behaviour is unverified.
+
+For Aishani's 2 November My RSVPs redesign, Codex authored the peach header,
+summary counts, time-aware Upcoming/Saved/Past/Cancelled tabs, next confirmed
+event, focused row/card/empty-state components, directions and calendar download.
+Codex added caller-scoped saved-event reads and unsave through the existing
+preference endpoint, with matching demo adapters. Existing cancellation, offer
+actions, ticket routes and periodic/focus refresh are retained. Attendance labels
+require an explicitly unflagged check-in. Ten focused Node and ten browser cases
+pass across targeted runs; browser/API fixtures do not verify hosted persistence.
+No SQL, recommendation scoring, dependencies or hosted data were changed.
+
+For Aishani's 2 November recommendation journey request, Codex updated the mocked
+Playwright scenarios for save exclusion, related-event explanations, refresh,
+dismiss/undo, retry and empty states, and enlarged bookmark targets to 44px.
+Three mocked browser tests pass. Codex prepared twelve fictional event drafts and
+a separate mocked/live evidence log; browser permissions block form creation and
+live verification. No hosted events, account resets or database writes occurred.
+
+For Aishani's saved-event discovery follow-up on 2 November, Codex added active
+save candidate exclusions and applied the supplied interaction regression test.
+Saved events still teach preferences for other events; evidence calculation is
+unchanged. All 22 focused mocked backend checks pass.
+
+On 2 November 2026, Codex applied Aishani's supplied recommendation-quality ZIP,
+preserving current scoring and distance changes. Organiser/team activity no longer
+teaches preferences, including historical organiser events; explanations identify
+supporting save/registration/attendance evidence. Codex adapted the supplied tests
+to existing check helpers. All 22 focused mocked backend tests pass; hosted
+integration was not verified and no database/deployment changes were made.
+
 For Aishani's landing-page request, Codex moved the existing illustrated hero into
 `LandingView.vue` at `/`, linked all Bookedz brands home and retained event browsing
 at `/discover`. Existing filters carry search/category/map actions into Discover.
