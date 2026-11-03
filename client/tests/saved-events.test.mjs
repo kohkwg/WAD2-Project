@@ -27,6 +27,7 @@ async function setup({ failure = false, attendanceFlags = [] } = {}) {
   }
   globalThis.__savedEventsFixture = fixture
   const source = (await readFile(new URL('../src/utils/supabaseApi.js', import.meta.url), 'utf8'))
+    .replace("import * as hangouts from './supabaseHangoutsApi.js'", 'const hangouts = {}')
     .replace("import { supabase } from './supabase.js'", 'const { supabase } = globalThis.__savedEventsFixture')
     .replace("import { api as recommendationApi } from '../lib/api.js'", 'const { recommendationApi } = globalThis.__savedEventsFixture')
   const api = await import('data:text/javascript;base64,' + Buffer.from(source + `\n// fixture ${++serial}`).toString('base64'))

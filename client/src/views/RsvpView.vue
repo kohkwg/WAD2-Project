@@ -7,6 +7,7 @@ import AnnouncementFeed from '../components/event-operations/AnnouncementFeed.vu
 import ClashWarning from '../components/rsvp/ClashWarning.vue'
 import VenueMap from '../components/VenueMap.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
+import HangoutPage from '../components/hangout/HangoutPage.vue'
 import {
   getEvent,
   getUser,
@@ -171,7 +172,9 @@ async function submitRsvp() {
 </script>
 
 <template>
-  <div ref="pageMotion" class="public-event-page">
+  <!-- Hangout-template events keep this URL but show the hangout page instead of the RSVP form. -->
+  <HangoutPage v-if="!loading && event?.kind === 'hangout'" :event="event" :my-rsvps="myRsvps" />
+  <div v-else ref="pageMotion" class="public-event-page">
   <div class="rsvp-intro">
     <RouterLink to="/events" class="rsvp-back">&larr; All events</RouterLink>
     <!-- Phones only: the RSVP panel sits below the details, map and announcements -->

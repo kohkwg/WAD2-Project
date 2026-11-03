@@ -1,5 +1,13 @@
 # Decisions
 
+3 November 2026 — merge-resolution implementation: preserve Aishani's committed
+recommendation and redesigned pages while integrating dev's Hangout functionality.
+Retain current shared palette/typography and add missing compatibility tokens.
+Keep the illustrated landing and current street-map workspace; retain IslandArtwork
+because it is imported, and accept dev's deletion of the unused SingaporeMap.
+Combine both Supabase adapter imports and both sets of geographic helpers. Leave
+the merge commit and push for Aishani; do not apply incoming SQL to hosted services.
+
 3 November 2026, subsequent street-map correction — Aishani rejects the illustrated Discover map and explicitly chooses **Map beside timeline**. This supersedes the list-only/map-removal layout decision below: retain the current palette, recommendation strip and event-title navigation, and add a real OneMap street map beside the timeline (stacked on narrow screens). Keep the existing recommendation algorithm. No separate Map navigation entry is needed.
 
 3 November 2026 — Aishani requests removal of the Discover Map feature and the
@@ -446,3 +454,66 @@ Create Event previews and Discover's `EventCard`), keeping uploaded originals ra
 than cropping files on upload. `EventCard` is Aishani's Feature 1 component, so she
 should review that change. Details:
 [status](status.md#28-october--event-covers-cropped-to-169-gregory).
+
+## 3 November 2026 — OpenJio UI and outing-planning integration
+
+Requested in conversation by a team member, who asked not to be named. They report
+team approval to restyle every teammate's pages. This is user-reported, not
+independent verification, and it is not permission for commits, pushes or hosted
+mutations. Supplied sources: the OpenJio `design-handoff.md` (UI only) and
+`feature-specification.md`.
+
+- **Visual system:** replace Bookedz tokens globally with OpenJio's Hawker Glow
+  (light/dark palette, Nunito headings, 14/20px radii, motion timings). Keep the
+  Bookedz name, logo and page layouts. Buttons keep a resting shadow that deepens on
+  hover; the colourway and smooth animation are explicitly liked.
+- **Map:** use OneMap instead of the illustrated island everywhere: landing hero
+  (a live OneMap preview of real upcoming events), Discover's Map view and the
+  neighbourhood cards. The Discover map includes category pins with clusters,
+  "Search this area", "Near me" (location never stored or sent) and a result rail
+  with a preview.
+- **No OpenJio placeholder data:** listings, itinerary candidates and pins come from
+  real Bookedz events (plus organiser-entered OneMap places later), never sample
+  OpenJio listings.
+- **Planned, not yet implemented:** event creation will offer an *Official* (Bookedz)
+  or *Hangout* (OpenJio) template. A Hangout is an event type on the existing events
+  table, with private invite link, public Open Jio and solo modes. It will have group
+  availability and slot ranking (no reply counts as unknown), an itinerary built from
+  real Official events and OneMap places, versioned Keep/Swap votes with explicit
+  host confirmation, and On the day late-join. The backend will be demo mode plus a
+  live adapter and an unapplied SQL migration draft, pending Timothy's review.
+  Late-join routing will use an Express OneMap proxy when server credentials exist,
+  otherwise a visibly labelled estimate.
+- Order: tokens → OneMap → Hangout template/data → Time → Plan + voting → On the day
+  → migration draft, checking in after each step.
+- **Step 3 choices:** Hangouts keep the `/events/:id/rsvp` URL, which renders the
+  hangout workspace for hangout-type events; private invites preview at `/j/:token`.
+  Create event opens with two template cards (Official / Hangout) before the wizard.
+  Organisers of either template choose one of three join modes: Open (instant
+  join, no questions or waitlist, closes when full), RSVP auto-confirm with waitlist,
+  or RSVP with approval. Hangouts default to Open and Official events to
+  auto-confirm. Open needs a `join_mode` column and an RSVP function change, which
+  go only in the unapplied migration draft for Timothy to review.
+- **Routing endpoint:** `/api/route` is public (demo visitors have no session),
+  limited to Singapore coordinates and 120 requests a minute per IP. Credentials stay
+  server-side. Revisit requiring sign-in once live hangouts exist.
+- **Hangout capacity** includes the host (the wizard says "including you").
+
+## 3 November 2026 — live hangouts approved
+
+The requesting team member (unnamed, as before) explicitly approved building live
+mode: hangout data held in the hosted database with the updated rules, and live
+OneMap routing.
+
+- The draft is promoted to `supabase/migrations/20261103120000_hangouts.sql`. They
+  will apply it themselves with the Supabase CLI (`npx supabase@2.122.0`, run and
+  logged in by them; no agent-typed credentials), after checking `migration list` and
+  a dry run. Timothy should still review it. This approval covers this migration only.
+- They will add `ONEMAP_EMAIL`/`ONEMAP_PASSWORD` to `server/.env` themselves.
+- After the migration is applied, a signed-in live test is approved: `[TEST]`-prefixed
+  hangouts on the Bookerz development project, created with their session and deleted
+  afterwards, leaving existing events untouched.
+- Live group-time ranking runs on Express (`/api/hangouts/:id/time`): the caller's
+  membership is checked as the caller first, then the server key reads the private free
+  times. Live plan scoring weighs the hangout's chosen interests, because members'
+  own interests are private.

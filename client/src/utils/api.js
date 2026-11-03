@@ -41,6 +41,25 @@ export const getOrganiserEvents = () => backend.getOrganiserEvents() // the sign
 export const createEvent = (eventData) => backend.createEvent(eventData)
 export const updateEvent = (eventId, changes) => backend.updateEvent(eventId, changes) // organiser edits a published event
 export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
+export const getHangoutInvite = (token) => backend.getHangoutInvite(token) // private hangout preview
+export const joinHangout = (target) => backend.joinHangout(target) // { eventId, token? }; private hangouts need the invite token
+export const getHangoutTime = (eventId, options) => backend.getHangoutTime(eventId, options) // members, aggregate overlap, ranked slots
+export const saveHangoutAvailability = (eventId, intervals) => backend.saveHangoutAvailability(eventId, intervals) // own free times only
+export const clearHangoutAvailability = (eventId) => backend.clearHangoutAvailability(eventId)
+export const setHangoutRequired = (eventId, userId, required) => backend.setHangoutRequired(eventId, userId, required) // host
+export const previewHangoutSlot = (eventId, slot) => backend.previewHangoutSlot(eventId, slot)
+export const lockHangoutSlot = (eventId, slot) => backend.lockHangoutSlot(eventId, slot) // host
+export const unlockHangoutSlot = (eventId) => backend.unlockHangoutSlot(eventId) // host
+export const getHangoutPlan = (eventId) => backend.getHangoutPlan(eventId) // timed stops, issues, versioned vote counts
+export const generateHangoutPlan = (eventId, options) => backend.generateHangoutPlan(eventId, options) // host; { ok, plan } or { ok: false, reason, suggestions }
+export const previewHangoutStops = (eventId, refs) => backend.previewHangoutStops(eventId, refs) // host; retime without saving
+export const setHangoutStops = (eventId, refs) => backend.setHangoutStops(eventId, refs) // host
+export const addHangoutPlace = (eventId, place) => backend.addHangoutPlace(eventId, place) // host; itinerary-only place
+export const getHangoutAlternatives = (eventId, stopId) => backend.getHangoutAlternatives(eventId, stopId) // host
+export const voteHangoutStop = (eventId, stopId, value) => backend.voteHangoutStop(eventId, stopId, value) // +1 Keep, -1 Swap, 0 clear
+export const finalizeHangoutPlan = (eventId, options) => backend.finalizeHangoutPlan(eventId, options) // host; not a booking
+export const reopenHangoutPlan = (eventId) => backend.reopenHangoutPlan(eventId) // host
+export const setHangoutMeetingPoint = (eventId, text) => backend.setHangoutMeetingPoint(eventId, text) // host; up to 120 characters
 
 
 // ---------- Users ----------

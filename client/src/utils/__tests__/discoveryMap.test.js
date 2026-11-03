@@ -1,31 +1,36 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { projectVenue, projectIllustratedVenue, ILLUSTRATION_ANCHORS, groupMarkers } from '../discoveryMap.js'
+import { eventLatLng, inBounds, categoryStyle, groupMarkers, mergeOverlapping, eventsNear, distanceKm, SINGAPORE_BOUNDS } from '../discoveryMap.js'
 
-test('illustrated projection matches the documented landmark calibration anchors', () => {
-  for (const anchor of ILLUSTRATION_ANCHORS) {
-    const point = projectIllustratedVenue(anchor)
-    assert.ok(Math.abs(point.x - anchor.x) < .001, anchor.name)
-    assert.ok(Math.abs(point.y - anchor.y) < .001, anchor.name)
-  }
-  assert.equal(projectIllustratedVenue({ lat: null, lng: null }), null)
-  assert.equal(projectIllustratedVenue({ lat: 51.5, lng: -.1 }), null)
-  const venue = { lat: 1.2966, lng: 103.8502 }
-  assert.deepEqual(projectIllustratedVenue(venue), projectIllustratedVenue(venue))
-  const point = projectIllustratedVenue(venue)
-  assert.ok(point.x > 0 && point.x < 1200 && point.y > 0 && point.y < 900)
+test('neighbourhood counts include only mapped events within the radius', () => {
+  const marina = { lat: 1.282, lng: 103.855 }
+  assert.ok(Math.abs(distanceKm(marina, { lat: 1.355, lng: 103.945 }) - 12.9) < .5)
+  const events = [{ id: 'near', lat: 1.29, lng: 103.85 }, { id: 'far', lat: 1.355, lng: 103.945 }, { id: 'none', lat: null, lng: null }]
+  assert.deepEqual(eventsNear(events, marina, 3).map(e => e.id), ['near'])
 })
 
-test('valid Singapore coordinates preserve geographic direction without inventing missing locations', () => {
-  assert.equal(projectVenue({ lat: null, lng: null }), null)
-  assert.equal(projectVenue({ lat: '', lng: '' }), null)
-  assert.equal(projectVenue({ lat: 51.5, lng: -0.1 }), null)
-  assert.equal(projectVenue({ lat: '1.3', lng: '103.8' }), null)
-  const west = projectVenue({ lat: 1.35, lng: 103.7 })
-  const east = projectVenue({ lat: 1.35, lng: 103.95 })
-  const north = projectVenue({ lat: 1.45, lng: 103.7 })
-  assert.ok(west.x < east.x)
-  assert.ok(north.y < west.y)
+test('only valid Singapore coordinates are placed on the map', () => {
+  assert.equal(eventLatLng({ lat: null, lng: null }), null)
+  assert.equal(eventLatLng({ lat: '', lng: '' }), null)
+  assert.equal(eventLatLng({ lat: '1.3', lng: '103.8' }), null)
+  assert.equal(eventLatLng({ lat: 51.5, lng: -0.1 }), null)
+  assert.deepEqual(eventLatLng({ lat: 1.2966, lng: 103.8502 }), { lat: 1.2966, lng: 103.8502 })
+  assert.deepEqual(eventLatLng({ venue: { lat: 1.35, lng: 103.94 } }), { lat: 1.35, lng: 103.94 })
+})
+
+test('search-area bounds include edges and exclude outside points', () => {
+  const area = { south: 1.28, west: 103.84, north: 1.3, east: 103.86 }
+  assert.equal(inBounds({ lat: 1.29, lng: 103.85 }, area), true)
+  assert.equal(inBounds({ lat: 1.28, lng: 103.86 }, area), true)
+  assert.equal(inBounds({ lat: 1.31, lng: 103.85 }, area), false)
+  assert.equal(inBounds(null, area), false)
+  assert.equal(inBounds({ lat: 1.35, lng: 103.82 }, SINGAPORE_BOUNDS), true)
+})
+
+test('category pins always carry a text glyph alongside colour', () => {
+  assert.deepEqual(categoryStyle({ tags: ['food'] }), { category: 'food', tone: 'mango', glyph: 'F' })
+  assert.equal(categoryStyle({ tags: ['unknown'] }).glyph, '•')
+  assert.equal(categoryStyle({}).tone, 'ink')
 })
 
 test('clusters and prominent markers represent each event exactly once', () => {
@@ -38,6 +43,19 @@ test('clusters and prominent markers represent each event exactly once', () => {
   const represented = groups.flatMap(g => g.events.map(e => e.id))
   assert.deepEqual(represented.sort(), ['a', 'b', 'c', 'd'])
   assert.equal(groups.find(g => g.events.some(e => e.id === 'b')).events.length, 2)
+})
+
+test('overlapping pins merge so no hit area covers another, keeping the picked flag', () => {
+  const groups = [
+    { key: 'a', x: 100, y: 100, events: [{ id: 'a' }], prominent: true },
+    { key: 'b', x: 120, y: 110, events: [{ id: 'b' }], prominent: false },
+    { key: 'c', x: 300, y: 100, events: [{ id: 'c' }], prominent: false },
+  ]
+  const merged = mergeOverlapping(groups)
+  assert.equal(merged.length, 2)
+  assert.deepEqual(merged[0].events.map(e => e.id), ['a', 'b'])
+  assert.equal(merged[0].prominent, true)
+  assert.equal(groups[0].events.length, 1)
 })
 
 test('zoom splits nearby events while co-located events remain selectable together', () => {

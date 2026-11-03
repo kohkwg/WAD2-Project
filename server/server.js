@@ -16,6 +16,10 @@ app.use("/api/recommendations", require("./routes/recommendations"));
 app.use("/api/uploads", require("./routes/uploads"));
 // Automatic event planner: programme + task suggestions from past events
 app.use("/api/plan-suggestions", require("./routes/planSuggestions"));
+// Hangout late-join travel: OneMap routes when ONEMAP_EMAIL/ONEMAP_PASSWORD are set
+app.use("/api/route", require("./routes/route"));
+// Live hangouts: group-time ranking over private free times (members only)
+app.use("/api/hangouts", require("./routes/hangouts"));
 
 if (require.main === module) {
   const port = Number(process.env.PORT || 3000);
