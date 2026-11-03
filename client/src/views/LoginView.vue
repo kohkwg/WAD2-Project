@@ -144,13 +144,15 @@ async function submit() {
 .auth-kicker { margin: 0 0 .9rem; color: var(--bookedz-ink-soft, #62676b); font-size: .9rem; }
 .auth-title { color: var(--bookedz-ink, #292d32); font-family: var(--bookedz-heading); font-size: clamp(2.5rem, 5vw, 4.2rem); line-height: 1.02; letter-spacing: -.045em; }
 .auth-copy { max-width: 34ch; margin: 1.25rem 0 0; color: var(--bookedz-ink-soft, #62676b); font-size: 1.05rem; line-height: 1.6; }
-.auth-card { border: 1px solid var(--bookedz-border, #e5ded2); border-radius: 24px; background: #fffdf9; box-shadow: 0 18px 50px rgba(41, 45, 50, .08); }
-.auth-tabs { padding: .3rem; border-radius: 14px; background: #f4efe7; }
-.auth-tabs .nav-link { border-radius: 11px; color: #565b60; }
-.auth-tabs .nav-link.active { color: #fff; background: var(--bookedz-primary-dark, #aa3e2c); }
+/* Theme tokens: the fixed light card stayed light in dark mode, hiding the (white) labels */
+.auth-card { border: 1px solid var(--bookedz-border, #e5ded2); border-radius: 24px; background: var(--bookedz-surface); box-shadow: var(--bookedz-shadow); }
+.auth-tabs { padding: .3rem; border-radius: 14px; background: var(--bookedz-hover); }
+.auth-tabs .nav-link { border-radius: 11px; color: var(--bookedz-muted); }
+/* Same "selected" look as the sidebar's active link (white on light orange was ~1.7:1 in dark) */
+.auth-tabs .nav-link.active { color: var(--bookedz-primary-dark); background: var(--bookedz-glass-active); font-weight: 650; }
 :deep(.form-control) { min-height: 46px; border-color: var(--bookedz-border, #e5ded2); border-radius: 12px; }
 :deep(.form-control:focus) { border-color: var(--bookedz-primary, #e9725c); box-shadow: 0 0 0 .2rem rgba(233, 114, 92, .18); }
 :deep(.btn-primary) { min-height: 46px; border-radius: 12px; }
-:deep(:focus-visible) { outline: 3px solid #292d32; outline-offset: 3px; }
+:deep(:focus-visible) { outline: 3px solid var(--bookedz-focus); outline-offset: 3px; }
 @media (max-width: 700px) { .auth-wrap { max-width: 480px; grid-template-columns: 1fr; gap: 1.5rem; margin: 1.25rem auto; } .auth-title { font-size: clamp(2.3rem, 12vw, 3.2rem); } .auth-copy { margin-top: .8rem; } }
 </style>
