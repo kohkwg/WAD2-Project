@@ -14,6 +14,8 @@ const props = defineProps({
     // Viewer mode for the public event page: never editable, hidden when no plan exists
     eventId: { type: String, default: '' },
     readOnly: { type: Boolean, default: false },
+    // Embedded in Manage Event's tab bar: no back link, no page container
+    embedded: { type: Boolean, default: false },
 })
 
 const route = useRoute()
@@ -727,11 +729,11 @@ function addPerson() {
 <template>
     <!-- Viewer mode renders nothing until a plan exists, so event pages without one stay clean -->
     <div v-if="!readOnly || (!loading && !loadError && planId)"
-        :class="readOnly ? 'floor-plan-viewer' : 'container py-4 floor-editor'">
+        :class="readOnly ? 'floor-plan-viewer' : embedded ? 'floor-editor' : 'container py-4 floor-editor'">
         <p v-if="!USING_SUPABASE" class="alert alert-info">Floor plans and programme editing require a configured live
             Supabase connection.</p>
         <template v-if="!readOnly && USING_SUPABASE">
-            <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event
+            <RouterLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event
             </RouterLink>
             <div class="floor-page-heading d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
                 <div>

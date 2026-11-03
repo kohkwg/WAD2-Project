@@ -1,4 +1,5 @@
 <script setup>
+import '../assets/design-baseline.css'
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import * as api from '../utils/api.js'
@@ -8,14 +9,41 @@ import AnnouncementManager from '../components/event-operations/AnnouncementMana
 import BudgetTracker from '../components/event-operations/BudgetTracker.vue'
 import WeatherTool from '../components/event-operations/WeatherTool.vue'
 import { TASK_STATUSES } from '../utils/feature4.js'
+import { defineAsyncComponent } from 'vue'
+// Tools from other features are loaded only when their tab opens (they subscribe/fetch on mount).
+const StaffStationView = defineAsyncComponent(() => import('./checkin/StaffStationView.vue'))
+const VenueQrView = defineAsyncComponent(() => import('./checkin/VenueQrView.vue'))
+const AttendanceDashboardView = defineAsyncComponent(() => import('./checkin/AttendanceDashboardView.vue'))
+const FloorPlanEditor = defineAsyncComponent(() => import('../editor.vue'))
 
 const route = useRoute()
 const router = useRouter()
-const tabs = ['tasks', 'announcements', 'budget', 'weather']
+const coreTabs = ['tasks', 'announcements', 'budget', 'weather']
+// Check-in, venue QR, attendance and floor plan need the live database, so they only exist there.
+const tabs = api.USING_SUPABASE ? [...coreTabs, 'check-in', 'venue-qr', 'attendance', 'floor-plan'] : coreTabs
+const TAB_LABELS = { tasks: 'Tasks', announcements: 'Announcements', budget: 'Budget', weather: 'Weather', 'check-in': 'Check-in station', 'venue-qr': 'Venue QR', attendance: 'Attendance', 'floor-plan': 'Floor plan' }
+const TAB_HINTS = { tasks: 'Plan the work', announcements: 'Tell attendees', budget: 'Track costs', weather: 'Venue plan', 'check-in': 'Scan arrivals', 'venue-qr': 'Entrance display', attendance: 'Live arrivals', 'floor-plan': 'Layout and programme' }
 const activeTab = computed(() => tabs.includes(route.query.tab) ? route.query.tab : 'tasks')
 const workspace = ref(null)
 const loading = ref(false)
 const loadError = ref('')
+const publishState = ref('published') // 'published' | 'draft' | 'cancelled' | 'completed'
+const publishing = ref(false)
+const publishError = ref('')
+const canTogglePublish = computed(() => ['published', 'draft'].includes(publishState.value))
+async function togglePublish() {
+  if (publishing.value || !canTogglePublish.value) return
+  const publish = publishState.value !== 'published'
+  if (!publish && !window.confirm('Unpublish this event? It disappears from Discover and its public page until you publish it again. Existing RSVPs are kept.')) return
+  const ticket = epoch
+  publishing.value = true; publishError.value = ''
+  try {
+    const updated = await api.setEventPublished(String(route.params.id), publish)
+    if (ticket === epoch) publishState.value = updated.status || (publish ? 'published' : 'draft')
+  } catch (error) {
+    if (ticket === epoch) publishError.value = error.message || 'Could not change publish status. Please try again.'
+  } finally { if (ticket === epoch) publishing.value = false }
+}
 const forecast = ref(null)
 const areas = ref([])
 const weatherLoading = ref(false)
@@ -42,8 +70,8 @@ watch(() => route.query.tab, tab => {
 async function load() {
   const ticket = ++epoch
   weatherRequest++; workspace.value = null; forecast.value = null; loading.value = true; loadError.value = ''; weatherError.value = ''; areasError.value = ''; weatherLoading.value = false
-  tabs.forEach(tab => { pending[tab] = false; errors[tab] = ''; successes[tab] = ''; retries[tab] = null })
-  try { const result = await api.getEventOperations(String(route.params.id)); if (ticket === epoch) workspace.value = result }
+  coreTabs.forEach(tab => { pending[tab] = false; errors[tab] = ''; successes[tab] = ''; retries[tab] = null })
+  try { const result = await api.getEventOperations(String(route.params.id)); if (ticket === epoch) { workspace.value = result; publishState.value = result.event.status || 'published'; publishError.value = '' } }
   catch (error) { if (ticket === epoch) loadError.value = error.message || 'Could not load this event.' }
   finally { if (ticket === epoch) loading.value = false }
 }
@@ -127,6 +155,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 </script>
 
 <template>
+<div class="design-baseline">
   <RouterLink to="/organiser/events" class="workspace-back">← My events</RouterLink>
   <p v-if="loading" class="my-5 text-center" role="status">Loading event workspace…</p>
   <div v-else-if="loadError" class="alert alert-danger mt-3" role="alert">{{ loadError }} <button type="button" class="btn btn-sm btn-outline-danger" @click="load">Retry event</button></div>
@@ -140,13 +169,11 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
         <details class="workspace-address"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
       </div>
       <div class="workspace-link-groups">
-        <div class="workspace-primary-links"><RouterLink class="btn event-cta" :to="'/organiser/events/' + workspace.event.id + '/rsvps'">Manage RSVPs</RouterLink><RouterLink class="btn btn-primary" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink><span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>
-        <div v-if="api.USING_SUPABASE" class="workspace-quick-links" aria-label="More event tools">
-          <span>Quick links</span><RouterLink :to="'/organiser/events/' + workspace.event.id + '/check-in'">Check-in station</RouterLink><RouterLink :to="'/organiser/events/' + workspace.event.id + '/venue-qr'">Venue QR</RouterLink><RouterLink :to="'/organiser/events/' + workspace.event.id + '/attendance'">Attendance</RouterLink><RouterLink :to="'/organiser/events/' + workspace.event.id + '/floor-plan'">Floor plan</RouterLink>
-        </div>
+        <div class="workspace-primary-links"><RouterLink class="btn event-cta" :to="'/organiser/events/' + workspace.event.id + '/rsvps'">Manage RSVPs</RouterLink><RouterLink class="btn btn-primary" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink><span class="workspace-publish"><span v-if="publishState === 'draft'" class="workspace-mode">Unpublished</span><span v-else-if="publishState !== 'published'" class="workspace-mode">{{ publishState[0].toUpperCase() + publishState.slice(1) }}</span><button v-if="canTogglePublish" type="button" class="btn" :class="publishState === 'published' ? 'btn-outline-secondary' : 'btn-primary'" :disabled="publishing" @click="togglePublish">{{ publishing ? 'Saving…' : publishState === 'published' ? 'Unpublish' : 'Publish' }}</button></span><span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>
+        <p v-if="publishError" class="text-danger mb-0" role="alert">{{ publishError }}</p>
       </div>
     </header>
-    <nav class="nav event-tool-nav mb-4" aria-label="Event tools"><RouterLink v-for="tab in tabs" :key="tab" :aria-label="tab[0].toUpperCase() + tab.slice(1)" :to="{ path: route.path, query: { ...route.query, tab } }" class="nav-link" :class="{ active: activeTab === tab }" :aria-current="activeTab === tab ? 'page' : undefined"><span class="tool-tab-label">{{ tab[0].toUpperCase() + tab.slice(1) }}</span><span class="tool-tab-hint">{{ { tasks: 'Plan the work', announcements: 'Tell attendees', budget: 'Track costs', weather: 'Venue plan' }[tab] }}</span></RouterLink></nav>
+    <nav class="nav event-tool-nav mb-4" aria-label="Event tools"><RouterLink v-for="tab in tabs" :key="tab" :aria-label="TAB_LABELS[tab]" :to="{ path: route.path, query: { ...route.query, tab } }" class="nav-link" :class="{ active: activeTab === tab }" :aria-current="activeTab === tab ? 'page' : undefined"><span class="tool-tab-label">{{ TAB_LABELS[tab] }}</span><span class="tool-tab-hint">{{ TAB_HINTS[tab] }}</span></RouterLink></nav>
     <div class="tool-feedback" aria-live="polite">
       <div v-if="errors[activeTab]" class="alert alert-danger" role="alert">{{ errors[activeTab] }} <button v-if="retries[activeTab]" type="button" class="btn btn-sm btn-outline-danger" :disabled="pending[activeTab]" @click="retries[activeTab]()">Retry save</button></div>
       <p v-if="pending[activeTab]" role="status" class="text-secondary">Saving…</p><p v-else-if="successes[activeTab]" role="status" class="text-success">{{ successes[activeTab] }}</p>
@@ -155,10 +182,16 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
     <AnnouncementManager v-show="activeTab === 'announcements'" :key="'posts-' + workspace.event.id" :posts="workspace.announcements" :pending="pending.announcements" :action-error="errors.announcements" @create="saveAnnouncement($event, 'create')" @update="saveAnnouncement($event, 'update')" @delete="saveAnnouncement($event, 'delete')" @cancel-action="cancelDestructiveAction('announcements')" />
     <BudgetTracker v-show="activeTab === 'budget'" :key="'budget-' + workspace.event.id" :budget="workspace.budget" :custom-categories="workspace.budgetCategories || []" :pending="pending.budget" :action-error="errors.budget" @save-limit="saveLimit" @save-item="saveItem" @delete-item="deleteItem" @save-category="saveCategory" @delete-category="deleteCategory" @cancel-action="cancelDestructiveAction('budget')" />
     <WeatherTool v-show="activeTab === 'weather'" :key="'weather-' + workspace.event.id" :event="workspace.event" :forecast="forecast" :areas="areas" :area-override="workspace.forecastAreaOverride" :loading="weatherLoading" :pending="pending.weather" :action-error="errors.weather" :error="weatherError" :areas-error="areasError" @refresh="refreshWeather" @save-area="saveArea" @switch-venue="switchVenue" @cancel-action="cancelDestructiveAction('weather')" />
+    <StaffStationView v-if="activeTab === 'check-in'" :event-id="String(workspace.event.id)" embedded />
+    <VenueQrView v-else-if="activeTab === 'venue-qr'" :event-id="String(workspace.event.id)" embedded />
+    <AttendanceDashboardView v-else-if="activeTab === 'attendance'" :event-id="String(workspace.event.id)" embedded />
+    <FloorPlanEditor v-else-if="activeTab === 'floor-plan'" :event-id="String(workspace.event.id)" embedded />
   </template>
+</div>
 </template>
 
 <style scoped>
+.workspace-publish { order: 2; display: inline-flex; align-items: center; gap: .6rem; margin-left: auto; }
 .workspace-back { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .5rem; color: var(--bookedz-muted); font-weight: 600; text-decoration: none; }
 .workspace-header { padding: clamp(1.15rem, 3vw, 2rem); margin-bottom: 1.25rem; border: 1px solid var(--bookedz-border); border-radius: 1.25rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
 .workspace-title-row { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .7rem 1rem; }
@@ -177,11 +210,12 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 .workspace-address p { margin: .25rem 0; color: var(--bookedz-muted); font-size: .85rem; overflow-wrap: anywhere; }
 .workspace-link-groups { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.25rem; padding-top: 1rem; margin-top: 1rem; border-top: 1px solid var(--bookedz-border); }
 .workspace-primary-links, .workspace-quick-links { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; }
+.workspace-primary-links { flex: 1 1 100%; }
 .workspace-primary-links .btn { min-height: 44px; }
 .workspace-save-note, .workspace-quick-links > span { color: var(--bookedz-muted); font-size: .8rem; }
 .workspace-quick-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--bookedz-primary-dark); font-size: .84rem; font-weight: 600; text-decoration: none; }
 .workspace-quick-links a:hover, .workspace-back:hover { text-decoration: underline; }
-.event-tool-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; max-width: none; padding: .45rem; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-glass-solid); }
+.event-tool-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: .5rem; max-width: none; padding: .45rem; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-glass-solid); }
 .event-tool-nav .nav-link { display: grid; align-content: center; min-height: 58px; gap: .1rem; padding: .55rem .7rem; border: 1px solid transparent; border-radius: .75rem; color: var(--bookedz-muted); text-align: left; text-decoration: none; transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease; }
 .event-tool-nav .nav-link:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }
 .event-tool-nav .nav-link.active { border-color: var(--bookedz-border); background: var(--bookedz-surface); box-shadow: var(--bookedz-tab-shadow); color: var(--bookedz-primary-dark); transform: translateY(-1px); }

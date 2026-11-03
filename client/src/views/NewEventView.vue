@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CreateEventView from './CreateEventView.vue'
 import HangoutWizard from '../components/hangout/HangoutWizard.vue'
+import '../assets/design-baseline.css'
 
 // Create event starts by choosing a template. ?template= keeps the choice in the URL,
 // so Back returns to the picker and a reload keeps the chosen wizard.
@@ -10,10 +11,11 @@ const route = useRoute()
 const router = useRouter()
 const template = computed(() => (['official', 'hangout'].includes(route.query.template) ? route.query.template : ''))
 const heading = ref(null)
+const PRESET_NAMES = ['school', 'work', 'custom']
 const hangoutCreated = ref(false) // switching templates makes no sense once the hangout exists
 
 function choose(value) {
-  router.push({ query: { ...route.query, template: value } })
+  router.push({ query: { ...route.query, template: value === 'hangout' ? 'hangout' : 'official', preset: PRESET_NAMES.includes(value) ? value : undefined } })
 }
 watch(template, async (value) => {
   if (value) return
@@ -23,7 +25,8 @@ watch(template, async (value) => {
 </script>
 
 <template>
-  <div v-if="template && !hangoutCreated" class="template-switch col-12 col-xl-11 mx-auto">
+  <div class="design-baseline">
+  <div v-if="template && !hangoutCreated" class="template-switch col-12 mx-auto">
     <RouterLink :to="{ query: { ...route.query, template: undefined } }">← Choose a different template</RouterLink>
     <span>{{ template === 'official' ? 'Official event' : 'Hangout' }} template · your draft is kept if you switch</span>
   </div>
@@ -58,10 +61,24 @@ watch(template, async (value) => {
         <span class="template-go">Use Hangout <span aria-hidden="true">→</span></span>
       </button>
     </div>
+    <h2 class="preset-heading">Or start from a preset</h2>
+    <div class="preset-row">
+      <button v-for="p in [{ k: 'school', t: 'School', d: 'Talks, CCA and club events' }, { k: 'work', t: 'Work', d: 'Team sessions and networking' }, { k: 'custom', t: 'Custom', d: 'A blank official event' }]" :key="p.k" type="button" class="preset-chip" @click="choose(p.k)">
+        <strong>{{ p.t }}</strong><span>{{ p.d }}</span>
+      </button>
+    </div>
+  </div>
   </div>
 </template>
 
 <style scoped>
+.preset-heading { margin: 2rem 0 .8rem; font-size: 1.15rem; }
+.preset-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.preset-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 44px; padding: 14px 18px; border: 1px dashed var(--bookedz-control-border); border-radius: 16px; background: var(--bookedz-surface); color: var(--bookedz-ink); text-align: left; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease); }
+.preset-chip span { color: var(--bookedz-muted); font-size: .85rem; }
+.preset-chip:hover { transform: translateY(-2px); border-color: var(--bookedz-primary-dark); }
+@media (max-width: 767.98px) { .preset-row { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .preset-chip, .preset-chip:hover { transition: none; transform: none; } }
 .template-picker { padding-block: 1rem 2rem; }
 .template-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-bottom: 12px; font-size: .85rem; color: var(--bookedz-muted); }
 .template-switch a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; color: var(--bookedz-primary-dark); text-decoration: none; }

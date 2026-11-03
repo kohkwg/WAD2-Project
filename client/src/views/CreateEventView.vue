@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, nextTick, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import '../assets/design-baseline.css'
 import StepIndicator from '../components/rsvp/StepIndicator.vue'
 import AddressSearch from '../components/rsvp/AddressSearch.vue'
 import VenueMap from '../components/VenueMap.vue'
@@ -69,7 +70,18 @@ function blankForm() {
     questions: [], // [{ id, text, type: 'text' | 'yesno', required }]
   }
 }
-const form = ref(blankForm())
+// Starting points chosen on the template picker (?preset=). They only pre-fill; everything stays editable.
+const PRESETS = {
+  school: { tags: ['tech'], capacity: 40, description: 'What will we cover, and who is it for? Mention any prep, materials or the faculty/CCA hosting it.', question: 'Which course or CCA are you from?' },
+  work: { tags: ['career'], capacity: 25, description: 'What is the agenda, and who should attend? Add dress code or anything to prepare.', question: 'Which team or company are you from?' },
+}
+function presetForm() {
+  const form = blankForm()
+  const preset = PRESETS[route.query.preset]
+  if (!preset || route.params.id) return form
+  return { ...form, tags: [...preset.tags], capacity: preset.capacity, description: preset.description, questions: [{ id: crypto.randomUUID(), text: preset.question, type: 'text', required: false }] }
+}
+const form = ref(presetForm())
 
 // ---------- Edit mode: change a published event ----------
 
@@ -110,7 +122,7 @@ watch(editId, async (id) => {
   editBlocked.value = ''
   original.value = null
   if (!id) {
-    form.value = blankForm()
+    form.value = presetForm()
     return
   }
   editLoading.value = true
@@ -420,6 +432,16 @@ function nextStep() {
   focusStep()
 }
 
+// Finished steps in the progress bar jump straight back (moving forward still goes through Next's validation)
+function jumpToStep(target) {
+  if (target >= step.value) return
+  showErrors.value = false
+  questionNotice.value = ''
+  direction.value = -1
+  step.value = target
+  focusStep()
+}
+
 function previousStep() {
   showErrors.value = false
   questionNotice.value = ''
@@ -608,7 +630,7 @@ async function publish() {
 </script>
 
 <template>
-  <div class="create-event-page col-12 col-xl-11 mx-auto">
+  <div class="design-baseline create-event-page col-12 mx-auto">
     <header class="create-heading">
       <h1>{{ isEditing ? 'Edit event' : 'Create an event' }}</h1>
       <p>{{ isEditing ? 'Update the details below. Saving changes the live event straight away.' : 'Start with the essentials. You can review everything before it goes live.' }}</p>
@@ -624,7 +646,7 @@ async function publish() {
     </div>
 
     <template v-else>
-    <StepIndicator :steps="steps" :current="step" />
+    <StepIndicator :steps="steps" :current="step" @select="jumpToStep" />
 
     <div class="creation-layout">
     <div class="card shadow-sm creation-form-card">
@@ -697,7 +719,7 @@ async function publish() {
             </figure>
           </div>
           <div class="row">
-            <div class="col-md-6 mb-3">
+            <div class="col-md-4 mb-3">
               <label for="start" class="form-label">Starts</label>
               <input
                 id="start"
@@ -709,7 +731,7 @@ async function publish() {
                 :min="nowForInput"
               />
             </div>
-            <div class="col-md-6 mb-3">
+            <div class="col-md-4 mb-3">
               <label for="end" class="form-label">Ends</label>
               <input
                 id="end"
@@ -720,9 +742,6 @@ async function publish() {
                 :min="form.startTime || nowForInput"
               />
             </div>
-          </div>
-
-          <div class="row">
             <div class="col-md-4 mb-3">
               <label for="capacity" class="form-label">Capacity</label>
               <input

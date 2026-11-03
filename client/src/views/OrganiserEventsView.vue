@@ -1,4 +1,5 @@
 <script setup>
+import '../assets/design-baseline.css'
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { getOrganiserEvents, deleteEvent } from '../utils/api.js'
@@ -61,6 +62,7 @@ function fillPercent(event) {
 </script>
 
 <template>
+<div class="design-baseline">
   <header class="organiser-heading d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
     <div><p class="organiser-kicker mb-2">Your hosting space</p><h1 class="mb-1">My events</h1><p class="organiser-lede mb-0">Keep every gathering, guest list and detail in one place.</p></div>
     <RouterLink to="/organiser/events/new" class="btn btn-primary">Create event</RouterLink>
@@ -144,6 +146,7 @@ function fillPercent(event) {
       </article>
     </div>
   </div>
+</div>
 </template>
 
 <style scoped>

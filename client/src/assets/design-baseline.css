@@ -1,0 +1,87 @@
+/* "Festival ticket" treatment for Create event, scoped to .design-baseline so the rest of
+   the app is untouched. Uses the existing Hawker Glow tokens, so light/dark both work.
+   Remove the class (and CSS import) from the three create views to revert. */
+.design-baseline.design-baseline { position: relative; isolation: isolate; --db-r: 24px; --db-tilt: 1.2deg; }
+
+/* Soft colour blobs live on the body so they have no visible box edges. */
+body:has(.design-baseline) {
+  background:
+    radial-gradient(34rem 24rem at 12% 0%, color-mix(in srgb, var(--bookedz-fill) 22%, transparent), transparent 70%),
+    radial-gradient(32rem 22rem at 95% 0%, color-mix(in srgb, var(--bookedz-teal) 20%, transparent), transparent 70%),
+    radial-gradient(26rem 18rem at 60% 12%, color-mix(in srgb, var(--bookedz-mango) 16%, transparent), transparent 70%),
+    var(--bookedz-canvas) no-repeat;
+}
+
+/* Hero */
+.design-baseline.design-baseline :is(.create-heading, .hangout-head, .workspace-header, .rsvp-heading, .organiser-heading) {
+  position: relative; margin: .5rem 0 1.75rem; padding: clamp(1.4rem, 4vw, 2.4rem); overflow: hidden;
+  border: 2px solid var(--bookedz-ink); border-left-width: 2px; border-radius: var(--db-r);
+  background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 70%);
+  box-shadow: 6px 6px 0 var(--bookedz-ink);
+}
+.design-baseline.design-baseline :is(.create-heading, .hangout-head, .workspace-header, .rsvp-heading, .organiser-heading)::after {
+  content: '★'; position: absolute; right: clamp(.8rem, 4vw, 2.2rem); top: 50%; translate: 0 -50%; rotate: 12deg;
+  font-size: clamp(4rem, 12vw, 7rem); line-height: 1; color: var(--bookedz-fill); opacity: .35; pointer-events: none;
+}
+.design-baseline.design-baseline :is(.create-heading, .hangout-head, .workspace-header, .rsvp-heading, .organiser-heading) h1 {
+  font-size: clamp(2.1rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -.03em;
+  background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+:root[data-theme="dark"] .design-baseline.design-baseline :is(.create-heading, .hangout-head, .workspace-header, .rsvp-heading, .organiser-heading) {
+  background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 80%); border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill);
+}
+.design-baseline.design-baseline :is(.create-heading p, .hangout-head p, .workspace-header p, .rsvp-heading p, .organiser-heading p) { color: var(--bookedz-ink); font-weight: 500; max-width: 46ch; }
+.design-baseline.design-baseline .hangout-washi { display: inline-block; padding: .2rem .8rem; background: var(--bookedz-teal); color: #0b3b36; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; rotate: -2deg; }
+
+/* Step indicator becomes chunky pills */
+.design-baseline.design-baseline .creation-steps { padding: .9rem 1rem; border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: var(--bookedz-surface); }
+:root[data-theme="dark"] .design-baseline.design-baseline .creation-steps { border-color: var(--bookedz-border); }
+.design-baseline.design-baseline .step-item { padding: .35rem .6rem .35rem .35rem; border-radius: 99px; transition: background-color var(--bookedz-motion-normal) var(--bookedz-ease); }
+.design-baseline.design-baseline .step-item.is-current { background: var(--bookedz-orange-soft); }
+.design-baseline.design-baseline .step-item.is-current .step-number { border-color: var(--bookedz-ink); background: var(--bookedz-fill); color: var(--bookedz-on-fill); }
+.design-baseline.design-baseline .step-item.is-complete .step-number { border-color: var(--bookedz-teal); background: var(--bookedz-teal); color: #0b3b36; }
+.design-baseline.design-baseline .progress-track { height: .55rem; background: var(--bookedz-glass-active); }
+.design-baseline.design-baseline .progress-fill { background: linear-gradient(90deg, var(--bookedz-teal), var(--bookedz-fill), var(--bookedz-mango)); }
+
+/* Form card as a ticket: side notches + dashed tear line above the footer */
+.design-baseline.design-baseline :is(.creation-form-card, .hangout-panel, .workspace-panel) {
+  position: relative; border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal);
+  background:
+    radial-gradient(circle 14px at 0 3.5rem, var(--bookedz-canvas) 98%, transparent) left / 51% 100% no-repeat,
+    radial-gradient(circle 14px at 100% 3.5rem, var(--bookedz-canvas) 98%, transparent) right / 51% 100% no-repeat,
+    var(--bookedz-surface);
+}
+:root[data-theme="dark"] .design-baseline.design-baseline :is(.creation-form-card, .hangout-panel, .workspace-panel) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+.design-baseline.design-baseline .card-footer { border-top: 2px dashed var(--bookedz-control-border); border-radius: 0 0 var(--db-r) var(--db-r); }
+.design-baseline.design-baseline :is(.step-heading, .step-subheading) { font-family: var(--bookedz-heading); font-weight: 900; }
+
+/* Inputs */
+.design-baseline.design-baseline :is(.form-control, .form-select) { border-width: 2px; border-radius: 14px; }
+.design-baseline.design-baseline :is(.form-control, .form-select):focus { border-color: var(--bookedz-fill); box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--bookedz-fill) 28%, transparent); }
+.design-baseline.design-baseline .form-label, .design-baseline.design-baseline legend.form-label { font-weight: 800; }
+
+/* Buttons: pill shape, stamp press */
+.design-baseline.design-baseline .btn { border-radius: 99px; border-width: 2px; }
+.design-baseline.design-baseline .btn-primary, .design-baseline.design-baseline .btn-success { border-color: var(--bookedz-ink); }
+:root[data-theme="dark"] .design-baseline.design-baseline :is(.btn-primary, .btn-success) { border-color: var(--bookedz-fill); }
+@media (hover: hover) { .design-baseline.design-baseline .btn:not(:disabled):hover { transform: translateY(-2px) rotate(-.6deg); } }
+
+/* Live preview: a tilted ticket stub, taped on */
+.design-baseline.design-baseline .event-preview { rotate: var(--db-tilt); border: 2px dashed var(--bookedz-control-border); border-radius: var(--db-r); background: var(--bookedz-mango-soft); transition: rotate var(--bookedz-motion-slip) var(--bookedz-ease); }
+.design-baseline.design-baseline .event-preview:hover { rotate: 0deg; }
+.design-baseline.design-baseline .event-preview::before { content: ''; position: absolute; top: -.8rem; left: 50%; width: 5.5rem; height: 1.5rem; translate: -50% 0; rotate: -3deg; background: color-mix(in srgb, var(--bookedz-pink) 55%, transparent); border-radius: 3px; }
+.design-baseline.design-baseline .preview-card { border: 2px solid var(--bookedz-ink); border-radius: 18px; }
+:root[data-theme="dark"] .design-baseline.design-baseline .preview-card { border-color: var(--bookedz-border); }
+
+/* Hangout choice cards */
+.design-baseline.design-baseline .mode-card { border-width: 2px; border-radius: 18px; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp); }
+.design-baseline.design-baseline .mode-card.is-selected { transform: translateY(-3px) rotate(-.8deg); border-color: var(--bookedz-fill); box-shadow: 4px 4px 0 var(--bookedz-fill); }
+
+@media (max-width: 767.98px) {
+  .design-baseline.design-baseline .event-preview { rotate: 0deg; }
+  .design-baseline.design-baseline :is(.create-heading, .hangout-head, .workspace-header, .rsvp-heading, .organiser-heading) { box-shadow: 4px 4px 0 var(--bookedz-ink); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .design-baseline.design-baseline .event-preview, .design-baseline.design-baseline .mode-card { transition: none; }
+  .design-baseline.design-baseline .btn:not(:disabled):hover { transform: none; }
+}
