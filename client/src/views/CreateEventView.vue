@@ -6,12 +6,14 @@ import AddressSearch from '../components/rsvp/AddressSearch.vue'
 import VenueMap from '../components/VenueMap.vue'
 import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue'
+import HangoutWizard from '../components/hangout/HangoutWizard.vue'
 import { uploadCover } from '../lib/uploadCover.js'
 import { createEvent, getEvent, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
 import { PLANNER_AVAILABLE, searchEventTitles, fetchPlanSuggestion, addPlanToEvent } from '../utils/planSuggestions.js'
 import { normalizeTitle } from '../utils/planSuggestModel.js'
 import { describeEventChanges, formatAnnouncement } from '../utils/eventChanges.js'
+import { blankEventForm, errorsForStep } from '../utils/eventForm.js'
 
 // Multi-step form (progressive disclosure): one small chunk at a time instead of one long page.
 // The same wizard edits a published event at /organiser/events/:id/edit (edit mode).
@@ -52,24 +54,8 @@ async function chooseCover(event) {
   }
 }
 
-// Everything the organiser fills in, across all steps
-function blankForm() {
-  return {
-    title: '',
-    coverImageUrl: '',
-    description: '',
-    tags: [],
-    startTime: '', // from <input type="datetime-local">, e.g. "2026-10-20T19:00"
-    endTime: '',
-    capacity: 30,
-    venue: null, // { name, address, postal, lat, lng } from OneMap
-    isOutdoor: false,
-    backupVenue: null, // used by Denzel's rain check
-    requiresApproval: false,
-    questions: [], // [{ id, text, type: 'text' | 'yesno', required }]
-  }
-}
-const form = ref(blankForm())
+// Everything the organiser fills in, across all steps (its fields and checks: utils/eventForm.js)
+const form = ref(blankEventForm())
 
 // ---------- Edit mode: change a published event ----------
 
@@ -81,6 +67,7 @@ const editBlocked = ref('') // why this event can't be edited (not yours, alread
 const minCapacity = ref(1) // can't go below the people already confirmed or offered a place
 const hasRsvps = ref(false) // once anyone has RSVP'd, existing questions can't be removed
 const venueLocked = ref(false) // the rain switch already moved the event to its backup venue
+const hangoutEvent = ref(null) // a hangout being edited; the Hangout wizard handles it
 
 const venueCopy = (venue) => (venue ? { name: venue.name, address: venue.address || '', postal: venue.postal || '', lat: venue.lat ?? null, lng: venue.lng ?? null } : null)
 function formFromEvent(event) {
@@ -109,8 +96,9 @@ watch(editId, async (id) => {
   errorMessage.value = ''
   editBlocked.value = ''
   original.value = null
+  hangoutEvent.value = null
   if (!id) {
-    form.value = blankForm()
+    form.value = blankEventForm()
     return
   }
   editLoading.value = true
@@ -119,6 +107,7 @@ watch(editId, async (id) => {
     if (request !== editRequest) return
     if (!event.isMine) editBlocked.value = 'You can only edit events you organise.'
     else if (new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
+    else if (event.kind === 'hangout') hangoutEvent.value = event
     else {
       const rsvps = await getRsvpsForEvent(id)
       if (request !== editRequest) return
@@ -240,10 +229,6 @@ let planProgress = { programme: 0, tasks: 0 }
 let createdDates = null
 
 const canGenerate = computed(() => PLANNER_AVAILABLE && form.value.title.trim().length > 0 && !planBusy.value && !publishing.value && !eventCreated.value)
-const planHint = computed(() => {
-  if (!PLANNER_AVAILABLE) return 'Plan suggestions need a live connection.'
-  return form.value.title.trim() ? '' : 'Enter an event title to generate a plan.'
-})
 const planStale = computed(() => Boolean(planOffer.value || acceptedPlan.value) && normalizeTitle(form.value.title) !== planForTitle.value)
 
 async function generatePlan() {
@@ -337,52 +322,11 @@ async function finishPlan(eventId) {
 
 // ---------- Checking each step before moving on ----------
 
-const stepErrors = computed(() => {
-  return errorsForStep(form.value, step.value)
-})
+const stepErrors = computed(() => errorsForStep(form.value, step.value, ruleContext()))
 
-function errorsForStep(f, stepNumber, now = new Date()) {
-  const errors = []
-  const hasCoordinates = (place) => Number.isFinite(place?.lat) && Number.isFinite(place?.lng)
-
-  if (stepNumber === 1) {
-    if (f.title.trim() === '') errors.push('Give your event a title.')
-    if (f.startTime === '' || f.endTime === '') {
-      errors.push('Set a start and end time.')
-    } else if (new Date(f.endTime) <= new Date(f.startTime)) {
-      errors.push('The end time must be after the start time.')
-    } else if (new Date(f.startTime) < now) {
-      errors.push('The start time cannot be in the past.')
-    }
-    const keepsNoLimit = isEditing.value && original.value?.capacity === '' && f.capacity === ''
-    if (!keepsNoLimit && (!Number.isInteger(f.capacity) || f.capacity < 1)) {
-      errors.push('Capacity must be a whole number, at least 1.')
-    } else if (isEditing.value && !keepsNoLimit && f.capacity < minCapacity.value) {
-      errors.push(`Capacity can't be lower than ${minCapacity.value}: that many people are already confirmed or offered a place.`)
-    }
-    if (f.tags.length === 0) {
-      errors.push('Pick at least one tag (used for recommendations and waitlist scoring).')
-    }
-  }
-
-  if (stepNumber === 2) {
-    if (!f.venue) errors.push('Choose the venue from the address search.')
-    if (USING_SUPABASE && f.venue && !hasCoordinates(f.venue)) {
-      errors.push('Choose a venue result with map coordinates for live events.')
-    }
-    if (f.isOutdoor && !f.backupVenue) {
-      errors.push('Outdoor events need a backup venue in case of rain.')
-    }
-    if (USING_SUPABASE && f.backupVenue && !hasCoordinates(f.backupVenue)) {
-      errors.push('Choose a backup venue result with map coordinates for live events.')
-    }
-  }
-
-  if (stepNumber === 3 && f.questions.some((question) => question.text.trim() === '')) {
-    errors.push('Every RSVP question needs some wording.')
-  }
-
-  return errors
+// What the shared form checks need from this page: edit-mode capacity limits and live mode
+function ruleContext() {
+  return { editing: isEditing.value, originalCapacity: original.value?.capacity, minCapacity: minCapacity.value, live: USING_SUPABASE }
 }
 
 async function focusStep() {
@@ -506,7 +450,7 @@ let announceAttempt = null
 
 async function reviewChanges() {
   if (savingChanges.value || uploadingCover.value) return
-  const invalidStep = [1, 2, 3].find((stepNumber) => errorsForStep(form.value, stepNumber).length > 0)
+  const invalidStep = [1, 2, 3].find((stepNumber) => errorsForStep(form.value, stepNumber, ruleContext()).length > 0)
   if (invalidStep) {
     direction.value = invalidStep < step.value ? -1 : 1
     step.value = invalidStep
@@ -559,7 +503,7 @@ function closeAnnounceDialog() {
 
 async function publish() {
   if (publishing.value || uploadingCover.value) return
-  const invalidStep = [1, 2].find((stepNumber) => errorsForStep(form.value, stepNumber).length > 0)
+  const invalidStep = [1, 2].find((stepNumber) => errorsForStep(form.value, stepNumber, ruleContext()).length > 0)
   if (invalidStep) {
     direction.value = invalidStep < step.value ? -1 : 1
     step.value = invalidStep
@@ -608,7 +552,10 @@ async function publish() {
 </script>
 
 <template>
-  <div class="create-event-page col-12 col-xl-11 mx-auto">
+  <!-- Hangouts are edited in the Hangout wizard, so Official-only fields (rain backup venue,
+       RSVP questions) never appear for them -->
+  <HangoutWizard v-if="hangoutEvent" :key="hangoutEvent.id" :edit-event="hangoutEvent" />
+  <div v-else class="create-event-page">
     <header class="create-heading">
       <h1>{{ isEditing ? 'Edit event' : 'Create an event' }}</h1>
       <p>{{ isEditing ? 'Update the details below. Saving changes the live event straight away.' : 'Start with the essentials. You can review everything before it goes live.' }}</p>
@@ -794,7 +741,7 @@ async function publish() {
           </div>
           <AddressSearch
             v-else
-            label="Search for the venue (OneMap)"
+            label="Search for the venue"
             input-id="venue-search"
             @select="setVenue"
           />
@@ -962,6 +909,16 @@ async function publish() {
               </li>
             </ol>
           </EventSummary>
+          <!-- Offered on Review, when the title, tags, times and size are all known. Plans are only
+               added by publish(), so editing an event doesn't offer one -->
+          <section v-if="!isEditing" class="plan-offer" aria-labelledby="plan-offer-heading">
+            <h3 id="plan-offer-heading" class="h6 mb-1">Want a head start?</h3>
+            <p class="plan-offer-copy">Suggest a programme and tasks from similar past events. You pick what to keep; they're added when you publish.</p>
+            <button v-if="PLANNER_AVAILABLE" type="button" class="btn btn-outline-primary btn-sm" :disabled="!canGenerate" @click="generatePlan">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M10 1.5l1.7 4.8 4.8 1.7-4.8 1.7L10 14.5l-1.7-4.8-4.8-1.7 4.8-1.7zM16 12l.8 2.2L19 15l-2.2.8L16 18l-.8-2.2L13 15l2.2-.8z"/></svg>Suggest programme &amp; tasks
+            </button>
+            <p v-else class="plan-offer-copy mb-0">Available when you're signed in on the live site.</p>
+          </section>
         </div>
 
         </div>
@@ -1034,15 +991,6 @@ async function publish() {
           Back
         </button>
         <div class="d-flex gap-2 creation-actions-end">
-          <!-- Plans are only added by publish(), so editing an event doesn't offer one -->
-          <template v-if="!isEditing">
-            <span :title="planHint || undefined">
-              <button type="button" class="btn btn-outline-primary" :disabled="!canGenerate" :aria-describedby="planHint ? 'plan-hint' : undefined" @click="generatePlan">
-                <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" class="me-1" aria-hidden="true"><path d="M10 1.5l1.7 4.8 4.8 1.7-4.8 1.7L10 14.5l-1.7-4.8-4.8-1.7 4.8-1.7zM16 12l.8 2.2L19 15l-2.2.8L16 18l-.8-2.2L13 15l2.2-.8z"/></svg>Generate plan
-              </button>
-            </span>
-            <span v-if="planHint" id="plan-hint" class="visually-hidden">{{ planHint }}</span>
-          </template>
           <button v-if="step < steps.length" type="button" class="btn btn-primary" @click="nextStep">
             Next
           </button>
@@ -1103,11 +1051,13 @@ async function publish() {
 </template>
 
 <style scoped>
-.create-heading { margin: 1rem 0 1.5rem; padding: 1.5rem clamp(1rem, 3vw, 2rem); border-left: 5px solid var(--bookedz-primary-dark); border-radius: 0 20px 20px 0; background: var(--bookedz-glass-active); }
+.create-heading { margin: 0 0 1rem; padding: 1.1rem clamp(1rem, 3vw, 1.75rem); border-left: 5px solid var(--bookedz-primary-dark); border-radius: 0 20px 20px 0; background: var(--bookedz-glass-active); }
 .create-heading h1 { margin: 0 0 .4rem; color: var(--bookedz-ink); font-size: clamp(1.7rem, 3vw, 2.3rem); font-weight: 700; letter-spacing: -.035em; }
 .create-heading p:last-child { margin: 0; color: var(--bookedz-muted); }
 .create-kicker { margin: 0 0 .35rem; color: var(--bookedz-primary-dark); font-size: .875rem; font-weight: 650; }
 .creation-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(15rem, .85fr); align-items: start; gap: 1.25rem; }
+.plan-offer { margin-top: 1.25rem; padding: 1rem; border: 1px dashed var(--bookedz-control-border); border-radius: 14px; background: var(--bookedz-glass-solid); }
+.plan-offer-copy { margin: 0 0 .75rem; color: var(--bookedz-muted); font-size: .875rem; }
 .plan-panel { margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 14px; background: var(--bookedz-surface); }
 .plan-panel:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
 .plan-panel-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
@@ -1126,7 +1076,8 @@ async function publish() {
 .title-suggestion-kind { flex: none; color: var(--bookedz-muted); font-size: .78rem; font-weight: 700; }
 .create-event-page :deep(.card) { border: 1px solid var(--bookedz-border); border-radius: 20px; box-shadow: var(--bookedz-card-shadow) !important; }
 .create-event-page :deep(.card-body) { padding: clamp(1rem, 3vw, 2rem) !important; }
-.create-event-page :deep(.card-footer) { position: sticky; bottom: 0; z-index: 2; padding: .85rem clamp(1rem, 3vw, 2rem); border-color: var(--bookedz-border); background: var(--bookedz-glass-solid) !important; backdrop-filter: blur(14px); }
+/* Sits above the phone tab bar when there is one (--bottom-nav-h, main.css) */
+.create-event-page :deep(.card-footer) { position: sticky; bottom: var(--bottom-nav-h, 0px); z-index: 2; padding: .85rem clamp(1rem, 3vw, 2rem); border-color: var(--bookedz-border); background: var(--bookedz-glass-solid) !important; backdrop-filter: blur(14px); }
 .create-event-page :deep(.card-footer .btn) { min-width: 6.5rem; min-height: 44px; }
 .create-event-page :deep(.form-control), .create-event-page :deep(.form-select) { border-radius: 10px; transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease; }
 .create-event-page :deep(.form-control:focus), .create-event-page :deep(.form-select:focus) { border-color: var(--bookedz-primary-dark); box-shadow: var(--bookedz-focus-glow); }

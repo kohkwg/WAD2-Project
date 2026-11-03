@@ -551,3 +551,16 @@ Live hangout journey (after the migration is pushed; you sign in when the browse
 ```sh
 pnpm --dir client test:e2e:live --headed e2e-live/hangouts.spec.mjs
 ```
+
+## Step-by-step UX pass checks (3 November)
+
+```sh
+cd client && node --test src/utils/__tests__/eventForm.test.js src/utils/__tests__/hangoutForm.test.js
+pnpm --dir client exec playwright test e2e/feature4.spec.js e2e/feature4-interactions.spec.js --grep 'deletion|dialog cancel|weather confirmation'
+pnpm --dir client exec playwright test e2e/legacy-review-fixes.spec.js e2e/shared-ui.spec.js e2e/navbar-account.spec.js
+```
+
+Events deletion now opens
+the card's ⋯ menu, then the pop-up. The phone tab bar is a separate "Quick links" landmark, so
+scope link lookups to "Main navigation" at phone widths. The new menu, tab bar and rail were
+demo server on 5187 with a temporary config. See status for the already-failing cases.

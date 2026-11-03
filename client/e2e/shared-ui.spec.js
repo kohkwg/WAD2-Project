@@ -13,7 +13,7 @@ test('mobile navigation closes and focuses the destination main content', async 
   const toggle = page.getByRole('button', { name: 'Toggle navigation' })
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-  await page.getByRole('link', { name: 'My RSVPs', exact: true }).click()
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'My RSVPs', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'My RSVPs', exact: true })).toBeVisible()
   await expect(toggle).toHaveAttribute('aria-expanded', 'false')
   await expect(page.getByRole('main')).toBeFocused()

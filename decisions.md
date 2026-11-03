@@ -432,3 +432,22 @@ OneMap routing.
   membership is checked as the caller first, then the server key reads the private free
   times. Live plan scoring weighs the hangout's chosen interests, because members'
   own interests are private.
+
+## 3 November 2026 — step-by-step UX pass (`gregory`)
+
+- **Deleting an event** asks in a pop-up. The position fix in Denzel's shared
+  `ConfirmationDialog` applies to every feature that uses it.
+- **Hangouts are edited in the Hangout wizard**, not the Official one. Type, time and join
+  mode stay read-only until there is a way to save them.
+- **My events cards** show three controls (Manage event or Open hangout · RSVPs · ⋯); Edit
+  details, View public page / Event tools and Delete move into ⋯.
+- **Plan suggestions** are offered on the Review step ("Suggest programme & tasks") instead
+  of in the footer of every step.
+- **Navigation:** Categories and Map leave the sidebar (Discover links to both); phones get
+  a bottom tab bar and laptops (992–1199px) a slim icon rail; pages may be 1440px wide.
+  Settings stays, per Aishani's 27 October layout, and Create event stays on My events
+  rather than in the navigation.
+- **Discover filters** (Aishani's `EventFilters`): no duplicate title, an active count, a
+  readable button, 44px targets and a compact drop-down on wide screens.
+- **Unit tests** use Node's runner with a small `expect` helper; no Vitest dependency.
+

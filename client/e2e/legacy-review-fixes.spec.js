@@ -54,7 +54,7 @@ test('a stale OneMap response cannot replace results for the current query', asy
   await page.getByLabel('Ends').fill('2026-10-20T21:00')
   await page.getByText('music', { exact: true }).click()
   await page.getByRole('button', { name: 'Next' }).click()
-  const search = page.getByLabel('Search for the venue (OneMap)')
+  const search = page.getByLabel('Search for the venue')
   const oldRequest = page.waitForRequest(request => new URL(request.url()).searchParams.get('searchVal') === 'Old query')
   await search.fill('Old query')
   await oldRequest
@@ -82,7 +82,7 @@ test('Escape dismisses pending OneMap suggestions and ignores the late result', 
   await page.getByText('music', { exact: true }).click()
   await page.getByRole('button', { name: 'Next' }).click()
 
-  const search = page.getByLabel('Search for the venue (OneMap)')
+  const search = page.getByLabel('Search for the venue')
   const request = page.waitForRequest(request => new URL(request.url()).searchParams.get('searchVal') === 'Dismiss query')
   await search.fill('Dismiss query')
   await request
@@ -105,7 +105,7 @@ test('Publish revalidates elapsed start time and preserves the draft at Basics',
   await page.getByLabel('Ends').fill('2026-10-16T13:00')
   await page.getByText('music', { exact: true }).click()
   await page.getByRole('button', { name: 'Next' }).click()
-  await page.getByLabel('Search for the venue (OneMap)').fill('SMU venue')
+  await page.getByLabel('Search for the venue').fill('SMU venue')
   await page.getByRole('button', { name: /SMU Campus Green/ }).click()
   await page.getByRole('button', { name: 'Next' }).click()
   await page.getByRole('button', { name: 'Next' }).click()
