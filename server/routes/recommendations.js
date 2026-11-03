@@ -3,7 +3,7 @@ const supabaseForUser = require('../lib/userSupabase');
 const requireAuth = require('../lib/requireAuth');
 const { createEventEvidenceStore } = require('../services/eventEvidenceStore');
 const { buildRecommendationPipeline } = require('../services/recommendationPipeline');
-const { haversineKm } = require('../services/recommendation');
+const { buildRecommendationReason } = require('../services/recommendationReason');
 
 const router = express.Router();
 const PAGE_SIZE = 200;
@@ -22,13 +22,37 @@ async function readPages(buildQuery) {
   }
 }
 function reportFailure(res, error) {
+  console.error('[Recommendation error]', {
+    message: error.message,
+    code: error.code ?? error.cause?.code,
+    cause: error.cause?.message,
+    stack: error.stack,
+  });
+
   const code = error.code || error.cause?.code;
-  const setupMissing = ['42P01', '42703', '42883', 'PGRST202', 'PGRST205', 'RECOMMENDATION_SETUP_REQUIRED'].includes(code);
+
+  const setupMissing = [
+    '42P01',
+    '42703',
+    '42883',
+    'PGRST202',
+    'PGRST205',
+    'RECOMMENDATION_SETUP_REQUIRED',
+  ].includes(code);
+
   const forbidden = code === '42501';
-  return res.status(setupMissing ? 503 : forbidden ? 403 : 500).json({
-    error: setupMissing ? 'Personalised recommendations are temporarily unavailable.'
-      : forbidden ? 'This event is unavailable.' : 'Could not complete the recommendation request.',
-    ...(setupMissing ? { code: 'RECOMMENDATION_SETUP_REQUIRED' } : {}),
+
+  return res.status(
+    setupMissing ? 503 : forbidden ? 403 : 500
+  ).json({
+    error: setupMissing
+      ? 'Personalised recommendations are temporarily unavailable.'
+      : forbidden
+        ? 'This event is unavailable.'
+        : 'Could not complete the recommendation request.',
+    ...(setupMissing
+      ? { code: 'RECOMMENDATION_SETUP_REQUIRED' }
+      : {}),
   });
 }
 
@@ -72,11 +96,16 @@ router.get('/', requireAuth, async (req, res) => {
     }
     const historicalIds = [...new Set([...prefByEvent.keys(), ...regByEvent.keys(), ...checkByEvent.keys()])].sort();
     const eventInterestsById = {};
+    const staffEventIds = new Set(memberships.map(row => row.event_id));
+    for (const event of events) {
+      if (event.organiser_id === userId) staffEventIds.add(event.id);
+    }
     // Batch historical reads independently of upcoming events. No per-event RPCs.
     for (let offset = 0; offset < historicalIds.length; offset += PAGE_SIZE) {
       const batch = historicalIds.slice(offset, offset + PAGE_SIZE);
-      const historical = await readPages(() => supabase.from('events').select('id,event_interests(interests(slug))').in('id', batch).order('id'));
+      const historical = await readPages(() => supabase.from('events').select('id,organiser_id,event_interests(interests(slug))').in('id', batch).order('id'));
       for (const event of historical) {
+        if (event.organiser_id === userId) staffEventIds.add(event.id);
         if (!Array.isArray(event.event_interests)) throw new Error('Incomplete historical interest mapping');
         eventInterestsById[event.id] = event.event_interests.map(link => {
           if (!link.interests?.slug) throw new Error('Unavailable historical interest');
@@ -86,6 +115,10 @@ router.get('/', requireAuth, async (req, res) => {
     }
     const evidenceSnapshots = historicalIds.map(eventId => {
       const pref = prefByEvent.get(eventId);
+      // Preserve dismissal state, but ignore organiser/team behaviour as taste.
+      if (staffEventIds.has(eventId)) {
+        return { eventId, dismissed: pref?.dismissed === true };
+      }
       const registration = regByEvent.get(eventId);
       const check = checkByEvent.get(eventId);
       if (registration?.status === 'confirmed' && !pref?.first_confirmed_at) {
@@ -99,29 +132,52 @@ router.get('/', requireAuth, async (req, res) => {
         dismissed: pref?.dismissed === true,
       };
     });
-    const excludedIds = new Set(memberships.map(row => row.event_id));
-    for (const row of registrations) if (row.status === 'rejected') excludedIds.add(row.event_id);
-    const candidateEvents = events.filter(event => event.organiser_id !== userId && !excludedIds.has(event.id));
+    const excludedIds = new Set(
+      memberships.map(row => row.event_id)
+    );
+    for (const registration of registrations) {
+      if (registration.status === 'rejected') {
+        excludedIds.add(registration.event_id);
+      }
+    }
+    // Keep saves as learning evidence, but recommend unsaved events.
+    for (const preference of preferences) {
+      if (preference.save_active === true) {
+        excludedIds.add(preference.event_id);
+      }
+    }
+    const candidateEvents = events.filter(event =>
+      event.organiser_id !== userId
+      && !excludedIds.has(event.id)
+    );
     for (const event of candidateEvents) {
       if (!Array.isArray(event.tags)) throw new Error('Incomplete candidate interest mapping');
       eventInterestsById[event.id] = event.tags;
     }
-    const result = buildRecommendationPipeline({ selectedInterests, evidenceSnapshots,
-      eventInterestsById, candidateEvents, registrations, now, limit });
+const result = buildRecommendationPipeline({
+  selectedInterests,
+  evidenceSnapshots,
+  eventInterestsById,
+  candidateEvents,
+  registrations,
+  userLocation: profile,
+  now,
+  limit,
+});
     const savedIds = new Set(preferences.filter(row => row.save_active).map(row => row.event_id));
     const cards = result.recommendations.map(event => {
-      const matched = event.interests.filter(interest => result.preferences.combinedPreferences[interest] > 0);
-      const learned = matched.filter(interest => result.preferences.learnedPreferences[interest] > 0);
-      const reason = event.source === 'general_discovery' ? 'Upcoming event to explore'
-        : learned.length ? `Your recent activity supports your interest in ${learned.join(', ')}`
-          : `Matches your selected interests: ${matched.join(', ')}`;
-      const km = profile?.lat != null && profile?.lng != null && event.lat != null && event.lng != null
-        ? haversineKm(profile.lat, profile.lng, event.lat, event.lng) : null;
+      const reason = buildRecommendationReason({
+        event,
+        selectedInterests,
+        evidenceSnapshots,
+        eventInterestsById,
+        now,
+      });
       return { ...event, start_time: event.starts_at, tags: event.interests,
         score: event.compatibilityScore / 100, reason,
         reason_type: event.source === 'personalised' ? 'interest' : 'discovery',
         saved: savedIds.has(event.id), recommendation_actions: true,
-        distance_km: km == null ? null : Math.round(km * 10) / 10 };
+        distance_km: event.distance_km };
     });
     res.json({ events: cards });
   } catch (error) { reportFailure(res, error); }

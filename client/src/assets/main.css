@@ -1,69 +1,86 @@
 /* Hallmark · checked: 2026-10-24 · genre: playful · scope: app · built: Bookedz · v3.0.0 (Hawker Glow) */
 /* Bookedz visual system using the Hawker Glow palette. Bootstrap 5 (MIT): https://getbootstrap.com/.
    Nunito (SIL OFL): local fonts/Nunito-OFL.txt. DM Sans (SIL OFL): local fonts/DM-Sans-OFL.txt.
-   Bricolage Grotesque (SIL OFL) remains bundled but is no longer the heading face. */
+   Bricolage Grotesque (SIL OFL): local fonts/OFL.txt; retained shared heading face. */
+@font-face { font-family: 'Bricolage Grotesque'; src: url('./fonts/bricolage-grotesque.ttf') format('truetype'); font-weight: 400 800; font-display: swap; }
 @font-face { font-family: 'Nunito'; src: url('./fonts/nunito.ttf') format('truetype'); font-weight: 200 1000; font-display: swap; }
 @font-face { font-family: 'DM Sans'; src: url('./fonts/dm-sans.ttf') format('truetype'); font-weight: 100 1000; font-display: swap; }
 :root {
   --bookedz-canvas: #fff8f1; --bookedz-cream: #fff8f1; --bookedz-surface: #ffffff;
   --bookedz-ink: #1f2937; --bookedz-muted: #636975; --bookedz-border: #e9ded3;
-  --bookedz-coral: #ff6b35; --bookedz-coral-dark: #9a3412; --bookedz-mint: #d5f5f0; --bookedz-yellow: #fde7b0;
+  --bookedz-coral: #ff6b35; --bookedz-coral-dark: #9a3412; --bookedz-mint: #14b8a6; --bookedz-yellow: #fde7b0;
+  --bookedz-peach: #ffe4d6; --bookedz-mango: #fde7b0; --bookedz-teal: #14b8a6; --bookedz-pink: #ec4899;
   --bookedz-primary: #ff6b35; --bookedz-primary-dark: #9a3412; --bookedz-ink-soft: #636975;
-  /* Bright fills carry dark foregrounds; small white text never sits on orange/teal/mango. */
-  --bookedz-fill: #ff6b35; --bookedz-fill-active: #f75f27; --bookedz-on-fill: #1f2937;
-  --bookedz-orange-soft: #ffe4d6;
-  --bookedz-teal: #14b8a6; --bookedz-teal-ink: #115e59; --bookedz-teal-soft: #d5f5f0;
-  --bookedz-mango: #f59e0b; --bookedz-mango-soft: #fde7b0;
-  --bookedz-pink: #ec4899; --bookedz-pink-soft: #fce1ef; --bookedz-pink-ink: #9d174d;
-  --bookedz-focus: #0f766e;
   --bookedz-body: 'DM Sans', system-ui, sans-serif;
   --bookedz-space-1: 4px; --bookedz-space-2: 8px; --bookedz-space-3: 16px; --bookedz-space-4: 24px; --bookedz-space-5: 40px; --bookedz-space-6: 64px;
   --bookedz-radius-control: 14px; --bookedz-radius-card: 20px;
   --bookedz-motion-feedback: 100ms; --bookedz-motion-fast: 160ms; --bookedz-motion-normal: 240ms; --bookedz-motion-slip: 250ms; --bookedz-motion-reveal: 420ms;
   --bookedz-ease: cubic-bezier(.22,.61,.36,1); --bookedz-ease-stamp: cubic-bezier(.34,1.56,.64,1);
   --bs-body-font-family: var(--bookedz-body);
-  --bookedz-heading: 'Nunito', 'DM Sans', system-ui, sans-serif;
-  --bookedz-shadow: 0 12px 36px rgb(154 52 18 / 7%);
-  --bookedz-glass: rgb(255 255 255 / 84%); --bookedz-glass-solid: #fff3e8;
-  --bookedz-glass-border: rgb(255 255 255 / 92%); --bookedz-glass-hover: #fbeee2;
-  --bookedz-glass-active: #ffe4d6; --bookedz-control-border: #9c8e80;
-  --bookedz-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 95%), 0 8px 28px rgb(154 52 18 / 8%);
-  --bookedz-search-shadow: 0 8px 24px rgb(154 52 18 / 7%);
-  --bookedz-danger: #b91c1c;
+  --bookedz-heading: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
+  /* Typography roles shared across pages and cards. */
+  --text-page-title: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --text-section-title: clamp(1.375rem, 1.15rem + 1vw, 1.75rem);
+  --text-card-title: 1.25rem;
+  --text-featured-title: clamp(1.375rem, 1.15rem + 1vw, 1.75rem);
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+  --text-caption: 0.75rem;
+  --text-button: 0.875rem;
+  --bookedz-shadow: 0 12px 38px rgb(60 50 35 / 6%);
+  --bookedz-glass: rgb(255 255 255 / 84%); --bookedz-glass-solid: #ffffff;
+  --bookedz-glass-border: rgb(255 255 255 / 92%); --bookedz-glass-hover: #ffe4d6;
+  --bookedz-glass-active: #ffe4d6; --bookedz-control-border: #e9ded3;
+  --bookedz-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 95%), 0 8px 28px rgb(52 51 74 / 8%);
+  --bookedz-search-shadow: 0 8px 24px rgb(52 51 74 / 6%);
+  --bookedz-danger: #a52b36;
   --bs-body-color: var(--bookedz-ink); --bs-body-bg: var(--bookedz-canvas);
   --bs-secondary-color: var(--bookedz-muted); --bs-secondary-rgb: 99,105,117;
-  --bs-primary: #9a3412; --bs-primary-rgb: 154,52,18; --bs-border-color: var(--bookedz-border);
-  --bs-link-color: #9a3412; --bs-link-color-rgb: 154,52,18; --bs-link-hover-color: #7c2d12;
-  --bs-border-radius: .875rem; --bs-border-radius-lg: 1.25rem;
-  --bookedz-primary-hover: #7c2d12; --bookedz-forest: #115e59; --bookedz-success: #166534; --bookedz-hover: #fbeee2;
-  --bookedz-icon: #6b7280; --bookedz-muted-border: #d9c8b8;
+  --bs-primary: #ff6b35; --bs-primary-rgb: 255,107,53; --bs-border-color: var(--bookedz-border);
+  --bs-link-color: #9a3412; --bs-link-color-rgb: 154,52,18; --bs-link-hover-color: #9a3412;
+  --bs-border-radius: .75rem; --bs-border-radius-lg: 1.25rem;
+  --bookedz-primary-hover: #ff6b35; --bookedz-forest: #14b8a6; --bookedz-success: #14b8a6; --bookedz-hover: #ffe4d6;
+  --bookedz-icon: #636975; --bookedz-muted-border: #e9ded3;
   --bookedz-map-overlay: rgb(255 248 241 / 94%);
-  --bookedz-disabled-bg: #f1e7dd; --bookedz-disabled-ink: #6e6a66;
+  --bookedz-disabled-bg: #e9ded3; --bookedz-disabled-ink: #636975;
   --bookedz-mask-opaque: #000;
-  --bookedz-card-shadow: 0 2px 12px rgb(154 52 18 / 6%);
-  --bookedz-focus-glow: 0 0 0 .2rem rgb(15 118 110 / 18%);
-  --bookedz-tab-shadow: 0 2px 6px rgb(154 52 18 / 8%);
-  /* Buttons rest on a soft glow; hover deepens it. */
-  --bookedz-button-shadow: 0 4px 12px rgb(255 107 53 / 28%);
+  --bookedz-card-shadow: 0 4px 20px rgb(20 184 166 / 12%);
+  --bookedz-focus-glow: 0 0 0 .2rem rgb(154 52 18 / 13%);
+  --bookedz-tab-shadow: 0 2px 6px rgb(68 55 27 / 4%);
+  --bookedz-button-shadow: 0 5px 12px rgb(77 46 35 / 10%);
+  --bookedz-map-shadow: 0 4px 20px rgb(52 79 67 / 5%);
+  --bookedz-preview-shadow: 0 18px 45px rgb(52 79 67 / 13%);
+
+  /* Compatibility tokens for incoming Hangout and motion components. */
+  --bookedz-fill: #ff6b35;
+  --bookedz-fill-active: #f75f27;
+  --bookedz-on-fill: #1f2937;
+  --bookedz-orange-soft: #ffe4d6;
+  --bookedz-teal-ink: #115e59;
+  --bookedz-teal-soft: #d5f5f0;
+  --bookedz-mango-soft: #fde7b0;
+  --bookedz-pink-soft: #fce1ef;
+  --bookedz-pink-ink: #9d174d;
+  --bookedz-focus: #0f766e;
   --bookedz-button-shadow-hover: 0 8px 22px rgb(255 107 53 / 42%);
   --bookedz-neutral-shadow: 0 3px 10px rgb(31 41 55 / 8%);
   --bookedz-neutral-shadow-hover: 0 7px 18px rgb(31 41 55 / 16%);
-  --bookedz-map-shadow: 0 4px 20px rgb(154 52 18 / 6%);
-  --bookedz-preview-shadow: 0 18px 45px rgb(154 52 18 / 14%);
 
 }
 html, body { overflow-x: clip; }
 html { scroll-padding-top: 110px; }
-body { background: var(--bookedz-canvas); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+body { background: var(--bookedz-canvas); font-family: var(--bookedz-body); font-size: var(--text-body); line-height: 1.6; -webkit-font-smoothing: antialiased; }
 a { text-underline-offset: .2em; }
 button, input, select, textarea { font: inherit; }
 button, a, input, select, textarea, summary { touch-action: manipulation; }
 h1,h2,h3,h4,h5,.navbar-brand { font-family: var(--bookedz-heading); letter-spacing: -.015em; line-height: 1.15; color: var(--bookedz-ink); }
 h1,h2,h3 { text-wrap: balance; overflow-wrap: break-word; min-width: 0; }
-h1 { font-size: clamp(1.9rem, 1.4rem + 1.5vw, 2.65rem); font-weight: 900; }
-h2 { font-size: clamp(1.4rem,1.2rem + .7vw,1.9rem); font-weight: 800; }
-h3 { font-size: 1.25rem; font-weight: 800; }
-h4,h5 { font-weight: 700; }
+h1, .page-title { font-family: var(--bookedz-heading); font-size: var(--text-page-title); font-weight: 700; line-height: 1.12; letter-spacing: -0.035em; }
+h2, .section-title { font-family: var(--bookedz-heading); font-size: var(--text-section-title); font-weight: 650; line-height: 1.25; }
+h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-card-title); font-weight: 650; line-height: 1.3; }
+.event-title--featured { font-size: var(--text-featured-title); line-height: 1.25; }
+.text-meta { font-size: var(--text-small); line-height: 1.5; }
+.text-caption { font-size: var(--text-caption); line-height: 1.5; }
 :root { --sidebar-w: 240px; }
 /* Laptops use NavBar's slim rail instead of the full sidebar, and pages fill the room it frees
    (Bootstrap's .container would otherwise stop at 960px and leave empty gutters) */
@@ -77,16 +94,15 @@ h4,h5 { font-weight: 700; }
 .card { --bs-card-bg: var(--bookedz-surface); --bs-card-border-color: var(--bookedz-border); --bs-card-cap-bg: transparent; border-radius: 1.25rem; box-shadow: var(--bookedz-card-shadow); overflow-wrap: anywhere; }
 .card-body { padding: 1.5rem; }
 .card-header { padding: 1rem 1.5rem; }
-.card-title { font-size: 1.25rem; font-weight: 650; }
+.card-title { font-size: var(--text-card-title); font-weight: 650; }
 .form-label { font-weight: 600; font-size: .9rem; }
 .form-control,.form-select { min-height: 46px; border-color: var(--bookedz-control-border); background-color: var(--bookedz-surface); padding: .65rem .9rem; }
 .form-control:focus,.form-select:focus { border-color: var(--bookedz-primary-dark); box-shadow: var(--bookedz-focus-glow); background-color: var(--bookedz-surface); }
-.form-check-input:checked { background-color: var(--bookedz-primary-dark); border-color: var(--bookedz-primary-dark); }
+.form-check-input:checked { background-color: var(--bookedz-primary); border-color: var(--bookedz-primary); }
 .form-text { color: var(--bookedz-muted); }
-.btn { min-height: 44px; border-radius: var(--bookedz-radius-control); padding: .6rem 1rem; font-weight: 600; font-size: .9rem; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; box-shadow: var(--bookedz-neutral-shadow); transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease), transform var(--bookedz-motion-normal) var(--bookedz-ease); }
-.btn-sm { padding: .4rem .8rem; font-size: .8rem; border-radius: 11px; }
-.btn-link,.btn-close,.btn-link:hover { box-shadow: none !important; }
-.btn-primary { --bs-btn-color: var(--bookedz-on-fill); --bs-btn-hover-color: var(--bookedz-on-fill); --bs-btn-active-color: var(--bookedz-on-fill); --bs-btn-disabled-color: var(--bookedz-on-fill); --bs-btn-bg: var(--bookedz-fill); --bs-btn-border-color: var(--bookedz-fill); --bs-btn-hover-bg: var(--bookedz-fill); --bs-btn-hover-border-color: var(--bookedz-fill); --bs-btn-active-bg: var(--bookedz-fill-active); --bs-btn-active-border-color: var(--bookedz-fill-active); --bs-btn-disabled-bg: var(--bookedz-fill); --bs-btn-disabled-border-color: var(--bookedz-fill); font-weight: 700; box-shadow: var(--bookedz-button-shadow); }
+.btn { min-height: 44px; border-radius: .75rem; padding: .6rem 1rem; font-family: var(--bookedz-body); font-weight: 600; font-size: var(--text-button); display: inline-flex; align-items: center; justify-content: center; gap: .4rem; transition: background-color .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.btn-sm { padding: .4rem .8rem; }
+.btn-primary { --bs-btn-color: var(--bookedz-on-action); --bs-btn-hover-color: var(--bookedz-on-action); --bs-btn-active-color: var(--bookedz-on-action); --bs-btn-bg: var(--bookedz-primary); --bs-btn-border-color: var(--bookedz-primary); --bs-btn-hover-bg: var(--bookedz-primary-hover); --bs-btn-hover-border-color: var(--bookedz-primary-hover); --bs-btn-active-bg: var(--bookedz-primary-hover); --bs-btn-active-border-color: var(--bookedz-primary-hover); --bs-btn-disabled-bg: var(--bookedz-primary-dark); --bs-btn-disabled-border-color: var(--bookedz-primary-dark); }
 .btn-outline-primary { --bs-btn-color: var(--bookedz-primary-dark); --bs-btn-border-color: var(--bookedz-primary-dark); --bs-btn-hover-bg: var(--bookedz-primary-dark); --bs-btn-hover-border-color: var(--bookedz-primary-dark); --bs-btn-active-bg: var(--bookedz-primary-dark); --bs-btn-active-border-color: var(--bookedz-primary-dark); }
 .btn-outline-secondary { --bs-btn-color: var(--bookedz-muted); --bs-btn-border-color: var(--bookedz-control-border); --bs-btn-hover-bg: var(--bookedz-hover); --bs-btn-hover-border-color: var(--bookedz-control-border); --bs-btn-hover-color: var(--bookedz-ink); }
 .btn-outline-danger { --bs-btn-color: var(--bookedz-danger); --bs-btn-border-color: var(--bookedz-danger); }
@@ -147,35 +163,43 @@ h4,h5 { font-weight: 700; }
   color-scheme: dark;
   --bookedz-canvas: #1c1917; --bookedz-cream: #1c1917; --bookedz-surface: #292524;
   --bookedz-ink: #fafaf9; --bookedz-muted: #a8a29e; --bookedz-ink-soft: #a8a29e;
-  --bookedz-border: #57534e; --bookedz-control-border: #78716c; --bookedz-muted-border: #57534e;
-  --bookedz-primary-dark: #ffb79a; --bookedz-primary-hover: #ffd0bc; --bookedz-coral-dark: #ffb79a;
-  --bookedz-primary: #ff8a5b; --bookedz-coral: #ff8a5b; --bookedz-mint: #134e4a; --bookedz-yellow: #5b4210;
-  --bookedz-fill: #ff8a5b; --bookedz-fill-active: #ff7a45; --bookedz-on-fill: #1c1917;
-  --bookedz-orange-soft: #4a2b1f;
-  --bookedz-teal: #2dd4bf; --bookedz-teal-ink: #99f6e4; --bookedz-teal-soft: #134e4a;
-  --bookedz-mango: #fbbf24; --bookedz-mango-soft: #5b4210;
-  --bookedz-pink: #f472b6; --bookedz-pink-soft: #50213a; --bookedz-pink-ink: #fbcfe8;
-  --bookedz-focus: #5eead4;
-  --bookedz-glass: rgb(41 37 36 / 88%); --bookedz-glass-solid: #231f1c;
-  --bookedz-glass-border: rgb(250 250 249 / 12%); --bookedz-glass-hover: #34302d; --bookedz-glass-active: #4a2b1f;
-  --bookedz-hover: #34302d; --bookedz-forest: #99f6e4; --bookedz-success: #86efac;
+  --bookedz-border: #57534e; --bookedz-control-border: #57534e; --bookedz-muted-border: #57534e;
+  --bookedz-primary-dark: #ffb79a; --bookedz-primary-hover: #ff8a5b; --bookedz-coral-dark: #ffb79a;
+  --bookedz-peach: #4a2b1f; --bookedz-mango: #5b4210; --bookedz-teal: #2dd4bf; --bookedz-pink: #f472b6;
+  --bookedz-coral: #ff8a5b; --bookedz-primary: #ff8a5b; --bookedz-mint: #2dd4bf; --bookedz-yellow: #5b4210;
+  --bookedz-glass: rgb(41 37 36 / 88%); --bookedz-glass-solid: #292524;
+  --bookedz-glass-border: rgb(255 255 255 / 14%); --bookedz-glass-hover: #4a2b1f; --bookedz-glass-active: #4a2b1f;
+  --bookedz-hover: #4a2b1f; --bookedz-forest: #2dd4bf; --bookedz-success: #2dd4bf;
   --bookedz-icon: #a8a29e; --bookedz-map-overlay: rgb(41 37 36 / 94%);
-  --bookedz-disabled-bg: #3a3532; --bookedz-disabled-ink: #a8a29e;
-  --bookedz-danger: #fca5a5; --bookedz-on-action: #1c1917;
-  --bookedz-card-shadow: 0 4px 22px rgb(0 0 0 / 22%);
-  --bookedz-shadow: 0 12px 38px rgb(0 0 0 / 30%);
-  --bookedz-focus-glow: 0 0 0 .2rem rgb(94 234 212 / 24%);
-  --bookedz-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 6%), 0 8px 28px rgb(0 0 0 / 26%);
+  --bookedz-disabled-bg: #57534e; --bookedz-disabled-ink: #a8a29e;
+  --bookedz-danger: #ff9eaa; --bookedz-on-action: #1c1917;
+  --bookedz-card-shadow: 0 4px 22px rgb(45 212 191 / 10%);
+  --bookedz-shadow: 0 12px 38px rgb(0 0 0 / 18%);
+  --bookedz-focus-glow: 0 0 0 .2rem rgb(255 183 154 / 22%);
+  --bookedz-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 6%), 0 8px 28px rgb(0 0 0 / 16%);
+  --bs-body-color: var(--bookedz-ink); --bs-body-bg: var(--bookedz-canvas);
+  --bs-secondary-color: var(--bookedz-muted); --bs-secondary-rgb: 168,162,158;
+  --bs-border-color: var(--bookedz-border); --bs-link-color: #ffb79a; --bs-link-hover-color: #ffb79a;
+  --bs-link-color-rgb: 255,183,154; --bs-primary: #ff8a5b; --bs-primary-rgb: 255,138,91;
+  /* Compatibility tokens for incoming Hangout and motion components. */
+  --bookedz-fill: #ff8a5b;
+  --bookedz-fill-active: #ff7a45;
+  --bookedz-on-fill: #1c1917;
+  --bookedz-orange-soft: #4a2b1f;
+  --bookedz-teal-ink: #99f6e4;
+  --bookedz-teal-soft: #134e4a;
+  --bookedz-mango-soft: #5b4210;
+  --bookedz-pink-soft: #50213a;
+  --bookedz-pink-ink: #fbcfe8;
+  --bookedz-focus: #5eead4;
   --bookedz-button-shadow: 0 4px 14px rgb(255 138 91 / 22%);
   --bookedz-button-shadow-hover: 0 8px 24px rgb(255 138 91 / 36%);
   --bookedz-neutral-shadow: 0 3px 10px rgb(0 0 0 / 28%);
   --bookedz-neutral-shadow-hover: 0 7px 20px rgb(0 0 0 / 42%);
-  --bs-body-color: var(--bookedz-ink); --bs-body-bg: var(--bookedz-canvas);
-  --bs-secondary-color: var(--bookedz-muted); --bs-secondary-rgb: 168,162,158;
-  --bs-border-color: var(--bookedz-border); --bs-link-color: #ffb79a; --bs-link-hover-color: #ffd0bc;
-  --bs-link-color-rgb: 255,183,154; --bs-primary-rgb: 255,183,154;
+
 }
-:root { --bookedz-on-action: #ffffff; }
+:root { --bookedz-on-action: #1f2937; }
+:root[data-theme="dark"] .btn-primary { --bs-btn-color: var(--bookedz-on-action); --bs-btn-hover-color: var(--bookedz-on-action); --bs-btn-active-color: var(--bookedz-on-action); }
 :root[data-theme="dark"] .btn-outline-primary { --bs-btn-hover-color: var(--bookedz-on-action); --bs-btn-active-color: var(--bookedz-on-action); }
 :root[data-theme="dark"] .btn-outline-secondary { --bs-btn-color: var(--bookedz-muted); --bs-btn-border-color: var(--bookedz-control-border); --bs-btn-hover-bg: var(--bookedz-hover); --bs-btn-hover-color: var(--bookedz-ink); }
 :root[data-theme="dark"] .text-success { color: var(--bookedz-success) !important; }
@@ -192,10 +216,10 @@ h4,h5 { font-weight: 700; }
 :root[data-theme="dark"] .step-number,:root[data-theme="dark"] .rsvp-state--success .state-mark { color: var(--bookedz-on-action); }
 
 /* Event actions borrow a ticket's perforated edge; interaction supplies the motion. */
-.event-cta { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 58px 12px 22px; border: 1px solid var(--bookedz-fill); border-radius: 14px 24px 24px 14px; background: var(--bookedz-fill); color: var(--bookedz-on-fill); font-weight: 700; text-decoration: none; box-shadow: var(--bookedz-button-shadow); transition: transform var(--bookedz-motion-normal) var(--bookedz-ease), background-color var(--bookedz-motion-fast) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease); }
-.event-cta::before { content: ''; position: absolute; right: 43px; top: 10px; bottom: 10px; border-left: 1px dashed currentColor; opacity: .45; }
-.event-cta::after { content: ''; position: absolute; right: 20px; width: 8px; height: 8px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; transform: rotate(45deg); transition: transform var(--bookedz-motion-normal) var(--bookedz-ease); }
-.event-cta:hover { background: var(--bookedz-fill); color: var(--bookedz-on-fill); box-shadow: var(--bookedz-button-shadow-hover); transform: translateY(-2px); }
+.event-cta { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 58px 12px 22px; border: 1px solid var(--bookedz-primary); border-radius: 14px 24px 24px 14px; background: var(--bookedz-primary); color: var(--bookedz-on-action); font-family: var(--bookedz-body); font-size: var(--text-button); font-weight: 600; text-decoration: none; box-shadow: var(--bookedz-button-shadow); transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease; }
+.event-cta::before { content: ''; position: absolute; right: 43px; top: 10px; bottom: 10px; border-left: 1px dashed currentColor; opacity: .4; }
+.event-cta::after { content: ''; position: absolute; right: 20px; width: 8px; height: 8px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; transform: rotate(45deg); transition: transform .2s ease; }
+.event-cta:hover { background: var(--bookedz-primary-hover); color: var(--bookedz-on-action); transform: translateY(-2px); }
 .event-cta:hover::after { transform: translateX(3px) rotate(45deg); }
 .event-cta--secondary { background: var(--bookedz-surface); color: var(--bookedz-ink); border-color: var(--bookedz-control-border); box-shadow: var(--bookedz-neutral-shadow); }
 .event-cta--secondary:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); box-shadow: var(--bookedz-neutral-shadow-hover); }

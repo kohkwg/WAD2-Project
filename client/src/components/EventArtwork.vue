@@ -17,13 +17,13 @@ const kind = computed(() => {
 })
 
 const palette = computed(() => ({
-  sports: { base: '#dceee3', deep: '#6eab83', light: '#fff9ef', accent: '#e9725c' },
-  music: { base: '#fae1d8', deep: '#b85a46', light: '#fff9ef', accent: '#f3c65f' },
-  food: { base: '#f6e8b8', deep: '#9d6745', light: '#fff9ef', accent: '#e9725c' },
-  arts: { base: '#e6e2f2', deep: '#756d9c', light: '#fff9ef', accent: '#e9725c' },
-  city: { base: '#dcebe8', deep: '#48756f', light: '#fff9ef', accent: '#efbb58' },
-  garden: { base: '#dceee3', deep: '#628d65', light: '#fff9ef', accent: '#efbb58' },
-  festival: { base: '#f8e6c0', deep: '#a66650', light: '#fff9ef', accent: '#7da78a' },
+  sports: { base: '#dceee3', deep: '#6eab83', light: '#fff8f1', accent: '#ff6b35' },
+  music: { base: '#fae1d8', deep: '#b85a46', light: '#fff8f1', accent: '#f3c65f' },
+  food: { base: '#f6e8b8', deep: '#9d6745', light: '#fff8f1', accent: '#ff6b35' },
+  arts: { base: '#e6e2f2', deep: '#756d9c', light: '#fff8f1', accent: '#ff6b35' },
+  city: { base: '#dcebe8', deep: '#48756f', light: '#fff8f1', accent: '#efbb58' },
+  garden: { base: '#dceee3', deep: '#628d65', light: '#fff8f1', accent: '#efbb58' },
+  festival: { base: '#f8e6c0', deep: '#a66650', light: '#fff8f1', accent: '#7da78a' },
 }[kind.value]))
 </script>
 

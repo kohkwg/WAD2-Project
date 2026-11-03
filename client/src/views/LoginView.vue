@@ -141,18 +141,18 @@ async function submit() {
 <style scoped>
 .auth-wrap { max-width: 920px; margin: clamp(1.5rem, 6vh, 4rem) auto; display: grid; grid-template-columns: 1fr minmax(300px, 420px); gap: clamp(2rem, 7vw, 5.5rem); align-items: center; }
 .auth-intro { max-width: 430px; }
-.auth-kicker { margin: 0 0 .9rem; color: var(--bookedz-ink-soft, #62676b); font-size: .9rem; }
-.auth-title { color: var(--bookedz-ink, #292d32); font-family: var(--bookedz-heading); font-size: clamp(2.5rem, 5vw, 4.2rem); line-height: 1.02; letter-spacing: -.045em; }
-.auth-copy { max-width: 34ch; margin: 1.25rem 0 0; color: var(--bookedz-ink-soft, #62676b); font-size: 1.05rem; line-height: 1.6; }
-/* Theme tokens: the fixed light card stayed light in dark mode, hiding the (white) labels */
-.auth-card { border: 1px solid var(--bookedz-border, #e5ded2); border-radius: 24px; background: var(--bookedz-surface); box-shadow: var(--bookedz-shadow); }
-.auth-tabs { padding: .3rem; border-radius: 14px; background: var(--bookedz-hover); }
+.auth-kicker { margin: 0 0 .9rem; color: var(--bookedz-ink-soft, #636975); font-size: .9rem; }
+.auth-title { color: var(--bookedz-ink, #1f2937); font-family: var(--bookedz-heading); font-size: clamp(2.5rem, 5vw, 4.2rem); line-height: 1.02; letter-spacing: -.045em; }
+.auth-copy { max-width: 34ch; margin: 1.25rem 0 0; color: var(--bookedz-ink-soft, #636975); font-size: 1.05rem; line-height: 1.6; }
+/* Theme tokens: a fixed light card stayed light in dark mode, hiding the (white) labels.
+   --bookedz-peach is the palette's #ffe4d6 in light mode and its dark equivalent in dark mode. */
+.auth-card { border: 1px solid var(--bookedz-border, #e9ded3); border-radius: 24px; background: var(--bookedz-surface); box-shadow: var(--bookedz-shadow); }
+.auth-tabs { padding: .3rem; border-radius: 14px; background: var(--bookedz-peach); }
 .auth-tabs .nav-link { border-radius: 11px; color: var(--bookedz-muted); }
-/* Same "selected" look as the sidebar's active link (white on light orange was ~1.7:1 in dark) */
-.auth-tabs .nav-link.active { color: var(--bookedz-primary-dark); background: var(--bookedz-glass-active); font-weight: 650; }
-:deep(.form-control) { min-height: 46px; border-color: var(--bookedz-border, #e5ded2); border-radius: 12px; }
-:deep(.form-control:focus) { border-color: var(--bookedz-primary, #e9725c); box-shadow: 0 0 0 .2rem rgba(233, 114, 92, .18); }
-:deep(.btn-primary) { min-height: 46px; border-radius: 12px; }
+.auth-tabs .nav-link.active { color: var(--bookedz-on-action); background: var(--bookedz-primary); }
+:deep(.form-control) { min-height: 46px; border-color: var(--bookedz-border, #e9ded3); border-radius: 12px; }
+:deep(.form-control:focus) { border-color: var(--bookedz-primary, #ff6b35); box-shadow: 0 0 0 .2rem rgba(233, 114, 92, .18); }
+:deep(.btn-primary) { min-height: 46px; border-color: var(--bookedz-primary); border-radius: 12px; background: var(--bookedz-primary); }
 :deep(:focus-visible) { outline: 3px solid var(--bookedz-focus); outline-offset: 3px; }
 @media (max-width: 700px) { .auth-wrap { max-width: 480px; grid-template-columns: 1fr; gap: 1.5rem; margin: 1.25rem auto; } .auth-title { font-size: clamp(2.3rem, 12vw, 3.2rem); } .auth-copy { margin-top: .8rem; } }
 </style>

@@ -7,8 +7,8 @@ const preferences = { pottery: 20, music: 10 };
 const examples = [
   { tags: ['pottery'], expected: 200 / 3 },
   { tags: ['music'], expected: 50 },
-  { tags: ['pottery', 'music'], expected: 175 / 3 },
-  { tags: ['pottery', 'sports'], expected: 100 / 3 },
+  { tags: ['pottery', 'music'], expected: 250 / 3 },
+  { tags: ['pottery', 'sports'], expected: 200 / 3 },
   { tags: ['pottery', 'pottery'], expected: 200 / 3 },
 ];
 
@@ -69,4 +69,10 @@ test('inputs stay unchanged and tag order does not change the score', () => {
   checkEqual(calculateCompatibility(points, tags), calculateCompatibility(points, ['music', 'pottery']));
   checkEqual(tags.length, 2);
   checkEqual(points.pottery, 20);
+});
+
+test('adding an unmatched tag preserves fit and another matched tag improves it', () => {
+  const single = calculateCompatibility(preferences, ['pottery']);
+  checkEqual(calculateCompatibility(preferences, ['pottery', 'sports']), single);
+  checkTrue(calculateCompatibility(preferences, ['pottery', 'music']) > single);
 });

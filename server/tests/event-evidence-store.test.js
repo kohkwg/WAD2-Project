@@ -3,6 +3,14 @@ const { checkEqual, checkDeepEqual, checkThrows, checkRejects } = require('./che
 const { createEventEvidenceStore } = require('../services/eventEvidenceStore');
 const { calculateEventEvidence } = require('../services/eventEvidence');
 
+
+function checkClose(actual, expected) {
+  if (!Number.isFinite(actual) || Math.abs(actual - expected) > 1e-10) {
+    throw new Error(`Expected approximately ${expected}, received ${actual}`);
+  }
+}
+const aged = (points, days) => points * 2 ** (-days / 45);
+
 const EVENT = '11111111-1111-4111-8111-111111111111';
 const NOW = Date.parse('2026-10-27T12:00:00Z');
 const DAY = 86_400_000;
@@ -70,15 +78,15 @@ test('save → RSVP → attend → dismiss → undo returns one contribution and
   const store = createEventEvidenceStore('alice', db);
   const points = snapshot => calculateEventEvidence(snapshot, { now: NOW }).contribution;
   const saved = await store.setPreference(EVENT, 'save');
-  checkEqual(points(saved), 5);
+  checkClose(points(saved), aged(5, 20));
   db.setTime(NOW - 10 * DAY);
   db.register('alice', EVENT);
   const registered = await store.getSnapshot(EVENT);
-  checkEqual(points(registered), 10);
+  checkClose(points(registered), aged(10, 10));
   db.setTime(NOW - DAY);
   db.checkIn('alice', EVENT);
   const attended = await store.getSnapshot(EVENT);
-  checkEqual(points(attended), 15);
+  checkClose(points(attended), aged(15, 1));
   const dismissed = await store.setPreference(EVENT, 'dismiss');
   checkEqual(points(dismissed), 0);
   checkEqual(dismissed.rsvp.active, true);
@@ -87,7 +95,7 @@ test('save → RSVP → attend → dismiss → undo returns one contribution and
   checkDeepEqual(restored, attended);
   checkEqual(restored.save.timestamp, saved.save.timestamp);
   checkEqual(restored.rsvp.timestamp, registered.rsvp.timestamp);
-  checkEqual(points(restored), 15);
+  checkClose(points(restored), aged(15, 1));
 });
 
 test('cancellation falls back to saved date; resave and re-registration keep first dates', async () => {
@@ -99,7 +107,7 @@ test('cancellation falls back to saved date; resave and re-registration keep fir
   db.setTime(NOW);
   db.cancel('alice', EVENT);
   const cancelled = await store.getSnapshot(EVENT);
-  checkEqual(calculateEventEvidence(cancelled, { now: NOW }).contribution, 5);
+  checkClose(calculateEventEvidence(cancelled, { now: NOW }).contribution, aged(5, 20));
   checkEqual(cancelled.save.timestamp, saved.save.timestamp);
   await store.setPreference(EVENT, 'unsave');
   const resaved = await store.setPreference(EVENT, 'save');
@@ -159,7 +167,7 @@ test('only confirmed registrations earn RSVP points; other statuses preserve sav
     checkEqual(snapshot.rsvp.timestamp, null);
     checkEqual(calculateEventEvidence(snapshot, { now: NOW }).contribution, 0);
     await store.setPreference(EVENT, 'save');
-    checkEqual(calculateEventEvidence(await store.getSnapshot(EVENT), { now: NOW }).contribution, 5);
+    checkClose(calculateEventEvidence(await store.getSnapshot(EVENT), { now: NOW }).contribution, aged(5, 20));
   }
 });
 
@@ -175,7 +183,7 @@ test('direct confirmation and transitions to confirmed capture the confirmation 
     const confirmed = await store.getSnapshot(EVENT);
     const expected = new Date(NOW - (initialStatus === 'confirmed' ? 20 : 1) * DAY).toISOString();
     checkEqual(confirmed.rsvp.timestamp, expected);
-    checkEqual(calculateEventEvidence(confirmed, { now: NOW }).contribution, 10);
+    checkClose(calculateEventEvidence(confirmed, { now: NOW }).contribution, aged(10, initialStatus === 'confirmed' ? 20 : 1));
     db.setTime(NOW);
     db.register('alice', EVENT, 'confirmed');
     checkEqual((await store.getSnapshot(EVENT)).rsvp.timestamp, expected);
@@ -183,7 +191,7 @@ test('direct confirmation and transitions to confirmed capture the confirmation 
 });
 
 test('cancel/reconfirm retains first confirmation and its 45/91-day ageing', async () => {
-  for (const [age, expected] of [[45, 5], [91, 0]]) {
+  for (const [age, expected] of [[45, 5], [91, aged(10, 91)]]) {
     const db = fixture();
     const store = createEventEvidenceStore('alice', db);
     db.setTime(NOW - age * DAY);
@@ -200,11 +208,11 @@ test('cancel/reconfirm retains first confirmation and its 45/91-day ageing', asy
     const restored = await store.getSnapshot(EVENT);
     checkEqual(restored.rsvp.active, true);
     checkEqual(restored.rsvp.timestamp, original.rsvp.timestamp);
-    checkEqual(calculateEventEvidence(restored, { now: NOW }).contribution, expected);
+    checkClose(calculateEventEvidence(restored, { now: NOW }).contribution, expected);
   }
 });
 
-test('91-day-old save stays expired after unsave/resave and dismissal undo', async () => {
+test('91-day-old save retains its original decayed weight after resave and dismissal undo', async () => {
   const db = fixture();
   const store = createEventEvidenceStore('alice', db);
   db.setTime(NOW - 91 * DAY);
@@ -214,11 +222,11 @@ test('91-day-old save stays expired after unsave/resave and dismissal undo', asy
   const resaved = await store.setPreference(EVENT, 'save');
   checkEqual(resaved.save.timestamp, original.save.timestamp);
   checkEqual(resaved.save.active, true);
-  checkEqual(calculateEventEvidence(resaved, { now: NOW }).contribution, 0);
+  checkClose(calculateEventEvidence(resaved, { now: NOW }).contribution, aged(5, 91));
   await store.setPreference(EVENT, 'dismiss');
   const restored = await store.setPreference(EVENT, 'undo_dismiss');
   checkEqual(restored.save.timestamp, original.save.timestamp);
-  checkEqual(calculateEventEvidence(restored, { now: NOW }).contribution, 0);
+  checkClose(calculateEventEvidence(restored, { now: NOW }).contribution, aged(5, 91));
 });
 
 test('flagged attendance never creates attendance points or suppresses valid save evidence', async () => {
@@ -228,5 +236,5 @@ test('flagged attendance never creates attendance points or suppresses valid sav
   checkEqual(calculateEventEvidence(await store.getSnapshot(EVENT), { now: NOW }).contribution, 0);
   await store.setPreference(EVENT, 'save');
   db.register('alice', EVENT, 'pending');
-  checkEqual(calculateEventEvidence(await store.getSnapshot(EVENT), { now: NOW }).contribution, 5);
+  checkClose(calculateEventEvidence(await store.getSnapshot(EVENT), { now: NOW }).contribution, aged(5, 20));
 });

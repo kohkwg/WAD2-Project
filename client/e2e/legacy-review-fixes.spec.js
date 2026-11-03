@@ -144,7 +144,7 @@ test('Manage RSVPs reloads the event when the mounted route changes IDs', async 
   await expect(page.getByRole('link', { name: 'My events', exact: true })).toBeVisible()
 })
 
-test('closed RSVP disclosure exposes its expanded state and controlled list', async ({ page }) => {
+test('closed RSVP tab exposes its selected state and controlled panel', async ({ page }) => {
   await page.goto('/my-rsvps')
   await expect(page.getByRole('heading', { name: 'My RSVPs' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Refresh RSVPs' })).toBeVisible()
@@ -155,8 +155,10 @@ test('closed RSVP disclosure exposes its expanded state and controlled list', as
   }, STORE)
   await page.reload()
   await expect(page.getByRole('heading', { name: 'My RSVPs' })).toBeVisible()
-  await page.getByRole('button', { name: /Show cancelled and closed RSVPs/ }).click()
-  const disclosure = page.getByRole('button', { name: /Hide cancelled and closed RSVPs/ })
-  await expect(disclosure).toHaveAttribute('aria-expanded', 'true')
-  await expect(page.locator('#closed-rsvps')).toBeVisible()
+  const tab = page.getByRole('tab', { name: /^Cancelled/ })
+  await tab.click()
+  await expect(tab).toHaveAttribute('aria-selected', 'true')
+  await expect(tab).toHaveAttribute('aria-controls', 'panel-cancelled')
+  await expect(page.locator('#panel-cancelled')).toBeVisible()
+  await expect(page.locator('#panel-cancelled')).toContainText('Cancelled')
 })
