@@ -27,6 +27,7 @@ test('live update adapter can reschedule a draft while protecting started publis
   const { readFile } = await import('node:fs/promises')
   const { checkRejects, checkTrue } = checks
   const source = (await readFile(new URL('../src/utils/supabaseApi.js', import.meta.url), 'utf8'))
+    .replace("import * as hangouts from './supabaseHangoutsApi.js'", 'const hangouts = {}')
     .replace("import { supabase } from './supabase.js'", 'const supabase = {}')
     .replace("import { api as recommendationApi } from '../lib/api.js'", 'const recommendationApi = {}')
   const { updateEventWith } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))

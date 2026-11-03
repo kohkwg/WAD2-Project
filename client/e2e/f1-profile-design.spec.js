@@ -52,7 +52,7 @@ test('profile reflows in both themes and preserves interest drafts through save 
       await page.setViewportSize({ width, height: 900 })
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
       await expect(page.locator('main')).toHaveCount(1)
-      await expect(page.locator('.profile-form')).toHaveCSS('background-color', scheme === 'dark' ? 'rgb(30, 41, 50)' : 'rgb(255, 253, 250)')
+      await expect(page.locator('.profile-form')).toHaveCSS('background-color', scheme === 'dark' ? 'rgb(41, 37, 36)' : 'rgb(255, 255, 255)')
       const contrast = await page.locator('label[for="int-music"]').evaluate(el => {
         const luminance = color => {
           const channels = color.match(/\d+/g).slice(0, 3).map(Number).map(v => {
@@ -116,16 +116,16 @@ test('discovery view controls and hosting invitation reflow in both themes', asy
     for (const width of [375, 575, 768, 1280]) {
       await page.setViewportSize({ width, height: 900 })
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-      for (const name of ['Island', 'Map', 'List']) {
+      for (const name of ['Map', 'List']) {
         const rect = await page.getByRole('button', { name, exact: true }).boundingBox()
         expect(rect.height).toBeGreaterThanOrEqual(44)
       }
     }
   }
-  await page.getByRole('button', { name: 'Island', exact: true }).click()
+  await page.getByRole('button', { name: 'List', exact: true }).click()
   await page.locator('.hosting-invitation').scrollIntoViewIfNeeded()
   await page.screenshot({ path: testInfo.outputPath('discovery-hosting-dark.png') })
   await expect(page.getByRole('link', { name: 'Host an event' })).toBeVisible()
-  expect(await page.locator('.hosting-invitation').evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(32, 44, 53)')
+  expect(await page.locator('.hosting-invitation').evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(35, 31, 28)')
   expect(errors).toEqual([])
 })

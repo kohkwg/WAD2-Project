@@ -1,5 +1,19 @@
 # Project status and timeline
 
+3 November, local merge resolution — resolved the overlapping `aish-algorithm`
+and `origin/dev` files. Retained Aishani's recommendation, saved-event, My RSVPs,
+My events, palette, typography, illustrated landing and committed street-map
+workspace; retained incoming Hangout/template, route helpers, backend and migration
+source. The unused old SingaporeMap component follows dev's deletion; IslandArtwork
+is retained for the landing. Geographic exports and Supabase adapter imports are
+combined. All 77 Vue sources/templates and the shared stylesheet compile; 82
+focused calculation/adapter/recommendation tests, seven local backend route tests
+and twelve selected demo/mocked browser cases pass. Browser checks include
+organiser-to-participant state updates and both creation template choices.
+No live database writes, migration execution, full build/suite, commit, push or PR
+merge performed. This checkpoint supersedes conflicting design descriptions in
+the incoming history below; historical authorship entries are preserved.
+
 3 November, Discover street-map follow-up — replaced the illustrated Discover map with a new Leaflet/OneMap GreyLite panel beside the existing timeline. Current-page filters feed both views; thumbnails select real venue coordinates, while titles still open event details. Map previews reuse existing RSVP/waitlist actions and supplied recommendation metadata. Co-located events remain selectable groups, with fit-all/zoom controls, tile retry and a missing-coordinate count. Existing palette and recommendation backend/composable preserved. No new dependencies, schema changes, commits or hosted writes. Verification: 11 focused discovery Node tests and 22 recommendation Node tests passed; three changed Vue SFCs compile. Manual in-app browser checks covered real tile loading, keyboard row/pin selection, cluster choice, preview dismiss/focus, light/dark reflow at 375/575/768/1280px with no horizontal overflow, and no console errors. Automated browser suite, forced tile-failure and live authenticated scoring were not run.
 
 3 November, Discover workspace — integrated Aishani's reference with search,
@@ -876,3 +890,233 @@ not persist. These are dated observations, not permanent database invariants.
   `workspace-design`, `immersive-discovery`, creation preview, My events deletion and
   public list cards passed; `design-polish` failed its navbar Escape-focus case once
   (untouched code), then passed 2/2 when rerun. No full suite or production build.
+
+### 3 November — Hawker Glow tokens and OneMap discovery (OpenJio UI, steps 1–2)
+
+- Step 1: Hawker Glow token values in `main.css` (existing variable names), the
+  self-hosted Nunito font, fill/on-fill button tokens with resting and hover
+  shadows, and a teal focus ring. Removed 13 per-page terracotta `.btn-primary`
+  overrides across 11 files; updated the browser `theme-color`.
+- Step 2: `EventMap.vue` (Leaflet + OneMap Default/Night tiles) replaced
+  `SingaporeMap.vue`. `MapPreview.vue` replaced the hero island. Neighbourhood cards
+  now show real 3 km counts. Removed `IslandArtwork.vue` and the illustrated
+  projection helpers; the art files are unused but retained.
+- Evidence, 3 November: `node --test src/utils/__tests__/discoveryMap.test.js` 7/7
+  pass. In mocked Chromium on an isolated port (5193; 5173 was occupied), the
+  affected specs (`immersive-discovery`, `redesign`, `landing-page`,
+  `design-polish`, `filter-panel`, `motion-theme`, `f1-profile-design`) give
+  16 passes and 7 failures. That figure combines the last full run of the seven files
+  (15/8) with a rerun of `immersive-discovery` and `redesign` after one test-only
+  fix (9/1); no application code changed between them. All 7 also fail on untouched HEAD `196aae2` (checked in
+  a temporary detached worktree): `design-polish` live navigation, the three
+  `filter-panel` cases, `landing-page` filter hand-off, `motion-theme` category
+  disclosure and `redesign` Back scroll restore. Island-specific assertions were
+  rewritten for OneMap. A screenshot pass at 375/1280px in both themes showed one
+  `main`, no horizontal overflow and no console errors. No full suite or
+  production build was run.
+- Limits: OneMap tiles are fetched from onemap.gov.sg at runtime, so offline runs
+  show pins without tiles. Remaining steps (Hangout template onward) are not started.
+
+### 3 November — Create event template choice and Hangout template (step 3, demo mode)
+
+- `/organiser/events/new` now opens `NewEventView.vue`, which offers two template
+  cards. **Official** shows the existing Create Event wizard unchanged; **Hangout**
+  shows `components/hangout/HangoutWizard.vue` (who and what, when, where via
+  OneMap, then review and join mode). `?template=` keeps the choice in the URL, and
+  both drafts are kept (KeepAlive) when switching templates.
+- Hangouts are events with `kind: 'hangout'` and a `hangout` object (mode,
+  visibility, stage, date range or locked slot, invite token). Rules live in
+  `utils/hangouts.js` with Node tests. The join modes are Open (instant, refused when
+  full), RSVP auto-confirm and RSVP with approval. Creation ends on an invite slip
+  with copy/share. `/j/:token` previews a private invite without joining.
+  `/events/:id/rsvp` renders `HangoutPage.vue` for hangouts, so Official events
+  are untouched. Private and solo hangouts are excluded from Discover.
+- Live mode refuses hangout creation and invites with a clear message, because the
+  migration draft isn't written or applied yet; nothing is silently published as
+  Official. The Official wizard's own Open join-mode option is not yet added.
+- Not built yet: Time (availability/slot ranking), Plan and voting, On the day,
+  and the migration draft.
+
+### 3 November — Hangout Time: availability and slot ranking (step 4, demo mode)
+
+- Group hangouts now show **Find a time** (`components/hangout/TimePanel.vue`,
+  `AvailabilityGrid.vue`) to the host and confirmed members. Members paint free
+  30-minute cells in an explicit Paint, Erase or Scroll mode, or use the keyboard
+  (arrows, Space). They can apply presets, undo and type a range, then save
+  explicitly; leaving with unsaved marks asks first. "Remove my reply" returns them
+  to *no reply*.
+- The group overlap view shows aggregate counts only, with partly free cells rounded
+  inward. Raw free times are returned only to their owner.
+- Ranking is `utils/hangoutSlots.js`, following the specification's §4: a
+  sweep-line over responders' merged free time, all required people included, day
+  splits, a 2-hour minimum and a 5-hour target inside 11:00–22:00, and the
+  0.60/0.20/0.15/0.05 score. It returns the top five, each listing who can make it,
+  who can't and who hasn't replied. The host marks people required or optional,
+  checks a custom time (blocked unless every required person who replied is free for
+  all of it), and locks or unlocks a time. Locking is revalidated in the backend and
+  sets the event's start and end. When nothing qualifies, explicit rescue choices
+  appear (wait, make someone optional, shorter times, add days); none is applied
+  automatically.
+- Evidence: 24/24 Node checks (`hangouts`, `hangoutSlots`, `discoveryMap`,
+  `discovery-state`). A scratch Playwright run at 1280px light and 375px dark
+  covered create → preset → keyboard toggle → drag (1280 only) → undo → save →
+  ranked times → show on grid → lock → unlock, with one `main`, no overflow and no
+  console errors. Touch-drag painting on a real phone is not verified.
+- Limits: demo mode has one browser identity, so a demo hangout has only its host
+  unless someone joins in live mode later. Multi-person ranking is covered by the
+  Node tests. Editing a hangout's dates isn't built, and the "add days" choice
+  is advice only. Live mode refuses these calls until the migration draft exists.
+
+### 3 November — Hangout plan, Keep/Swap votes and confirmation (step 5, demo mode)
+
+- **Shape the plan** (`components/hangout/PlanPanel.vue`) opens once a hangout has
+  a locked time. Stops are real Official Bookedz events or host-entered OneMap places
+  that stay private to the plan. Sample/OpenJio listings are not used.
+- `utils/itinerary.js` adapts the specification's §5. Candidates are mapped
+  Official events that fit inside the slot (6 km, widening to 12 km; full events
+  and hangouts excluded). Ranking uses 0.7 × interest + 0.3 × proximity, then a
+  beam search (width 12, 2–4 stops, 40-minute wait cap, lunch/dinner windows,
+  no consecutive meals) with the spec's score weights (deal weight is zero: Bookedz
+  has no deals). Member interests come from profiles, falling back to the hangout's
+  interests. When no plan qualifies, the host gets a reason plus explicit choices.
+  These are meet later, just before the first event (a Bookedz-specific addition,
+  because Official events have fixed times), one stop, skip the meal, or add places
+  by hand. A chosen relaxation is saved with the plan.
+- `retime` reports missed events, long waits, overruns, closed places and
+  consecutive meals as must-fix. Unknown opening hours, a missing meal and full
+  events are concerns the host can accept. Travel is a distance estimate (walk or
+  public transport) and is labelled "estimated travel"; OneMap routing is step 6.
+- Hosts generate or regenerate, add events or places (up to 6 stops), move stops
+  earlier or later or to a position, remove them, and view up to three same-kind
+  swap alternatives. Every edit is previewed with new timings and saved only by
+  "Save order". Moving or adding a stop bumps its version, so earlier votes on it go
+  stale, and editing a confirmed plan reopens voting.
+- Members (and the host) vote Keep or Swap per stop while voting is open, and can
+  clear a vote. Votes never change the plan by themselves. Confirmation lists
+  must-fix problems and acceptable concerns separately and stores the final timings.
+  It always states that nothing is booked and that people RSVP to each event.
+  "Reopen voting" is available afterwards.
+- Not done: pointer drag reordering (buttons and a position select cover the same
+  moves by keyboard and touch), the greedy comparison baseline, spend estimates
+  (Bookedz events have no prices) and a live backend.
+
+### 3 November — Hangout On the day, OneMap routing proxy (step 6)
+
+- **On the day** (`components/hangout/GoPanel.vue`) appears once a time is locked.
+  Before confirmation it is a clearly labelled preview. After confirmation it shows
+  the host-set meeting point (120 characters at most), each stop with Google Maps
+  directions and its Bookedz event link, Copy plan, an `.ics` calendar file
+  (`utils/calendar.js`), and a copyable hangout link. All of it says nothing is
+  booked.
+- Late join (`utils/lateJoin.js`) takes an origin, either a OneMap address or a
+  one-time browser location that is never stored or shared, plus a departure time.
+  It routes to every stop and suggests the earliest stop reached at least 20 minutes
+  before the group leaves, with a backup, the time together, directions and
+  "Copy my ETA". Infeasible cases explain why.
+- `GET /api/route` (`server/routes/route.js`, `server/services/onemapRoute.js`)
+  proxies OneMap public-transport and walking routes. `ONEMAP_EMAIL` and
+  `ONEMAP_PASSWORD` are server-only placeholders in `.env.example`. Tokens refresh
+  before expiry, requests time out after 15 seconds, and results are cached in
+  memory (5,000 entries, 30 days, 15-minute departure buckets). It is limited to
+  120 requests per minute per IP, accepts Singapore coordinates only, and returns
+  generic 400/429/503 errors with no secrets. Unconfigured or failing OneMap returns
+  503, and the client then uses its distance estimate, labelled "estimated travel".
+  The route is public, because demo visitors have no Supabase session; it is rate
+  limited and coordinate-only. The persistent file cache from the spec isn't built.
+- The forecast (`lib/hangoutWeather.js`) calls NEA's data.gov.sg v2 endpoints
+  directly. It uses the two-hour area forecast within 2 hours, the 24-hour regional
+  forecast within a day, and the four-day outlook within 4 days. It is labelled
+  "NEA via data.gov.sg" with the update time, and is otherwise "unavailable" with a
+  retry.
+- Evidence: `server` `node --test tests/onemapRoute.test.js` 4/4 (fake OneMap:
+  token reuse, Singapore date and time, caching, failures, validation, 503 mapping,
+  rate limit). Client `onTheDay.test.js` 3/3 (late-join feasibility, ICS escaping,
+  folding and UTC, plan text, forecast horizons and picks). The running dev API on
+  3000 picked up the route and returned 503 "configuration" without credentials, so
+  the browser run used the labelled estimate. Live OneMap routing with real
+  credentials is not verified.
+
+### 3 November — Hangout database migration draft (step 7, not applied)
+
+- (Superseded below: the draft is now `supabase/migrations/20261103120000_hangouts.sql`.) The SQL was a **review
+  draft**, deliberately outside `supabase/migrations`. It has not been applied to
+  Bookerz or any hosted project; Timothy must review it and hosted history must be
+  checked first.
+- It adds `events.kind` (official/hangout, immutable after creation) and
+  `events.join_mode` (open/auto/approval; null keeps today's
+  `requires_approval` behaviour). It also adds the hangout tables (hangouts,
+  member settings, replies, free blocks, places, stops, votes), all read-only through
+  RLS, with every change going through `SECURITY DEFINER` RPCs that check
+  `auth.uid()`. Covered: create, invite preview and join, save or clear
+  availability, aggregate heatmap, required flags, lock or unlock, places, stops with
+  optimistic revisions and stop versions, votes and vote counts, confirm or reopen,
+  and the meeting point.
+- It replaces the events SELECT policy and `can_view_event`, so private and solo
+  hangouts are hidden from public reads, including the security-invoker
+  `events_with_counts`, which now also exposes `kind` and `join_mode`.
+  `register_for_event` is the 22 October definition with two marked changes: a
+  shared admission rule (Open refuses when full; a hangout's capacity includes its
+  host) and private hangouts joined only by invite token. Invite tokens are
+  column-hidden from everyone but the host.
+- Evidence: `server/checks/hangouts-db.check.mjs` loads all 13 repository
+  migrations plus the draft into in-memory PGlite 0.5.12 (installed in a temporary
+  folder, not a project dependency): 7/7 pass. Official auto, waitlist and Open
+  behaviour, kind immutability, hidden private hangouts for anon and non-members,
+  token-only join, owner-only raw free times with aggregate counts, required-member
+  lock rules, revision conflicts, stale votes after reordering, confirmation and
+  reopen-on-edit, and Open Jio listing with solo privacy are all covered. The check
+  found that capacity didn't count the host; that is fixed in both the draft and the
+  demo backend.
+- Not done: a live adapter in `supabaseApi.js` (live mode still refuses hangouts),
+  hosted signed-in testing, and database-side retiming (travel, waits and meal
+  windows stay in the application; the database rechecks authority, stage, bounds,
+  references, the 6-stop cap and revisions).
+
+### 3 November — live hangouts built (migration not yet applied)
+
+- `supabase/migrations/20261103120000_hangouts.sql` replaces the review draft. It adds
+  `hangout_members` (people list without free times), a richer invite preview
+  (`isHost`, own status, mode, tags) and an `event_availability` that counts the host
+  and hides private hangouts' counts. `server/checks/hangouts-db.check.mjs` (all 14
+  migrations, in-memory PGlite) passes 7/7, including the new member list and counts.
+- `client/src/utils/supabaseHangoutsApi.js` implements every hangout function against
+  RLS reads and the RPCs, plus `joinHangout` (invite token for private hangouts).
+  `supabaseApi.js` now maps `kind`/`joinMode`, loads hangout details in `getEvent`,
+  and sends hangout creation to `create_hangout`. The plan view is shared with the
+  demo through `utils/hangoutPlan.js`.
+- Express `/api/hangouts/:id/time` and `/preview-slot` (`server/routes/hangouts.js`,
+  `server/services/hangoutTime.js`) verify the token, check `is_hangout_member` as
+  the caller, then read with the server key and return only aggregate counts, ranked
+  options and names. They reuse `client/src/utils/hangoutSlots.js`.
+  `server/tests/hangoutsRoute.test.js` 3/3 and `onemapRoute.test.js` 4/4 pass.
+- Demo regression: the full plan → confirm → On the day flow (1280px light) passes
+  after the refactor. The only console message is the expected 503 from unconfigured
+  routing.
+- Pending: the user runs the CLI migration push (dry run first; note that
+  `20261027120000` may also be pending on the hosted database), adds the OneMap
+  credentials, then a signed-in `[TEST]` live run with cleanup.
+
+- OneMap routing verified live on 3 November with the user-added `ONEMAP_EMAIL`/`ONEMAP_PASSWORD`
+  (values never read): a separate API instance on port 3005 returned `live: true` for
+  transit and walking. A repeat request came from the cache, and Raffles Place → Tampines
+  at 18:00 the next day was 44 min transit with 1 transfer (the labelled estimate said ~39).
+  The already-running API on 3000 needs a restart to pick up the new `.env` values.
+### 3 November — My RSVPs card action sizing
+
+- At the team member's request, the RSVP card now puts its status badges on their own row (8px gaps)
+  and both actions in one column: "My ticket" (the ticket CTA, compacted to 44px) above "Cancel
+  RSVP" (full 44px instead of `btn-sm`), each 168px wide on desktop. Below 768px they become two
+  equal halves (151px at 375px). The "Cancel this RSVP?" step keeps its buttons on one line.
+  Labels, ids, the checked-in rule and the two-step cancel are unchanged (`MyRsvpsView.vue` only).
+- Checked at 1280px light and dark and 375px light, with the live-only ticket link inserted for
+  preview. Specs touching My RSVPs: 19 passed, 4 failed. `landing-page:45` also fails on the
+  untouched baseline. The other three fail identically on untouched HEAD `196aae2` (checked in a temporary
+  detached worktree, since removed): they expect the logo to open `/discover` and links named
+  "RSVP for …"; neither is touched by this change.
+- Live test attempt, 3 November: a probe from the live-mode app found the hangout migration
+  is **not yet on Bookerz** (`preview_hangout_invite` missing, no `events_with_counts.kind`),
+  so no live hangout test ran and nothing was written. `client/e2e-live/hangouts.spec.mjs` is
+  ready. It skips itself until the migration exists, then runs the full journey with both
+  development accounts and deletes its [TEST] hangout. The migration now also registers the
+  start-area venue in `event_created_venues`, so deleting a hangout removes it; the PGlite
+  check covers this (7/7).

@@ -1,7 +1,9 @@
-/* Hallmark · checked: 2026-10-24 · genre: playful · scope: app · built: Bookedz · v2.0.0 */
-/* Bookedz visual system. Bootstrap 5 (MIT): https://getbootstrap.com/.
-   Bricolage Grotesque (SIL OFL): local fonts/OFL.txt. */
+/* Hallmark · checked: 2026-10-24 · genre: playful · scope: app · built: Bookedz · v3.0.0 (Hawker Glow) */
+/* Bookedz visual system using the Hawker Glow palette. Bootstrap 5 (MIT): https://getbootstrap.com/.
+   Nunito (SIL OFL): local fonts/Nunito-OFL.txt. DM Sans (SIL OFL): local fonts/DM-Sans-OFL.txt.
+   Bricolage Grotesque (SIL OFL): local fonts/OFL.txt; retained shared heading face. */
 @font-face { font-family: 'Bricolage Grotesque'; src: url('./fonts/bricolage-grotesque.ttf') format('truetype'); font-weight: 400 800; font-display: swap; }
+@font-face { font-family: 'Nunito'; src: url('./fonts/nunito.ttf') format('truetype'); font-weight: 200 1000; font-display: swap; }
 @font-face { font-family: 'DM Sans'; src: url('./fonts/dm-sans.ttf') format('truetype'); font-weight: 100 1000; font-display: swap; }
 :root {
   --bookedz-canvas: #fff8f1; --bookedz-cream: #fff8f1; --bookedz-surface: #ffffff;
@@ -11,8 +13,9 @@
   --bookedz-primary: #ff6b35; --bookedz-primary-dark: #9a3412; --bookedz-ink-soft: #636975;
   --bookedz-body: 'DM Sans', system-ui, sans-serif;
   --bookedz-space-1: 4px; --bookedz-space-2: 8px; --bookedz-space-3: 16px; --bookedz-space-4: 24px; --bookedz-space-5: 40px; --bookedz-space-6: 64px;
-  --bookedz-radius-control: 12px; --bookedz-radius-card: 24px;
-  --bookedz-motion-fast: 160ms; --bookedz-motion-normal: 280ms; --bookedz-motion-reveal: 650ms;
+  --bookedz-radius-control: 14px; --bookedz-radius-card: 20px;
+  --bookedz-motion-feedback: 100ms; --bookedz-motion-fast: 160ms; --bookedz-motion-normal: 240ms; --bookedz-motion-slip: 250ms; --bookedz-motion-reveal: 420ms;
+  --bookedz-ease: cubic-bezier(.22,.61,.36,1); --bookedz-ease-stamp: cubic-bezier(.34,1.56,.64,1);
   --bs-body-font-family: var(--bookedz-body);
   --bookedz-heading: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
   /* Typography roles shared across pages and cards. */
@@ -48,6 +51,21 @@
   --bookedz-map-shadow: 0 4px 20px rgb(52 79 67 / 5%);
   --bookedz-preview-shadow: 0 18px 45px rgb(52 79 67 / 13%);
 
+  /* Compatibility tokens for incoming Hangout and motion components. */
+  --bookedz-fill: #ff6b35;
+  --bookedz-fill-active: #f75f27;
+  --bookedz-on-fill: #1f2937;
+  --bookedz-orange-soft: #ffe4d6;
+  --bookedz-teal-ink: #115e59;
+  --bookedz-teal-soft: #d5f5f0;
+  --bookedz-mango-soft: #fde7b0;
+  --bookedz-pink-soft: #fce1ef;
+  --bookedz-pink-ink: #9d174d;
+  --bookedz-focus: #0f766e;
+  --bookedz-button-shadow-hover: 0 8px 22px rgb(255 107 53 / 42%);
+  --bookedz-neutral-shadow: 0 3px 10px rgb(31 41 55 / 8%);
+  --bookedz-neutral-shadow-hover: 0 7px 18px rgb(31 41 55 / 16%);
+
 }
 html, body { overflow-x: clip; }
 html { scroll-padding-top: 110px; }
@@ -55,7 +73,7 @@ body { background: var(--bookedz-canvas); font-family: var(--bookedz-body); font
 a { text-underline-offset: .2em; }
 button, input, select, textarea { font: inherit; }
 button, a, input, select, textarea, summary { touch-action: manipulation; }
-h1,h2,h3,h4,h5,.navbar-brand { font-family: var(--bookedz-heading); letter-spacing: -.035em; color: var(--bookedz-ink); }
+h1,h2,h3,h4,h5,.navbar-brand { font-family: var(--bookedz-heading); letter-spacing: -.015em; line-height: 1.15; color: var(--bookedz-ink); }
 h1,h2,h3 { text-wrap: balance; overflow-wrap: break-word; min-width: 0; }
 h1, .page-title { font-family: var(--bookedz-heading); font-size: var(--text-page-title); font-weight: 700; line-height: 1.12; letter-spacing: -0.035em; }
 h2, .section-title { font-family: var(--bookedz-heading); font-size: var(--text-section-title); font-weight: 650; line-height: 1.25; }
@@ -107,7 +125,7 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 .workspace-panel { background: var(--bookedz-surface); border: 1px solid var(--bookedz-border); border-radius: 1.25rem; padding: 1.5rem; }
 .section-heading { font-size: 1.1rem; font-weight: 650; margin-bottom: 1rem; }
 .workspace-panel input,.workspace-panel textarea { scroll-margin: 5rem; }
-:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 4px; }
+:focus-visible { outline: 3px solid var(--bookedz-focus); outline-offset: 4px; }
 .app-main:focus { outline: none; }
 .skip-link { position: fixed; top: .5rem; left: 1rem; z-index: 2000; padding: .6rem 1rem; background: var(--bookedz-surface); border: 2px solid var(--bookedz-primary-dark); border-radius: .75rem; transform: translateY(-180%); }
 .skip-link:focus { transform: translateY(0); }
@@ -127,18 +145,15 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 @media(max-width:575.98px) { .app-main { padding-top: 1.5rem; } .app-main--discover { padding-top: 0; } .card-body,.workspace-panel { padding: 1.1rem; } .event-tool-nav { grid-template-columns: repeat(2,minmax(0,1fr)); } .app-navbar { min-height: 70px; } .app-navbar .navbar-brand { font-size: 1.6rem; margin-right: 0; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 
-@media(hover:hover) { .btn:not(:disabled):hover { box-shadow: var(--bookedz-button-shadow); } }
-.btn:active:not(:disabled) { transform: translateY(1px); }
-
-/* Shared artwork feathering leaves event markers and their hit areas intact. */
-.island-artwork > image {
-  mask-image: linear-gradient(to right, transparent, var(--bookedz-mask-opaque) 7%, var(--bookedz-mask-opaque) 93%, transparent), linear-gradient(to bottom, transparent, var(--bookedz-mask-opaque) 8%, var(--bookedz-mask-opaque) 91%, transparent);
-  mask-composite: intersect;
-  -webkit-mask-image: linear-gradient(to right, transparent, var(--bookedz-mask-opaque) 7%, var(--bookedz-mask-opaque) 93%, transparent), linear-gradient(to bottom, transparent, var(--bookedz-mask-opaque) 8%, var(--bookedz-mask-opaque) 91%, transparent);
-  -webkit-mask-composite: source-in;
+@media(hover:hover) {
+  .btn:not(:disabled):hover { box-shadow: var(--bookedz-neutral-shadow-hover); transform: translateY(-1px); }
+  .btn-primary:not(:disabled):hover { box-shadow: var(--bookedz-button-shadow-hover); }
 }
+.btn:active:not(:disabled) { transform: translateY(1px); box-shadow: var(--bookedz-neutral-shadow); transition-duration: var(--bookedz-motion-feedback); }
+.btn:disabled,.btn.disabled { box-shadow: none; }
+@media(prefers-reduced-motion:reduce) { .btn:not(:disabled):hover,.btn:active:not(:disabled) { transform: none; } }
 
-/* System-aware night palette. Artwork keeps its own daylight colours. */
+/* System-aware warm-charcoal night palette (Hawker Glow dark). */
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bookedz-canvas: #1c1917; --bookedz-cream: #1c1917; --bookedz-surface: #292524;
@@ -161,6 +176,22 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
   --bs-secondary-color: var(--bookedz-muted); --bs-secondary-rgb: 168,162,158;
   --bs-border-color: var(--bookedz-border); --bs-link-color: #ffb79a; --bs-link-hover-color: #ffb79a;
   --bs-link-color-rgb: 255,183,154; --bs-primary: #ff8a5b; --bs-primary-rgb: 255,138,91;
+  /* Compatibility tokens for incoming Hangout and motion components. */
+  --bookedz-fill: #ff8a5b;
+  --bookedz-fill-active: #ff7a45;
+  --bookedz-on-fill: #1c1917;
+  --bookedz-orange-soft: #4a2b1f;
+  --bookedz-teal-ink: #99f6e4;
+  --bookedz-teal-soft: #134e4a;
+  --bookedz-mango-soft: #5b4210;
+  --bookedz-pink-soft: #50213a;
+  --bookedz-pink-ink: #fbcfe8;
+  --bookedz-focus: #5eead4;
+  --bookedz-button-shadow: 0 4px 14px rgb(255 138 91 / 22%);
+  --bookedz-button-shadow-hover: 0 8px 24px rgb(255 138 91 / 36%);
+  --bookedz-neutral-shadow: 0 3px 10px rgb(0 0 0 / 28%);
+  --bookedz-neutral-shadow-hover: 0 7px 20px rgb(0 0 0 / 42%);
+
 }
 :root { --bookedz-on-action: #1f2937; }
 :root[data-theme="dark"] .btn-primary { --bs-btn-color: var(--bookedz-on-action); --bs-btn-hover-color: var(--bookedz-on-action); --bs-btn-active-color: var(--bookedz-on-action); }
@@ -185,8 +216,8 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 .event-cta::after { content: ''; position: absolute; right: 20px; width: 8px; height: 8px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; transform: rotate(45deg); transition: transform .2s ease; }
 .event-cta:hover { background: var(--bookedz-primary-hover); color: var(--bookedz-on-action); transform: translateY(-2px); }
 .event-cta:hover::after { transform: translateX(3px) rotate(45deg); }
-.event-cta--secondary { background: var(--bookedz-surface); color: var(--bookedz-ink); border-color: var(--bookedz-control-border); box-shadow: none; }
-.event-cta--secondary:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }
+.event-cta--secondary { background: var(--bookedz-surface); color: var(--bookedz-ink); border-color: var(--bookedz-control-border); box-shadow: var(--bookedz-neutral-shadow); }
+.event-cta--secondary:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); box-shadow: var(--bookedz-neutral-shadow-hover); }
 .event-cta:disabled { background: var(--bookedz-disabled-bg); border-color: var(--bookedz-border); color: var(--bookedz-disabled-ink); box-shadow: none; transform: none; cursor: not-allowed; }
 ::view-transition-old(root),::view-transition-new(root) { animation-duration: .34s; animation-timing-function: cubic-bezier(.2,.7,.2,1); }
 ::view-transition { pointer-events: none; }

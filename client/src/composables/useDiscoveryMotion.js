@@ -21,7 +21,7 @@ export function useDiscoveryMotion(target) {
           const intro = root.querySelectorAll('[data-hero-reveal]:not([data-motion-ready])')
           intro.forEach(element => element.setAttribute('data-motion-ready', ''))
           if (intro.length) gsap.fromTo(intro, { opacity: .1, y: 18 }, { opacity: 1, y: 0, duration: revealDuration, stagger: .09, ease: 'power2.out', clearProps: 'opacity,transform' })
-          const art = root.querySelector('.hero-illustration')
+          const art = root.querySelector('.hero-map')
           if (art && !seen.has(art)) {
             seen.add(art)
             gsap.fromTo(art, { opacity: .2, scale: .96 }, { opacity: 1, scale: 1, duration: revealDuration * 1.7, ease: 'power2.out', clearProps: 'opacity' })

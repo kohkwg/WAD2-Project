@@ -1,5 +1,30 @@
 # Testing and local operation
 
+3 November merge-resolution checkpoint: 82 focused Node tests passed across
+`rsvp-overview`, `saved-events`, `organiser-events`, geographic helpers, Hangout
+slots/basics/itinerary/on-the-day helpers and the recommendation pipeline/route/
+quality files. A further seven incoming backend route checks passed with temporary
+local ports:
+
+```sh
+node --test server/tests/hangoutsRoute.test.js server/tests/onemapRoute.test.js
+```
+
+The isolated saved-event/Official adapter fixtures now stub the incoming Hangout
+namespace; Hangout operations have their own focused checks. The recommendation
+pipeline test now checks the existing five-second clock-skew allowance at 5000ms
+and rejection at 5001ms; production scoring/evidence code is unchanged.
+
+Twelve selected browser cases passed from `immersive-discovery.spec.js`,
+`my-rsvps.spec.js` and `organiser-events.spec.js`. The updated immersive cases
+exercise the retained illustrated landing, committed street-map workspace, mobile
+layout and incoming Official/Hangout picker. Existing selected cases cover saved
+events, offer/cancellation flows, tab state and organiser approval/rejection/removal
+appearing in participant My RSVPs after focus. Browser data are synthetic demo
+fixtures and map tiles/search are stubbed; no hosted account or migration was used.
+The isolated run used port 5187 and `/tmp/wad2-merge-browser-results`. All 77 Vue
+sources/templates and the merged stylesheet compiled. No full suite/build ran.
+
 ## 3 November: Discover street map beside timeline
 
 Run focused checks from the repository root:
@@ -262,7 +287,7 @@ parallel Feature 4 CRUD.
 | File | Names / purpose |
 | --- | --- |
 | `client/.env` | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_R2_PUBLIC_URL`; optional `VITE_API_URL` (defaults to `http://127.0.0.1:3000`) and `VITE_USE_MOCK` |
-| `server/.env` | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`; `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`; optional `PORT` |
+| `server/.env` | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`; `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`; optional `PORT`; optional `ONEMAP_EMAIL`, `ONEMAP_PASSWORD` (hangout routes) |
 
 Use the supplied `.env.example` templates and team-provided values. Both R2 public
 URL names contain the same HTTPS bucket base, without trailing slash. They are
@@ -664,3 +689,91 @@ widths. The existing `design-polish.spec.js --grep 'search stays'` covers discov
 search/view-switch regression. On 25 October, these ran against an owned demo Vite
 server on 5183 using a temporary config overriding baseURL/output paths because
 5173 was occupied; the repository's default config remains unchanged.
+
+## OpenJio UI integration checks (3 November)
+
+```sh
+cd client && NODE_ENV=test node --test src/utils/__tests__/discoveryMap.test.js
+pnpm --dir client exec playwright test e2e/immersive-discovery.spec.js e2e/redesign.spec.js e2e/landing-page.spec.js e2e/design-polish.spec.js
+```
+
+These cover the OneMap hero preview, Night tiles in dark theme, Search this area and
+clear, the result rail, keyboard pins with focus return, 44px pin targets and reflow.
+OneMap tiles need network access. If 5173 is already serving a non-mock app,
+Playwright reuses it and map cases fail for lack of demo events. Run against an
+owned mock server instead: a temporary config overriding `baseURL`, `webServer`
+port/`reuseExistingServer: false` and output paths. See status for the pre-existing
+failures in these files.
+
+Hangout template rules and the Create event flow:
+
+```sh
+cd client && NODE_ENV=test node --test src/utils/__tests__/hangouts.test.js
+pnpm --dir client exec playwright test e2e/legacy-review-fixes.spec.js e2e/motion-theme.spec.js
+```
+
+Create-event tests open `/organiser/events/new?template=official`; the bare path
+now shows the template picker. The hangout flow (picker → wizard → invite slip →
+`/j/:token` → hangout page) was checked with a scratch Playwright script, not a
+committed spec.
+
+Hangout Time tools:
+
+```sh
+cd client && NODE_ENV=test node --test src/utils/__tests__/hangoutSlots.test.js src/utils/__tests__/hangouts.test.js
+```
+
+These cover clipping and merging, no-reply and required gating, ranking order and
+uniqueness, midnight splits, inward-rounded overlap counts, custom-slot blocking and
+rescue choices. The browser flow was checked with a scratch script, not a committed spec.
+
+Hangout plan rules:
+
+```sh
+cd client && NODE_ENV=test node --test src/utils/__tests__/itinerary.test.js
+```
+
+These cover estimated travel labels, must-fix and acceptable issues, meal windows,
+generation from real events only, explicit relaxations, the 12 km widening and
+full-event exclusion, and same-kind swaps.
+
+On the day and routing:
+
+```sh
+cd client && NODE_ENV=test node --test src/utils/__tests__/onTheDay.test.js
+cd server && node --test tests/onemapRoute.test.js
+```
+
+The server test uses a fake OneMap and an ephemeral local port. No real OneMap calls
+or credentials are needed; live routes need `ONEMAP_EMAIL`/`ONEMAP_PASSWORD` in
+`server/.env`.
+
+Hangout SQL draft (isolated, no credentials or hosted access):
+
+```sh
+mkdir -p /tmp/wad2-pglite && cd /tmp/wad2-pglite && npm init -y && npm install --ignore-scripts @electric-sql/pglite@0.5.12
+node server/checks/hangouts-db.check.mjs /tmp/wad2-pglite/node_modules/@electric-sql/pglite/dist/index.js
+```
+
+This loads every repository migration, including `20261103120000_hangouts.sql`, into an
+in-memory database. It never reads `.env`, and PGlite is not added to any lockfile.
+
+Live hangout server routes:
+
+```sh
+cd server && node --test tests/hangoutsRoute.test.js tests/onemapRoute.test.js
+```
+
+Applying the hangout migration (the user runs these and types any credentials):
+
+```sh
+npx supabase@2.122.0 login
+npx supabase@2.122.0 migration list        # compare local and hosted history first
+npx supabase@2.122.0 db push --dry-run     # shows every migration that would be applied
+npx supabase@2.122.0 db push
+```
+Live hangout journey (after the migration is pushed; you sign in when the browser opens):
+
+```sh
+pnpm --dir client test:e2e:live --headed e2e-live/hangouts.spec.mjs
+```

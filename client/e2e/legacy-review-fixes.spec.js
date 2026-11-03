@@ -48,7 +48,7 @@ test('a stale OneMap response cannot replace results for the current query', asy
     }
     await route.fulfill({ json: { results: [{ BUILDING: 'New place', SEARCHVAL: 'New place', ADDRESS: 'New address', POSTAL: '654321', LATITUDE: '1.3', LONGITUDE: '103.8' }] } })
   })
-  await page.goto('/organiser/events/new')
+  await page.goto('/organiser/events/new?template=official')
   await page.getByLabel('Event title').fill('Address test')
   await page.getByLabel('Starts').fill('2026-10-20T19:00')
   await page.getByLabel('Ends').fill('2026-10-20T21:00')
@@ -75,7 +75,7 @@ test('Escape dismisses pending OneMap suggestions and ignores the late result', 
       results: [{ BUILDING: 'Dismissed place', SEARCHVAL: 'Dismissed place', ADDRESS: 'Late address', POSTAL: '123456', LATITUDE: '1', LONGITUDE: '103' }],
     } })
   })
-  await page.goto('/organiser/events/new')
+  await page.goto('/organiser/events/new?template=official')
   await page.getByLabel('Event title').fill('Escape test')
   await page.getByLabel('Starts').fill('2026-10-20T19:00')
   await page.getByLabel('Ends').fill('2026-10-20T21:00')
@@ -99,7 +99,7 @@ test('Escape dismisses pending OneMap suggestions and ignores the late result', 
 })
 
 test('Publish revalidates elapsed start time and preserves the draft at Basics', async ({ page }) => {
-  await page.goto('/organiser/events/new')
+  await page.goto('/organiser/events/new?template=official')
   await page.getByLabel('Event title').fill('Future event')
   await page.getByLabel('Starts').fill('2026-10-16T12:01')
   await page.getByLabel('Ends').fill('2026-10-16T13:00')
@@ -119,7 +119,7 @@ test('Publish revalidates elapsed start time and preserves the draft at Basics',
 })
 
 test('Basics validation focuses the missing date field and keeps the draft', async ({ page }) => {
-  await page.goto('/organiser/events/new')
+  await page.goto('/organiser/events/new?template=official')
   await page.getByLabel('Event title').fill('Date focus test')
   await page.getByText('music', { exact: true }).click()
 

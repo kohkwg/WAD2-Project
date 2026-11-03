@@ -208,7 +208,9 @@ test('cancellation fallback and evidence timestamps remain owned by the evidence
     rsvp: { active: false, timestamp: iso(-DAY) },
   }], eventInterestsById: { past: ['music'] } });
   checkEqual(result.preferences.learnedPreferences.music, 2.5);
-  checkThrows(() => run({ evidenceSnapshots: [{ eventId: 'future', attendance: { verified: true, timestamp: iso(1) } }] }), RangeError);
+  const nearFuture = run({ evidenceSnapshots: [{ eventId: 'future', attendance: { verified: true, timestamp: iso(5000) } }], eventInterestsById: { future: ['music'] } });
+  checkEqual(nearFuture.preferences.learnedPreferences.music, 15);
+  checkThrows(() => run({ evidenceSnapshots: [{ eventId: 'future', attendance: { verified: true, timestamp: iso(5001) } }] }), RangeError);
 });
 
 test('inputs are not mutated and unrelated candidates do not change compatibility', () => {
