@@ -1,0 +1,173 @@
+{
+  "Date": "2026-11-02",
+  "Timezone": "Asia/Singapore",
+  "Dataset": "recommendation-events.json",
+  "EventsCreated": 0,
+  "HostedMutationsPerformed": false,
+  "MockedBrowserTestsPassed": 3,
+  "LiveDatabaseVerification": "PENDING",
+  "BackendHealth": "Local Express /health returned status true; this is not database verification",
+  "Accounts": "User provided separate A, B and organiser accounts; credentials/tokens omitted",
+  "Cases": [
+    {
+      "Mode": "MOCKED_BROWSER",
+      "Case": "Save teaches a different event; dismiss and undo",
+      "Setup": "Synthetic signed-in fixture; Express and Supabase are not used",
+      "Action": "Save Pottery afternoon, reload, dismiss Sketching afternoon, undo, fail/retry dismissal",
+      "Expected": "Saved A disappears; unsaved B has an action-based reason; refresh retains fixture state; dismiss hides B and undo restores it",
+      "Actual": "All checks passed; response is synthetic and fixture state lives in the test process",
+      "Result": "PASS",
+      "Evidence": [
+        "/tmp/wad2-recommendation-quality-results/recommendation-mvp-recomme-9dced-save-dismiss-undo-and-retry/mock-before-save.png",
+        "/tmp/wad2-recommendation-quality-results/recommendation-mvp-recomme-9dced-save-dismiss-undo-and-retry/mock-after-save.png",
+        "/tmp/wad2-recommendation-quality-results/recommendation-mvp-recomme-9dced-save-dismiss-undo-and-retry/mock-recommendations-after-save.json"
+      ]
+    },
+    {
+      "Mode": "MOCKED_BROWSER",
+      "Case": "Filtered/map discovery and responsive controls",
+      "Setup": "Synthetic events; two themes; widths 375, 575, 768, 1280",
+      "Action": "Filter Arts, save A, dismiss/undo B, search, show other picks, switch Map/List",
+      "Expected": "Filters persist; matching/other picks are labelled; saved A excluded; no horizontal overflow",
+      "Actual": "Passed; bookmark target increased from 38px to 44px",
+      "Result": "PASS",
+      "Evidence": [
+        "/tmp/wad2-recommendation-quality-results/recommendation-mvp-filtere-18178-icitly-labelled-other-picks/compact-picks-light.png",
+        "/tmp/wad2-recommendation-quality-results/recommendation-mvp-filtere-18178-icitly-labelled-other-picks/compact-picks-dark.png"
+      ]
+    },
+    {
+      "Mode": "MOCKED_BROWSER",
+      "Case": "Backend failure/retry and honest empty state",
+      "Setup": "Synthetic HTTP 503 and empty recommendation responses at 375px",
+      "Action": "Load error, enable success, click Try again, then return empty events",
+      "Expected": "Error/retry shown without substitute recommendations; empty response shows No picks yet",
+      "Actual": "Passed; this simulates backend failure and does not stop the real server",
+      "Result": "PASS",
+      "Evidence": [
+        "/tmp/wad2-recommendation-quality-results/recommendation-mvp-mocked--d2cf6-d-empty-results-stay-honest/mock-backend-error.png",
+        "/tmp/wad2-recommendation-quality-results/recommendation-mvp-mocked--d2cf6-d-empty-results-stay-honest/mock-empty.png"
+      ]
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "Create 12 events through the form",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Publish the prepared fictional demo drafts using existing suitable coordinate-bearing venues",
+      "Expected": "12 published [TEST] events with open registration and no initial participants",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "Cold start A",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Clear search/filters and open Discover as A with no interests/activity",
+      "Expected": "Eligible events have general_discovery source",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "A saves gaming",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Save Beginner Board Games",
+      "Expected": "Saved event excluded; other gaming events have positive compatibility and save-based reasons",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "A refresh persistence",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Reload Discover",
+      "Expected": "Stored save and learned recommendations persist through Express and Supabase",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "B saves arts",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Save Photography Walk as B",
+      "Expected": "Other arts events become personalised",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "Compare A and B",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Compare returned unsaved events, topic scores and reasons",
+      "Expected": "Same starting profiles diverge after different activity; no exact order requirement",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "A dismiss/undo",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Dismiss an unsaved gaming pick, then Undo",
+      "Expected": "Pick disappears and becomes eligible again",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "Registration exclusion",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Register for an unsaved pick",
+      "Expected": "Pending/confirmed registration excludes it",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "Organiser saves own event",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Save a test event as its organiser",
+      "Expected": "No learned preference from own-event activity",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "Live empty state",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Use controlled account/eligibility without modifying other users or existing events",
+      "Expected": "Honest empty state",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "Live unavailable backend",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Temporarily block only the test browser request, then retry",
+      "Expected": "Error/retry without fake fallback; real server remains available",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    },
+    {
+      "Mode": "LIVE_BROWSER_EXPRESS_SUPABASE",
+      "Case": "Live mobile usability",
+      "Setup": "Dedicated participant A/B plus separate organiser; reset authorised; identities and existing data not yet inspected",
+      "Action": "Use 375px width and keyboard/touch actions",
+      "Expected": "Readable cards, accessible actions and no horizontal overflow",
+      "Actual": "Not run: Computer Use reports permissions are not granted; no saved Playwright sessions exist",
+      "Result": "PENDING",
+      "Evidence": []
+    }
+  ]
+}

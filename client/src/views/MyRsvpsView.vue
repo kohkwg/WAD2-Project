@@ -1,17 +1,19 @@
 <script setup>
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
-import { RouterLink } from 'vue-router'
 import OfferBanner from '../components/rsvp/OfferBanner.vue'
-import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
+import NextEventCard from '../components/rsvp/NextEventCard.vue'
+import ParticipantRsvpRow from '../components/rsvp/ParticipantRsvpRow.vue'
+import SavedEventCard from '../components/rsvp/SavedEventCard.vue'
+import RsvpEmptyState from '../components/rsvp/RsvpEmptyState.vue'
+import { groupRsvps, eventCalendar } from '../utils/rsvpOverview.js'
 import {
   getMyRsvps,
   cancelRsvp,
   respondToOffer,
-  CURRENT_USER_ID,
-  CLOSED_STATUSES,
+  getSavedEvents,
+  unsaveEvent,
   USING_SUPABASE,
 } from '../utils/api.js'
-import { formatEventTime } from '../utils/helpers.js'
 
 const rsvps = ref([])
 const loading = ref(true)
@@ -19,7 +21,17 @@ const errorMessage = ref('')
 const statusMessage = ref('')
 const busyId = ref(null) // which RSVP is being saved
 const confirmCancelId = ref(null) // which RSVP is showing "Are you sure?"
-const showClosed = ref(false)
+const activeTab = ref('upcoming')
+const savedEvents = ref([])
+const savedError = ref('')
+const savedReady = ref(false)
+const groups = computed(() => groupRsvps(rsvps.value, now.value))
+const tabs = computed(() => [
+  { id: 'upcoming', label: 'Upcoming', count: groups.value.upcoming.length },
+  { id: 'saved', label: 'Saved', count: savedReady.value ? savedEvents.value.length : '—' },
+  { id: 'past', label: 'Past', count: groups.value.past.length },
+  { id: 'cancelled', label: 'Cancelled', count: groups.value.cancelled.length },
+])
 const statusAlert = ref(null)
 const errorAlert = ref(null)
 
@@ -42,13 +54,51 @@ async function keepRsvp(rsvpId) {
   document.getElementById(`cancel-${rsvpId}`)?.focus()
 }
 const planCounts = computed(() => [
-  { label: 'Confirmed', value: rsvps.value.filter(r => r.status === 'confirmed').length },
-  { label: 'Awaiting approval', value: rsvps.value.filter(r => r.status === 'pending').length },
-  { label: 'Waitlisted', value: rsvps.value.filter(r => r.status === 'waitlisted').length },
+  { label: 'Upcoming plans', value: groups.value.upcoming.length },
+  { label: 'Saved for later', value: savedReady.value ? savedEvents.value.length : '—' },
+  { label: 'Past events', value: groups.value.past.length },
 ])
-function datePart(event, part) {
-  const date = new Date(event.startTime || event.start_time)
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('en-SG', part === 'month' ? { month: 'short' } : { day: 'numeric' })
+function addCalendar(event) {
+  const calendar = eventCalendar(event)
+  if (!calendar) return
+  const url = URL.createObjectURL(new Blob([calendar], { type: 'text/calendar;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'bookedz-event.ics'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+async function removeSaved(eventId) {
+  if (busyId.value) return
+  busyId.value = `saved-${eventId}`
+  savedError.value = ''
+  statusMessage.value = ''
+  try {
+    if (pendingLoad) await pendingLoad
+    await unsaveEvent(eventId)
+    if (!mounted) return
+    savedEvents.value = savedEvents.value.filter(event => event.id !== eventId)
+    statusMessage.value = 'Event removed from saved events.'
+    await focusMessage(statusAlert)
+  } catch (error) {
+    if (mounted) savedError.value = 'Could not remove saved event: ' + error.message
+  } finally {
+    if (mounted) busyId.value = null
+  }
+}
+async function moveTab(event, index) {
+  let target
+  if (event.key === 'ArrowRight') target = (index + 1) % tabs.value.length
+  else if (event.key === 'ArrowLeft') target = (index + tabs.value.length - 1) % tabs.value.length
+  else if (event.key === 'Home') target = 0
+  else if (event.key === 'End') target = tabs.value.length - 1
+  else return
+  event.preventDefault()
+  activeTab.value = tabs.value[target].id
+  await nextTick()
+  document.getElementById(`tab-${activeTab.value}`)?.focus()
 }
 
 // `now` ticks every 30 seconds so the offer countdown moves
@@ -69,9 +119,19 @@ async function loadRsvps(allowBusy = false) {
   refreshing = true
   const request = ++loadRequest
   try {
-    pendingLoad = getMyRsvps(CURRENT_USER_ID)
-    const rows = await pendingLoad
-    if (mounted && request === loadRequest) rsvps.value = rows
+    pendingLoad = Promise.allSettled([getMyRsvps(), getSavedEvents()])
+    const [registrations, saves] = await pendingLoad
+    if (mounted && request === loadRequest) {
+      if (saves.status === 'fulfilled') {
+        savedEvents.value = saves.value
+        savedReady.value = true
+        savedError.value = ''
+      } else {
+        savedError.value = 'Could not load saved events: ' + saves.reason.message
+      }
+      if (registrations.status === 'fulfilled') rsvps.value = registrations.value
+      else throw registrations.reason
+    }
   } finally {
     if (request === loadRequest) {
       refreshing = false
@@ -82,6 +142,7 @@ async function loadRsvps(allowBusy = false) {
 
 async function refreshRsvps() {
   if (refreshing || busyId.value) return
+  now.value = Date.now()
   errorMessage.value = ''
   try {
     await loadRsvps()
@@ -116,11 +177,9 @@ onUnmounted(() => {
   window.removeEventListener('focus', onFocus)
 })
 
-const offers = computed(() => rsvps.value.filter((r) => r.status === 'offered'))
-const activeRsvps = computed(() =>
-  rsvps.value.filter((r) => ['confirmed', 'pending', 'waitlisted'].includes(r.status)),
-)
-const closedRsvps = computed(() => rsvps.value.filter((r) => CLOSED_STATUSES.includes(r.status)))
+const offers = computed(() => rsvps.value.filter(r => r.status === 'offered'
+  && Date.parse(r.offerExpiresAt) > now.value
+  && !(Date.parse(r.event.endTime) <= now.value)))
 
 async function answerOffer(rsvpId, accept) {
   if (busyId.value) return
@@ -186,197 +245,38 @@ async function cancel(rsvpId) {
 
 <template>
   <div class="my-rsvps-page">
-  <header class="rsvps-heading">
-    <div>
-      <h1 class="rsvps-title">My RSVPs</h1>
-      <p class="rsvps-lede">Confirmed plans, requests waiting for a reply, and offers to claim.</p>
-    </div>
-  </header>
-
-  <div v-if="loading" class="text-center my-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading your RSVPs…</span>
-    </div>
-  </div>
-
-  <template v-else>
-    <dl class="plans-summary"><div v-for="count in planCounts" :key="count.label"><dt>{{ count.label }}</dt><dd>{{ count.value }}</dd></div></dl>
-    <div class="rsvps-toolbar">
-      <button
-        type="button"
-        class="btn btn-outline-secondary btn-sm"
-        :disabled="busyId !== null"
-        @click="refreshRsvps"
-      >
-        Refresh RSVPs
-      </button>
-    </div>
-    <div
-      v-if="statusMessage"
-      ref="statusAlert"
-      tabindex="-1"
-      class="alert alert-success d-flex justify-content-between align-items-center" role="status" aria-live="polite"
-    >
-      <span>{{ statusMessage }}</span>
-      <button
-        type="button"
-        class="btn-close"
-        aria-label="Close"
-        @click="statusMessage = ''"
-      ></button>
-    </div>
-    <div v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
-
-    <!-- 24-hour offers go on top so they're not missed -->
-    <OfferBanner
-      v-for="rsvp in offers"
-      :key="rsvp.id"
-      :rsvp="rsvp"
-      :now="now"
-      :busy="busyId === rsvp.id"
-      @confirm="confirmOffer"
-      @decline="declineOffer"
-    />
-
-    <div v-if="activeRsvps.length === 0 && offers.length === 0" class="empty-rsvps">
-      <p class="empty-title">You haven't RSVP'd to anything yet.</p>
-      <p class="text-secondary mb-3">Your next plan is waiting to be found.</p>
-      <RouterLink to="/events" class="btn event-cta">Find events</RouterLink>
-    </div>
-
-    <TransitionGroup name="rsvp-list" tag="div" class="rsvp-list">
-    <article v-for="rsvp in activeRsvps" :key="rsvp.id" class="card rsvp-card">
-      <div class="rsvp-card-main">
-        <div class="date-ticket" aria-hidden="true"><span>{{ datePart(rsvp.event, 'month') }}</span><strong>{{ datePart(rsvp.event, 'day') }}</strong></div>
-        <div class="rsvp-plan-copy">
-          <h2 class="rsvp-event-title">{{ rsvp.event.title }}</h2>
-          <p class="small text-secondary mb-2">
-            {{ formatEventTime(rsvp.event) }} · {{ rsvp.event.venue.name }}
-          </p>
-          <div class="rsvp-status-row">
-            <RsvpStatusBadge :status="rsvp.status" />
-            <span v-if="rsvp.checkedInAt" class="badge text-bg-success">Checked in</span>
-          </div>
-          <p v-if="rsvp.status === 'waitlisted'" class="small mb-0 mt-2">
-            If a spot opens up, you'll see a banner here and have 24 hours to confirm.
-          </p>
-          <p v-if="rsvp.status === 'pending'" class="small mb-0 mt-2">
-            The organiser hasn't reviewed your RSVP yet.
-          </p>
-        </div>
-
-        <!-- One action column: the ticket first, then cancel, at a matching size -->
-        <div v-if="(USING_SUPABASE && rsvp.status === 'confirmed') || !rsvp.checkedInAt" class="rsvp-actions">
-          <!-- Feature 3: personal QR ticket for check-in (live Supabase only) -->
-          <RouterLink
-            v-if="USING_SUPABASE && rsvp.status === 'confirmed'"
-            :to="`/events/${rsvp.event.id}/ticket`"
-            class="btn event-cta ticket-action"
-          >My ticket</RouterLink>
-          <!-- Cancel with a second "are you sure?" step instead of a browser pop-up -->
-          <div v-if="!rsvp.checkedInAt && confirmCancelId === rsvp.id" class="cancel-confirm">
-            <p class="small mb-0">Cancel this RSVP?</p>
-            <button
-              type="button"
-              class="btn btn-danger btn-sm"
-              :disabled="busyId === rsvp.id"
-              @click="cancel(rsvp.id)"
-            >
-              <span v-if="busyId === rsvp.id" class="spinner-border spinner-border-sm me-1"></span>
-              Yes, cancel
-            </button>
-            <button
-              :id="`keep-${rsvp.id}`"
-              type="button"
-              class="btn btn-outline-secondary btn-sm"
-              @click="keepRsvp(rsvp.id)"
-            >
-              Keep it
-            </button>
-          </div>
-          <button
-            v-else-if="!rsvp.checkedInAt"
-            :id="`cancel-${rsvp.id}`"
-            type="button"
-            class="btn btn-outline-danger cancel-action"
-            @click="askCancel(rsvp.id)"
-          >
-            Cancel RSVP<span class="visually-hidden"> for {{ rsvp.event.title }}</span>
-          </button>
-        </div>
+    <header class="rsvps-heading">
+      <div><p class="rsvps-eyebrow">A LITTLE LESS PLANNING. A LOT MORE LIVING.</p><h1 class="page-title">My RSVPs</h1><p>Your plans, saved favourites and good times to come.</p></div>
+      <span class="header-star" aria-hidden="true">✳</span>
+    </header>
+    <div v-if="loading" class="text-center my-5" role="status"><span class="spinner-border text-primary" aria-hidden="true"></span><span class="visually-hidden">Loading your RSVPs…</span></div>
+    <template v-else>
+      <dl class="plans-summary"><div v-for="count in planCounts" :key="count.label"><dt>{{ count.label }}</dt><dd>{{ count.value }}</dd></div></dl>
+      <div class="rsvps-toolbar"><p>Make room for something good.</p><button type="button" class="btn btn-outline-secondary" :disabled="busyId !== null" @click="refreshRsvps">Refresh RSVPs</button></div>
+      <div v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success" role="status" aria-live="polite">{{ statusMessage }}</div>
+      <div v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+      <OfferBanner v-for="rsvp in offers" :key="rsvp.id" :rsvp="rsvp" :now="now" :busy="busyId !== null" @confirm="confirmOffer" @decline="declineOffer" />
+      <div class="rsvp-tabs" role="tablist" aria-label="Your events">
+        <button v-for="(tab, index) in tabs" :id="`tab-${tab.id}`" :key="tab.id" role="tab" type="button" :aria-selected="activeTab === tab.id" :aria-controls="`panel-${tab.id}`" :tabindex="activeTab === tab.id ? 0 : -1" @click="activeTab = tab.id" @keydown="moveTab($event, index)">{{ tab.label }} <span>{{ tab.count }}</span></button>
       </div>
-    </article>
-
-    </TransitionGroup>
-
-    <!-- Older / closed RSVPs hidden until asked for -->
-    <div v-if="closedRsvps.length > 0" class="mt-4">
-      <button
-        type="button"
-        class="btn btn-link p-0"
-        aria-controls="closed-rsvps"
-        :aria-expanded="showClosed"
-        @click="showClosed = !showClosed"
-      >
-        {{ showClosed ? 'Hide' : 'Show' }} cancelled and closed RSVPs ({{ closedRsvps.length }})
-      </button>
-      <ul v-if="showClosed" id="closed-rsvps" class="list-group mt-2">
-        <li
-          v-for="rsvp in closedRsvps"
-          :key="rsvp.id"
-          class="list-group-item closed-rsvp"
-        >
-          <span class="closed-title">{{ rsvp.event.title }}</span>
-          <span class="closed-badges">
-            <RsvpStatusBadge :status="rsvp.status" />
-            <span v-if="rsvp.checkedInAt" class="badge text-bg-success">Checked in</span>
-          </span>
-        </li>
-      </ul>
-    </div>
-  </template>
+      <section v-for="tab in tabs" v-show="activeTab === tab.id" :id="`panel-${tab.id}`" :key="tab.id" role="tabpanel" :aria-labelledby="`tab-${tab.id}`" tabindex="0" class="rsvp-panel">
+        <template v-if="tab.id === 'saved'">
+          <div v-if="savedError" class="alert alert-danger" role="alert">{{ savedError }} <button type="button" class="btn btn-outline-secondary" :disabled="busyId !== null" @click="refreshRsvps">Retry saved events</button></div>
+          <div v-if="savedEvents.length" class="saved-grid"><SavedEventCard v-for="event in savedEvents" :key="event.id" :event="event" :busy="busyId === `saved-${event.id}`" :disabled="busyId !== null" @unsave="removeSaved" /></div>
+          <RsvpEmptyState v-else-if="!savedError" section="saved" />
+        </template>
+        <template v-else>
+          <NextEventCard v-if="tab.id === 'upcoming' && groups.next" :rsvp="groups.next" :tickets-enabled="USING_SUPABASE" @calendar="addCalendar" />
+          <h2 class="section-title">{{ tab.id === 'upcoming' ? 'All upcoming plans' : tab.id === 'past' ? 'Past events' : 'Cancelled & closed' }}</h2>
+          <ParticipantRsvpRow v-for="rsvp in groups[tab.id]" :key="rsvp.id" :rsvp="rsvp" :past="tab.id === 'past'" :closed="tab.id === 'cancelled'" :confirming="confirmCancelId === rsvp.id" :busy="busyId === rsvp.id" :disabled="busyId !== null" :tickets-enabled="USING_SUPABASE" @ask-cancel="askCancel" @keep="keepRsvp" @cancel="cancel" />
+          <RsvpEmptyState v-if="!groups[tab.id].length && !errorMessage" :section="tab.id" />
+        </template>
+      </section>
+    </template>
   </div>
 </template>
-
 <style scoped>
-.plans-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 0 0 20px; }
-.plans-summary > div { padding: 16px 20px; border: 1px solid var(--bookedz-border); border-radius: 18px; background: var(--bookedz-glass-solid); }
-.plans-summary dt { color: var(--bookedz-muted); font-size: .8rem; font-weight: 500; }.plans-summary dd { margin: 4px 0 0; font: 650 1.8rem/1 var(--bookedz-heading); font-variant-numeric: tabular-nums; }
-.date-ticket { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; width: 64px; min-height: 76px; border: 1px solid var(--bookedz-border); border-radius: 16px; background: var(--bookedz-glass-active); color: var(--bookedz-primary-dark); }
-.date-ticket span { font-size: .8rem; }.date-ticket strong { font: 650 1.9rem/1.2 var(--bookedz-heading); }
-.rsvp-plan-copy { min-width: 0; flex: 1; }
-.rsvp-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-/* Ticket and cancel share one column, one width and one 44px height. */
-.rsvp-actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; flex-shrink: 0; min-width: 10.5rem; }
-.rsvp-actions .ticket-action { min-height: 44px; padding: 10px 44px 10px 18px; font-size: .9rem; border-radius: 12px 20px 20px 12px; }
-.rsvp-actions .ticket-action::before { right: 32px; top: 9px; bottom: 9px; }
-.rsvp-actions .ticket-action::after { right: 15px; }
-.cancel-action { min-height: 44px; border-radius: var(--bookedz-radius-control); }
-.cancel-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.cancel-confirm p { flex-basis: 100%; }
-.cancel-confirm .btn { flex: 1; min-height: 40px; white-space: nowrap; }
-@media (max-width: 767.98px) {
-  /* Equal halves on phones whatever each button's padding; a lone button fills the row. */
-  .rsvp-actions { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); width: auto; }
-}
-.rsvp-list-enter-active,.rsvp-list-leave-active,.rsvp-list-move { transition: opacity .25s ease, transform .3s ease; }.rsvp-list-enter-from,.rsvp-list-leave-to { opacity: 0; transform: translateY(12px); }
-@media(max-width:575px) { .plans-summary { gap: 8px; }.plans-summary > div { padding: 12px 10px; }.plans-summary dt { font-size: .75rem; }.date-ticket { width: 60px; min-height: 64px; flex-direction: row; gap: 6px; }.date-ticket strong { font-size: 1.3rem; } }
-@media(prefers-reduced-motion:reduce) { .rsvp-list-enter-active,.rsvp-list-leave-active,.rsvp-list-move { transition: none; } }
-.my-rsvps-page { max-width: 960px; margin: 0 auto; padding: 1.25rem 0 3rem; }
-.rsvps-heading { display: flex; justify-content: space-between; align-items: end; margin-bottom: 1.75rem; }
-.rsvps-kicker { margin: 0 0 .5rem; color: var(--bookedz-ink-soft, #62676b); font-size: .9rem; }
-.rsvps-title { margin: 0; color: var(--bookedz-ink, #292d32); font: 500 clamp(2.2rem, 5vw, 3.25rem)/1.05 var(--bookedz-heading); letter-spacing: -.04em; }
-.rsvps-lede { margin: .75rem 0 0; color: var(--bookedz-ink-soft, #62676b); }
-.rsvps-toolbar { display: flex; justify-content: end; margin-bottom: 1rem; }
-.rsvp-card { margin-bottom: .9rem; border: 1px solid var(--bookedz-border, #e5ded2); border-radius: 18px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
-.rsvp-card-main { display: flex; flex-direction: column; justify-content: space-between; gap: 1.25rem; padding: 1.25rem; }
-.rsvp-event-title { margin: 0 0 .4rem; color: var(--bookedz-ink, #292d32); font: 500 1.35rem/1.2 var(--bookedz-heading); }
-.empty-rsvps { padding: clamp(1.5rem, 6vw, 3rem); border: 1px dashed var(--bookedz-border); border-radius: 22px; background: var(--bookedz-glass-solid); text-align: center; }
-.empty-title { margin: 0 0 .5rem; color: var(--bookedz-ink, #292d32); font: 500 1.45rem var(--bookedz-heading); }
-:deep(:focus-visible) { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
-@media (min-width: 768px) { .rsvp-card-main { flex-direction: row; align-items: center; padding: 1.35rem 1.5rem; } }
-.closed-rsvp { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; }
-.closed-title { min-width: 0; overflow-wrap: anywhere; }
-.closed-badges { display: inline-flex; flex-wrap: wrap; gap: .5rem; }
-@media (max-width: 575px) { .my-rsvps-page { padding-top: .5rem; } }
+.my-rsvps-page{max-width:1060px;margin:0 auto;padding:12px 0 48px;color:var(--bookedz-ink)}.rsvps-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:38px;border-radius:26px;background:var(--bookedz-peach);border:1px solid var(--bookedz-border)}.rsvps-heading h1{ margin:10px 0; }.rsvps-heading p{margin:8px 0 0;color:var(--bookedz-muted);font-size:var(--text-body)}.rsvps-heading .rsvps-eyebrow{font-size:var(--text-caption);letter-spacing:.13em;font-weight:700}.header-star{font-size:6rem;line-height:1;color:var(--bookedz-primary);transform:rotate(15deg)}.plans-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:24px 0}.plans-summary>div{display:grid;grid-template-rows:auto 1fr;gap:7px;padding:22px;border:1px solid var(--bookedz-border);border-radius:18px;background:var(--bookedz-surface)}.plans-summary dt{grid-row:2;font-size:var(--text-small);color:var(--bookedz-muted);font-weight:500}.plans-summary dd{grid-row:1;margin:0;font:600 2rem var(--bookedz-heading);font-variant-numeric:tabular-nums}.rsvps-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}.rsvps-toolbar p{font-size:var(--text-small);color:var(--bookedz-muted);margin:0}.rsvps-toolbar button{ min-height:44px; }.rsvp-tabs{display:flex;gap:8px;border-bottom:1px solid var(--bookedz-border);overflow-x:auto}.rsvp-tabs button{border:0;border-bottom:3px solid transparent;background:transparent;color:var(--bookedz-muted);padding:14px 12px;font-size:var(--text-button);white-space:nowrap;min-height:48px}.rsvp-tabs button[aria-selected=true]{color:var(--bookedz-primary-dark);border-bottom-color:var(--bookedz-primary-dark);font-weight:650}.rsvp-tabs span{font-size:var(--text-caption);padding:3px 6px;border-radius:7px;background:var(--bookedz-hover);margin-left:4px}.rsvp-panel{padding-top:24px}.saved-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.section-title{ margin:0 0 18px; }.rsvp-panel .next-event{margin-top:0}.alert{overflow-wrap:anywhere}.alert button{min-height:44px;margin-left:8px}:deep(:focus-visible){outline:3px solid var(--bookedz-primary-dark);outline-offset:3px}
+@media(max-width:767px){.saved-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.plans-summary{gap:8px}.plans-summary>div{padding:16px 12px}}
+@media(max-width:575px){.rsvps-heading{padding:24px 20px}.header-star{font-size:3rem}.rsvps-heading .rsvps-eyebrow{max-width:210px;line-height:1.7}.plans-summary dt{grid-row:2;font-size:var(--text-small)}.plans-summary dd{font-size:1.65rem}.saved-grid{grid-template-columns:1fr}.rsvps-toolbar p{max-width:150px}.rsvp-tabs{gap:0}.rsvp-tabs button{padding:13px 8px;font-size:.8rem}.rsvp-tabs span{margin-left:2px}.my-rsvps-page{padding-top:0}}
 </style>

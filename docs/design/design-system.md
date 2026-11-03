@@ -7,26 +7,45 @@ backend, registration, weather and privacy contracts remain in [decisions](../..
 
 ## Visual direction and tokens
 
-Hawker Glow (adopted 3 November 2026 from the OpenJio design handoff; UI only).
-Warm, social and locally grounded: a cream or warm-charcoal canvas, bright orange
-actions, and teal, mango and pink accents. Nunito (700–900) supplies headings and
-the wordmark; DM Sans supplies body text, navigation and forms. Both are self-hosted
-with adjacent OFL licences (`Nunito-OFL.txt`, `DM-Sans-OFL.txt`). Bricolage
-Grotesque remains bundled but is no longer used. Shared colour, control, shadow and
-motion tokens live in `client/src/assets/main.css`; existing `--bookedz-*` names
-were kept so every page picked up the new values.
+An illustrated Singapore field guide, with quiet controls and more structured
+organiser tools. Bricolage Grotesque supplies headings/wordmark; DM Sans supplies
+body text, navigation and forms. Both are self-hosted with adjacent OFL licences.
+Page headings share one responsive scale; the landing display headline remains
+a separate promotional role.
+Shared colour, control, shadow and motion tokens live in `client/src/assets/main.css`.
+
+Typography roles (2 November update) also live in that stylesheet. Use the shared
+classes and remove conflicting scoped font declarations, including mobile rules;
+keep component spacing and layout local. Do not use `!important` to force the scale.
+
+| Role/class | Size at 16px root | Weight |
+| --- | --- | --- |
+| `.page-title` | 32–48px responsive | 700 |
+| `.section-title` | 22–28px responsive | 650 |
+| `.event-title` | 20px | 650 |
+| `.event-title.event-title--featured` | 22–28px responsive | 650 |
+| Body | 16px, line height 1.6 | Inherited body weight |
+| `.text-meta` | 14px, line height 1.5 | Inherited |
+| `.text-caption` | 12px, line height 1.5 | Inherited |
+| `.btn` / `.event-cta` | 14px | 600 |
+
+Discover, My RSVPs and My events share page/section/card roles, including their
+child cards and recommendation containers. Profile and Community also use the
+shared page-title class. Decorative date/count numerals retain their own roles.
 
 | Role | Light | Dark |
 | --- | --- | --- |
-| Canvas | #fff8f1 | #1c1917 |
-| Surface | #ffffff | #292524 |
-| Ink | #1f2937 | #fafaf9 |
-| Supporting text | #636975 | #a8a29e |
-| Bright fill (`--bookedz-fill`) | #ff6b35 | #ff8a5b |
-| Orange text/links (`--bookedz-primary-dark`) | #9a3412 | #ffb79a |
-| Teal / mango / pink | #14b8a6 / #f59e0b / #ec4899 | #2dd4bf / #fbbf24 / #f472b6 |
-| Focus ring | #0f766e | #5eead4 |
-| Border | #e9ded3 | #57534e |
+| Page background | #fff8f1 | #1c1917 |
+| Cards and surfaces | #ffffff | #292524 |
+| Text and outlines | #1f2937 | #fafaf9 |
+| Muted text | #636975 | #a8a29e |
+| Orange actions/steps/stars | #ff6b35 | #ff8a5b |
+| Orange text and links | #9a3412 | #ffb79a |
+| Soft peach | #ffe4d6 | #4a2b1f |
+| Soft mango | #fde7b0 | #5b4210 |
+| Teal | #14b8a6 | #2dd4bf |
+| Pink | #ec4899 | #f472b6 |
+| Borders | #e9ded3 | #57534e |
 
 Primary buttons and ticket CTAs use the bright fill with dark `--bookedz-on-fill`
 text (5.2:1 light, 7.5:1 dark); small white text never sits on orange, teal or
@@ -55,11 +74,17 @@ or Escape, returning focus to the toggle on Escape. The shell owns the only main
 
 ## Discovery and OneMap
 
-The illustrated island was replaced by OneMap on 3 November 2026. The landing hero
-keeps the headline, description and search in one copy column beside a still OneMap
-preview (`MapPreview.vue`) showing real upcoming venues only; "Explore the map"
-opens Discover’s Map view. Below 992px copy/search and the preview stack.
-Category/date/availability/sort choices stay inside the Filters disclosure.
+3 November update: Discover is now list-only. Map navigation, its interactive
+panel, selection controls and map-specific background fetching are removed.
+Timeline titles navigate directly to event details. Old `view=map` URLs are
+normalised to List while preserving filters. The decorative landing illustration
+and normal Leaflet/OneMap venue selection are retained. The illustrated-map
+implementation notes below describe the earlier design and retained source assets.
+
+Island view leads with headline, description and search in one copy column.
+Category/date/availability/sort choices appear inside the Filters disclosure;
+active choices are reflected in its count. Pending typed text is flushed before
+switching views. Below 992px, copy/search and artwork stack.
 
 Discover’s Map view (`EventMap.vue`) is Leaflet with OneMap tiles: Default in light
 theme, Night in dark, switched live through `lib/onemapTiles.js`. OneMap/SLA

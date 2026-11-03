@@ -14,7 +14,7 @@ const emit = defineEmits(['toggle'])
   </button>
 </template>
 <style scoped>
-.event-bookmark { position:absolute; top:12px; right:12px; z-index:3; width:38px; height:38px; padding:9px; display:grid; place-items:center; border:1px solid var(--bookedz-control-border); border-radius:50%; background:var(--bookedz-surface); color:var(--bookedz-ink); cursor:pointer; }
+.event-bookmark { position:absolute; top:12px; right:12px; z-index:3; width:44px; height:44px; padding:9px; display:grid; place-items:center; border:1px solid var(--bookedz-control-border); border-radius:50%; background:var(--bookedz-surface); color:var(--bookedz-ink); cursor:pointer; }
 .event-bookmark[aria-pressed="true"] { color:var(--bookedz-primary-dark); }
 .event-bookmark svg { position:static; width:19px; height:19px; }
 .bookmark-tooltip { position:absolute; top:calc(100% + 6px); right:0; padding:5px 8px; border-radius:4px; background:var(--bookedz-ink); color:var(--bookedz-surface); font-size:12px; white-space:nowrap; visibility:hidden; }

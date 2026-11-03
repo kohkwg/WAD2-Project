@@ -2,6 +2,14 @@ const test = require('node:test');
 const { checkEqual, checkDeepEqual, checkTrue } = require('./checks');
 const { fixture, candidate, USER, EVENT, NOW } = require('./recommendation-route-fixture');
 
+
+function checkClose(actual, expected) {
+  if (!Number.isFinite(actual) || Math.abs(actual - expected) > 1e-10) {
+    throw new Error(`Expected approximately ${expected}, received ${actual}`);
+  }
+}
+const aged = (points, days) => points * 2 ** (-days / 45);
+
 test('V1 route retains flat events, forwards JWT and uses explicit interests rather than boosted weights', async () => {
   const app = fixture({ tables: { profiles: [{ id: USER, interest_weights: { sports: 500 } }],
     events_with_counts: [candidate(EVENT), candidate('sports', ['sports'])] } });
@@ -31,7 +39,8 @@ test('route loads historical attendance independently and continues capped pagin
   const res = await app.request('/');
   checkEqual(res.statusCode, 200);
   checkEqual(res.body.events[0].id, 'arts');
-  checkEqual(res.body.events[0].compatibilityScore, 60);
+  const points = aged(15, 1);
+  checkClose(res.body.events[0].compatibilityScore, 100 * points / (points + 10));
   checkTrue(res.body.events[0].reason.includes('recent activity'));
   checkTrue(app.calls.some(call => call.table === 'events_with_counts' && call.method === 'range' && call.args[0] === 1));
   checkTrue(app.calls.some(call => call.table === 'events' && call.method === 'in' && call.args[1].includes('past')));
@@ -53,7 +62,11 @@ test('team, organiser, rejected, confirmed and unexpired offered events never en
   const res = await app.request('/');
   checkDeepEqual(res.body.events.map(event => event.id), ['expired', 'open']);
   // The excluded confirmed event still supplies valid interest evidence.
-  checkTrue(res.body.events.every(event => event.source === 'personalised' && event.compatibilityScore === 50));
+  const points = aged(10, 1);
+  for (const event of res.body.events) {
+    checkEqual(event.source, 'personalised');
+    checkClose(event.compatibilityScore, 100 * points / (points + 10));
+  }
 });
 
 test('cold-start route labels general discovery without fabricated match scores', async () => {
@@ -77,4 +90,20 @@ test('limit validation rejects malformed values and caps valid requests', async 
   for (const limit of ['-1', '2.5', 'abc']) checkEqual((await app.request('/', { query: { limit } })).statusCode, 400);
   checkDeepEqual((await app.request('/', { query: { limit: '0' } })).body.events, []);
   checkEqual((await app.request('/', { query: { limit: '100' } })).statusCode, 200);
+});
+
+test('route passes profile location into ranking and returns distances', async () => {
+  const app = fixture({ tables: {
+    profiles: [{ id: USER, lat: 1.3, lng: 103.8 }],
+    events_with_counts: [
+      candidate('a-far', ['music'], { lat: 1.4, lng: 103.8 }),
+      candidate('z-near', ['music'], { lat: 1.3, lng: 103.8 }),
+    ],
+  } });
+  const res = await app.request('/');
+  checkEqual(res.statusCode, 200);
+  checkEqual(res.body.events[0].id, 'z-near');
+  checkEqual(res.body.events[0].distance_km, 0);
+  checkClose(res.body.events[0].relevanceScore, 57.5);
+  checkEqual(res.body.events[0].compatibilityScore, 50);
 });

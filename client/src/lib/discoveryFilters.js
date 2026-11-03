@@ -86,7 +86,7 @@ export function discoveryUrlQuery(
   const selected = normalizeDiscoveryFilters(filters)
 
   return {
-    view,
+    view: view === 'categories' ? 'categories' : 'list',
     search,
     when: selected.when || undefined,
     extras: selected.extras.length ? selected.extras : undefined,
