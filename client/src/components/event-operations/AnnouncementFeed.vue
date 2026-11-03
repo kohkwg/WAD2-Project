@@ -44,6 +44,6 @@ onBeforeUnmount(() => { request++ })
 </template>
 <style scoped>
 .post-body { white-space: pre-wrap; overflow-wrap: anywhere; }
-.card { border-color: var(--bookedz-border, #e5ded2); border-radius: 18px; background: #fffdf8; }
-.post { border-color: var(--bookedz-border, #e5ded2) !important; }
+.card { border-color: var(--bookedz-border, #e9ded3); border-radius: 18px; background: #ffffff; }
+.post { border-color: var(--bookedz-border, #e9ded3) !important; }
 </style>

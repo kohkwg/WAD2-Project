@@ -1,5 +1,69 @@
 # Project status and timeline
 
+3 November, Discover street-map follow-up — replaced the illustrated Discover map with a new Leaflet/OneMap GreyLite panel beside the existing timeline. Current-page filters feed both views; thumbnails select real venue coordinates, while titles still open event details. Map previews reuse existing RSVP/waitlist actions and supplied recommendation metadata. Co-located events remain selectable groups, with fit-all/zoom controls, tile retry and a missing-coordinate count. Existing palette and recommendation backend/composable preserved. No new dependencies, schema changes, commits or hosted writes. Verification: 11 focused discovery Node tests and 22 recommendation Node tests passed; three changed Vue SFCs compile. Manual in-app browser checks covered real tile loading, keyboard row/pin selection, cluster choice, preview dismiss/focus, light/dark reflow at 375/575/768/1280px with no horizontal overflow, and no console errors. Automated browser suite, forced tile-failure and live authenticated scoring were not run.
+
+3 November, Discover workspace — integrated Aishani's reference with search,
+compact Picked for you strip, pastel category shortcuts, dated event rows and a
+sticky desktop map. Timeline and map share the current filtered/paginated event
+array and selection; selected off-centre events pan into the embedded map frame.
+Phones use List/Map tabs, a single initial pick and retained See all. Existing
+recommendation backend/composable/filter helpers are unchanged; supplied scores,
+reasons, source labels, save/dismiss/undo/retry and canonical event actions remain.
+New rows show only real status/availability; full events link to the waitlist.
+The existing selected island and water/Flyer/plane/bird motion are retained.
+Six changed SFCs compile. Focused checks: 22 backend recommendation, 10 existing
+discovery/projection and four new strip/row rendering cases pass. In-app demo
+browser checks cover both themes at 375/575/768/1280px without overflow, desktop
+and mobile selection/focus return, category/list/map consistency and empty search.
+No full suite/build, live signed-in recommendation persistence, Safari/device,
+dependency, database, commit, push or deployment verification in this pass.
+
+3 November, stable-boat refinement — replaced translating/bobbing SVG hulls with
+detailed fixed boats in `singapore-anchored-boats-plate.webp`, matching Aishani's
+reference. `IslandBoats.vue` now animates only four wake streams and twelve stern
+ripples; open-water currents/glints remain. The port/cargo/ferry/launch hulls are
+painted and never change position. Moved the desktop pause control to the top
+right so it does not cover the northwest ferry. Four component compilations pass;
+in-app temporal checks confirm fixed anchors, changing water/wakes and all 37
+water/wake effects freezing when paused. No console warnings/errors and no page
+overflow at 375/575/768/1280px. A revised recording is in this chat's outputs.
+The earlier sailing-route notes below are historical. No full build/suite,
+hosted writes, dependencies, commit or push; reduced-motion CSS retained/compiled.
+
+3 November, motion follow-up — added `IslandBoats.vue` with four visible sailing
+routes (cargo, ferry, coastal speedboat and bay speedboat), bobbing vessels and
+flowing wakes. Added `IslandWater.vue` with ten open-water ripple/glint patches
+and shoreline flow. Negative route delays show boats immediately; Flyer rotation
+is now 48 seconds. New sibling `singapore-living-water-plate.webp` removes the
+painted sailing cargo ship while retaining the moored harbour vessel. It is shared
+by map, landing artwork and neighbourhood thumbnails. An inherited play-state
+connects new motion to existing pause/offscreen/tab handling; reduced-motion CSS
+is retained in every component. Four SFCs compile; in-app measurements confirm
+all four routes, ten currents and four wakes change over time, and all 33 new
+animated elements actually freeze while paused. Responsive checks at
+375/575/768/1280px show no page overflow or console warnings/errors. A short GIF
+of the actual running map is in the requesting chat's outputs. No full suite,
+build, hosted writes, dependencies, commit or push; reduced motion was compiled
+but not re-emulated on this host.
+
+3 November — expanded illustrated Singapore island integrated locally. The shared
+1448×1086 WebP adds terrain, neighbourhoods and attractions; printed labels and
+the static Flyer wheel were cleaned for independent overlays. Wheel, boats, plane
+and birds retain the existing pause/visibility/reduced-motion implementation at
+new positions. Event projection anchors and list neighbourhood thumbnails match
+the new composition. A separate label component provides 10px labels, 44px native
+button targets, keyboard/click zoom, closer-view attractions and viewport/collision
+suppression. Mobile caption sits above the artwork to avoid covering Woodlands.
+Four focused projection/clustering tests and four edited SFC compilations pass.
+In-app browser checks passed light/dark at 375/575/768/1280px (no horizontal or
+label overlap, one main), label zoom/focus, keyboard event preview/focus return,
+pause/resume and mobile detail zoom. No console warnings/errors observed. The
+standalone Playwright launch was blocked by the host sandbox; in-app browser
+checks supplied the UI evidence. Reduced-motion CSS is preserved/compiled but
+was not re-emulated in this browser. Checks used Node 24 and isolated demo server
+5189; Node 22, full suites/build, Safari/device and live accounts were not tested.
+No dependencies, database, hosted writes, commit, push or deployment changes.
+
 2 November — shared typography tokens/classes now align Discover, My RSVPs and
 My events, including their recommendation, ordinary, saved, next-event and
 organiser cards. Profile and Community page titles also adopt the shared role.

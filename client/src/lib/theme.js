@@ -11,7 +11,7 @@ function applyTheme() {
   document.documentElement.dataset.theme = theme
   document.documentElement.dataset.bsTheme = theme
   document.documentElement.style.colorScheme = theme
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#141b22' : '#fff8ec')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1c1917' : '#fff8f1')
 }
 export function setTheme(value) {
   if (!choices.includes(value)) return

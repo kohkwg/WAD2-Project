@@ -452,14 +452,14 @@ async function demoExpireOffers() {
 .capacity-title > strong span { font-size: 1rem; }
 .capacity-track { position: relative; display: block; width: 100%; height: 13px; overflow: hidden; margin: 1rem 0 .9rem; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-hover); }
 .capacity-segment { position: absolute; inset: 0; display: block; width: 100%; height: 100%; transform-origin: left; transition: transform 320ms cubic-bezier(.2,.8,.2,1); }
-.capacity-segment--confirmed { z-index: 3; background: var(--bookedz-primary-dark); }
+.capacity-segment--confirmed { z-index: 3; background: var(--bookedz-primary); }
 .capacity-segment--offered { z-index: 2; background: var(--bookedz-yellow); }
 .capacity-segment--available { background: var(--bookedz-mint); }
 .capacity-legend { display: flex; flex-wrap: wrap; gap: .45rem 1rem; padding: 0; margin: 0; list-style: none; }
 .capacity-legend li { display: inline-flex; align-items: center; gap: .4rem; color: var(--bookedz-muted); font-size: .78rem; }
 .capacity-legend strong { color: var(--bookedz-ink); font-variant-numeric: tabular-nums; }
 .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
-.legend-dot--confirmed { background: var(--bookedz-primary-dark); }
+.legend-dot--confirmed { background: var(--bookedz-primary); }
 .legend-dot--offered { background: var(--bookedz-yellow); }
 .legend-dot--available { background: var(--bookedz-mint); border: 1px solid var(--bookedz-muted-border); }
 .status-chips { display: grid; grid-template-columns: 1fr; align-content: center; gap: .6rem; }

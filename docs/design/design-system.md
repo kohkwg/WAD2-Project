@@ -34,12 +34,17 @@ shared page-title class. Decorative date/count numerals retain their own roles.
 
 | Role | Light | Dark |
 | --- | --- | --- |
-| Canvas | #fff8ec | #141b22 |
-| Surface | #fffdfa | #1e2932 |
-| Ink | #34334a | #f3eee4 |
-| Supporting text | #63665e | #b7c2c5 |
-| Action/accent | #aa3e2c | #ffad97 |
-| Border | #e5ded2 | #3b4a54 |
+| Page background | #fff8f1 | #1c1917 |
+| Cards and surfaces | #ffffff | #292524 |
+| Text and outlines | #1f2937 | #fafaf9 |
+| Muted text | #636975 | #a8a29e |
+| Orange actions/steps/stars | #ff6b35 | #ff8a5b |
+| Orange text and links | #9a3412 | #ffb79a |
+| Soft peach | #ffe4d6 | #4a2b1f |
+| Soft mango | #fde7b0 | #5b4210 |
+| Teal | #14b8a6 | #2dd4bf |
+| Pink | #ec4899 | #f472b6 |
+| Borders | #e9ded3 | #57534e |
 
 Action foregrounds use `--bookedz-on-action`, rather than assuming white works in
 both themes. Cards and controls have distinct radii; interactive targets are at
@@ -62,6 +67,13 @@ it is not an anonymous live session. Mobile navigation closes on route changes
 or Escape, returning focus to the toggle on Escape. The shell owns the only main.
 
 ## Discovery and island
+
+3 November update: Discover is now list-only. Map navigation, its interactive
+panel, selection controls and map-specific background fetching are removed.
+Timeline titles navigate directly to event details. Old `view=map` URLs are
+normalised to List while preserving filters. The decorative landing illustration
+and normal Leaflet/OneMap venue selection are retained. The illustrated-map
+implementation notes below describe the earlier design and retained source assets.
 
 Island view leads with headline, description and search in one copy column.
 Category/date/availability/sort choices appear inside the Filters disclosure;

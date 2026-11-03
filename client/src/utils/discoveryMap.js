@@ -8,18 +8,18 @@ export function projectVenue(event) {
   return { x: 100 + (lng - 103.59) / 0.51 * 1000, y: 570 - (lat - 1.15) / 0.34 * 480 }
 }
 
-// Authored regional control points on the supplied illustration (1200×900).
+// Authored regional control points on the expanded illustration (1200×900).
 // These register broad neighbourhoods, not surveyed street-level positions.
 // All events use the same continuous geographic warp; none get manual slots.
 export const ILLUSTRATION_ANCHORS = [
-  { name: 'Jurong', lat: 1.34, lng: 103.7, x: 215, y: 390 },
-  { name: 'Woodlands', lat: 1.435, lng: 103.79, x: 550, y: 155 },
-  { name: 'Central / Orchard', lat: 1.3048, lng: 103.8318, x: 510, y: 420 },
-  { name: 'Bishan', lat: 1.35, lng: 103.85, x: 520, y: 300 },
-  { name: 'Tampines', lat: 1.355, lng: 103.945, x: 810, y: 305 },
-  { name: 'Changi', lat: 1.365, lng: 104.0, x: 1055, y: 385 },
-  { name: 'Marina Bay', lat: 1.282, lng: 103.855, x: 715, y: 525 },
-  { name: 'Sentosa', lat: 1.25, lng: 103.83, x: 605, y: 740 },
+  { name: 'Jurong', lat: 1.34, lng: 103.7, x: 180, y: 440 },
+  { name: 'Woodlands', lat: 1.435, lng: 103.79, x: 440, y: 100 },
+  { name: 'Central / Orchard', lat: 1.3048, lng: 103.8318, x: 650, y: 390 },
+  { name: 'Bishan', lat: 1.35, lng: 103.85, x: 600, y: 270 },
+  { name: 'Tampines', lat: 1.355, lng: 103.945, x: 1005, y: 255 },
+  { name: 'Changi', lat: 1.365, lng: 104.0, x: 1095, y: 430 },
+  { name: 'Marina Bay', lat: 1.282, lng: 103.855, x: 810, y: 610 },
+  { name: 'Sentosa', lat: 1.25, lng: 103.83, x: 585, y: 780 },
 ]
 const illustrationBase = point => ({ x: (point.x - 100) * 1.2, y: (point.y - 90) * 1.875 })
 const calibratedAnchors = ILLUSTRATION_ANCHORS.map(anchor => ({ ...anchor, base: illustrationBase(projectVenue(anchor)) }))

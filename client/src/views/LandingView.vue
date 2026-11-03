@@ -15,8 +15,8 @@ const query = computed(() => discoveryEventQuery(filters.value, { search: search
 const { total, loading, error, fetchEvents } = useEvents()
 function refreshCount() { fetchEvents({ ...query.value, countOnly: true }) }
 watch(query, refreshCount, { immediate: true })
-function explore(mode) {
-  router.push({ path: '/discover', query: discoveryUrlQuery(filters.value, search.value, mode === 'map' ? 'map' : 'list') })
+function explore() {
+  router.push({ path: '/discover', query: discoveryUrlQuery(filters.value, search.value, 'list') })
 }
 </script>
 

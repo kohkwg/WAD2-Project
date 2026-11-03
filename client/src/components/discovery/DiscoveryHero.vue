@@ -29,13 +29,10 @@ function changeMode(mode) {
     </div>
     <div class="illustrated-island">
       <svg v-if="!artFailed" class="hero-illustration" viewBox="0 0 1200 900" role="img" aria-label="A whimsical miniature Singapore, from leafy neighbourhoods to Marina Bay and Sentosa" :data-loaded="artLoaded"><IslandArtwork :paused="paused" @load="artLoaded = true" @error="artFailed = true" /></svg>
-      <div v-else class="hero-art-fallback" role="status">The island illustration couldn’t load.<button type="button" class="btn btn-outline-primary" @click="changeMode('map')">Explore the live map</button></div>
+      <div v-else class="hero-art-fallback" role="status">The island illustration couldn’t load.<button type="button" class="btn btn-outline-primary" @click="changeMode('list')">Explore events</button></div>
       <div class="island-edge-mist" aria-hidden="true"></div>
     </div>
     <button type="button" class="hero-motion-toggle" :aria-pressed="paused" @click="paused = !paused">{{ paused ? 'Play island animations' : 'Pause island animations' }}</button>
-    <div class="hero-view-switch" data-hero-reveal role="group" aria-label="Discovery view">
-      <button type="button" aria-pressed="true" class="is-active">Island</button><button type="button" aria-pressed="false" @click="changeMode('map')">Map</button><button type="button" aria-pressed="false" @click="changeMode('list')">List</button>
-    </div>
     <button type="button" class="hero-scroll-cue" @click="changeMode('list')"><span aria-hidden="true">↓</span> Follow your curiosity</button>
   </section>
 </template>
@@ -54,10 +51,10 @@ function changeMode(mode) {
 .hero-illustration { display: block; width: 100%; height: 100%; will-change: transform; }
 .island-edge-mist { position: absolute; inset: 0; background: radial-gradient(ellipse at 0 0,var(--bookedz-canvas),transparent 22%),radial-gradient(ellipse at 100% 100%,var(--bookedz-canvas),transparent 20%); }
 .hero-art-fallback { position: absolute; inset: 20%; display: flex; flex-direction: column; justify-content: center; gap: 16px; pointer-events: auto; }
-.hero-view-switch { grid-column: 2; grid-row: 1; justify-self: end; display: flex; gap: 4px; padding: 4px; border-radius: 99px; background: var(--bookedz-glass-solid); border: 1px solid var(--bookedz-border); z-index: 3; }
-.hero-view-switch button { min-height: 44px; padding: 8px 18px; border: 0; border-radius: 99px; background: transparent; color: var(--bookedz-muted); font-size: .875rem; font-weight: 600; }
-.hero-view-switch button:hover { background: var(--bookedz-glass-active); color: var(--bookedz-ink); }
-.hero-view-switch .is-active { background: var(--bookedz-ink); color: var(--bookedz-surface); }
+
+
+
+
 .hero-motion-toggle { grid-column: 2; grid-row: 3; justify-self: end; min-height: 44px; padding: 8px 14px; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-glass-solid); color: var(--bookedz-muted); font-size: .8rem; z-index: 3; }
 .hero-motion-toggle:hover { background: var(--bookedz-surface); color: var(--bookedz-ink); }
 .hero-scroll-cue { display: none; }
@@ -71,8 +68,8 @@ function changeMode(mode) {
  .hero-search { max-width: none; }
  .illustrated-island { grid-column: auto; grid-row: auto; width: calc(100% + 24px); margin: 10px -12px -8px; }
  .hero-copy { grid-column: auto; grid-row: auto; }
- .hero-view-switch { position: absolute; top: 15px; right: 12px; }
- .hero-view-switch button { padding-inline: 16px; }
+
+
  .hero-motion-toggle { grid-column: auto; grid-row: auto; justify-self: auto; align-self: center; margin-top: 8px; }
 }
 @media(prefers-reduced-motion:reduce) { .hero-illustration { will-change: auto; } }

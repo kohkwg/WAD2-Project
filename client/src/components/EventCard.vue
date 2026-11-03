@@ -103,9 +103,9 @@ function initials(attendee) {
 }
 /* Fixed 16:9 box, the same crop as every event card. The photo and artwork are absolutely
    positioned so a portrait upload can no longer stretch the card. */
-.event-cover { position: relative; align-self: center; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 16px; background: var(--bookedz-mint, #dceee3); }
+.event-cover { position: relative; align-self: center; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 16px; background: var(--bookedz-mint, #ffe4d6); }
 .event-cover > :deep(.event-artwork), .event-cover-image { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
-.artwork-category { position: absolute; right: 12px; bottom: 12px; max-width: calc(100% - 24px); padding: .35rem .65rem; overflow: hidden; border: 1px solid rgb(255 249 239 / 72%); border-radius: 999px; background: rgb(255 249 239 / 92%); color: var(--bookedz-ink, #292d32); font-size:var(--text-caption); font-weight: 650; text-overflow: ellipsis; text-transform: capitalize; white-space: nowrap; }
+.artwork-category { position: absolute; right: 12px; bottom: 12px; max-width: calc(100% - 24px); padding: .35rem .65rem; overflow: hidden; border: 1px solid rgb(255 249 239 / 72%); border-radius: 999px; background: rgb(255 249 239 / 92%); color: var(--bookedz-ink, #1f2937); font-size:var(--text-caption); font-weight: 650; text-overflow: ellipsis; text-transform: capitalize; white-space: nowrap; }
 .event-details { min-width: 0; align-self: center; }
 .event-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem .7rem; margin-bottom: .55rem; }
 .event-time { display: block; color: var(--bookedz-muted); font-size:var(--text-small); }
@@ -125,16 +125,16 @@ function initials(attendee) {
 .attendee-avatar svg { width: 20px; height: 20px; }
 .attendee-overflow { padding: 0 6px; color: var(--bookedz-muted); font-size: .75rem; }
 .going-count { color: var(--bookedz-muted); font-size:var(--text-small); }
-.availability-chip { display: inline-flex; align-items: center; min-height: 28px; padding: .25rem .6rem; border: 1px solid #c5ddcb; border-radius: 999px; background: #e5f2e8; color: #315c3e; font-size:var(--text-caption); font-weight: 650; }
-.availability-chip--full { border-color: #e4c7a5; background: #fbebd9; color: #714a2d; }
+.availability-chip { display: inline-flex; align-items: center; min-height: 28px; padding: .25rem .6rem; border: 1px solid #ffe4d6; border-radius: 999px; background: #ffe4d6; color: #315c3e; font-size:var(--text-caption); font-weight: 650; }
+.availability-chip--full { border-color: #e4c7a5; background: #ffe4d6; color: #714a2d; }
 .event-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 .event-actions .btn { display: inline-flex; align-items: center; justify-content: center; min-width: 76px; min-height: 44px; border-radius: 14px 24px 24px 14px; padding: 12px 54px 12px 18px; }
-.event-actions .btn-primary { --bs-btn-bg: var(--bookedz-primary-dark, #aa3e2c); --bs-btn-border-color: var(--bookedz-primary-dark, #aa3e2c); --bs-btn-hover-bg: #8f3022; --bs-btn-hover-border-color: #8f3022; }
-.event-actions .btn-outline-secondary { --bs-btn-color: #4f5656; --bs-btn-border-color: #bdc3bc; --bs-btn-hover-bg: #f4f0e7; --bs-btn-hover-color: #292d32; --bs-btn-hover-border-color: #aeb4ad; }
+.event-actions .btn-primary { --bs-btn-bg: var(--bookedz-primary-dark, #9a3412); --bs-btn-border-color: var(--bookedz-primary-dark, #9a3412); --bs-btn-hover-bg: #9a3412; --bs-btn-hover-border-color: #9a3412; }
+.event-actions .btn-outline-secondary { --bs-btn-color: #4f5656; --bs-btn-border-color: #bdc3bc; --bs-btn-hover-bg: #ffe4d6; --bs-btn-hover-color: #1f2937; --bs-btn-hover-border-color: #aeb4ad; }
 @media (max-width: 575px) {
   .event-card { grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: .8rem; border-radius: 18px; }
   .event-cover { border-radius: 13px; }
   .event-actions { margin-top: 14px; }
 }
-.event-card :deep(:focus-visible) { outline: 3px solid var(--bookedz-primary-dark, #aa3e2c); outline-offset: 3px; }
+.event-card :deep(:focus-visible) { outline: 3px solid var(--bookedz-primary-dark, #9a3412); outline-offset: 3px; }
 </style>

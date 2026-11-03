@@ -42,7 +42,7 @@ test('extras and categories share the canonical state and accurate active count'
   state.choose('when', 'today'); state.choose('extras', 'spots_left')
   state.choose('categories', 'sports'); state.choose('categories', 'music')
   checkEqual(state.activeCount.value, 4)
-  checkDeepEqual(props.modelValue, { when: 'today', extras: ['spots_left'], categories: ['sports', 'music'] })
+  checkDeepEqual(props.modelValue, { when: 'today', extras: ['spots_left'], categories: ['sports', 'music'], dateFrom: '', dateTo: '' })
   state.choose('categories', 'sports')
   checkDeepEqual(props.modelValue.categories, ['music'])
   checkEqual(props.search, 'Futsal')
@@ -52,7 +52,7 @@ test('clear all clears filters only, pending search is flushed, and Show closes 
   const { state, props, emitted } = await setupFilters({ categories: ['arts'] })
   state.search.value = 'Pottery'
   state.clearAll()
-  checkDeepEqual(props.modelValue, { when: '', extras: [], categories: [] })
+  checkDeepEqual(props.modelValue, { when: '', extras: [], categories: [], dateFrom: '', dateTo: '' })
   checkEqual(props.search, 'Pottery')
   state.expanded.value = true
   state.showEvents()
@@ -72,7 +72,7 @@ test('Pick dates emits a calendar hook and applies no invented date range', asyn
 
 test('normalization removes Free and unknown choices without mutating inputs', () => {
   const value = { when: 'unknown', extras: ['free', 'spots_left', 'spots_left'], categories: ['arts', 'arts', 'fake'], price: 0 }
-  checkDeepEqual(normalizeDiscoveryFilters(value), { when: '', extras: ['spots_left'], categories: ['arts'] })
+  checkDeepEqual(normalizeDiscoveryFilters(value), { when: '', extras: ['spots_left'], categories: ['arts'], dateFrom: '', dateTo: '' })
   checkEqual(value.extras.length, 3)
 })
 
@@ -87,12 +87,12 @@ test('date presets use Singapore days, Monday weeks and the current/upcoming wee
 test('URL roundtrip and derived event queries preserve one filter model', () => {
   const filters = { when: 'today', extras: ['spots_left'], categories: ['arts', 'music'] }
   const query = discoveryUrlQuery(filters, 'workshop', 'map')
-  checkDeepEqual(discoveryFiltersFromQuery(query), filters)
+  checkDeepEqual(discoveryFiltersFromQuery(query), { ...filters, dateFrom: '', dateTo: '' })
   checkEqual(query.search, 'workshop')
-  checkEqual(query.view, 'map')
+  checkEqual(query.view, 'list')
   const eventQuery = discoveryEventQuery(filters, { search: 'workshop', now: '2026-10-27T10:00:00Z' })
   checkEqual(eventQuery.availableOnly, true)
   checkEqual(eventQuery.dateFrom, '2026-10-27')
   checkDeepEqual(Object.keys(filters), ['when', 'extras', 'categories'])
-  checkDeepEqual(discoveryFiltersFromQuery({ extras: 'spots_left', categories: 'sports' }), { when: '', extras: ['spots_left'], categories: ['sports'] })
+  checkDeepEqual(discoveryFiltersFromQuery({ extras: 'spots_left', categories: 'sports' }), { when: '', extras: ['spots_left'], categories: ['sports'], dateFrom: '', dateTo: '' })
 })

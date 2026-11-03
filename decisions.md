@@ -1,5 +1,43 @@
 # Decisions
 
+3 November 2026, subsequent street-map correction — Aishani rejects the illustrated Discover map and explicitly chooses **Map beside timeline**. This supersedes the list-only/map-removal layout decision below: retain the current palette, recommendation strip and event-title navigation, and add a real OneMap street map beside the timeline (stacked on narrow screens). Keep the existing recommendation algorithm. No separate Map navigation entry is needed.
+
+3 November 2026 — Aishani requests removal of the Discover Map feature and the
+supplied exact light/dark colour roles. Remove the sidebar entry, discovery map
+panel/switch/selection and landing map entry points. Legacy map URLs open List
+without losing search/filters. Retain the decorative landing artwork and normal
+event-form venue selection maps. Preserve existing uncommitted artwork/code;
+unreferenced map components are not deleted in this pass. Palette values are
+documented in the design system; filled orange actions and orange text/links use
+separate tokens.
+
+3 November 2026, Discover workspace — Aishani requests the supplied search →
+compact Picked for you → category chips → timeline beside map layout, explicitly
+retaining and using the current recommendation algorithm. Reuse existing
+recommendation reads/actions and event registration routes. Desktop shows both
+panels; phones use tabs. Map and timeline show the same filtered current page;
+this supersedes the previous all-results map layer for the Discover workspace.
+Keep the selected illustrated island and fixed-boat water animations. No request
+to commit, push, deploy, change scoring or write hosted event data.
+
+3 November 2026, stable-boat refinement — Aishani requests detailed boats that
+match the supplied illustration and remain fixed in place, with moving water
+and wakes creating the sailing impression. This supersedes translating/bobbing
+SVG boat routes; retain the expanded island, labels and other animations.
+
+3 November 2026, follow-up — Aishani requests visible boat travel and a moving
+water effect, explaining that the sparse plane/transport accents were insufficient.
+Add continuous local ripples, wakes and several sailing vessels while retaining
+the selected artwork, small labels and shared motion controls. Buildings remain
+fixed; the docked cargo ship stays moored.
+
+3 November 2026 — Aishani selects the expanded illustrated Singapore island:
+larger terrain, more buildings and attractions, the existing cheerful palette,
+smaller labels and all existing decorative animations. She requests integration
+into the local Bookedz repository. Preserve event discovery and real venue data;
+the illustration remains approximate. This request authorises local source/asset
+edits, not a commit, push or deployment.
+
 2 November 2026 — Aishani requests central typography roles in `main.css`, keeping
 Bricolage Grotesque for headings and DM Sans for body/buttons. Page titles use
 32–48px/700; section headings 22–28px/650; ordinary card titles 20px/650; body 16px;

@@ -4,10 +4,11 @@
 @font-face { font-family: 'Bricolage Grotesque'; src: url('./fonts/bricolage-grotesque.ttf') format('truetype'); font-weight: 400 800; font-display: swap; }
 @font-face { font-family: 'DM Sans'; src: url('./fonts/dm-sans.ttf') format('truetype'); font-weight: 100 1000; font-display: swap; }
 :root {
-  --bookedz-canvas: #fff8ec; --bookedz-cream: #fff8ec; --bookedz-surface: #fffdfa;
-  --bookedz-ink: #34334a; --bookedz-muted: #63665e; --bookedz-border: #e5ded2;
-  --bookedz-coral: #ff8e7a; --bookedz-coral-dark: #aa3e2c; --bookedz-mint: #a8ddce; --bookedz-yellow: #ffd976;
-  --bookedz-primary: #e9725c; --bookedz-primary-dark: #aa3e2c; --bookedz-ink-soft: #63665e;
+  --bookedz-canvas: #fff8f1; --bookedz-cream: #fff8f1; --bookedz-surface: #ffffff;
+  --bookedz-ink: #1f2937; --bookedz-muted: #636975; --bookedz-border: #e9ded3;
+  --bookedz-coral: #ff6b35; --bookedz-coral-dark: #9a3412; --bookedz-mint: #14b8a6; --bookedz-yellow: #fde7b0;
+  --bookedz-peach: #ffe4d6; --bookedz-mango: #fde7b0; --bookedz-teal: #14b8a6; --bookedz-pink: #ec4899;
+  --bookedz-primary: #ff6b35; --bookedz-primary-dark: #9a3412; --bookedz-ink-soft: #636975;
   --bookedz-body: 'DM Sans', system-ui, sans-serif;
   --bookedz-space-1: 4px; --bookedz-space-2: 8px; --bookedz-space-3: 16px; --bookedz-space-4: 24px; --bookedz-space-5: 40px; --bookedz-space-6: 64px;
   --bookedz-radius-control: 12px; --bookedz-radius-card: 24px;
@@ -24,24 +25,24 @@
   --text-caption: 0.75rem;
   --text-button: 0.875rem;
   --bookedz-shadow: 0 12px 38px rgb(60 50 35 / 6%);
-  --bookedz-glass: rgb(255 253 250 / 84%); --bookedz-glass-solid: #fffaf2;
-  --bookedz-glass-border: rgb(255 255 255 / 92%); --bookedz-glass-hover: #f0ece2;
-  --bookedz-glass-active: #f7e5db; --bookedz-control-border: #b6b8a9;
+  --bookedz-glass: rgb(255 255 255 / 84%); --bookedz-glass-solid: #ffffff;
+  --bookedz-glass-border: rgb(255 255 255 / 92%); --bookedz-glass-hover: #ffe4d6;
+  --bookedz-glass-active: #ffe4d6; --bookedz-control-border: #e9ded3;
   --bookedz-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 95%), 0 8px 28px rgb(52 51 74 / 8%);
   --bookedz-search-shadow: 0 8px 24px rgb(52 51 74 / 6%);
   --bookedz-danger: #a52b36;
   --bs-body-color: var(--bookedz-ink); --bs-body-bg: var(--bookedz-canvas);
-  --bs-secondary-color: var(--bookedz-muted); --bs-secondary-rgb: 99,102,94;
-  --bs-primary: #aa3e2c; --bs-primary-rgb: 170,62,44; --bs-border-color: var(--bookedz-border);
-  --bs-link-color: #aa3e2c; --bs-link-color-rgb: 170,62,44; --bs-link-hover-color: #842e20;
+  --bs-secondary-color: var(--bookedz-muted); --bs-secondary-rgb: 99,105,117;
+  --bs-primary: #ff6b35; --bs-primary-rgb: 255,107,53; --bs-border-color: var(--bookedz-border);
+  --bs-link-color: #9a3412; --bs-link-color-rgb: 154,52,18; --bs-link-hover-color: #9a3412;
   --bs-border-radius: .75rem; --bs-border-radius-lg: 1.25rem;
-  --bookedz-primary-hover: #842e20; --bookedz-forest: #344f43; --bookedz-success: #246345; --bookedz-hover: #eef0e6;
-  --bookedz-icon: #68717e; --bookedz-muted-border: #c4cbb9;
-  --bookedz-map-overlay: rgb(255 250 242 / 94%);
-  --bookedz-disabled-bg: #ebe8df; --bookedz-disabled-ink: #767970;
+  --bookedz-primary-hover: #ff6b35; --bookedz-forest: #14b8a6; --bookedz-success: #14b8a6; --bookedz-hover: #ffe4d6;
+  --bookedz-icon: #636975; --bookedz-muted-border: #e9ded3;
+  --bookedz-map-overlay: rgb(255 248 241 / 94%);
+  --bookedz-disabled-bg: #e9ded3; --bookedz-disabled-ink: #636975;
   --bookedz-mask-opaque: #000;
-  --bookedz-card-shadow: 0 4px 20px rgb(60 50 35 / 3%);
-  --bookedz-focus-glow: 0 0 0 .2rem rgb(170 62 44 / 13%);
+  --bookedz-card-shadow: 0 4px 20px rgb(20 184 166 / 12%);
+  --bookedz-focus-glow: 0 0 0 .2rem rgb(154 52 18 / 13%);
   --bookedz-tab-shadow: 0 2px 6px rgb(68 55 27 / 4%);
   --bookedz-button-shadow: 0 5px 12px rgb(77 46 35 / 10%);
   --bookedz-map-shadow: 0 4px 20px rgb(52 79 67 / 5%);
@@ -74,11 +75,11 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 .form-label { font-weight: 600; font-size: .9rem; }
 .form-control,.form-select { min-height: 46px; border-color: var(--bookedz-control-border); background-color: var(--bookedz-surface); padding: .65rem .9rem; }
 .form-control:focus,.form-select:focus { border-color: var(--bookedz-primary-dark); box-shadow: var(--bookedz-focus-glow); background-color: var(--bookedz-surface); }
-.form-check-input:checked { background-color: var(--bookedz-primary-dark); border-color: var(--bookedz-primary-dark); }
+.form-check-input:checked { background-color: var(--bookedz-primary); border-color: var(--bookedz-primary); }
 .form-text { color: var(--bookedz-muted); }
 .btn { min-height: 44px; border-radius: .75rem; padding: .6rem 1rem; font-family: var(--bookedz-body); font-weight: 600; font-size: var(--text-button); display: inline-flex; align-items: center; justify-content: center; gap: .4rem; transition: background-color .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .btn-sm { padding: .4rem .8rem; }
-.btn-primary { --bs-btn-bg: var(--bookedz-primary-dark); --bs-btn-border-color: var(--bookedz-primary-dark); --bs-btn-hover-bg: var(--bookedz-primary-hover); --bs-btn-hover-border-color: var(--bookedz-primary-hover); --bs-btn-active-bg: var(--bookedz-primary-hover); --bs-btn-active-border-color: var(--bookedz-primary-hover); --bs-btn-disabled-bg: var(--bookedz-primary-dark); --bs-btn-disabled-border-color: var(--bookedz-primary-dark); }
+.btn-primary { --bs-btn-color: var(--bookedz-on-action); --bs-btn-hover-color: var(--bookedz-on-action); --bs-btn-active-color: var(--bookedz-on-action); --bs-btn-bg: var(--bookedz-primary); --bs-btn-border-color: var(--bookedz-primary); --bs-btn-hover-bg: var(--bookedz-primary-hover); --bs-btn-hover-border-color: var(--bookedz-primary-hover); --bs-btn-active-bg: var(--bookedz-primary-hover); --bs-btn-active-border-color: var(--bookedz-primary-hover); --bs-btn-disabled-bg: var(--bookedz-primary-dark); --bs-btn-disabled-border-color: var(--bookedz-primary-dark); }
 .btn-outline-primary { --bs-btn-color: var(--bookedz-primary-dark); --bs-btn-border-color: var(--bookedz-primary-dark); --bs-btn-hover-bg: var(--bookedz-primary-dark); --bs-btn-hover-border-color: var(--bookedz-primary-dark); --bs-btn-active-bg: var(--bookedz-primary-dark); --bs-btn-active-border-color: var(--bookedz-primary-dark); }
 .btn-outline-secondary { --bs-btn-color: var(--bookedz-muted); --bs-btn-border-color: var(--bookedz-control-border); --bs-btn-hover-bg: var(--bookedz-hover); --bs-btn-hover-border-color: var(--bookedz-control-border); --bs-btn-hover-color: var(--bookedz-ink); }
 .btn-outline-danger { --bs-btn-color: var(--bookedz-danger); --bs-btn-border-color: var(--bookedz-danger); }
@@ -140,27 +141,28 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 /* System-aware night palette. Artwork keeps its own daylight colours. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bookedz-canvas: #141b22; --bookedz-cream: #141b22; --bookedz-surface: #1e2932;
-  --bookedz-ink: #f3eee4; --bookedz-muted: #b7c2c5; --bookedz-ink-soft: #b7c2c5;
-  --bookedz-border: #3b4a54; --bookedz-control-border: #64757f; --bookedz-muted-border: #495c65;
-  --bookedz-primary-dark: #ffad97; --bookedz-primary-hover: #ffc6b7; --bookedz-coral-dark: #ffad97;
-  --bookedz-primary: #ed9985; --bookedz-mint: #24483f; --bookedz-yellow: #655329;
-  --bookedz-glass: rgb(30 41 50 / 88%); --bookedz-glass-solid: #202c35;
-  --bookedz-glass-border: rgb(160 185 199 / 22%); --bookedz-glass-hover: #30414b; --bookedz-glass-active: #3e3433;
-  --bookedz-hover: #30414b; --bookedz-forest: #a7d7c3; --bookedz-success: #8dd9ae;
-  --bookedz-icon: #b7c7d3; --bookedz-map-overlay: rgb(30 41 50 / 94%);
-  --bookedz-disabled-bg: #303c44; --bookedz-disabled-ink: #9caab2;
-  --bookedz-danger: #ff9eaa; --bookedz-on-action: #241d1b;
-  --bookedz-card-shadow: 0 4px 22px rgb(0 0 0 / 13%);
+  --bookedz-canvas: #1c1917; --bookedz-cream: #1c1917; --bookedz-surface: #292524;
+  --bookedz-ink: #fafaf9; --bookedz-muted: #a8a29e; --bookedz-ink-soft: #a8a29e;
+  --bookedz-border: #57534e; --bookedz-control-border: #57534e; --bookedz-muted-border: #57534e;
+  --bookedz-primary-dark: #ffb79a; --bookedz-primary-hover: #ff8a5b; --bookedz-coral-dark: #ffb79a;
+  --bookedz-peach: #4a2b1f; --bookedz-mango: #5b4210; --bookedz-teal: #2dd4bf; --bookedz-pink: #f472b6;
+  --bookedz-coral: #ff8a5b; --bookedz-primary: #ff8a5b; --bookedz-mint: #2dd4bf; --bookedz-yellow: #5b4210;
+  --bookedz-glass: rgb(41 37 36 / 88%); --bookedz-glass-solid: #292524;
+  --bookedz-glass-border: rgb(255 255 255 / 14%); --bookedz-glass-hover: #4a2b1f; --bookedz-glass-active: #4a2b1f;
+  --bookedz-hover: #4a2b1f; --bookedz-forest: #2dd4bf; --bookedz-success: #2dd4bf;
+  --bookedz-icon: #a8a29e; --bookedz-map-overlay: rgb(41 37 36 / 94%);
+  --bookedz-disabled-bg: #57534e; --bookedz-disabled-ink: #a8a29e;
+  --bookedz-danger: #ff9eaa; --bookedz-on-action: #1c1917;
+  --bookedz-card-shadow: 0 4px 22px rgb(45 212 191 / 10%);
   --bookedz-shadow: 0 12px 38px rgb(0 0 0 / 18%);
-  --bookedz-focus-glow: 0 0 0 .2rem rgb(255 173 151 / 22%);
+  --bookedz-focus-glow: 0 0 0 .2rem rgb(255 183 154 / 22%);
   --bookedz-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 6%), 0 8px 28px rgb(0 0 0 / 16%);
   --bs-body-color: var(--bookedz-ink); --bs-body-bg: var(--bookedz-canvas);
-  --bs-secondary-color: var(--bookedz-muted); --bs-secondary-rgb: 183,194,197;
-  --bs-border-color: var(--bookedz-border); --bs-link-color: #ffad97; --bs-link-hover-color: #ffc6b7;
-  --bs-link-color-rgb: 255,173,151; --bs-primary-rgb: 255,173,151;
+  --bs-secondary-color: var(--bookedz-muted); --bs-secondary-rgb: 168,162,158;
+  --bs-border-color: var(--bookedz-border); --bs-link-color: #ffb79a; --bs-link-hover-color: #ffb79a;
+  --bs-link-color-rgb: 255,183,154; --bs-primary: #ff8a5b; --bs-primary-rgb: 255,138,91;
 }
-:root { --bookedz-on-action: #fffdfa; }
+:root { --bookedz-on-action: #1f2937; }
 :root[data-theme="dark"] .btn-primary { --bs-btn-color: var(--bookedz-on-action); --bs-btn-hover-color: var(--bookedz-on-action); --bs-btn-active-color: var(--bookedz-on-action); }
 :root[data-theme="dark"] .btn-outline-primary { --bs-btn-hover-color: var(--bookedz-on-action); --bs-btn-active-color: var(--bookedz-on-action); }
 :root[data-theme="dark"] .btn-outline-secondary { --bs-btn-color: var(--bookedz-muted); --bs-btn-border-color: var(--bookedz-control-border); --bs-btn-hover-bg: var(--bookedz-hover); --bs-btn-hover-color: var(--bookedz-ink); }
@@ -178,7 +180,7 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 :root[data-theme="dark"] .step-number,:root[data-theme="dark"] .rsvp-state--success .state-mark { color: var(--bookedz-on-action); }
 
 /* Event actions borrow a ticket's perforated edge; interaction supplies the motion. */
-.event-cta { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 58px 12px 22px; border: 1px solid var(--bookedz-primary-dark); border-radius: 14px 24px 24px 14px; background: var(--bookedz-primary-dark); color: var(--bookedz-on-action); font-family: var(--bookedz-body); font-size: var(--text-button); font-weight: 600; text-decoration: none; box-shadow: var(--bookedz-button-shadow); transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease; }
+.event-cta { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 58px 12px 22px; border: 1px solid var(--bookedz-primary); border-radius: 14px 24px 24px 14px; background: var(--bookedz-primary); color: var(--bookedz-on-action); font-family: var(--bookedz-body); font-size: var(--text-button); font-weight: 600; text-decoration: none; box-shadow: var(--bookedz-button-shadow); transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease; }
 .event-cta::before { content: ''; position: absolute; right: 43px; top: 10px; bottom: 10px; border-left: 1px dashed currentColor; opacity: .4; }
 .event-cta::after { content: ''; position: absolute; right: 20px; width: 8px; height: 8px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; transform: rotate(45deg); transition: transform .2s ease; }
 .event-cta:hover { background: var(--bookedz-primary-hover); color: var(--bookedz-on-action); transform: translateY(-2px); }

@@ -104,13 +104,13 @@ const action = computed(() => {
 }
 
 .card-action--rsvp {
-  background: var(--bookedz-primary-dark);
-  color: #fff;
+  background: var(--bookedz-primary);
+  color: var(--bookedz-on-action);
 }
 
 .card-action--rsvp:hover {
   filter: brightness(.94);
-  color: #fff;
+  color: var(--bookedz-on-action);
 }
 
 .registration-status {
@@ -125,8 +125,8 @@ const action = computed(() => {
 }
 
 .registration-status--confirmed {
-  background: #e5f2e8;
-  border-color: #c5ddcb;
+  background: #ffe4d6;
+  border-color: #ffe4d6;
   color: #285237;
 }
 
