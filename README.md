@@ -15,8 +15,10 @@ Organisers manage events, attendance and operations through the same shell.
 
 ## Current frontend
 
-Discovery uses the latest illustrated Singapore island with real event markers,
-sparse independent motion and collapsible filters. The floating navbar, ticket-like
+Discover pairs its dated timeline with a OneMap street map, recommendation strip
+and collapsible filters. On small screens the map stacks below the timeline. Old
+map links open this unified page with their filters preserved. The landing
+illustration and event-form venue maps remain. The floating navbar, ticket-like
 event actions and participant/organiser screens share System/Light/Dark themes.
 Public event facts lead; RSVP actions sit beside them. Creation has a live preview;
 organiser tools and RSVP capacity/status visuals use actual event data.
@@ -52,6 +54,61 @@ deployment status. Use the timeline for the latest verified checkpoint and remai
 limits. Keep the disclosure and library credits in submission/presentation materials.
 
 ## AI assistance disclosure
+
+For Aishani's subsequent 3 November street-map request, Codex authored
+`DiscoveryStreetMap.vue` and connected timeline thumbnail selection to it while
+retaining title navigation and the existing palette. It uses the already installed
+Leaflet library and [OneMap GreyLite tiles](https://www.onemap.gov.sg/docs/maps/)
+with visible OneMap/SLA attribution. Coordinates come from existing event venues;
+no geocoding token or new dependency is needed. Codex added selectable clusters,
+map previews using existing RSVP actions, tile retry, and focused verification.
+The recommendation backend and composable were not edited in this change.
+
+For Aishani's 3 November map-removal/palette request, Codex detached the Discover
+map, removed sidebar/landing map controls, removed map-only selection/fetching,
+and changed timeline titles to event-detail links. Codex connected filled actions,
+heading surfaces and steps to the supplied light/dark palette, preserving earlier
+uncommitted artwork and application changes. Event-form Leaflet/OneMap remains.
+Focused verification is recorded in testing/status; no hosted data, dependencies,
+commit, push or deployment changes were made.
+
+For Aishani's 3 November Discover reference-layout request, Codex added a compact
+recommendation strip, category shortcuts, date-led compact event rows and a
+simultaneous sticky map on desktop. The existing recommendation endpoint,
+composable, scoring, eligibility/exclusions and server order are unchanged.
+Scores/reasons appear only when supplied; anonymous upcoming picks retain their
+source explanation. Save/dismiss/undo/retry and event status/RSVP/waitlist routes
+are retained. Timeline and map share the current filtered 12-event page, with
+linked selection and embedded-map framing; phones use List/Map tabs and one
+initial pick. Existing island/water animation remains. Codex authored four
+focused rendering tests; no new dependencies, backend, database or hosted writes.
+
+For Aishani's subsequent stable-boat refinement on 3 November, Codex replaced
+the translating SVG hulls with detailed boats painted into a new sibling
+illustration, using built-in imagegen. Boat positions now remain fixed; only
+stern ripples, wake streams, open-water currents and shoreline glints animate.
+The existing Flyer/plane/bird motion and common pause/reduced-motion handling
+remain. This supersedes the sailing-route presentation described below.
+
+For the 3 November water-motion follow-up, Codex replaced the painted sailing
+cargo ship with an independently animated SVG vessel, added ferry/coastal/bay
+boat routes, animated wakes, local water currents/glints and shoreline strokes.
+The existing pause/offscreen/tab logic now shares an inherited play-state variable
+with the new components; each respects reduced motion. Built-in imagegen removed
+only the sailing cargo ship from a sibling background plate; the moored port
+ship remains static. Actual movement and pause freezing were checked in-browser;
+no application dependencies or hosted data changed.
+
+For Aishani's 3 November expanded-island request, Codex used built-in imagegen to
+expand the illustrated terrain with more neighbourhoods and attractions, then
+cleaned printed labels, small boats and the Flyer wheel from the animation plate.
+Codex integrated the optimised WebP, repositioned the existing independent wheel,
+boats, plane and birds, recalibrated approximate regional event placement, and
+added compact clickable neighbourhood/attraction labels with zoom-dependent
+detail and collision suppression. Existing event coordinates, clustering,
+previews, pause/visibility/reduced-motion logic and theme contracts are retained.
+Asset prompts/provenance are in [the asset register](docs/design/assets.md).
+No new runtime libraries, hosted data, scoring or schema changes.
 
 For Aishani's shared-typography request on 2 November, Codex added central size
 tokens and page/section/card/metadata/caption/button roles, retaining Bricolage

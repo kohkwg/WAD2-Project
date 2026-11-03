@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { writeFile } from 'node:fs/promises'
 
-test('filtered and map discovery retain compact matching picks and explicitly labelled other picks', async ({ page }, testInfo) => {
+test('filtered discovery retains compact matching picks and explicitly labelled other picks', async ({ page }, testInfo) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await fixture(page)
@@ -45,14 +45,6 @@ test('filtered and map discovery retain compact matching picks and explicitly la
   await expect(search).toHaveValue('No such workshop')
   await expect(page.getByRole('button', { name: 'Remove Arts filter' })).toBeVisible()
   await expect(picks.getByRole('link', { name: 'Sketching afternoon', exact: true })).toHaveAttribute('href', '/events/sketching/rsvp')
-  await page.getByRole('group', { name: 'Discovery view', exact: true }).getByRole('button', { name: 'Map', exact: true }).click()
-  await expect(search).toHaveValue('No such workshop')
-  await expect(picks.getByText(/These picks may be outside your current filters/)).toBeVisible()
-  const map = await page.locator('.map-surface').boundingBox()
-  const recommendation = await picks.boundingBox()
-  expect(recommendation.y).toBeGreaterThanOrEqual(map.y + map.height)
-  await page.getByRole('group', { name: 'Discovery view', exact: true }).getByRole('button', { name: 'List', exact: true }).click()
-  await expect(picks.getByText(/These picks may be outside your current filters/)).toBeVisible()
   await page.getByRole('button', { name: 'Clear search', exact: true }).click()
   await expect(picks.locator('.recommendation-card')).toHaveCount(1)
   await expect(picks.getByText('Picks matching your current filters.')).toBeVisible()
@@ -178,7 +170,10 @@ test('recommendation MVP displays scores and supports save, dismiss, undo and re
 async function dismissSketching(picks) {
   const card = picks.locator('.recommendation-card').filter({ has: picks.page().getByRole('link', { name: 'Sketching afternoon', exact: true }) })
   const dismiss = card.getByRole('button', { name: 'Not interested in Sketching afternoon', exact: true })
-  if (!(await dismiss.isVisible())) await card.getByText('More options', { exact: true }).click()
+  if (!(await dismiss.isVisible())) {
+    const options = card.getByText('More options', { exact: true })
+    await (await options.count() ? options : card.getByText('Why this?', { exact: true })).click()
+  }
   await dismiss.click()
 }
 

@@ -18,7 +18,7 @@ test('illustrated hero keeps real event mapping and list filtering separate and 
   await expect(page.locator('.illustrated-island [data-marker]')).toHaveCount(0)
   await page.getByRole('button', { name: 'Map', exact: true }).click()
   const map = page.getByRole('region', { name: 'Explore events on the Singapore map' })
-  await expect(map.locator('image[data-map-artwork]')).toHaveAttribute('href', /singapore-animated-plate\.webp/)
+  await expect(map.locator('image[data-map-artwork]')).toHaveAttribute('href', /singapore-anchored-boats-plate\.webp/)
   await expect(map.locator('[data-marker]').first()).toBeVisible()
   await expect(map.locator('.map-surface')).toHaveCSS('opacity', '1')
   await expect(map.locator('[data-flyer-wheel]')).toHaveCSS('animation-play-state', 'running')

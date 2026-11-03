@@ -1,5 +1,99 @@
 # Testing and local operation
 
+## 3 November: Discover street map beside timeline
+
+Run focused checks from the repository root:
+
+```sh
+node --test client/tests/discover-workspace.test.mjs client/tests/discovery-state.test.mjs client/tests/discover-browse.test.mjs
+node --test server/tests/recommendation-quality.test.js server/tests/recommendations-route.test.js server/tests/recommendation-interactions.test.js
+```
+
+These passed 11 and 22 cases respectively. Compile `DiscoverView.vue`,
+`DiscoveryEventRow.vue` and `DiscoveryStreetMap.vue` with `vue/compiler-sfc`.
+The targeted `client/e2e/discovery-list-palette.spec.js` now expects the map
+beside the timeline and explicit thumbnail selection, while title navigation
+remains intact. That automated browser file was not run on this host.
+
+Manual in-app browser verification used an owned demo Vite server on 5191
+(`VITE_USE_MOCK=true VITE_FEATURE4_TEST_SEED=true`), without hosted writes.
+Verified actual OneMap tile images, keyboard row selection and marker activation,
+cluster selection, preview dismissal/focus return, light/dark layouts at
+375/575/768/1280px, no horizontal overflow, one main, and no console errors.
+Forced tile-failure/retry and authenticated live recommendation scoring remain
+unverified. Anonymous demo recommendations are upcoming events, not fabricated
+compatibility scores. No full suite or production build was run.
+
+For the 3 November Discover workspace, use these focused checks:
+
+```sh
+node --test client/tests/discover-workspace.test.mjs client/tests/discovery-state.test.mjs client/tests/discover-browse.test.mjs client/src/utils/__tests__/discoveryMap.test.js
+node --test server/tests/recommendation-quality.test.js server/tests/recommendations-route.test.js server/tests/recommendation-interactions.test.js
+```
+
+All 36 cases pass across targeted runs. The four new SSR rendering cases verify
+backend order versus displayed compatibility, truthful general-discovery labels,
+available save/dismiss actions, actual registration/waitlist handling and retained
+retry/undo states. They use the existing Vue compiler and Node runner; no new
+dependencies. Six changed Vue SFCs compile. The recommendation endpoint/composable
+and filter/scoring helpers have no diff in this layout change.
+
+In-app browser demo checks on isolated port 5189 cover light/dark at
+375/575/768/1280px, one main/no overflow, linked row/marker selection, waitlist
+preview links, desktop focus return, mobile row → Map handoff and close focus,
+category filtering of both panels, empty search and clear recovery. Phones show
+one collapsed pick, desktop three; See all is retained. Current map count is the
+current page's located events, not every filtered page. Final screenshots and
+layout measurements are in this Codex chat's outputs/work directories. Existing
+browser suites tied to the superseded standalone list/map and carousel layout
+were not run as a full suite. This is not live signed-in persistence/RLS or
+production-build evidence; Node 24 was used, no dependency updates.
+
+For the latest stable-boat refinement (3 November), the in-app browser sampled
+four `[data-boat-anchor]` transforms twice: all were unchanged and had no hull
+animation. Twenty-six sampled wake/ripple/current properties changed over time;
+all 37 wake/current/glint/shore effects froze with identical transforms/stroke
+offsets after pausing, and resumed normally. Fixed hulls are in the bitmap;
+the SVG component draws only water effects. Vue SFC compilation passes for
+the artwork, wakes, water and Discover view. Four-width overflow/anchor checks
+passed (375/575/768/1280px), with no console warnings/errors. Recorded evidence
+is `outputs/stable-boats-moving-water.gif` in the requesting chat. Earlier boat
+route checks below refer to the superseded implementation. No full suite/build.
+
+For the 3 November water-motion follow-up, compile `IslandArtwork.vue`,
+`IslandBoats.vue`, `IslandWater.vue` and `DiscoverView.vue` using the installed
+Vue SFC compiler. All four pass. The in-app browser compared computed transforms
+and stroke offsets at two times: all four boat routes, ten water-current groups
+and four wakes changed. All 33 animated descendants of the new boat/water layers
+reported paused and retained identical transforms/stroke offsets after a pause.
+Resume restarted them. Four-width checks (375/575/768/1280px) found all routes and
+water patches present, no horizontal overflow and no warning/error console logs.
+A 16-frame recording shows actual UI motion. This follow-up did not rerun the
+previous projection tests because their code did not change; reduced-motion CSS
+was compiled/preserved, not re-emulated. No full suite or production build.
+
+For the expanded island (3 November), run the bounded projection/cluster check:
+
+```sh
+node --test client/src/utils/__tests__/discoveryMap.test.js
+```
+
+Four cases pass; `IslandArtwork.vue`, `SingaporeMap.vue`, `NeighbourhoodLabels.vue`
+and `DiscoverView.vue` also compile with the installed Vue SFC compiler. The
+in-app browser checked demo `/discover?view=map` at 375/575/768/1280px in both
+themes, including no page/label overlap, one main, 10px label text and 44px label
+targets. Interaction checks cover label keyboard zoom/focus, event keyboard
+preview/focus restoration, pause/resume of every existing animated layer and
+mobile zoom revealing attraction labels. Mobile caption placement was rechecked
+after a preview-server restart because the host file watcher retained stale CSS.
+No warning/error console entries were observed. This is bounded UI verification,
+not an automated-suite pass or hosted integration evidence. Direct Playwright
+launch failed at Chromium's macOS MachPort sandbox boundary, so in-app browser
+inspection was used instead. Reduced-motion styles were preserved and compiled,
+not re-emulated; Node 24 was available, Node 22 was not. Screenshots/measurements
+are in the requesting Codex chat's `work/map-checks` and `outputs` directories.
+No full suite or production build was run.
+
 For shared typography, compare Discover, My RSVPs and My events at the same
 browser zoom and viewport. At 100% zoom, page titles must match font family,
 weight, size, line height and letter spacing. Ordinary event cards use 20px/650,

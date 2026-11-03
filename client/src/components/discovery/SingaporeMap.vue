@@ -4,22 +4,30 @@ import { motion, useReducedMotion } from 'motion-v'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import IslandArtwork from './IslandArtwork.vue'
+import EventCardActions from '../EventCardActions.vue'
+import NeighbourhoodLabels from './NeighbourhoodLabels.vue'
 import { projectIllustratedVenue, groupMarkers } from '@/utils/discoveryMap'
 
 // Supplied island illustration, cleaned of baked event UI.
 // Regional calibration is approximate; real venue coordinates remain unchanged.
 // GSAP https://gsap.com/; Motion for Vue (MIT) https://motion.dev/docs/vue.
-const props = defineProps({ events: { type: Array, default: () => [] }, prominentIds: { type: Array, default: () => [] }, loading: Boolean, error: String, region: { type: Object, default: null } })
+const props = defineProps({ events: { type: Array, default: () => [] }, prominentIds: { type: Array, default: () => [] }, loading: Boolean, error: String, region: { type: Object, default: null }, embedded: Boolean, focusedEventId: { type: String, default: null } })
 gsap.registerPlugin(ScrollTrigger)
-const emit = defineEmits(['retry', 'list'])
+const emit = defineEmits(['retry', 'list', 'select'])
 const reduced = useReducedMotion()
 const scene = ref(null)
 const svg = ref(null)
 const paused = ref(false)
 const zoom = ref(1)
 const viewport = ref({ width: 1200, height: 900 })
-// Keep hit areas at CSS-pixel size, rather than shrinking them with the island.
-const markerScale = computed(() => 1 / (Math.min(viewport.value.width / 1200, viewport.value.height / 900) * zoom.value))
+// The embedded panel crops the illustration to its actual viewport aspect ratio.
+// Artwork, labels, hit areas and drag distances share this same frame.
+const frame = computed(() => {
+  const aspect = viewport.value.width / viewport.value.height
+  return props.embedded ? { width: Math.min(1200, 900 * aspect), height: Math.min(900, 1200 / aspect) } : { width: 1200, height: 900 }
+})
+const canvasScale = computed(() => Math.min(viewport.value.width / frame.value.width, viewport.value.height / frame.value.height))
+const markerScale = computed(() => 1 / (canvasScale.value * zoom.value))
 const center = ref({ x: 600, y: 450 })
 const selection = ref([])
 const selectedId = ref(null)
@@ -49,7 +57,7 @@ const groups = computed(() => {
   return placed
 })
 const selected = computed(() => props.events.find(e => e.id === selectedId.value))
-const viewBox = computed(() => `${center.value.x - 600 / zoom.value} ${center.value.y - 450 / zoom.value} ${1200 / zoom.value} ${900 / zoom.value}`)
+const viewBox = computed(() => `${center.value.x - frame.value.width / 2 / zoom.value} ${center.value.y - frame.value.height / 2 / zoom.value} ${frame.value.width / zoom.value} ${frame.value.height / zoom.value}`)
 let gesture
 let context
 let resizeObserver
@@ -59,24 +67,30 @@ function setZoom(value, point = center.value) {
     x: Math.max(200, Math.min(1000, point.x)), y: Math.max(120, Math.min(800, point.y)),
   }
 }
-function home() { setZoom(1); selection.value = []; selectedId.value = null }
+function focusNeighbourhood(place) {
+  selection.value = []
+  selectedId.value = null
+  setZoom(2.2, place)
+}
+function home() { setZoom(1); selection.value = []; selectedId.value = null; emit('select', null) }
 function pan(dx, dy) { center.value = { x: Math.max(150, Math.min(1050, center.value.x + dx / zoom.value)), y: Math.max(100, Math.min(800, center.value.y + dy / zoom.value)) } }
 function choose(group) {
   markerOpener = document.activeElement
   selection.value = group.events
   selectedId.value = group.events.length === 1 ? group.events[0].id : null
+  emit('select', selectedId.value)
   if (group.events.length > 1) setZoom(Math.max(zoom.value, 2.2), group)
 }
 async function openClusterEvent(id) {
   selectedId.value = id
+  emit('select', id)
   await nextTick()
   previewTitle.value?.focus({ preventScroll: true })
 }
 const selectionAnnouncement = computed(() => selected.value ? `Selected event: ${selected.value.title}. Event preview is available after the map controls.` : selection.value.length ? `${selection.value.length} events selected. Choose an event from the preview.` : '')
 function startDrag(event) {
-  if (event.pointerType === 'touch' || event.target.closest('[data-marker]')) return
-  const bounds = svg.value.getBoundingClientRect()
-  gesture = { x: event.clientX, y: event.clientY, center: { ...center.value }, scale: Math.min(bounds.width / 1200, bounds.height / 900) * zoom.value, moved: false }
+  if (event.pointerType === 'touch' || event.target.closest('[data-marker], [data-neighbourhood]')) return
+  gesture = { x: event.clientX, y: event.clientY, center: { ...center.value }, scale: canvasScale.value * zoom.value, moved: false }
   svg.value.setPointerCapture(event.pointerId)
 }
 function drag(event) {
@@ -95,14 +109,35 @@ watch(() => props.region, region => {
   const point = region && projectIllustratedVenue(region)
   if (point) setZoom(2.2, point)
 }, { immediate: true })
+function focusExternalEvent(id) {
+  if (!id) return
+  const event = props.events.find(event => event.id === id)
+  if (!event) return
+  markerOpener = document.activeElement
+  selection.value = [event]
+  selectedId.value = id
+  const point = projectIllustratedVenue(event)
+  if (point && props.embedded) {
+    const halfWidth = frame.value.width / (2 * zoom.value)
+    const halfHeight = frame.value.height / (2 * zoom.value)
+    center.value = {
+      x: Math.max(halfWidth, Math.min(1200 - halfWidth, point.x)),
+      y: Math.max(halfHeight, Math.min(900 - halfHeight, point.y)),
+    }
+  } else if (point && zoom.value > 1) setZoom(zoom.value, point)
+}
+watch(() => props.focusedEventId, focusExternalEvent, { immediate: true })
 watch(() => props.events, () => {
   selection.value = []
   selectedId.value = null
+  focusExternalEvent(props.focusedEventId)
 })
 function dismiss() {
+  emit('select', null)
   selection.value = []
   selectedId.value = null
-  if (markerOpener?.isConnected) markerOpener.focus({ preventScroll: true })
+  if (markerOpener?.isConnected && markerOpener.getClientRects().length) markerOpener.focus({ preventScroll: true })
+  else scene.value?.querySelector('button[aria-label="Return to island view"]')?.focus({ preventScroll: true })
 }
 onMounted(() => {
   resizeObserver = new ResizeObserver(([entry]) => {
@@ -118,23 +153,25 @@ onBeforeUnmount(() => { context?.revert(); resizeObserver?.disconnect() })
 </script>
 
 <template>
-  <section class="island-explorer" aria-label="Explore events on the Singapore map" :aria-busy="loading" data-lenis-prevent @keydown.esc="dismiss">
+  <section class="island-explorer" :class="{ 'island-explorer--embedded': embedded }" aria-label="Explore events on the Singapore map" :aria-busy="loading" data-lenis-prevent @keydown.esc="dismiss">
     <p class="visually-hidden" role="status" aria-live="polite">{{ selectionAnnouncement }}</p>
     <div class="map-surface" ref="scene">
-      <div class="map-caption">Your island, your next adventure <span class="map-caption-line"></span></div>
+      <div v-if="embedded" class="map-event-count">{{ points.length }} {{ points.length === 1 ? 'event' : 'events' }} on the map</div>
+      <div v-else class="map-caption">Your island, your next adventure <span class="map-caption-line"></span></div>
       <svg ref="svg" class="island-svg" :viewBox="viewBox" role="group" aria-label="Illustrated Singapore event map. Use markers or the pan and zoom buttons to explore." @pointerdown="startDrag" @pointermove="drag" @pointerup="endDrag" @pointercancel="endDrag">
         <IslandArtwork :paused="paused" />
+        <NeighbourhoodLabels :zoom="zoom" :marker-scale="markerScale" :center="center" :frame="frame" :compact="viewport.width < 600" @focus="focusNeighbourhood" />
         <path v-for="group in groups" :key="`connector-${group.key}`" :d="`M${group.x},${group.y}L${group.displayX},${group.displayY}`" stroke="#66816c" stroke-width="1.5" stroke-dasharray="3 3" aria-hidden="true" />
         <g v-for="(group, index) in groups" :key="group.key" :transform="`translate(${group.displayX} ${group.displayY}) scale(${markerScale})`" :style="{ '--marker-index': index % 6 }" data-marker role="button" tabindex="0" :aria-label="group.events.length > 1 ? `${group.events.length} events near ${group.events[0].venue_name || 'this location'}` : `Preview ${group.events[0].title}`" :aria-pressed="selection.some(e => group.events.some(g => g.id === e.id))" class="map-marker" :class="{ 'map-marker--featured': group.prominent }" @click.stop="choose(group)" @keydown="keyMarker($event, group)">
           <title>{{ group.events.length > 1 ? `${group.events.length} events` : group.events[0].title }}</title>
           <circle r="26" fill="transparent" />
           <ellipse cy="15" rx="17" ry="5" fill="#426b591c" />
           <g class="marker-icon">
-          <path d="M-19-12a19 19 0 1 1 38 0c0 12-19 28-19 28s-19-16-19-28" :fill="group.prominent ? '#e9725c' : group.events.length > 1 ? '#344f43' : '#fffdfa'" :stroke="group.prominent ? '#fff9ef' : '#56785e'" stroke-width="2" />
-          <text v-if="group.events.length > 1" y="-5" text-anchor="middle" fill="#fffdfa" class="marker-count">{{ group.events.length }}</text>
-          <path v-else d="m-6-12 4 4 8-9" fill="none" :stroke="group.prominent ? '#292d32' : '#9b482e'" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M-19-12a19 19 0 1 1 38 0c0 12-19 28-19 28s-19-16-19-28" :fill="group.prominent ? '#ff6b35' : group.events.length > 1 ? '#344f43' : '#ffffff'" :stroke="group.prominent ? '#fff8f1' : '#56785e'" stroke-width="2" />
+          <text v-if="group.events.length > 1" y="-5" text-anchor="middle" fill="#ffffff" class="marker-count">{{ group.events.length }}</text>
+          <path v-else d="m-6-12 4 4 8-9" fill="none" :stroke="group.prominent ? '#1f2937' : '#9b482e'" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
           </g>
-          <g v-if="group.prominent && zoom === 1" class="marker-tag-group"><rect x="-68" y="-63" width="136" height="27" rx="13" fill="#fffdfa" stroke="#e4ddce"/><text y="-45" text-anchor="middle" class="marker-tag">{{ (group.events[0].category || group.events[0].tags?.[0] || 'For you').replace(/[_-]/g, ' ') }}</text></g>
+          <g v-if="group.prominent && zoom === 1" class="marker-tag-group"><rect x="-68" y="-63" width="136" height="27" rx="13" fill="#ffffff" stroke="#e4ddce"/><text y="-45" text-anchor="middle" class="marker-tag">{{ (group.events[0].category || group.events[0].tags?.[0] || 'For you').replace(/[_-]/g, ' ') }}</text></g>
         </g>
       </svg>
       <div v-if="loading" class="map-message" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Finding events around Singapore…</div>
@@ -153,23 +190,24 @@ onBeforeUnmount(() => { context?.revert(); resizeObserver?.disconnect() })
     <motion.div v-if="selection.length" :key="selectedId ?? selection.map(event => event.id).join(',')" ref="preview" class="map-preview" :initial="reduced ? false : { opacity: 0, y: 24, scale: .88 }" :animate="{ opacity: 1, y: 0, scale: 1 }" :transition="reduced ? { duration: 0 } : { type: 'spring', stiffness: 360, damping: 24 }" role="region" aria-label="Selected map events">
       <button class="preview-close" type="button" aria-label="Close event preview" @click="dismiss">×</button>
       <template v-if="selected">
+        <p v-if="Number.isFinite(selected.compatibilityScore) && selected.source !== 'general_discovery'" class="preview-match">{{ Math.round(selected.compatibilityScore) }}% match</p>
         <p class="preview-kicker">{{ selected.category || selected.tags?.[0] || 'Discover something new' }}</p>
         <h2 ref="previewTitle" tabindex="-1">{{ selected.title }}</h2>
         <p class="preview-date">{{ dateLabel(selected) }} · {{ new Date(selected.start_time).toLocaleTimeString('en-SG', { hour: 'numeric', minute: '2-digit' }) }}</p>
         <p class="preview-venue">{{ selected.venue_name || 'Venue to be announced' }}</p>
         <p v-if="selected.registration_status" class="preview-status">{{ selected.registration_status === 'confirmed' ? 'You’re going' : selected.registration_status === 'pending' ? 'Pending approval' : selected.registration_status }}</p>
-        <div class="d-flex gap-2 flex-wrap"><RouterLink :to="`/events/${selected.id}/rsvp`" class="btn event-cta">View event</RouterLink><RouterLink :to="{ path: `/events/${selected.id}/rsvp`, hash: '#rsvp' }" class="btn event-cta event-cta--secondary">RSVP</RouterLink></div>
+        <EventCardActions class="map-event-actions" :event="selected" />
       </template>
       <template v-else><p class="preview-kicker">A little closer</p><h2>{{ selection.length }} events in this spot</h2><ul class="cluster-events"><li v-for="event in selection" :key="event.id"><button @click="openClusterEvent(event.id)">{{ event.title }}<span>{{ dateLabel(event) }}</span></button></li></ul></template>
     </motion.div>
-    <div class="map-bottomline"><span>{{ points.length }} {{ points.length === 1 ? 'event' : 'events' }} on the map<template v-if="missingCount"> · {{ missingCount }} more in the list</template></span><button type="button" @click="emit('list')">Explore the event list</button></div>
+    <div v-if="!embedded" class="map-bottomline"><span>{{ points.length }} {{ points.length === 1 ? 'event' : 'events' }} on the map<template v-if="missingCount"> · {{ missingCount }} more in the list</template></span><button type="button" @click="emit('list')">Explore the event list</button></div>
   </section>
 </template>
 
 <style scoped>
 .island-explorer { position: relative; }
 .map-surface { position: relative; background: var(--bookedz-canvas); overflow: hidden; min-height: 480px; border-radius: 0 0 28px 28px; }
-.island-svg { display: block; width: 100%; height: clamp(580px,65vw,900px); cursor: grab; touch-action: pan-y; }
+.island-svg { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; cursor: grab; touch-action: pan-y; }
 .island-svg:active { cursor: grabbing; }
 .map-caption { position: absolute; top: 25px; left: 32px; display: flex; align-items: center; gap: 9px; color: var(--bookedz-muted); font-size: .75rem; z-index: 1; pointer-events: none; padding: 7px 12px; border-radius: 99px; background: var(--bookedz-map-overlay); }
 .map-caption-dot { width: 7px; height: 7px; background: var(--bookedz-success); border-radius: 50%; }.map-caption-line { width: 50px; height: 1px; background: var(--bookedz-mint); }
@@ -177,7 +215,7 @@ onBeforeUnmount(() => { context?.revert(); resizeObserver?.disconnect() })
 .marker-icon { transform-origin: 0 -10px; transition: transform .22s cubic-bezier(.2,1.6,.4,1); }
 .map-marker:is(:hover,:focus-visible) .marker-icon { transform: translateY(-4px) scale(1.12); }
 .map-marker[aria-pressed=true] .marker-icon { transform: translateY(-6px) scale(1.2); }
-.map-motion-toggle { position: absolute; left: 32px; top: 70px; min-height: 44px; padding: 7px 12px; border: 1px solid var(--bookedz-muted-border); border-radius: 99px; background: var(--bookedz-map-overlay); color: var(--bookedz-ink); font-size: .7rem; }
+.map-motion-toggle { position: absolute; right: 24px; top: 25px; min-height: 44px; padding: 7px 12px; border: 1px solid var(--bookedz-muted-border); border-radius: 99px; background: var(--bookedz-map-overlay); color: var(--bookedz-ink); font-size: .7rem; }
 @media(prefers-reduced-motion:reduce) { .marker-icon { transition: none; } }
 .marker-tag-group { pointer-events: none; opacity: 0; transition: opacity .16s ease; }.map-marker:hover .marker-tag-group,.map-marker:focus-visible .marker-tag-group { opacity: 1; }
 @keyframes marker-arrive { from { opacity: 0; } to { opacity: 1; } }
@@ -191,13 +229,36 @@ onBeforeUnmount(() => { context?.revert(); resizeObserver?.disconnect() })
 .map-bottomline { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 15px 32px; font-size: .75rem; color: var(--bookedz-muted); }.map-bottomline button { border: 0; background: none; color: var(--bookedz-primary-dark); font-weight: 600; min-height: 44px; }
 .map-preview { position: absolute; top: 35px; right: 95px; width: 300px; max-height: calc(100% - 120px); overflow-y: auto; padding: 26px; border: 1px solid var(--bookedz-muted-border); border-radius: 22px; background: var(--bookedz-surface); box-shadow: var(--bookedz-preview-shadow); z-index: 3; }.map-preview h2 { text-wrap: balance; font-size: 1.5rem; margin-bottom: 12px; padding-right: 12px; }.preview-close { position: absolute; top: 8px; right: 8px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; font-size: 1.4rem; color: var(--bookedz-muted); }.preview-kicker { margin: 0 0 12px; font-size: .75rem; color: var(--bookedz-primary-dark); font-weight: 600; text-transform: capitalize; }.preview-date,.preview-venue { font-size: .85rem; color: var(--bookedz-muted); margin-bottom: 10px; }.preview-venue { margin-bottom: 22px; }.preview-status { color: var(--bookedz-success); font-size: .8rem; }
 .cluster-events { list-style: none; margin: 0; padding: 0; }.cluster-events button { text-align: left; border: 0; border-top: 1px solid var(--bookedz-border); background: none; padding: 14px 0; width: 100%; font-size: .85rem; font-weight: 600; color: var(--bookedz-ink); }.cluster-events span { display: block; font-size: .75rem; color: var(--bookedz-muted); margin-top: 4px; }
-@media(min-width:1500px) { .island-svg { height: 900px; } }
-@media(max-width:767px) { .marker-tag-group { display: none; } .map-surface { min-height: 350px; border-radius: 0 0 22px 22px; }.island-svg { height: 350px; }.map-caption { left: 18px; top: 18px; font-size: .65rem; }.map-caption-line { display: none; }.map-controls { right: 12px; bottom: 52px; }.map-key { left: 18px; bottom: 22px; gap: 10px; font-size: .65rem; }.map-credit { font-size: .7rem; right: 18px; bottom: 4px; }.map-preview { position: relative; top: auto; right: auto; width: auto; max-height: 360px; margin: 12px; padding: 22px; box-shadow: var(--bookedz-map-shadow); }.map-bottomline { padding: 4px 18px 14px; font-size: .7rem; gap: 4px; }.map-message { bottom: 60px; left: 14px; transform: none; max-width: calc(100% - 90px); padding: 10px 12px; font-size: .75rem; } }
+@media(max-width:767px) { .marker-tag-group { display: none; } .map-surface { min-height: 350px; border-radius: 0 0 22px 22px; }.island-svg { height: auto; }.map-caption { left: 18px; top: 18px; font-size: .65rem; }.map-caption-line { display: none; }.map-controls { right: 12px; bottom: 52px; }.map-key { left: 18px; bottom: 22px; gap: 10px; font-size: .65rem; }.map-credit { font-size: .7rem; right: 18px; bottom: 4px; }.map-preview { position: relative; top: auto; right: auto; width: auto; max-height: 360px; margin: 12px; padding: 22px; box-shadow: var(--bookedz-map-shadow); }.map-bottomline { padding: 4px 18px 14px; font-size: .7rem; gap: 4px; }.map-message { bottom: 60px; left: 14px; transform: none; max-width: calc(100% - 90px); padding: 10px 12px; font-size: .75rem; } }
 @media(max-width:767px) {
+  .map-caption { position: static; width: max-content; max-width: calc(100% - 24px); margin: 10px 12px 0; }
   .map-motion-toggle { position: static; display: block; margin: 6px auto; }
   .map-controls { position: relative; right: auto; bottom: auto; flex-direction: row; width: max-content; margin: 8px auto; }
   .pan-controls div { right: 0; bottom: 60px; }
   .map-key { position: static; width: max-content; max-width: 100%; justify-content: center; margin: 6px auto; }
   .map-credit { position: static; text-align: center; margin: 6px 12px 12px; }
 }
+.island-explorer--embedded .map-surface { border-radius: 16px; border: 1px solid var(--bookedz-border); min-height: 0; }
+.island-explorer--embedded .island-svg { height: clamp(480px,calc(100svh - 390px),720px); aspect-ratio: auto; }
+.map-event-count { position: absolute; top: 12px; left: 12px; z-index: 1; padding: 6px 10px; border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: 11px; font-weight: 600; pointer-events: none; }
+.island-explorer--embedded .map-preview { top: 12px; right: 12px; width: min(245px,calc(100% - 24px)); max-height: calc(100% - 110px); padding: 14px; border-radius: 12px; }
+.island-explorer--embedded .map-preview h2 { font-family: var(--bookedz-body); font-size: 16px; margin: 0 0 6px; padding-right: 22px; }
+.island-explorer--embedded .preview-kicker { margin: 0 24px 5px 0; font-size: 11px; }
+.island-explorer--embedded .preview-date,.island-explorer--embedded .preview-venue { font-size: 12px; margin-bottom: 6px; }
+.island-explorer--embedded .preview-close { top: 2px; right: 2px; width: 32px; height: 32px; }
+.island-explorer--embedded .event-cta { min-height: 40px; padding: 8px 12px; border-radius: 7px; font-size: 12px; }
+.island-explorer--embedded .event-cta::after { display: none; }
+.island-explorer--embedded .map-controls { right: 10px; bottom: 56px; gap: 0; padding: 2px; border-radius: 10px; }
+.island-explorer--embedded .map-controls button,.island-explorer--embedded .pan-controls summary { width: 36px; height: 36px; }
+.island-explorer--embedded .map-motion-toggle { top: auto; bottom: 45px; left: 12px; right: auto; min-height: 36px; padding: 5px 9px; font-size: 10px; background: var(--bookedz-surface); }
+.island-explorer--embedded .map-key { left: 10px; bottom: 10px; font-size: 10px; gap: 8px; }
+.island-explorer--embedded .map-credit { display: none; }
+.island-explorer--embedded .marker-icon { transform: scale(.75); }
+.island-explorer--embedded .map-marker:is(:hover,:focus-visible) .marker-icon { transform: translateY(-3px) scale(.85); }
+.island-explorer--embedded .map-marker[aria-pressed=true] .marker-icon { transform: translateY(-4px) scale(.9); }
+.map-event-actions :deep(.card-action) { min-height: 40px; padding: 8px 10px; font-size: 12px; }
+.preview-match { color: var(--bookedz-primary-dark); font-size: 11px; font-weight: 700; margin: 0 24px 4px 0; }
+.island-explorer--embedded::after { content: 'Illustrated positions are approximate · Open an event for its exact venue'; display: block; padding: 7px 2px; color: var(--bookedz-muted); font-size: 10px; }
+@media(max-width:991px) { .island-explorer--embedded .island-svg { height: 560px; }.island-explorer--embedded .map-controls { position: absolute; flex-direction: column; margin: 0; }.island-explorer--embedded .map-motion-toggle { position: absolute; margin: 0; }.island-explorer--embedded .map-key { position: absolute; width: auto; margin: 0; }.island-explorer--embedded .map-preview { position: absolute; margin: 0; }.island-explorer--embedded .pan-controls div { bottom: 0; right: 48px; } }
+@media(pointer:coarse) { .island-explorer--embedded .map-controls button,.island-explorer--embedded .pan-controls summary { width: 44px; height: 44px; }.island-explorer--embedded .map-motion-toggle { min-height: 44px; } }
 </style>
