@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { getOrganiserEvents, deleteEvent } from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
 import EventArtwork from '../components/EventArtwork.vue'
+import ConfirmationDialog from '../components/event-operations/ConfirmationDialog.vue'
 
 // The organiser's list of events. (This may later merge into Denzel's organiser dashboard.)
 
@@ -13,7 +14,9 @@ const events = ref([])
 const loading = ref(true)
 const errorMessage = ref('')
 const statusMessage = ref('')
-const confirmDeleteId = ref(null)
+const statusAlert = ref(null)
+const deleting = ref(null) // the event whose "Delete this event?" pop-up is open
+const deleteError = ref('') // shown inside the pop-up, which stays open for a retry
 const busyId = ref(null)
 // Cover URLs that failed to load; those cards fall back to the category artwork
 const failedCovers = ref(new Set())
@@ -41,18 +44,59 @@ onMounted(loadEvents)
 async function removeEvent(eventId) {
   if (busyId.value) return
   busyId.value = eventId
-  errorMessage.value = ''
+  deleteError.value = ''
   statusMessage.value = ''
   try {
     await deleteEvent(eventId)
-    confirmDeleteId.value = null
+    deleting.value = null
     events.value = events.value.filter((event) => event.id !== eventId)
     statusMessage.value = 'Event deleted, including its RSVPs and organiser records.'
+    // The card and its Delete button are gone, so keyboard focus moves to the outcome message
+    await nextTick()
+    statusAlert.value?.focus()
   } catch (error) {
-    errorMessage.value = error.message
+    deleteError.value = error.message
   } finally {
     busyId.value = null
   }
+}
+
+function cancelDelete() {
+  deleting.value = null
+  deleteError.value = ''
+}
+
+// ---------- "More actions" (⋯) list on each card ----------
+
+const moreFor = ref(null) // id of the card whose list is open
+const moreToggles = new Map() // card id → its ⋯ button, to return focus to
+function setMoreToggle(id, element) {
+  if (element) moreToggles.set(id, element)
+  else moreToggles.delete(id)
+}
+function toggleMore(id) {
+  moreFor.value = moreFor.value === id ? null : id
+}
+function closeMore(restoreFocus = false) {
+  const id = moreFor.value
+  moreFor.value = null
+  if (restoreFocus && id) moreToggles.get(id)?.focus()
+}
+// Tabbing or clicking away closes an open list
+function leaveMore(event) {
+  if (!event.currentTarget.contains(event.relatedTarget)) moreFor.value = null
+}
+function closeOnOutsidePointer(event) {
+  if (moreFor.value && !event.target.closest?.('.more-actions')) moreFor.value = null
+}
+onMounted(() => document.addEventListener('pointerdown', closeOnOutsidePointer))
+onBeforeUnmount(() => document.removeEventListener('pointerdown', closeOnOutsidePointer))
+
+// Delete still asks in the pop-up; ⋯ takes focus first, so Cancel returns to it
+function askDelete(event) {
+  moreToggles.get(event.id)?.focus()
+  moreFor.value = null
+  deleting.value = event
 }
 
 function fillPercent(event) {
@@ -72,7 +116,7 @@ function fillPercent(event) {
   <div v-if="justUpdatedId" class="alert alert-success" role="status">
     Changes saved. {{ route.query.announced ? 'An announcement about them is now on the event page.' : 'No announcement was posted.' }}
   </div>
-  <div v-if="statusMessage" class="alert alert-success" role="status">{{ statusMessage }}</div>
+  <div v-if="statusMessage" ref="statusAlert" class="alert alert-success" role="status" tabindex="-1">{{ statusMessage }}</div>
   <div v-if="errorMessage && events.length" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
 
   <div v-if="loading" class="text-center my-5" role="status" aria-live="polite">
@@ -92,7 +136,7 @@ function fillPercent(event) {
     <RouterLink to="/organiser/events/new" class="btn btn-primary">Create your first event</RouterLink>
   </div>
 
-  <div v-else class="row row-cols-1 row-cols-md-2 g-3">
+  <div v-else class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
     <div class="col" v-for="event in events" :key="event.id">
       <article class="card organiser-event-card h-100" :class="{ 'border-success': event.id === justCreatedId }">
         <!-- One fixed 16:9 box for every cover: photos and the fallback artwork are both centre-cropped to fill it -->
@@ -104,12 +148,8 @@ function fillPercent(event) {
         <div class="card-body organiser-event-body">
           <div class="event-title-row">
             <h2 class="h5 card-title mb-1">{{ event.title }}</h2>
-            <div class="event-title-tools">
-              <span v-if="event.id === justCreatedId" class="status-pill status-pill--new">Just published</span>
-              <!-- Editing sits by the name so the footer keeps one row on every card; hidden once the event starts -->
-              <RouterLink v-if="isUpcoming(event)" :to="'/organiser/events/' + event.id + '/edit'" class="edit-link">
-                <span aria-hidden="true">✎</span> Edit<span class="visually-hidden"> {{ event.title }}</span>
-              </RouterLink>
+            <div v-if="event.id === justCreatedId" class="event-title-tools">
+              <span class="status-pill status-pill--new">Just published</span>
             </div>
           </div>
           <p class="event-meta small text-secondary mb-3">
@@ -128,22 +168,53 @@ function fillPercent(event) {
           </div>
         </div>
         <footer class="card-footer event-card-actions">
-          <div class="event-primary-actions">
-            <RouterLink :to="'/organiser/events/' + event.id + '/manage?tab=tasks'" class="btn btn-primary btn-sm">Manage event</RouterLink>
-            <RouterLink :to="'/organiser/events/' + event.id + '/rsvps'" class="btn btn-outline-primary btn-sm">Manage RSVPs</RouterLink>
-            <RouterLink :to="'/events/' + event.id + '/rsvp'" class="btn btn-link btn-sm">View public page</RouterLink>
-          </div>
-          <div class="event-delete-action">
-            <template v-if="confirmDeleteId === event.id">
-              <button type="button" class="btn btn-danger btn-sm me-1" :disabled="busyId === event.id" @click="removeEvent(event.id)">Yes, delete event</button>
-              <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="busyId === event.id" @click="confirmDeleteId = null">Keep event</button>
-            </template>
-            <button v-else type="button" class="btn btn-outline-danger btn-sm" @click="confirmDeleteId = event.id">Delete event</button>
+          <!-- A hangout's own page (Time, Plan, On the day) is where its host manages it -->
+          <RouterLink v-if="event.kind === 'hangout'" :to="'/events/' + event.id + '/rsvp'" class="btn btn-primary btn-sm">Open hangout</RouterLink>
+          <RouterLink v-else :to="'/organiser/events/' + event.id + '/manage?tab=tasks'" class="btn btn-primary btn-sm">Manage event</RouterLink>
+          <RouterLink :to="'/organiser/events/' + event.id + '/rsvps'" class="btn btn-outline-primary btn-sm">
+            <span class="visually-hidden">Manage </span>RSVPs<span class="visually-hidden"> for {{ event.title }}</span>
+          </RouterLink>
+          <!-- Less frequent actions sit behind ⋯ so each card shows three controls; Delete is last and red -->
+          <div class="more-actions" @keydown.esc="closeMore(true)" @focusout="leaveMore">
+            <button
+              :ref="(element) => setMoreToggle(event.id, element)"
+              type="button"
+              class="btn btn-outline-secondary btn-sm more-toggle"
+              :aria-expanded="moreFor === event.id"
+              :aria-controls="'more-' + event.id"
+              :aria-label="'More actions for ' + event.title"
+              @click="toggleMore(event.id)"
+            >
+              <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="4" cy="10" r="1.8" /><circle cx="10" cy="10" r="1.8" /><circle cx="16" cy="10" r="1.8" /></svg>
+            </button>
+            <ul v-if="moreFor === event.id" :id="'more-' + event.id" class="more-menu">
+              <!-- Editing is only offered until the event starts -->
+              <li v-if="isUpcoming(event)"><RouterLink :to="'/organiser/events/' + event.id + '/edit'">Edit details</RouterLink></li>
+              <li v-if="event.kind === 'hangout'"><RouterLink :to="'/organiser/events/' + event.id + '/manage?tab=tasks'">Event tools</RouterLink></li>
+              <li v-else><RouterLink :to="'/events/' + event.id + '/rsvp'">View public page</RouterLink></li>
+              <li class="more-menu-divider"><button type="button" class="more-menu-danger" @click="askDelete(event)">Delete event</button></li>
+            </ul>
           </div>
         </footer>
       </article>
     </div>
   </div>
+
+  <!-- Deleting asks in a pop-up, so the card's footer keeps its shape -->
+  <ConfirmationDialog
+    v-if="deleting"
+    title="Delete this event?"
+    confirm-label="Delete event"
+    pending-label="Deleting…"
+    :pending="busyId === deleting.id"
+    :error="deleteError"
+    @cancel="cancelDelete"
+    @confirm="removeEvent(deleting.id)"
+  >
+    <p>“{{ deleting.title }}” will be deleted for everyone, including its RSVPs and organiser records.</p>
+    <p v-if="deleting.confirmedCount > 0">{{ deleting.confirmedCount }} {{ deleting.confirmedCount === 1 ? 'person has' : 'people have' }} a confirmed place.</p>
+    <p class="mb-0">This can’t be undone.</p>
+  </ConfirmationDialog>
 </template>
 
 <style scoped>
@@ -165,9 +236,6 @@ function fillPercent(event) {
 .event-title-row { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .5rem; }
 .event-title-row h2 { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
 .event-title-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
-.edit-link { display: inline-flex; align-items: center; gap: .35rem; min-height: 44px; padding: 0 .85rem; border: 1px solid var(--bookedz-border); border-radius: 999px; color: var(--bookedz-primary-dark); font-size: .85rem; font-weight: 650; text-decoration: none; transition: background-color var(--bookedz-motion-fast) ease; }
-.edit-link:hover { color: var(--bookedz-primary-dark); background: var(--bookedz-glass-hover); }
-@media (prefers-reduced-motion: reduce) { .edit-link { transition: none; } }
 .event-meta { display: grid; gap: .2rem; margin-top: .2rem; }
 .capacity-copy { display: flex; align-items: baseline; gap: .35rem; margin-top: auto; color: var(--bookedz-muted, #63665e); font-size: .9rem; }
 .capacity-copy strong { color: var(--bookedz-ink, #292d32); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
@@ -181,15 +249,22 @@ function fillPercent(event) {
 .status-pill--waitlist { background: color-mix(in srgb, var(--bookedz-mint) 45%, var(--bookedz-surface)); }
 .status-pill--new { background: color-mix(in srgb, var(--bookedz-success) 22%, var(--bookedz-surface)); }
 /* The footer follows the theme (bg-white stayed white in dark mode) */
-.event-card-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; border-color: var(--bookedz-border, #e5ded2); background: var(--bookedz-surface); }
-.event-primary-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
-.event-delete-action { margin-left: auto; }
+.event-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; border-color: var(--bookedz-border, #e5ded2); background: var(--bookedz-surface); }
+/* The ⋯ list opens upwards so the card's rounded, clipped edge never cuts it off */
+.more-actions { position: relative; margin-left: auto; }
+.more-toggle { width: 44px; padding: 0; }
+.more-menu { position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 5; min-width: 12rem; margin: 0; padding: .35rem; list-style: none; border: 1px solid var(--bookedz-border); border-radius: 14px; background: var(--bookedz-surface); box-shadow: var(--bookedz-preview-shadow); }
+.more-menu a, .more-menu button { display: flex; align-items: center; width: 100%; min-height: 44px; padding: .5rem .75rem; border: 0; border-radius: 10px; background: transparent; color: var(--bookedz-ink); font-size: .9rem; font-weight: 600; text-align: left; text-decoration: none; }
+.more-menu a:hover, .more-menu button:hover { background: var(--bookedz-hover); }
+.more-menu-divider { margin-top: .3rem; padding-top: .3rem; border-top: 1px solid var(--bookedz-border); }
+.more-menu .more-menu-danger { color: var(--bookedz-danger); }
+/* Two columns on small tablets: the main action gets its own row so nothing squeezes */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .event-card-actions > .btn-primary { flex: 1 0 100%; }
+  .event-card-actions > .btn-outline-primary { flex: 1 1 auto; }
+}
 @media (max-width: 575.98px) {
   .organiser-heading { align-items: stretch !important; }
   .organiser-heading :deep(.btn) { width: 100%; }
-  .event-card-actions { align-items: stretch; }
-  .event-primary-actions { display: grid; grid-template-columns: 1fr 1fr; }
-  .event-primary-actions :deep(.btn:first-child) { grid-column: 1 / -1; }
-  .event-delete-action { margin-left: 0; }
 }
 </style>

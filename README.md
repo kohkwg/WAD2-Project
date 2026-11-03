@@ -53,6 +53,23 @@ limits. Keep the disclosure and library credits in submission/presentation mater
 
 ## AI assistance disclosure
 
+On 3 November 2026, used Claude Code
+(Anthropic Claude Opus 5.5) to make a step-by-step UX pass. There were reports of the bugs
+and prof feedback, and previewed and approved each change before it was applied.
+Claude Code authored the My events delete pop-up, ⋯ action menu, "Open hangout" button
+and responsive grid (`OrganiserEventsView.vue`); a `pendingLabel` option and a centring
+fix in Denzel's shared `ConfirmationDialog.vue`; hangout editing in `HangoutWizard.vue`
+with `hangoutFormFromEvent` and `hangoutChanges` (`utils/hangouts.js`); the Hangout live
+preview, full-width create layouts and the Review-step "Suggest programme & tasks" card
+(`NewEventView.vue`, `CreateEventView.vue`); changes to Aishani's `EventFilters.vue`; the
+phone tab bar, laptop rail, visible ☰ icon and shorter sidebar in `NavBar.vue` and
+`main.css`; `utils/eventForm.js` (the Create Event checks, moved unchanged) with
+`eventForm.test.js`, `hangoutForm.test.js` and the `expect.js` helper; and selector updates
+in three existing browser tests. No backend, SQL, dependency, asset or hosted change was
+made. Details: [status](status.md).
+
+
+
 On 3 November 2026, at the request of a team member who asked not to be named
 (team approval to restyle all pages is user-reported), Claude Code (Anthropic Claude
 Opus 5.5) began integrating OpenJio's design handoff (UI only) and outing-planning

@@ -987,3 +987,46 @@ not persist. These are dated observations, not permanent database invariants.
   development accounts and deletes its [TEST] hangout. The migration now also registers the
   start-area venue in `event_created_venues`, so deleting a hangout removes it; the PGlite
   check covers this (7/7).
+
+### 3 November — step-by-step UX pass 
+
+- RBased on request where steps were instucted in prompt, previewed overlooked and accepted each step before it was applied. Builds on `c34dcf9`; 
+
+- **Delete pop-up:** My events asks in a centred pop-up (event name, confirmed count, "can't
+  be undone"; a failure stays in it for retry). The shared `ConfirmationDialog` gained
+  `pendingLabel` and `position: fixed`: Bootstrap's `.card` had made it `relative`, so it
+  opened at the top of a scrolled page. Feature 4's pop-ups get the same fix.
+- **Hangout editing:** `/organiser/events/:id/edit` hands hangouts to `HangoutWizard`
+  (`hangoutFormFromEvent`/`hangoutChanges`). Title, description, 1–5 interests, group size and
+  start area are editable; type, time and join mode are read-only, because only the shared
+  event columns can be updated. No rain backup venue or RSVP questions appear.
+- **Discover filters** (Aishani's `EventFilters`): no second "Filters" title, an active count
+  on the button, "Show N events" in the primary fill (it was white on light orange, 1.7:1 in
+  dark), 44px targets, When options wrapping 3 + 2 on phones, and a 36rem drop-down with three
+  category columns from 768px.
+- **My events:** Manage event (Open hangout for hangouts) · RSVPs · ⋯ (Edit details, View
+  public page or Event tools, Delete event), in 1, 2 (≥576px) or 3 (≥1200px) columns.
+- **Create pages:** full width at ≥1200px, a shorter Official heading, a Hangout live preview,
+  and plan suggestions moved from the sticky footer to a Review-step card ("Suggest programme
+  & tasks"; demo mode shows a visible note instead of a disabled button).
+- **Navigation:** the ☰ had no icon in light mode (Bootstrap's toggler image needs `.navbar`).
+  Categories and Map left the sidebar (Discover links to both). Phones below 768px get a tab
+  bar for signed-in and demo users, laptops at 992–1199px an 84px labelled rail with pages
+  filling the freed width, and non-Discover pages are capped at 1440px instead of 1220px.
+  Settings stays (Aishani's 27 October layout); Create event stays on My events.
+- **Form checks:** `utils/eventForm.js` holds the Create Event checks (moved unchanged).
+  `eventForm.test.js` 14/14 and `hangoutForm.test.js` 6/6 use `expect.js` over `node:assert`;
+  `hangouts.test.js` 7/7.
+- Chromium on an owned demo server (5187; 5173 was in use): deletion and Feature 4 pop-up
+  cases 8/8; `legacy-review-fixes` 7/7 after updating three selectors to the renamed "Search
+  for the venue" label; the create-wizard, `navbar-account` and three `shared-ui` cases pass
+  (one `shared-ui` link lookup is now scoped to Main navigation). Scratch checks covered
+  375–1920px in both themes: focus return, Escape, failure/retry, 44px targets, contrast, one
+  `main`, no overflow and no console errors.
+- Already failing, and identical on an untouched `c34dcf9` worktree (since removed):
+  `discover-browse` 3, `filter-panel` 3, `recommendation-mvp` 2, the `landing-page` filter
+  hand-off, `motion-theme` category disclosure, `design-polish` live navigation,
+  `discovery-rsvp-regressions` legacy links, `shared-ui` demo reset and public summary, and
+  4 of 7 `event-filters.test.mjs` cases.
+- Not done: full suites, a production build, live or real-device checks, and committed specs
+  for the new menu and navigation (scratch scripts only).

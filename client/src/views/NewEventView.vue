@@ -23,7 +23,7 @@ watch(template, async (value) => {
 </script>
 
 <template>
-  <div v-if="template && !hangoutCreated" class="template-switch col-12 col-xl-11 mx-auto">
+  <div v-if="template && !hangoutCreated" class="template-switch">
     <RouterLink :to="{ query: { ...route.query, template: undefined } }">← Choose a different template</RouterLink>
     <span>{{ template === 'official' ? 'Official event' : 'Hangout' }} template · your draft is kept if you switch</span>
   </div>
@@ -32,7 +32,7 @@ watch(template, async (value) => {
     <CreateEventView v-if="template === 'official'" />
     <HangoutWizard v-else-if="template === 'hangout'" @created="hangoutCreated = true" />
   </KeepAlive>
-  <div v-if="!template" class="template-picker col-12 col-xl-10 mx-auto">
+  <div v-if="!template" class="template-picker">
     <p class="picker-washi">New on Bookedz</p>
     <h1 ref="heading" tabindex="-1">What are you making?</h1>
     <p class="picker-lede">Pick a template. You can go back and switch before you publish.</p>

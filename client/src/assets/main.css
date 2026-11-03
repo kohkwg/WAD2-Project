@@ -65,8 +65,13 @@ h2 { font-size: clamp(1.4rem,1.2rem + .7vw,1.9rem); font-weight: 800; }
 h3 { font-size: 1.25rem; font-weight: 800; }
 h4,h5 { font-weight: 700; }
 :root { --sidebar-w: 240px; }
+/* Laptops use NavBar's slim rail instead of the full sidebar, and pages fill the room it frees
+   (Bootstrap's .container would otherwise stop at 960px and leave empty gutters) */
+@media(min-width:992px) and (max-width:1199.98px) { :root { --sidebar-w: 84px; } .app-main:not(.app-main--discover) { max-width: none; } }
 .app-shell { min-height: 100vh; padding-left: var(--sidebar-w); }
 @media(max-width:991.98px) { .app-shell { padding-left: 0; } }
+/* Phones: room for NavBar's fixed bottom tab bar, which only signed-in (and demo) users get */
+@media(max-width:767.98px) { .app-shell:has(.bottom-tabs) { --bottom-nav-h: calc(64px + env(safe-area-inset-bottom)); padding-bottom: var(--bottom-nav-h); } }
 .app-main { padding-top: 2.5rem; padding-bottom: 4rem; min-height: calc(100vh - 230px); }
 .app-main--discover { max-width: 100%; padding: 0; }
 .card { --bs-card-bg: var(--bookedz-surface); --bs-card-border-color: var(--bookedz-border); --bs-card-cap-bg: transparent; border-radius: 1.25rem; box-shadow: var(--bookedz-card-shadow); overflow-wrap: anywhere; }
@@ -124,7 +129,7 @@ h4,h5 { font-weight: 700; }
 .app-footer { border-top: 1px solid var(--bookedz-border); padding: 1.75rem 0; color: var(--bookedz-muted); background: var(--bookedz-glass-solid); font-size: .8rem; }
 .app-footer .container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
 .app-footer strong { font-family: var(--bookedz-heading); color: var(--bookedz-ink); font-size: 1.3rem; letter-spacing: -.04em; }
-@media(min-width:1400px) { .app-main:not(.app-main--discover) { max-width: 1220px; } }
+@media(min-width:1400px) { .app-main:not(.app-main--discover) { max-width: 1440px; } }
 @media(max-width:991.98px) { .app-navbar .navbar-collapse { padding: 1rem 0; } .nav-section-label { border-top: 1px solid var(--bookedz-border); margin-top: .5rem; padding-top: 1rem; } .app-navbar .navbar-collapse > .btn { margin-top: 1rem; } }
 @media(max-width:575.98px) { .app-main { padding-top: 1.5rem; } .app-main--discover { padding-top: 0; } .card-body,.workspace-panel { padding: 1.1rem; } .event-tool-nav { grid-template-columns: repeat(2,minmax(0,1fr)); } .app-navbar { min-height: 70px; } .app-navbar .navbar-brand { font-size: 1.6rem; margin-right: 0; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
