@@ -14,7 +14,7 @@ const accountName = computed(() => user.value?.email?.split('@')[0] || 'Your acc
 const signingOut = ref(false)
 const authError = ref('')
 const discoverView = computed(() => route.path === '/discover' ? route.query.view : undefined)
-const isOnDiscover = computed(() => route.path === '/discover' && !['categories', 'map'].includes(discoverView.value))
+const isOnDiscover = computed(() => route.path === '/discover')
 const isMyEvents = computed(() => route.path.startsWith('/organiser/events') && route.path !== '/organiser/events/new')
 const ICONS = {
   discover: 'M3 11.5 12 4l9 7.5M5.5 10v10h13V10M10 20v-5h4v5',
@@ -22,7 +22,6 @@ const ICONS = {
   rsvps: 'M4 6.5h16V20H4zM4 11h16M8 3.5v5M16 3.5v5',
   events: 'M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4zM14 6v12',
   categories: 'M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM13.5 13.5H20V20h-6.5z',
-  map: 'M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5zM9 4v13.5M15 6.5V20',
   settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z',
 }
 let stopListening = () => {}
@@ -75,8 +74,6 @@ function resetDemo() {
           <li><RouterLink class="side-link" active-class="active" to="/my-rsvps"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg>My RSVPs</RouterLink></li>
           <li><RouterLink class="side-link" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>My events</RouterLink></li>
         </template>
-        <li><RouterLink class="side-link" :class="{ active: discoverView === 'categories' }" active-class="" exact-active-class="" :to="{ path: '/discover', query: { view: 'categories' } }"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.categories" /></svg>Categories</RouterLink></li>
-        <li><RouterLink class="side-link" :class="{ active: discoverView === 'map' }" active-class="" exact-active-class="" :to="{ path: '/discover', query: { view: 'map' } }"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.map" /></svg>Map</RouterLink></li>
       </ul>
       <ul class="sidebar-links sidebar-links--secondary">
         <li v-if="hasSession && USING_SUPABASE"><RouterLink class="side-link" active-class="active" to="/profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.settings" /></svg>Settings</RouterLink></li>
@@ -131,7 +128,7 @@ function resetDemo() {
 @media(min-width:992px) { .app-topbar--minimal { display: none; } }
 .nav-sign-in, .nav-quiet, .nav-profile { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 9px 15px; border: 0; border-radius: 14px; text-decoration: none; font-size: .875rem; font-weight: 600; white-space: nowrap; }
 .nav-sign-in { background: var(--bookedz-ink); color: var(--bookedz-surface); }
-.nav-sign-in:hover { background: var(--bookedz-primary-dark); color: var(--bookedz-surface); }
+.nav-sign-in:hover { background: var(--bookedz-primary); color: var(--bookedz-on-action); }
 .nav-sign-in svg { width: 20px; height: 20px; }
 .nav-quiet, .nav-profile { background: transparent; color: var(--bookedz-muted); }
 .nav-quiet:hover, .nav-profile:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }

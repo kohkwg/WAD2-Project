@@ -15,8 +15,10 @@ Organisers manage events, attendance and operations through the same shell.
 
 ## Current frontend
 
-Discovery uses the latest illustrated Singapore island with real event markers,
-sparse independent motion and collapsible filters. The floating navbar, ticket-like
+Discover pairs its dated timeline with a OneMap street map, recommendation strip
+and collapsible filters. On small screens the map stacks below the timeline. Old
+map links open this unified page with their filters preserved. The landing
+illustration and event-form venue maps remain. The floating navbar, ticket-like
 event actions and participant/organiser screens share System/Light/Dark themes.
 Public event facts lead; RSVP actions sit beside them. Creation has a live preview;
 organiser tools and RSVP capacity/status visuals use actual event data.
@@ -52,6 +54,121 @@ deployment status. Use the timeline for the latest verified checkpoint and remai
 limits. Keep the disclosure and library credits in submission/presentation materials.
 
 ## AI assistance disclosure
+
+For Aishani's 3 November `origin/dev` merge conflict follow-up, Codex combined the
+recommendation/saved-event and redesigned participant/organiser pages with the
+incoming Hangout/template/routing functionality. Codex retained the committed
+landing illustration and street-map workspace, shared Bricolage/DM Sans typography
+and palette, added incoming compatibility tokens, and combined geographic helpers.
+Codex updated isolated test fixtures for the new adapter import and aligned a stale
+timestamp assertion with the already committed five-second clock-skew tolerance.
+Eighty-nine focused Node cases and twelve selected browser cases pass; all 77 Vue
+sources/templates compile. Hosted integration is not verified. Conflict resolution
+does not itself commit, push, merge the PR, deploy or run the incoming SQL.
+
+For Aishani's subsequent 3 November street-map request, Codex authored
+`DiscoveryStreetMap.vue` and connected timeline thumbnail selection to it while
+retaining title navigation and the existing palette. It uses the already installed
+Leaflet library and [OneMap GreyLite tiles](https://www.onemap.gov.sg/docs/maps/)
+with visible OneMap/SLA attribution. Coordinates come from existing event venues;
+no geocoding token or new dependency is needed. Codex added selectable clusters,
+map previews using existing RSVP actions, tile retry, and focused verification.
+The recommendation backend and composable were not edited in this change.
+
+For Aishani's 3 November map-removal/palette request, Codex detached the Discover
+map, removed sidebar/landing map controls, removed map-only selection/fetching,
+and changed timeline titles to event-detail links. Codex connected filled actions,
+heading surfaces and steps to the supplied light/dark palette, preserving earlier
+uncommitted artwork and application changes. Event-form Leaflet/OneMap remains.
+Focused verification is recorded in testing/status; no hosted data, dependencies,
+commit, push or deployment changes were made.
+
+For Aishani's 3 November Discover reference-layout request, Codex added a compact
+recommendation strip, category shortcuts, date-led compact event rows and a
+simultaneous sticky map on desktop. The existing recommendation endpoint,
+composable, scoring, eligibility/exclusions and server order are unchanged.
+Scores/reasons appear only when supplied; anonymous upcoming picks retain their
+source explanation. Save/dismiss/undo/retry and event status/RSVP/waitlist routes
+are retained. Timeline and map share the current filtered 12-event page, with
+linked selection and embedded-map framing; phones use List/Map tabs and one
+initial pick. Existing island/water animation remains. Codex authored four
+focused rendering tests; no new dependencies, backend, database or hosted writes.
+
+For Aishani's subsequent stable-boat refinement on 3 November, Codex replaced
+the translating SVG hulls with detailed boats painted into a new sibling
+illustration, using built-in imagegen. Boat positions now remain fixed; only
+stern ripples, wake streams, open-water currents and shoreline glints animate.
+The existing Flyer/plane/bird motion and common pause/reduced-motion handling
+remain. This supersedes the sailing-route presentation described below.
+
+For the 3 November water-motion follow-up, Codex replaced the painted sailing
+cargo ship with an independently animated SVG vessel, added ferry/coastal/bay
+boat routes, animated wakes, local water currents/glints and shoreline strokes.
+The existing pause/offscreen/tab logic now shares an inherited play-state variable
+with the new components; each respects reduced motion. Built-in imagegen removed
+only the sailing cargo ship from a sibling background plate; the moored port
+ship remains static. Actual movement and pause freezing were checked in-browser;
+no application dependencies or hosted data changed.
+
+For Aishani's 3 November expanded-island request, Codex used built-in imagegen to
+expand the illustrated terrain with more neighbourhoods and attractions, then
+cleaned printed labels, small boats and the Flyer wheel from the animation plate.
+Codex integrated the optimised WebP, repositioned the existing independent wheel,
+boats, plane and birds, recalibrated approximate regional event placement, and
+added compact clickable neighbourhood/attraction labels with zoom-dependent
+detail and collision suppression. Existing event coordinates, clustering,
+previews, pause/visibility/reduced-motion logic and theme contracts are retained.
+Asset prompts/provenance are in [the asset register](docs/design/assets.md).
+No new runtime libraries, hosted data, scoring or schema changes.
+
+For Aishani's shared-typography request on 2 November, Codex added central size
+tokens and page/section/card/metadata/caption/button roles, retaining Bricolage
+Grotesque and DM Sans. Codex removed conflicting scoped desktop/mobile declarations
+across Discover, My RSVPs, My events and their cards, and aligned Profile/Community
+page titles. A temporary Chromium comparison verified actual computed type values
+on the three primary pages at 100% zoom, four widths and both themes; four existing
+focused layout/action checks also pass. No new dependencies, behaviour or hosted
+changes. The comparison script and screenshot evidence remain under `/tmp`.
+
+For Aishani's 2 November organiser My events request, Codex authored the mint
+header, date-led cards, Upcoming/Drafts/Past/All tabs, search/sort retention,
+pending-request summary and direct review actions. State-specific links reuse
+existing edit, management and attendance/results routes. Existing draft events
+can be rescheduled without publishing; no new draft-creation/publishing flow was
+added. Codex preserved deletion confirmation/focus, added pending-status deep
+links and prevented demo drafts appearing in public lists. Five Node and seven
+unique focused demo browser cases pass across targeted runs, including organiser
+approval/rejection/removal reflected in participant My RSVPs. No live database,
+SQL, recommendation-scoring or dependency changes; hosted behaviour is unverified.
+
+For Aishani's 2 November My RSVPs redesign, Codex authored the peach header,
+summary counts, time-aware Upcoming/Saved/Past/Cancelled tabs, next confirmed
+event, focused row/card/empty-state components, directions and calendar download.
+Codex added caller-scoped saved-event reads and unsave through the existing
+preference endpoint, with matching demo adapters. Existing cancellation, offer
+actions, ticket routes and periodic/focus refresh are retained. Attendance labels
+require an explicitly unflagged check-in. Ten focused Node and ten browser cases
+pass across targeted runs; browser/API fixtures do not verify hosted persistence.
+No SQL, recommendation scoring, dependencies or hosted data were changed.
+
+For Aishani's 2 November recommendation journey request, Codex updated the mocked
+Playwright scenarios for save exclusion, related-event explanations, refresh,
+dismiss/undo, retry and empty states, and enlarged bookmark targets to 44px.
+Three mocked browser tests pass. Codex prepared twelve fictional event drafts and
+a separate mocked/live evidence log; browser permissions block form creation and
+live verification. No hosted events, account resets or database writes occurred.
+
+For Aishani's saved-event discovery follow-up on 2 November, Codex added active
+save candidate exclusions and applied the supplied interaction regression test.
+Saved events still teach preferences for other events; evidence calculation is
+unchanged. All 22 focused mocked backend checks pass.
+
+On 2 November 2026, Codex applied Aishani's supplied recommendation-quality ZIP,
+preserving current scoring and distance changes. Organiser/team activity no longer
+teaches preferences, including historical organiser events; explanations identify
+supporting save/registration/attendance evidence. Codex adapted the supplied tests
+to existing check helpers. All 22 focused mocked backend tests pass; hosted
+integration was not verified and no database/deployment changes were made.
 
 On 3 November 2026, at the request of a team member who asked not to be named
 (team approval to restyle all pages is user-reported), Claude Code (Anthropic Claude

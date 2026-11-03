@@ -67,6 +67,8 @@ export const getUser = () => backend.getUser() // the signed-in user's profile
 
 // ---------- RSVPs: participant ----------
 export const getMyRsvps = () => backend.getMyRsvps()
+export const getSavedEvents = () => backend.getSavedEvents()
+export const unsaveEvent = (eventId) => backend.unsaveEvent(eventId)
 export const createRsvp = (rsvpData) => backend.createRsvp(rsvpData) // { eventId, name, email, answers }
 export const cancelRsvp = (rsvpId) => backend.cancelRsvp(rsvpId)
 export const respondToOffer = (rsvpId, accept) => backend.respondToOffer(rsvpId, accept)

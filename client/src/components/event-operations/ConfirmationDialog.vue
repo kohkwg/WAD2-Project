@@ -39,6 +39,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.confirmation { width: min(32rem, calc(100% - 2rem)); margin: auto; border: 1px solid var(--bookedz-border, #e5ded2) !important; border-radius: 20px; background: var(--bookedz-surface, #fff); }
+.confirmation { width: min(32rem, calc(100% - 2rem)); margin: auto; border: 1px solid var(--bookedz-border, #e9ded3) !important; border-radius: 20px; background: #ffffff; }
 .confirmation::backdrop { background: rgb(0 0 0 / 45%); }
+.confirmation :deep(.btn-primary) { background: #9a3412; border-color: #9a3412; }
 </style>
