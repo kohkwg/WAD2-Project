@@ -211,6 +211,7 @@ export async function getEvents() {
   await fakeDelay()
   const db = loadFreshDb()
   return db.events
+    .filter((e) => e.status !== 'draft') // unpublished events are hidden from the public list
     .map((e) => withCounts(db, e))
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
 }
@@ -219,6 +220,17 @@ export async function getEvent(eventId) {
   await fakeDelay()
   const db = loadFreshDb()
   return withCounts(db, findEvent(db, eventId))
+}
+
+export async function setEventPublished(eventId, published) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = findEvent(db, eventId)
+  if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('You can only publish or unpublish events you organise.')
+  if (event.status && !['draft', 'published'].includes(event.status)) throw new Error(`A ${event.status} event can't be published or unpublished.`)
+  event.status = published ? 'published' : 'draft'
+  saveDb(db)
+  return withCounts(db, event)
 }
 
 export async function deleteEvent(eventId) {

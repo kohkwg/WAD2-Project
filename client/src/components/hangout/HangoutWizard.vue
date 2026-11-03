@@ -1,4 +1,5 @@
 <script setup>
+import '../../assets/design-baseline.css'
 import { computed, nextTick, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import StepIndicator from '../rsvp/StepIndicator.vue'
@@ -79,7 +80,7 @@ async function publish() {
 </script>
 
 <template>
-  <div class="hangout-wizard col-12 col-xl-11 mx-auto">
+  <div class="design-baseline hangout-wizard col-12 col-xl-11 mx-auto">
     <InviteSlip v-if="created" :event="created" @open="router.push(`/events/${created.id}/rsvp`)" />
     <template v-else>
       <header class="hangout-head">

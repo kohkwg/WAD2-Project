@@ -424,6 +424,17 @@ export async function updateEvent(eventId, changes) {
   return getEvent(eventId)
 }
 
+// Organiser toggles an event between public (published) and hidden (draft). Cancelled/completed are left alone.
+export async function setEventPublished(eventId, published) {
+  const myId = await requireUserId()
+  const current = await getEvent(eventId)
+  if (current.organiserId !== myId) throw new Error('You can only publish or unpublish events you organise.')
+  if (!['draft', 'published'].includes(current.status)) throw new Error(`A ${current.status} event can't be published or unpublished.`)
+  const rows = check(await supabase.from('events').update({ status: published ? 'published' : 'draft' }).eq('id', eventId).select('id'))
+  if (!rows?.length) throw new Error('You can only publish or unpublish events you organise.')
+  return getEvent(eventId)
+}
+
 // Deleting the event also deletes its RSVPs, questions and tags (on delete cascade in the database)
 export async function deleteEvent(eventId) {
   const rows = check(await supabase.from('events').delete().eq('id', eventId).select('id'))

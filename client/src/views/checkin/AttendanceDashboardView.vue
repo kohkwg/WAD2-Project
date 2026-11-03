@@ -8,8 +8,10 @@ import AttendanceCsv from '@/components/checkin/AttendanceCsv.vue'
 import { supabase } from '@/utils/supabase'
 import { formatTime, getEvent } from '@/utils/checkin'
 
+// Standalone routes read :eventId; Manage Event embeds this view and passes it in.
+const props = defineProps({ eventId: { type: String, default: '' }, embedded: { type: Boolean, default: false } })
 const route = useRoute()
-const eventId = route.params.eventId
+const eventId = props.eventId || route.params.eventId
 
 const loading = ref(true)
 const error = ref('')
@@ -135,7 +137,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
 
 <template>
   <div class="container py-4 attendance-page">
-    <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
+    <RouterLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
 
     <header class="attendance-header d-flex justify-content-between align-items-start gap-2 mb-4">
       <div>

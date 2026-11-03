@@ -7,8 +7,10 @@ import { RouterLink, useRoute } from 'vue-router'
 import QrCode from '@/components/checkin/QrCode.vue'
 import { getCheckinSecret, getEvent, rotateCheckinSecret, venueCheckInUrl } from '@/utils/checkin'
 
+// Standalone routes read :eventId; Manage Event embeds this view and passes it in.
+const props = defineProps({ eventId: { type: String, default: '' }, embedded: { type: Boolean, default: false } })
 const route = useRoute()
-const eventId = route.params.eventId
+const eventId = props.eventId || route.params.eventId
 
 const event = ref(null)
 const secret = ref('')
@@ -90,7 +92,7 @@ onUnmounted(() => clearInterval(timer))
 
 <template>
   <div class="container py-4 venue-qr-page text-center">
-    <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block text-start mb-3">&larr; Manage event</RouterLink>
+    <RouterLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block text-start mb-3">&larr; Manage event</RouterLink>
 
     <div v-if="error && !secret" class="alert alert-danger" role="alert">{{ error }}</div>
 

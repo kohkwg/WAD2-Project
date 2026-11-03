@@ -40,6 +40,7 @@ export const getEvent = (eventId) => backend.getEvent(eventId)
 export const getOrganiserEvents = () => backend.getOrganiserEvents() // the signed-in organiser's
 export const createEvent = (eventData) => backend.createEvent(eventData)
 export const updateEvent = (eventId, changes) => backend.updateEvent(eventId, changes) // organiser edits a published event
+export const setEventPublished = (eventId, published) => backend.setEventPublished(eventId, published) // organiser: hide (draft) or show (published)
 export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
 export const getHangoutInvite = (token) => backend.getHangoutInvite(token) // private hangout preview
 export const joinHangout = (target) => backend.joinHangout(target) // { eventId, token? }; private hangouts need the invite token

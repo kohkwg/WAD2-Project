@@ -8,8 +8,10 @@ import AttendeeSearch from '@/components/checkin/AttendeeSearch.vue'
 import { supabase } from '@/utils/supabase'
 import { formatTime, getEvent, staffCheckIn, wasAlreadyCheckedIn } from '@/utils/checkin'
 
+// Standalone routes read :eventId; Manage Event embeds this view and passes it in.
+const props = defineProps({ eventId: { type: String, default: '' }, embedded: { type: Boolean, default: false } })
 const route = useRoute()
-const eventId = route.params.eventId
+const eventId = props.eventId || route.params.eventId
 
 const event = ref(null)
 const busy = ref(false)
@@ -79,7 +81,7 @@ onMounted(() =>
 
 <template>
   <div class="container py-4 staff-page">
-    <RouterLink :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
+    <RouterLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
     <header class="staff-heading d-flex justify-content-between align-items-start gap-2 mb-4">
       <div>
         <h1 class="h4 mb-1">Check-in station</h1>
