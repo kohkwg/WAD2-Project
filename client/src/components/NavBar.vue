@@ -138,7 +138,7 @@ function resetDemo() {
 @media(min-width:992px) { .app-topbar--minimal { display: none; } }
 .nav-sign-in, .nav-quiet, .nav-profile { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 9px 15px; border: 0; border-radius: 14px; text-decoration: none; font-size: .875rem; font-weight: 600; white-space: nowrap; }
 .nav-sign-in { background: var(--bookedz-ink); color: var(--bookedz-surface); }
-.nav-sign-in:hover { background: var(--bookedz-primary-dark); color: var(--bookedz-surface); }
+.nav-sign-in:hover { background: var(--bookedz-primary); color: var(--bookedz-on-action); }
 .nav-sign-in svg { width: 20px; height: 20px; }
 .nav-quiet, .nav-profile { background: transparent; color: var(--bookedz-muted); }
 .nav-quiet:hover, .nav-profile:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }

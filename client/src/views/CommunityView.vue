@@ -229,7 +229,7 @@ function ago(ts) {
 <template>
   <div class="container community-page">
     <div class="community-feed">
-      <h1 class="h3 mb-3 community-title">Community</h1>
+      <h1 class="page-title mb-3 community-title">Community</h1>
 
       <div class="community-side">
       <form class="community-search" role="search" @submit.prevent>
@@ -411,8 +411,8 @@ function ago(ts) {
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: var(--bookedz-primary-dark);
-  color: #fff;
+  background: var(--bookedz-primary);
+  color: var(--bookedz-on-action);
   box-shadow: var(--bookedz-shadow, 0 6px 18px rgba(0, 0, 0, 0.35));
 }
 .community-fab:focus-visible { outline: 3px solid var(--bookedz-ink); outline-offset: 3px; }
@@ -438,8 +438,8 @@ function ago(ts) {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--bookedz-primary-dark);
-  color: #fff;
+  background: var(--bookedz-primary);
+  color: var(--bookedz-on-action);
   font-weight: 700;
 }
 .community-text { white-space: pre-wrap; overflow-wrap: anywhere; }

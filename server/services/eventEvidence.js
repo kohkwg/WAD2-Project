@@ -53,12 +53,21 @@ function calculateEventEvidence(snapshot, { now = Date.now() } = {}) {
   const stage = STAGES.find(stage => snapshot[stage.field]?.[stage.flag] === true);
   if (!stage) return empty;
   const timeMs = timestampMs(snapshot[stage.field].timestamp, `${stage.field}.timestamp`);
-  if (timeMs > nowMs) throw new RangeError('Evidence timestamp must not be in the future');
+  // Allow a small difference between database and application clocks.
+const CLOCK_SKEW_TOLERANCE_MS = 5_000;
+
+if (timeMs - nowMs > CLOCK_SKEW_TOLERANCE_MS) {
+  throw new RangeError(
+    `Evidence timestamp is ${timeMs - nowMs} ms ahead of recommendation time`
+  );
+}
 
   // Select the strongest valid stage BEFORE ageing; do not stack stages or
   // fall back to a weaker action merely because the stronger action is old.
-  const ageMs = nowMs - timeMs;
-  const ageMultiplier = ageMs <= 30 * DAY_MS ? 1 : ageMs <= 90 * DAY_MS ? 0.5 : 0;
+  const ageMs = Math.max(0, nowMs - timeMs);
+  const ageDays = ageMs / DAY_MS;
+const HALF_LIFE_DAYS = 45;
+const ageMultiplier = Math.pow(0.5, ageDays / HALF_LIFE_DAYS);
   return {
     eventId: snapshot.eventId,
     effectiveAction: stage.action,

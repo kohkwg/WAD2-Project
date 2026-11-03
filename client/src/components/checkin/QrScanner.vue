@@ -84,5 +84,5 @@ onBeforeUnmount(async () => {
 </style>
 
 <style scoped>
-.qr-scanner{background:#292d32!important;border:1px solid #292d32;min-height:240px}
+.qr-scanner{background:#1f2937!important;border:1px solid #1f2937;min-height:240px}
 </style>

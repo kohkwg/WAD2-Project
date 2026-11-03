@@ -211,6 +211,7 @@ export async function getEvents() {
   await fakeDelay()
   const db = loadFreshDb()
   return db.events
+    .filter(event => !event.status || event.status === 'published')
     .map((e) => withCounts(db, e))
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
 }
@@ -606,7 +607,7 @@ export async function updateEvent(eventId, changes) {
   const db = loadFreshDb()
   const event = findEvent(db, eventId)
   if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('You can only edit events you organise.')
-  if (new Date(event.startTime).getTime() <= Date.now()) {
+  if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) {
     throw new Error('This event has already started, so it can no longer be edited.')
   }
   if (new Date(changes.endTime) <= new Date(changes.startTime)) throw new Error('The end time must be after the start time.')
@@ -676,6 +677,26 @@ export async function getMyRsvps() {
     .filter((r) => r.userId === CURRENT_USER_ID)
     .map((r) => ({ ...r, event: withCounts(db, findEvent(db, r.eventId)) }))
     .sort((a, b) => new Date(a.event.startTime) - new Date(b.event.startTime))
+}
+
+export async function getSavedEvents() {
+  await fakeDelay()
+  const db = loadFreshDb()
+  return (db.eventPreferences || [])
+    .filter(row => row.userId === CURRENT_USER_ID && row.saveActive === true)
+    .map(row => {
+      const event = db.events.find(event => event.id === row.eventId)
+      return event ? { ...withCounts(db, event), saved: true, savedAt: row.savedAt } : null
+    }).filter(Boolean)
+    .sort((a, b) => Date.parse(b.savedAt) - Date.parse(a.savedAt) || a.id.localeCompare(b.id))
+}
+
+export async function unsaveEvent(eventId) {
+  await fakeDelay()
+  const db = loadDb()
+  const preference = (db.eventPreferences || []).find(row => row.userId === CURRENT_USER_ID && row.eventId === eventId)
+  if (preference) preference.saveActive = false
+  saveDb(db)
 }
 
 export async function createRsvp({ eventId, name, email, answers }) {

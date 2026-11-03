@@ -1,5 +1,90 @@
 # Decisions
 
+3 November 2026 — merge-resolution implementation: preserve Aishani's committed
+recommendation and redesigned pages while integrating dev's Hangout functionality.
+Retain current shared palette/typography and add missing compatibility tokens.
+Keep the illustrated landing and current street-map workspace; retain IslandArtwork
+because it is imported, and accept dev's deletion of the unused SingaporeMap.
+Combine both Supabase adapter imports and both sets of geographic helpers. Leave
+the merge commit and push for Aishani; do not apply incoming SQL to hosted services.
+
+3 November 2026, subsequent street-map correction — Aishani rejects the illustrated Discover map and explicitly chooses **Map beside timeline**. This supersedes the list-only/map-removal layout decision below: retain the current palette, recommendation strip and event-title navigation, and add a real OneMap street map beside the timeline (stacked on narrow screens). Keep the existing recommendation algorithm. No separate Map navigation entry is needed.
+
+3 November 2026 — Aishani requests removal of the Discover Map feature and the
+supplied exact light/dark colour roles. Remove the sidebar entry, discovery map
+panel/switch/selection and landing map entry points. Legacy map URLs open List
+without losing search/filters. Retain the decorative landing artwork and normal
+event-form venue selection maps. Preserve existing uncommitted artwork/code;
+unreferenced map components are not deleted in this pass. Palette values are
+documented in the design system; filled orange actions and orange text/links use
+separate tokens.
+
+3 November 2026, Discover workspace — Aishani requests the supplied search →
+compact Picked for you → category chips → timeline beside map layout, explicitly
+retaining and using the current recommendation algorithm. Reuse existing
+recommendation reads/actions and event registration routes. Desktop shows both
+panels; phones use tabs. Map and timeline show the same filtered current page;
+this supersedes the previous all-results map layer for the Discover workspace.
+Keep the selected illustrated island and fixed-boat water animations. No request
+to commit, push, deploy, change scoring or write hosted event data.
+
+3 November 2026, stable-boat refinement — Aishani requests detailed boats that
+match the supplied illustration and remain fixed in place, with moving water
+and wakes creating the sailing impression. This supersedes translating/bobbing
+SVG boat routes; retain the expanded island, labels and other animations.
+
+3 November 2026, follow-up — Aishani requests visible boat travel and a moving
+water effect, explaining that the sparse plane/transport accents were insufficient.
+Add continuous local ripples, wakes and several sailing vessels while retaining
+the selected artwork, small labels and shared motion controls. Buildings remain
+fixed; the docked cargo ship stays moored.
+
+3 November 2026 — Aishani selects the expanded illustrated Singapore island:
+larger terrain, more buildings and attractions, the existing cheerful palette,
+smaller labels and all existing decorative animations. She requests integration
+into the local Bookedz repository. Preserve event discovery and real venue data;
+the illustration remains approximate. This request authorises local source/asset
+edits, not a commit, push or deployment.
+
+2 November 2026 — Aishani requests central typography roles in `main.css`, keeping
+Bricolage Grotesque for headings and DM Sans for body/buttons. Page titles use
+32–48px/700; section headings 22–28px/650; ordinary card titles 20px/650; body 16px;
+metadata/buttons 14px; captions 12px. Featured event titles may use a distinct
+larger shared role. Remove conflicting scoped rules, including breakpoint rules,
+instead of adding `!important`; compare pages at equal zoom and mobile widths.
+
+2 November 2026 — Aishani prioritises organiser My events tabs/search, pending
+counts with direct Review requests, state-specific Edit draft/Manage event/View
+results, empty states/mobile layout and organiser-to-participant consistency.
+Use existing management, edit and attendance routes. Drafts lists persisted draft
+events; do not imply a new save-as-draft or publish-draft workflow. Preserve real
+status/availability counts and deletion confirmation; no invented attendance,
+duplication or cancellation controls from the reference image.
+
+2 November 2026 — Aishani requests the My RSVPs redesign with separate
+Upcoming/Saved/Past/Cancelled tabs, earliest upcoming confirmed plan, independent
+saved-event retrieval and component extraction. Keep offers above the tabs,
+existing cancellation/offer refresh and actual ticket navigation. Directions and
+calendar actions must work; no decorative QR, invented waitlist position or photo
+sharing. Closed registrations retain their specific status labels; verified
+attendance requires a check-in without a fraud flag. Recommendation scoring is
+outside this change.
+
+2 November 2026 — Aishani requests twelve fictional [TEST] events created through
+the live event form and a two-participant recommendation journey, with a separate
+organiser. The user authorises resets of the two dedicated test participants.
+Keep mocked UI evidence separate from browser/Express/Supabase evidence; event
+draft preparation is not event creation or live verification.
+
+2 November 2026 — Aishani requests excluding active saves from recommendation
+candidates while preserving their learning evidence. Unsave restores candidate
+eligibility subject to existing filters; evidence snapshots remain unchanged.
+
+2 November 2026 — apply Aishani's supplied recommendation-quality update:
+exclude organiser/team behavioural evidence while retaining explicit interests and
+bookmark storage; explain recommendations using supporting actions. Preserve the
+existing route fixture and current topic, distance and diversity scoring.
+
 Aishani requests the illustrated Singapore hero as a separate landing page rather
 than part of Discover. Bookedz logos must return to it from any page. Use `/` for
 the public landing page and retain `/discover` for recommendations/event browsing;

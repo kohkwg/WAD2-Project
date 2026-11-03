@@ -14,6 +14,7 @@ const props = defineProps({
   actionError: { type: String, default: '' },
   undoEvent: { type: Object, default: null },
   compact: { type: Boolean, default: false },
+  strip: { type: Boolean, default: false },
   filtered: { type: Boolean, default: false },
   otherPicks: { type: Boolean, default: false },
 })
@@ -74,12 +75,13 @@ function view(event) {
 <template>
   <section
     class="picked-for-you"
-    :class="{ 'picked-for-you--compact': compact }"
+    :class="{ 'picked-for-you--compact': compact, 'picked-for-you--strip': strip }"
     aria-labelledby="picked-for-you-title"
     :aria-busy="loading"
   >
     <header class="picks-header">
-      <h2 id="picked-for-you-title">Picked for you</h2>
+      <p v-if="strip" class="picks-eyebrow">{{ personalized ? 'Ranked for you' : 'Up next' }}</p>
+      <h2 id="picked-for-you-title" class="section-title" tabindex="-1">Picked for you</h2>
 
       <button
         v-if="!loading && !error && canToggle"
@@ -92,6 +94,8 @@ function view(event) {
         {{ showAll ? 'Show less' : 'See all' }}
       </button>
     </header>
+
+    <p v-if="strip && personalized" class="picks-note">Based on your interests and activity.</p>
 
     <p v-if="actionError" class="alert alert-danger" role="alert">
       {{ actionError }}
@@ -119,8 +123,7 @@ function view(event) {
     </p>
 
     <p v-else-if="!personalized" class="picks-note">
-      Explore upcoming events.
-      Personalised picks are available when you're signed in.
+      {{ strip ? 'Upcoming events to explore. Sign in for personalised picks.' : "Explore upcoming events. Personalised picks are available when you’re signed in." }}
     </p>
 
     <div v-if="filtered && !loading && !error" class="picks-context">
@@ -184,6 +187,7 @@ function view(event) {
         v-for="event in visibleEvents"
         :key="event.id"
         :event="event"
+        :strip="strip"
         :preference-pending="preferencePending"
         @view="view"
         @preference="emit('preference', $event)"
@@ -211,13 +215,7 @@ function view(event) {
   margin-bottom: 18px;
 }
 
-.picks-header h2 {
-  margin: 0;
-  font-family: var(--bookedz-heading);
-  color: var(--bookedz-ink);
-  font-size: 28px;
-  letter-spacing: 0;
-}
+.picks-header h2 { margin: 0; color: var(--bookedz-ink); }
 
 .see-all {
   min-height: 40px;
@@ -226,8 +224,9 @@ function view(event) {
   border-radius: 5px;
   background: var(--bookedz-surface);
   color: var(--bookedz-ink);
-  font: inherit;
-  font-size: 13px;
+  font-family: var(--bookedz-body);
+  font-weight: 600;
+  font-size:var(--text-button);
   cursor: pointer;
 }
 
@@ -240,7 +239,7 @@ function view(event) {
 .picks-context p,
 .picks-message {
   color: var(--bookedz-muted);
-  font-size: 14px;
+  font-size: var(--text-small);
 }
 
 .picks-note {
@@ -302,11 +301,6 @@ function view(event) {
   padding: 20px;
 }
 
-.picks-grid :deep(.pick-title) {
-  font-size: 20px;
-  letter-spacing: 0;
-}
-
 .picks-grid :deep(.pick-title a) {
   min-height: 0;
 }
@@ -314,12 +308,12 @@ function view(event) {
 .picks-grid :deep(.pick-source) {
   display: block;
   margin: 0 0 6px;
-  font-size: 14px;
+  font-size: var(--text-small);
 }
 
 .picks-grid :deep(.pick-reason) {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size:var(--text-small);
 }
 
 .picks-grid :deep(.pick-explanation) {
@@ -368,10 +362,6 @@ function view(event) {
   .picks-loading {
     grid-template-columns: minmax(0, 360px);
   }
-
-  .picks-header h2 {
-    font-size: 24px;
-  }
 }
 
 .picked-for-you--compact .picks-grid {
@@ -382,4 +372,22 @@ function view(event) {
   outline: 2px solid var(--bookedz-primary-dark);
   outline-offset: 3px;
 }
+/* Compact ranked strip: display only; featured selection and server order above
+   are unchanged. Preference actions and explanations remain available. */
+.picked-for-you--strip { display: grid; grid-template-columns: 156px minmax(0,1fr); gap: 0 14px; align-items: start; padding: 14px; margin: 0; border: 1px solid var(--bookedz-primary); border-radius: 15px; background: var(--bookedz-glass-active); }
+.picked-for-you--strip .picks-header { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin: 4px 0 0; }
+.picked-for-you--strip .picks-header h2 { font-size: 20px; line-height: 1.15; }
+.picks-eyebrow { margin: 0; color: var(--bookedz-primary-dark); font-size: 11px; font-weight: 700; }
+.picked-for-you--strip .see-all { min-height: 36px; padding: 4px 0; border: 0; background: transparent; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.picked-for-you--strip .picks-note { grid-column: 1; grid-row: 2; margin: 8px 0 0; font-size: 12px; line-height: 1.5; }
+.picked-for-you--strip .picks-grid { grid-column: 2; grid-row: 1 / span 4; grid-template-columns: repeat(var(--columns), minmax(0,1fr)); gap: 10px; align-self: stretch; }
+.picked-for-you--strip .picks-context { grid-column: 1; grid-row: 3; margin: 8px 0 0; gap: 2px; }
+.picked-for-you--strip .picks-context p { min-width: 0; font-size: 12px; }
+.picked-for-you--strip .picks-loading { grid-column: 2; grid-row: 1 / span 4; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.picked-for-you--strip .pick-skeleton { height: 145px; }
+.picked-for-you--strip .picks-message,.picked-for-you--strip > .alert { grid-column: 2; padding: 10px; margin: 0 0 8px; font-size: 12px; }
+.picked-for-you--strip .picks-grid :deep(.recommendation-card) { border: 0; border-radius: 11px; overflow: visible; }
+.picked-for-you--strip .picks-grid :deep(.pick-details) { padding: 12px; }
+@media(max-width:1199px) { .picked-for-you--strip { grid-template-columns: 128px minmax(0,1fr); gap: 0 10px; }.picked-for-you--strip .picks-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:767px) { .picked-for-you--strip { display: block; padding: 12px; }.picked-for-you--strip .picks-header { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; }.picked-for-you--strip .picks-eyebrow { width: 100%; }.picked-for-you--strip .picks-note { margin: 6px 0 12px; }.picked-for-you--strip .picks-grid { grid-template-columns: minmax(0,1fr); gap: 8px; }.picked-for-you--strip .picks-loading { grid-template-columns: minmax(0,1fr); }.picked-for-you--strip .picks-context { margin-bottom: 10px; } }
 </style>

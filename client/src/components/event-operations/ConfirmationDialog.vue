@@ -40,7 +40,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 /* Bootstrap's .card sets position: relative, which pinned the modal to the top of the page
-   (not the screen) at full height */
-.confirmation { position: fixed; width: min(32rem, calc(100% - 2rem)); height: fit-content; max-height: calc(100dvh - 2rem); margin: auto; border: 1px solid var(--bookedz-border, #e5ded2) !important; border-radius: 20px; color: var(--bookedz-ink); background: var(--bookedz-surface, #fff); }
+   (not the screen) at full height. Surface/ink tokens keep it readable in dark mode. */
+.confirmation { position: fixed; width: min(32rem, calc(100% - 2rem)); height: fit-content; max-height: calc(100dvh - 2rem); margin: auto; border: 1px solid var(--bookedz-border, #e9ded3) !important; border-radius: 20px; color: var(--bookedz-ink); background: var(--bookedz-surface, #ffffff); }
 .confirmation::backdrop { background: rgb(0 0 0 / 45%); }
+.confirmation :deep(.btn-primary) { background: #9a3412; border-color: #9a3412; }
 </style>
