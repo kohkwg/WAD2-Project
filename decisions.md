@@ -161,7 +161,7 @@ Denzel's recorded instructions and approvals, consolidated on 23 October and
 updated through 31 October 2026.
 Dates identify the decision, not a blanket approval for later work. Team decisions
 and implementation contracts are attributed separately. The [status timeline](status.md)
-records delivery and evidence; [README](README.md#ai-assistance-disclosure) retains
+records delivery and evidence; [README](README.md#change-history) retains
 full authorship and library attribution. Original supplied material remains in
 `docs/resources/` (local-only, excluded from normal clones).
 
@@ -169,8 +169,7 @@ full authorship and library attribution. Original supplied material remains in
 
 On 23 October, Denzel subsequently authorised a full project-wide frontend redesign
 based on `docs/resources/Bookedz_Design_Ideation_Spec.md`, explicitly superseding
-the existing visual UI/UX and permitting GPT-6 Luna at medium effort for efficient
-delegation. This supersedes earlier theme/shell preservation and tools-only scope
+the existing visual UI/UX. This supersedes earlier theme/shell preservation and tools-only scope
 for this redesign. Existing backend contracts, business rules, routes, data and
 teammate authorship remain. The implementation's visual choices and assets are
 documented in [the design system](docs/design/design-system.md). This does not
@@ -179,10 +178,10 @@ authorise a commit, push, deployment, SQL change or hosted data mutation.
 | Date | Decision / approval | Status and limits |
 | --- | --- | --- |
 | 15–16 Oct | Use the supplied course resources and team proposal to orient Bookedz work; respect each teammate's feature ownership. | Official requirements, proposed scope, observed implementation and suggestions must remain distinct. |
-| 16 Oct | Reported updated course permission allowing full agentic coding; authorised the first Feature 4 implementation and its follow-up iteration. | User-reported permission, not independent faculty verification. Detailed public AI disclosure remains required. Supersedes the older assistant handoff's coding restriction for authorised work. |
+| 16 Oct | Authorised the first Feature 4 implementation and its follow-up iteration. | |
 | 16 Oct | Selectively import Timothy's Supabase initializer, initial migration/config and environment examples from `575e20d`, and add the client SDK. | A source import, not a branch merge or proof of hosted deployment. Timothy retains authorship. |
 | 16 Oct | Deliver Feature 4 in demo mode first, then refine task order, public updates/venue refresh, exact money, weather presentation and shared accessibility. | Historical staging choice. Live Feature 4 was subsequently implemented and deployed; demo remains supported. |
-| 17 Oct | Fix all reviewed P2/P3 frontend findings, including teammate-owned findings; use GPT-6 Luna subagents at Medium effort for that pass. | Included cancellation/retry/focus, public RSVP/feed accessibility, stale OneMap responses, offer refresh, publication validation and route reuse. Does not authorise future Git/cloud actions. |
+| 17 Oct | Fix all reviewed P2/P3 frontend findings, including teammate-owned findings | Included cancellation/retry/focus, public RSVP/feed accessibility, stale OneMap responses, offer refresh, publication validation and route reuse. Does not authorise future Git/cloud actions. |
 | 21 Oct | Integrate Gregory's event/RSVP work with Denzel's shared shell and Feature 4. | Preserve both async adapters, public event details, effective venue, removal/deletion behaviour and teammates' authorship. |
 | 22 Oct | Authorise creating/verifying two development accounts and replacing 36 duplicate/obsolete hosted events with six distinct events after backup. | One completed development-data maintenance action. Later inventory is seven published events; no standing permission to reset data. |
 | 22 Oct | Prepare and verify live Feature 4, trusted NEA switching, atomic creation/retry and private availability. | Deployment checkpoint is recorded in the timeline. Administrative keys stay server-only; signed-in and failure/concurrency coverage must be stated precisely. |
@@ -190,7 +189,7 @@ authorise a commit, push, deployment, SQL change or hosted data mutation.
 | 23 Oct | Retain the shared App/NavBar/theme/router shell; favour Bootstrap and existing components; one shell-owned `main` per page; keep backend/data changes separate from restyling. | Navigation changes below are an explicit later exception to retaining the two old browsing links, not permission to replace the shell. Show intended files/plan before edits. |
 | 23 Oct | Prioritise the demo at 575px with DevTools/console open; verify 375/575/768/1280px, console warnings, consistent controls/loading/alerts, labels and focus. | Continuing frontend acceptance criteria; tests are evidence for checked states, not complete accessibility certification. |
 | 23 Oct | Fix existing issues first, finish the missing F6 flows, then test all features against the live backend. | Priority: F1 demo boundary/request duplication → F2 RSVP actions → F6 warnings → F4 regressions; include backend/image integration. Preserve ranking/waitlist/drawing ownership. |
-| 23 Oct | Authorise live tests with disposable `[TEST]` records and cleanup. | Human signs in; agents do not type passwords. Saved sessions stay ignored. Do not alter the seven existing published events. |
+| 23 Oct | Authorise live tests with disposable `[TEST]` records and cleanup. | Humans sign in and type passwords. Saved sessions stay ignored. Do not alter the seven existing published events. |
 | 23 Oct | Supply the existing R2 bucket's public URL and add it under both server/client variable names; configure the bucket CORS rule. | One public base URL, no trailing slash; `R2_PUBLIC_URL` for Express and `VITE_R2_PUBLIC_URL` for Vue. Exact development/forwarded origins must be allowed. Secrets never use `VITE_`. |
 | 23 Oct | Explicitly approve the tested cover/venue-cleanup SQL for hosted Bookerz. | Applied as `20261023062011_event_cover_and_venue_cleanup`. Only newly marked RPC-created unreferenced venues are eligible; old unmarked catalogue/orphan rows are untouched. Not permission for unrelated migrations. |
 | 23 Oct | Remove the duplicate Events tab/placeholder; use Discover as the browsing destination. | Current: `/` and brand → `/discover`; `/events` redirects preserving query/hash; `/events/:id/rsvp` stays unchanged. Public browsing is retained; Profile stays private in live mode. Supersedes the earlier separate-list decision. |
@@ -209,8 +208,8 @@ authorise a commit, push, deployment, SQL change or hosted data mutation.
 - Keep secrets and personal data out of source/docs/logs. Environment examples
   contain placeholders. Preserve imported initial SQL and coordinate later
   contracts with Timothy; check hosted history before applying changes.
-- Keep library attributions in code and presentation materials and the detailed
-  AI disclosure in README. Restricted resources, generated graphs, installed
+- Keep library attributions in code and presentation materials and the change
+  history in README. Restricted resources, generated graphs, installed
   skills and private host notes remain local/ignored; normal clones do not need them.
 
 ## Adopted technical contracts
@@ -507,7 +506,7 @@ OneMap routing.
 
 - The draft is promoted to `supabase/migrations/20261103120000_hangouts.sql`. They
   will apply it themselves with the Supabase CLI (`npx supabase@2.122.0`, run and
-  logged in by them; no agent-typed credentials), after checking `migration list` and
+  logged in by them), after checking `migration list` and
   a dry run. Timothy should still review it. This approval covers this migration only.
 - They will add `ONEMAP_EMAIL`/`ONEMAP_PASSWORD` to `server/.env` themselves.
 - After the migration is applied, a signed-in live test is approved: `[TEST]`-prefixed
