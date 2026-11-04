@@ -102,7 +102,8 @@ async function saveChanges() {
   errorMessage.value = ''
   try {
     await updateEvent(props.editEvent.id, hangoutChanges(props.editEvent, form.value))
-    await router.push({ path: '/organiser/events', query: { updated: props.editEvent.id } })
+    // Hangouts live in Community now, so saving returns to the hangout's own page
+    await router.push(`/events/${props.editEvent.id}/rsvp`)
   } catch (error) {
     // The edits stay as typed so the organiser can retry.
     errorMessage.value = `Your changes couldn’t be saved: ${error.message}`
