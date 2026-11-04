@@ -4,7 +4,7 @@
 .design-baseline.design-baseline { position: relative; isolation: isolate; --db-r: 24px; --db-tilt: 1.2deg; }
 
 /* Soft colour blobs live on the body so they have no visible box edges. */
-body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community-page, .group-page, .my-rsvps-page)) {
+body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community-page, .group-page, .my-rsvps-page, .discover-page)) {
   background:
     radial-gradient(34rem 24rem at 12% 0%, color-mix(in srgb, var(--bookedz-fill) 22%, transparent), transparent 70%),
     radial-gradient(32rem 22rem at 95% 0%, color-mix(in srgb, var(--bookedz-teal) 20%, transparent), transparent 70%),
@@ -294,4 +294,57 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 @media (prefers-reduced-motion: reduce) {
   :is(.community-page.community-page, .group-page.group-page, .my-rsvps-page.my-rsvps-page) :is(.btn:not(:disabled):hover, .group-card:hover, .community-filter[aria-pressed='true'], .rsvp-tabs button[aria-selected=true]) { transform: none; }
   .group-page.group-page .group-event { rotate: 0deg; transition: none; }
+}
+
+/* Discover (Aishani's page): CSS only, scoped to .discover-page so the view and its components stay untouched. */
+.discover-page.discover-page { position: relative; isolation: isolate; }
+.discover-page.discover-page .discovery-search :is(.search-toolbar) {
+  border: 2px solid var(--bookedz-ink); border-radius: 999px; padding: 6px;
+  background: var(--bookedz-surface); box-shadow: 5px 5px 0 var(--bookedz-teal);
+}
+.discover-page.discover-page .discovery-search .search-field input:focus-visible { outline: 3px solid color-mix(in srgb, var(--bookedz-fill) 45%, transparent); outline-offset: 2px; }
+.discover-page.discover-page .discovery-search .filter-toggle { border-radius: 999px; border: 2px solid var(--bookedz-ink); font-weight: 700; }
+.discover-page.discover-page .discovery-search .filter-toggle.is-active { background: var(--bookedz-fill); color: var(--bookedz-on-action); }
+.discover-page.discover-page .discovery-search :is(.filter-panel) { border: 2px solid var(--bookedz-ink); border-radius: 20px; box-shadow: 5px 5px 0 var(--bookedz-mango); }
+
+.discover-page.discover-page .category-shortcut { border: 2px solid var(--bookedz-ink); font-weight: 700; }
+.discover-page.discover-page .category-shortcut:hover { transform: translateY(-2px) rotate(-1deg); }
+.discover-page.discover-page .category-shortcut[aria-pressed=true] {
+  background: var(--bookedz-fill); color: var(--bookedz-on-action); box-shadow: 3px 3px 0 var(--bookedz-ink); rotate: -1.5deg;
+}
+.discover-page.discover-page .results-sort select { border: 2px solid var(--bookedz-ink); border-radius: 999px; padding: 0 14px; background: var(--bookedz-surface); font-weight: 600; }
+.discover-page.discover-page .pane-switch { border: 2px solid var(--bookedz-ink); }
+.discover-page.discover-page .pane-switch button[aria-pressed=true] { color: var(--bookedz-ink); font-weight: 700; }
+
+/* Timeline: dashed ticket-perforation rail, date stamps */
+.discover-page.discover-page .event-timeline::before { width: 0; background: none; border-left: 2px dashed var(--bookedz-ink); opacity: .35; }
+.discover-page.discover-page .timeline-date::after { background: var(--bookedz-fill); border: 2px solid var(--bookedz-ink); width: 12px; height: 12px; right: -7px; top: 10px; box-shadow: 0 0 0 3px var(--bookedz-canvas); }
+.discover-page.discover-page .date-label { font-weight: 800; }
+.discover-page.discover-page .weekday { color: var(--bookedz-teal-ink); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+
+/* Event rows become little tickets */
+.discover-page.discover-page .discovery-event-row {
+  border: 2px solid var(--bookedz-ink); border-radius: 18px; background: var(--bookedz-surface);
+  box-shadow: 5px 5px 0 var(--bookedz-teal); transition: transform .18s ease, box-shadow .18s ease;
+}
+.discover-page.discover-page .discovery-event-row:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--bookedz-teal); }
+.discover-page.discover-page .discovery-event-row.is-selected { border-color: var(--bookedz-ink); box-shadow: 6px 6px 0 var(--bookedz-fill); background: color-mix(in srgb, var(--bookedz-orange-soft) 55%, var(--bookedz-surface)); }
+.discover-page.discover-page .row-cover { border: 2px solid var(--bookedz-ink); border-radius: 12px; }
+.discover-page.discover-page .row-picked { background: var(--bookedz-pink); color: #3b0a24; border-radius: 999px; padding: 2px 9px; rotate: -2deg; }
+
+.discover-page.discover-page :is(.empty-state, .loading-state) {
+  border: 2px dashed var(--bookedz-ink); border-radius: 20px; background: var(--bookedz-surface); box-shadow: 5px 5px 0 var(--bookedz-mango);
+}
+.discover-page.discover-page .event-pagination .btn { border: 2px solid var(--bookedz-ink); border-radius: 999px; font-weight: 700; }
+.discover-page.discover-page .discovery-map-column { border: 2px solid var(--bookedz-ink); border-radius: 20px; overflow: hidden; box-shadow: 6px 6px 0 var(--bookedz-mango); }
+
+:root[data-theme="dark"] .discover-page.discover-page .discovery-search .search-toolbar,
+:root[data-theme="dark"] .discover-page.discover-page .discovery-event-row,
+:root[data-theme="dark"] .discover-page.discover-page .category-shortcut,
+:root[data-theme="dark"] .discover-page.discover-page .results-sort select,
+:root[data-theme="dark"] .discover-page.discover-page .discovery-map-column { border-color: var(--bookedz-fill); }
+:root[data-theme="dark"] .discover-page.discover-page .discovery-event-row { box-shadow: 5px 5px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .discover-page.discover-page :is(.discovery-event-row:hover, .category-shortcut:hover) { transform: none; }
+  .discover-page.discover-page .discovery-event-row { transition: none; }
 }
