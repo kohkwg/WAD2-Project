@@ -121,7 +121,8 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
   (`formatEventTime`), "7 Nov" for timeline dates, "1 Nov, 1:39 pm" for timestamps.
   Day before month, 12-hour times with lower-case am/pm.
 - **Buttons name the result:** "Approve selected (3)", "Join waitlist", "Save changes".
-  Toasts echo the action: "Saved", "Posted", "Spot confirmed".
+  Toasts echo the action: "Saved", "Posted", "Spot confirmed". Saving an event says "Saved to your
+  list" with a **View saved** button to My RSVPs → Saved.
 - **Errors say what happened and what to do:** "The event has to end after it starts."
 - **Sample data stays out of real labels.** No "demo" or "test" in event titles shown to users.
 
@@ -203,8 +204,12 @@ with a 24-hour offer, or organiser approval). Addresses from OneMap are shown in
 
 ### My RSVPs
 Waitlist offers come first, with a live countdown that shows seconds in the last hour.
-Then the totals, then tabs (Upcoming, Saved, Past, Cancelled). Updates every 30 seconds
-and on focus; the Refresh button stays as a fallback.
+Then the totals, then tabs (Upcoming, Saved, Past, Cancelled); `?tab=saved` (and the other tab ids)
+opens a tab directly. Updates every 30 seconds and on focus; the Refresh button stays as a fallback.
+Saved cards carry one badge (your RSVP, then Full or 5 or fewer spots, then "Starts tomorrow" /
+"Starts in 3 days") and one main action (RSVP, Join waitlist, Review offer, View your RSVP); the
+filled bookmark removes the save. Ended or cancelled saves are greyed and listed last. On Discover,
+signed-in visitors with a save get a **Saved** chip (with a count) at the start of the category row.
 
 ### Community: Go together (`/community`)
 Community is where people find others to go to events with. **Official events live in

@@ -1,6 +1,7 @@
 <script setup>
 import '../assets/design-baseline.css'
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import OfferBanner from '../components/rsvp/OfferBanner.vue'
 import NextEventCard from '../components/rsvp/NextEventCard.vue'
 import ParticipantRsvpRow from '../components/rsvp/ParticipantRsvpRow.vue'
@@ -10,7 +11,7 @@ import SkeletonList from '../components/ui/SkeletonList.vue'
 import CountUp from '../components/ui/CountUp.vue'
 import '../assets/design-baseline.css'
 import { toast } from '../composables/useToast'
-import { groupRsvps, eventCalendar } from '../utils/rsvpOverview.js'
+import { groupRsvps, eventCalendar, sortSavedEvents } from '../utils/rsvpOverview.js'
 import {
   getMyRsvps,
   cancelRsvp,
@@ -26,11 +27,24 @@ const errorMessage = ref('')
 const statusMessage = ref('')
 const busyId = ref(null) // which RSVP is being saved
 const confirmCancelId = ref(null) // which RSVP is showing "Are you sure?"
-const activeTab = ref('upcoming')
+const TAB_IDS = ['upcoming', 'saved', 'past', 'cancelled']
+const route = useRoute()
+const router = useRouter()
+// ?tab=saved (e.g. from the "View saved" toast on Discover) opens that tab; the URL follows tab changes
+const tabFromQuery = () => (TAB_IDS.includes(route.query.tab) ? route.query.tab : 'upcoming')
+const activeTab = ref(tabFromQuery())
+watch(() => route.query.tab, () => { activeTab.value = tabFromQuery() })
+watch(activeTab, tab => {
+  const current = typeof route.query.tab === 'string' ? route.query.tab : 'upcoming'
+  if (current !== tab) router.replace({ query: { ...route.query, tab: tab === 'upcoming' ? undefined : tab } })
+})
 const savedEvents = ref([])
 const savedError = ref('')
 const savedReady = ref(false)
 const groups = computed(() => groupRsvps(rsvps.value, now.value))
+const sortedSaved = computed(() => sortSavedEvents(savedEvents.value, now.value))
+// Your own RSVP per event, so a saved card says "You're going" instead of offering RSVP again
+const rsvpStatusByEvent = computed(() => new Map(rsvps.value.map(row => [row.eventId || row.event?.id, row.status])))
 const tabs = computed(() => [
   { id: 'upcoming', label: 'Upcoming', count: groups.value.upcoming.length },
   { id: 'saved', label: 'Saved', count: savedReady.value ? savedEvents.value.length : '—' },
@@ -275,7 +289,7 @@ async function cancel(rsvpId) {
       <section v-for="tab in tabs" v-show="activeTab === tab.id" :id="`panel-${tab.id}`" :key="tab.id" role="tabpanel" :aria-labelledby="`tab-${tab.id}`" tabindex="0" class="rsvp-panel stagger-in">
         <template v-if="tab.id === 'saved'">
           <div v-if="savedError" class="alert alert-danger" role="alert">{{ savedError }} <button type="button" class="btn btn-outline-secondary" :disabled="busyId !== null" @click="refreshRsvps">Retry saved events</button></div>
-          <div v-if="savedEvents.length" class="saved-grid stagger-in"><SavedEventCard v-for="event in savedEvents" :key="event.id" :event="event" :busy="busyId === `saved-${event.id}`" :disabled="busyId !== null" @unsave="removeSaved" /></div>
+          <div v-if="savedEvents.length" class="saved-grid stagger-in"><SavedEventCard v-for="event in sortedSaved" :key="event.id" :event="event" :rsvp-status="rsvpStatusByEvent.get(event.id) || null" :now="now" :busy="busyId === `saved-${event.id}`" :disabled="busyId !== null" @unsave="removeSaved" /></div>
           <RsvpEmptyState v-else-if="!savedError" section="saved" />
         </template>
         <template v-else>

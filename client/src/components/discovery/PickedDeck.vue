@@ -97,7 +97,7 @@ function key(event) {
       <p v-if="current" class="deck-left" aria-live="polite">{{ left }} of {{ events.length }} left</p>
       <div class="deck-tools">
         <button type="button" class="deck-tool" aria-label="Undo last swipe" :disabled="!history.length" @click="undo">↺</button>
-        <button type="button" class="deck-tool" :aria-label="saved ? 'Unsave this event' : 'Save this event'" :aria-pressed="saved" :disabled="!current || !personalized || preferencePending" @click="toggleSave">{{ saved ? '★' : '☆' }}</button>
+        <button type="button" class="deck-tool" :aria-label="saved ? 'Remove this event from saved' : 'Save this event'" :aria-pressed="saved" :disabled="!current || !personalized || preferencePending" @click="toggleSave">{{ saved ? '★' : '☆' }}</button>
         <button type="button" class="deck-tool" aria-label="Why this pick" :aria-pressed="showInfo" :disabled="!current" @click="showInfo = !showInfo">ⓘ</button>
       </div>
     </div>
