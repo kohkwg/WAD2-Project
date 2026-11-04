@@ -54,6 +54,7 @@ export const getGroupComments = groupsOnly('getGroupComments')
 export const addGroupComment = groupsOnly('addGroupComment')
 export const deleteGroupComment = groupsOnly('deleteGroupComment')
 export const suggestGroupStop = groupsOnly('suggestGroupStop') // (groupId, 'before' | 'after', place, deal or { name })
+export const setGroupAvailability = groupsOnly('setGroupAvailability') // (groupId, slot, [cell start ISO]); when2meet-style
 export const voteGroupStop = groupsOnly('voteGroupStop') // (groupId, slot, suggestionId, keen)
 export const chooseGroupStop = groupsOnly('chooseGroupStop') // host; suggestionId or null
 export const removeGroupStop = groupsOnly('removeGroupStop')

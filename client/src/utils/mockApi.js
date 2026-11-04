@@ -9,7 +9,7 @@ import { createSeedData, addSampleGroups, GROUP_SEED_VERSION } from './mockData.
 import { calculateWaitlistScore } from './waitlistScore.js'
 import { OFFER_HOURS, ACTIVE_STATUSES } from './helpers.js'
 import { joinOutcome } from './hangouts.js'
-import { isGroup, groupErrors, groupEventData, emptyPlan, slotTimes, mealLabel, SLOTS, suggestionFrom, suggestionErrors } from './groups.js'
+import { isGroup, groupErrors, groupEventData, emptyPlan, fitSlots, mealLabel, SLOTS, suggestionFrom, suggestionErrors, availabilityError } from './groups.js'
 import { TASK_STATUSES, FALLBACK_BUDGET_CATEGORY, budgetCategoryOptions, validateCategoryName, validateCents, validateExpenseAmounts, summariseBudget } from './feature4.js'
 import { fetchForecastData, forecastAreas, eventForecast } from './feature4Weather.js'
 
@@ -279,18 +279,34 @@ function groupView(db, group) {
   }
 }
 
+// Who acts for the demo's one browser identity in this group
+const groupActor = (group) => (isGroupHost(group) ? group.organiserId : CURRENT_USER_ID)
+
 function planView(db, group) {
   const plan = group.plan || emptyPlan()
-  const times = slotTimes(group)
+  const memberIds = [group.organiserId, ...db.rsvps.filter((r) => r.eventId === group.id && r.status === 'confirmed').map((r) => r.userId)]
+  const fitted = fitSlots(group, plan.availability || {}, memberIds)
+  const actor = groupActor(group)
+  const person = (id) => ({ id, name: userName(db, id), me: id === actor })
   const out = {}
   for (const slot of SLOTS) {
     const { suggestions = [], chosenId = null } = plan[slot] || {}
+    const f = fitted[slot]
+    const mine = plan.availability?.[actor]?.[slot]
     out[slot] = {
-      ...times[slot],
-      label: mealLabel(times[slot].start),
+      start: f.start,
+      end: f.end,
+      fitted: f.fitted,
+      label: mealLabel(f.start),
+      cells: f.cells.map((c) => ({ start: c.start, free: c.free.map(person) })),
+      memberCount: memberIds.length,
+      coming: f.coming.map(person),
+      cant: f.cant.map(person),
+      noReply: f.noReply.map(person),
+      myCells: Array.isArray(mine) ? mine : null, // null until you've marked anything
       chosenId,
       suggestions: suggestions
-        .map((s) => ({ ...s, suggestedByName: userName(db, s.suggestedBy), mine: s.suggestedBy === CURRENT_USER_ID || (isGroupHost(group) && s.suggestedBy === group.organiserId), votes: s.votes.length, myVote: s.votes.includes(CURRENT_USER_ID) }))
+        .map((s) => ({ ...s, suggestedByName: userName(db, s.suggestedBy), mine: s.suggestedBy === actor, votes: s.votes.length, myVote: s.votes.includes(CURRENT_USER_ID) }))
         .sort((a, b) => (b.id === chosenId) - (a.id === chosenId) || b.votes - a.votes),
     }
   }
@@ -395,8 +411,23 @@ export async function suggestGroupStop(groupId, slot, item) {
   const suggestion = suggestionFrom(item)
   const problem = suggestionErrors(group.plan, slot, suggestion)
   if (problem) throw new Error(problem)
-  const actor = isGroupHost(group) ? group.organiserId : CURRENT_USER_ID
+  const actor = groupActor(group)
   group.plan[slot].suggestions.push({ ...suggestion, id: newId('s'), suggestedBy: actor, votes: [CURRENT_USER_ID], createdAt: new Date().toISOString() })
+  saveDb(db)
+  return planView(db, group)
+}
+
+// Save the 15-minute cells you're free for one side of the event ([] means none of them)
+export async function setGroupAvailability(groupId, slot, cells) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const group = requireGroupMember(db, groupId)
+  group.plan = group.plan || emptyPlan()
+  group.plan.availability = group.plan.availability || {}
+  const actor = groupActor(group)
+  const problem = availabilityError(group, slot, cells)
+  if (problem) throw new Error(problem)
+  group.plan.availability[actor] = { ...(group.plan.availability[actor] || {}), [slot]: [...new Set(cells)].sort() }
   saveDb(db)
   return planView(db, group)
 }

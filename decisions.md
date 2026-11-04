@@ -1,5 +1,17 @@
 # Decisions
 
+4 November 2026 — Huxley, collapsible sidebar: from 992px the sidebar can collapse to an icon
+rail with tooltips, remembered per browser (`bookedz-sidebar`). The old 992–1199px rail with
+small labels is replaced by this; it still starts collapsed there. Go together pages refresh on
+their own (group page every 20 seconds, chat every 15, and on focus) and gained small
+animations, all disabled with reduced motion.
+
+4 November 2026 — Huxley, Go together availability is when2meet style: in a group's before and
+after plan, each side of the event is a three-hour column of 15-minute cells that members paint
+when they're free (an earlier version offered fixed "from"/"until" choices; it was replaced). The
+slot is the longest stretch of at least 45 minutes with the most members free for all of it,
+nearest the event on a tie. Demo mode only, like the rest of groups.
+
 4 November 2026 — Huxley, Community becomes Go together: the focus is finding people to go to an
 event with. Posts are called **groups** (not jios) and are public (listed in Community and on the
 event page) or private (only reachable by invite link); both have an invite link for members.

@@ -66,9 +66,68 @@ export function groupEventData(target, { note = '', capacity = 4, joinMode = 'op
 export const SLOTS = ['before', 'after']
 export const GAP_MINUTES = 15 // time to walk over
 export const SLOT_MINUTES = 60
-export const emptyPlan = () => ({ before: { suggestions: [], chosenId: null }, after: { suggestions: [], chosenId: null } })
+export const emptyPlan = () => ({ before: { suggestions: [], chosenId: null }, after: { suggestions: [], chosenId: null }, availability: {} })
 
-// When each slot happens, fitted around the event
+// Availability, when2meet style: each side of the event is a column of 15-minute cells
+// (3 hours, leaving 15 minutes to walk over). Members paint the cells they're free; the
+// slot is the longest stretch with the most people free in all of it.
+export const CELL_MINUTES = 15
+export const WINDOW_CELLS = 12 // 3 hours each side
+export const MIN_SLOT_CELLS = 3 // a meal needs at least 45 minutes
+
+// The cell start times (ISO) for one side of the event, earliest first
+export function slotCells(event, slot) {
+  const minute = 60000
+  const anchor = slot === 'before'
+    ? new Date(event.startTime).getTime() - (GAP_MINUTES + WINDOW_CELLS * CELL_MINUTES) * minute
+    : new Date(event.endTime || event.startTime).getTime() + GAP_MINUTES * minute
+  return Array.from({ length: WINDOW_CELLS }, (_, i) => new Date(anchor + i * CELL_MINUTES * minute).toISOString())
+}
+
+export function availabilityError(event, slot, cells) {
+  if (!SLOTS.includes(slot)) return 'Choose before or after the event.'
+  if (!Array.isArray(cells)) return 'Mark the times you’re free.'
+  const allowed = new Set(slotCells(event, slot))
+  if (cells.some((c) => !allowed.has(c))) return 'Those times are outside the planner. Refresh and try again.'
+  return ''
+}
+
+// For one side: the heat per cell and the best slot. availability is { userId: { before: [iso], after: [iso] } }.
+export function fitSlots(event, availability = {}, memberIds = []) {
+  const out = {}
+  for (const slot of SLOTS) {
+    const cells = slotCells(event, slot)
+    const replied = memberIds.filter((id) => Array.isArray(availability[id]?.[slot]))
+    const noReply = memberIds.filter((id) => !replied.includes(id))
+    const free = cells.map((cell) => replied.filter((id) => availability[id][slot].includes(cell)))
+    // Most people free for the whole stretch, then the longest, then nearest the event
+    let best = null
+    for (let length = WINDOW_CELLS; length >= MIN_SLOT_CELLS; length--) {
+      for (let first = 0; first + length <= WINDOW_CELLS; first++) {
+        const people = free.slice(first, first + length).reduce((common, ids) => common.filter((id) => ids.includes(id)), replied)
+        if (!people.length) continue
+        const nearness = slot === 'before' ? first + length : WINDOW_CELLS - first
+        const score = people.length * 10000 + length * 100 + nearness
+        if (!best || score > best.score) best = { first, length, people, score }
+      }
+    }
+    const fallback = slotTimes(event)[slot]
+    const end = (i) => new Date(new Date(cells[i]).getTime() + CELL_MINUTES * 60000).toISOString()
+    out[slot] = {
+      cells: cells.map((start, i) => ({ start, free: free[i] })),
+      start: best ? cells[best.first] : fallback.start,
+      end: best ? end(best.first + best.length - 1) : fallback.end,
+      fitted: Boolean(best),
+      coming: best ? best.people : [],
+      cant: best ? replied.filter((id) => !best.people.includes(id)) : replied,
+      noReply,
+      replied,
+    }
+  }
+  return out
+}
+
+// The default slot each side (an hour, with a walk gap), used until people mark times
 export function slotTimes(event) {
   const start = new Date(event.startTime).getTime()
   const end = new Date(event.endTime || event.startTime).getTime()

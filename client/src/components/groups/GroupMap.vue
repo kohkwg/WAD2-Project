@@ -50,7 +50,10 @@ onUnmounted(() => { stopTiles?.(); map?.remove(); map = null })
 <style scoped>
 .group-map { height: 280px; border: 1px solid var(--bookedz-border); border-radius: 16px; overflow: hidden; }
 .group-map :deep(.group-pin) { display: grid; place-items: center; width: 30px; height: 30px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); font: 700 .8rem/1 var(--bookedz-body, system-ui); }
-.group-map :deep(.group-pin--event) { background: var(--bookedz-ink); color: #fff; }
-.group-map :deep(.group-pin--idea) { background: #fff; color: var(--bookedz-ink); }
+.group-map :deep(.group-pin) { animation: pin-drop var(--bookedz-motion-slip, .25s) var(--bookedz-ease-stamp, ease-out) both; }
+@keyframes pin-drop { from { opacity: 0; transform: translateY(-10px) scale(.7); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .group-map :deep(.group-pin) { animation: none; } }
+.group-map :deep(.group-pin--event) { background: #1c1917; color: #fff; } /* fixed colours: the theme's ink flips in dark mode */
+.group-map :deep(.group-pin--idea) { background: #fff; color: #1c1917; }
 .group-map :deep(.group-pin--chosen) { background: var(--bookedz-primary); color: #fff; }
 </style>
