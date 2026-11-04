@@ -1,0 +1,116 @@
+// Go together: a host starts a group to go to one event with others. Groups are public
+// (listed in Community and on the event page) or private (only reachable by invite link);
+// both have a link to share. A group is stored as a hangout record (kind 'hangout') whose
+// hangout.eventId names the event, so it reuses joining and spots. Pure functions, no Vue.
+import { CAPACITY_RANGE } from './hangouts.js'
+
+export const NOTE_LIMIT = 200
+export const SUGGESTION_NAME_LIMIT = 80
+export const VISIBILITIES = ['public', 'private']
+export const isGroup = (event) => event?.kind === 'hangout' && Boolean(event.hangout?.eventId)
+
+// The errors for the Start a group form; [] means it can be posted.
+export function groupErrors({ eventId, note = '', capacity, visibility = 'public' }, events = [], now = new Date()) {
+  const errors = []
+  const target = events.find((e) => e.id === eventId)
+  if (!target) errors.push({ field: 'event', message: 'Choose the event you want company for.' })
+  else if (new Date(target.startTime) <= now) errors.push({ field: 'event', message: 'That event has already started. Choose another one.' })
+  if (note.trim().length > NOTE_LIMIT) errors.push({ field: 'note', message: `Keep the note to ${NOTE_LIMIT} characters or fewer.` })
+  const spots = Number(capacity)
+  if (!Number.isInteger(spots) || spots < CAPACITY_RANGE.min || spots > CAPACITY_RANGE.max) {
+    errors.push({ field: 'capacity', message: `A group has ${CAPACITY_RANGE.min} to ${CAPACITY_RANGE.max} spots, including you.` })
+  }
+  if (!VISIBILITIES.includes(visibility)) errors.push({ field: 'visibility', message: 'Choose who can find the group.' })
+  return errors
+}
+
+// An unguessable invite code for the share link (/g/<token>)
+export function inviteToken() {
+  const bytes = new Uint8Array(12)
+  globalThis.crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => b.toString(36).padStart(2, '0')).join('').slice(0, 16)
+}
+
+// The hangout record for a new group: time, place and tags come from the event itself.
+export function groupEventData(target, { note = '', capacity = 4, joinMode = 'open', visibility = 'public', token = inviteToken() }) {
+  return {
+    kind: 'hangout',
+    title: `Going to ${target.title}`,
+    description: note.trim(),
+    tags: [...(target.tags || [])],
+    startTime: target.startTime,
+    endTime: target.endTime,
+    venue: target.venue ? { ...target.venue } : null,
+    capacity: Number(capacity),
+    isOutdoor: Boolean(target.isOutdoor),
+    backupVenue: null,
+    joinMode,
+    requiresApproval: joinMode === 'approval',
+    questions: [],
+    hangout: {
+      mode: 'group',
+      visibility,
+      stage: 'planning',
+      dateRange: null,
+      lockedSlot: { startTime: target.startTime, endTime: target.endTime },
+      inviteToken: token,
+      eventId: target.id,
+    },
+    plan: emptyPlan(),
+  }
+}
+
+// ---------- Before / after plan ----------
+// Two optional slots around the event. Members suggest a place or deal for each,
+// everyone can mark the ones they're keen on, and the host picks one.
+export const SLOTS = ['before', 'after']
+export const GAP_MINUTES = 15 // time to walk over
+export const SLOT_MINUTES = 60
+export const emptyPlan = () => ({ before: { suggestions: [], chosenId: null }, after: { suggestions: [], chosenId: null } })
+
+// When each slot happens, fitted around the event
+export function slotTimes(event) {
+  const start = new Date(event.startTime).getTime()
+  const end = new Date(event.endTime || event.startTime).getTime()
+  const minute = 60000
+  return {
+    before: { start: new Date(start - (GAP_MINUTES + SLOT_MINUTES) * minute).toISOString(), end: new Date(start - GAP_MINUTES * minute).toISOString() },
+    after: { start: new Date(end + GAP_MINUTES * minute).toISOString(), end: new Date(end + (GAP_MINUTES + SLOT_MINUTES) * minute).toISOString() },
+  }
+}
+
+// "Lunch", "Dinner"… from the Singapore hour a slot starts at
+export function mealLabel(iso) {
+  const hour = Number(new Intl.DateTimeFormat('en-SG', { hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Singapore' }).format(new Date(iso)))
+  if (hour >= 6 && hour < 11) return 'Breakfast'
+  if (hour >= 11 && hour < 15) return 'Lunch'
+  if (hour >= 15 && hour < 17) return 'Coffee'
+  if (hour >= 17 && hour < 22) return 'Dinner'
+  return 'Supper'
+}
+
+// A suggestion from a nearby place, a deal, or a name someone typed
+export function suggestionFrom(item = {}) {
+  if (item.kind === 'deal') {
+    return {
+      kind: 'deal', refId: item.id, name: item.merchant || item.outlet?.name || item.title,
+      detail: item.title, priceText: item.priceText || null, address: item.outlet?.address || null,
+      lat: item.outlet?.lat ?? null, lng: item.outlet?.lng ?? null, sourceUrl: item.source?.url || null,
+    }
+  }
+  if (item.kind === 'place') {
+    return { kind: 'place', refId: item.id, name: item.name, detail: item.category || null, priceText: null, address: item.address || null, lat: item.lat ?? null, lng: item.lng ?? null, sourceUrl: null }
+  }
+  return { kind: 'custom', refId: null, name: String(item.name || '').trim(), detail: null, priceText: null, address: null, lat: null, lng: null, sourceUrl: null }
+}
+
+export function suggestionErrors(plan, slot, suggestion) {
+  if (!SLOTS.includes(slot)) return 'Choose before or after the event.'
+  if (!suggestion.name) return 'Name the place you have in mind.'
+  if (suggestion.name.length > SUGGESTION_NAME_LIMIT) return `Keep the name to ${SUGGESTION_NAME_LIMIT} characters or fewer.`
+  const list = plan?.[slot]?.suggestions || []
+  if (list.length >= 8) return 'This slot already has 8 ideas. Remove one first.'
+  const same = (s) => (suggestion.refId && s.refId === suggestion.refId) || s.name.toLowerCase() === suggestion.name.toLowerCase()
+  if (list.some(same)) return 'That place is already suggested.'
+  return ''
+}

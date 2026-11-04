@@ -689,6 +689,26 @@ search/view-switch regression. On 25 October, these ran against an owned demo Vi
 server on 5183 using a temporary config overriding baseURL/output paths because
 5173 was occupied; the repository's default config remains unchanged.
 
+## Go together and food deals (4 November)
+
+```sh
+cd server && node --test tests/foodDeals.test.js
+cd client && node --test src/utils/__tests__/groups.test.js
+VITE_USE_MOCK=true pnpm --dir client exec playwright test e2e/go-together.spec.js e2e/immersive-discovery.spec.js e2e/landing-page.spec.js
+```
+
+Server: deal validity by Singapore day, date and time window; distance; nearby deals from a
+temporary drafts file with stubbed OneMap search, and places reported as unconfigured without a
+Geoapify key (caches go to a temporary folder). Client: group form errors, private groups' invite
+tokens, slot times and meal names, suggestion duplicates. Browser (demo data, food API stubbed):
+join a group, RSVP prompt, open the group page, suggest a deal for lunch before, chat; start a
+private group from an event page, pick a typed idea for after, open it by invite link, an invalid
+link; groups stay out of Discover and My events. Results: 3 server, 4 unit and 8 browser tests
+passed. The full client unit run still has the same 7 failures as before this work. Manually,
+`GET /api/food/nearby` near SMU Campus Green on a weekday lunchtime returned a real deal (560 m)
+from the existing pipeline output; places were not checked because no Geoapify key is set, and
+the pipeline itself was not re-run.
+
 ## OpenJio UI integration checks (3 November)
 
 ```sh

@@ -50,12 +50,15 @@ const router = createRouter({
     { path: '/login', redirect: to => ({ path: '/', query: to.query }) },
     { path: '/events', redirect: to => ({ path: '/discover', query: to.query, hash: to.hash }) },
     { path: '/events/:id/rsvp', component: RsvpView, meta: { title: 'Event RSVP' } },
-    { path: '/community', component: () => import('../views/CommunityView.vue'), meta: { title: 'Open jios' } },
-    { path: '/community/plan', component: () => import('../views/HangoutPlanView.vue'), meta: { title: 'Plan a hangout' } },
+    { path: '/community', component: () => import('../views/CommunityView.vue'), meta: { title: 'Go together' } },
+    { path: '/community/plan', redirect: '/community' },
+    { path: '/groups/:id', component: () => import('../views/GroupView.vue'), meta: { title: 'Group' } },
+    // Invite links: /g/<token> opens the group, private or public
+    { path: '/g/:token', component: () => import('../views/GroupView.vue'), meta: { title: 'Group invite' } },
     { path: '/my-rsvps', component: MyRsvpsView, meta: { title: 'My RSVPs' } },
     { path: '/organiser/events', component: OrganiserEventsView, meta: { title: 'My events' } },
     { path: '/organiser/events/new', component: () => import('../views/NewEventView.vue'), meta: { title: 'Create event' } },
-    { path: '/j/:token', component: () => import('../views/HangoutInviteView.vue'), meta: { title: 'Hangout invite' } },
+    { path: '/j/:token', redirect: to => `/g/${to.params.token}` },
     // Same wizard, pre-filled, for changing a published event (Feature 2)
     { path: '/organiser/events/:id/edit', component: CreateEventView, meta: { title: 'Edit event' } },
     { path: '/organiser/events/:id/rsvps', component: ManageRsvpsView, meta: { title: 'Manage RSVPs' } },

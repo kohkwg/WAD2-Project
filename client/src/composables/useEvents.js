@@ -148,7 +148,7 @@ export function useEvents() {
       }
       const detailedRows = await withEventDetails(rows, !mapMode)
       if (currentRequest !== requestId) return
-      // Discover lists official events only; hangouts and open jios live in Community
+      // Discover lists official events only; Go together groups live in Community
       events.value = detailedRows.filter((row) => row.kind !== 'hangout')
       total.value = count || 0
     } catch (e) {
