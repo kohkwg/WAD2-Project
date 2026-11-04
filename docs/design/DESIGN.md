@@ -155,11 +155,12 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 - **Navigation:** sidebar on desktop, a floating frosted top bar where needed, a bottom tab
   bar on phones for signed-in and demo users. Personal links follow the session; Discover
   is public. The menu closes on route change or Escape. From 992px a **Collapse sidebar**
-  button at the bottom of the sidebar turns it into a 76px icon rail (Discover, Community, My
-  RSVPs, My events, Settings, Theme, account); each icon's name shows as a tooltip on hover or
+  button (a round chevron on the sidebar's right edge, on the divider line, labelled "Collapse" /
+  "Expand" on hover or focus) turns it into a 76px icon rail (Discover, Community, My
+  RSVPs, My events, Theme, account); each icon's name shows as a tooltip on hover or
   keyboard focus, and the page widens with it. The choice is saved as `bookedz-sidebar`; until
   someone chooses, it starts collapsed below 1200px and expanded above.
-- **Theme:** System / Light / Dark, defaulting to the OS and saved as `bookedz-color-theme`.
+- **Theme:** Auto (follows the OS) / Light / Dark, saved as `bookedz-color-theme`. The collapsed desktop rail shows one icon button that cycles Auto → Light → Dark.
   Bootstrap's `data-bs-theme`, native controls, map tiles and the browser colour follow it.
 - **Breakpoints:** phones below 768px (Bootstrap md), tablets 768 to 991px, desktop 992px
   and up. Check 375, 575, 768 and 1280px with no sideways scrolling.
