@@ -104,10 +104,11 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 
 
 /* Panels as ticket cards */
-.account-page.account-page :is(.profile-form) {
+.account-page.account-page :is(.profile-form, .delete-account) {
   border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: var(--bookedz-surface); box-shadow: 6px 6px 0 var(--bookedz-teal);
 }
 .account-page.account-page :root[data-theme="dark"] .account-page.account-page :is(.profile-form) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+:root[data-theme="dark"] .account-page.account-page .delete-account { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
 .account-page.account-page :is(.profile-section legend) { font-family: var(--bookedz-heading); font-weight: 900; }
 .account-page.account-page :is(.profile-section, .profile-actions) { border-color: var(--bookedz-control-border); border-style: dashed; }
 .account-page.account-page .profile-interests { border: 0; }
