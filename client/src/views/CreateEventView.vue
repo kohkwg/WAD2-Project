@@ -15,8 +15,11 @@ import { normalizeTitle } from '../utils/planSuggestModel.js'
 import { describeEventChanges, formatAnnouncement } from '../utils/eventChanges.js'
 
 // Multi-step form (progressive disclosure): one small chunk at a time instead of one long page.
-// The same wizard edits a published event at /organiser/events/:id/edit (edit mode).
+// The same wizard edits event details inside Manage event (edit mode).
 
+const props = defineProps({ embedded: { type: Boolean, default: false } })
+const emit = defineEmits(['saved'])
+const editSuccess = ref('')
 const router = useRouter()
 const route = useRoute()
 
@@ -112,7 +115,7 @@ function formFromEvent(event) {
   }
 }
 
-// Load (or reset) whenever the route changes between /new and /:id/edit; the page can be reused
+// Load (or reset) when the event ID changes; creation and embedded editing share this wizard.
 let editRequest = 0
 watch(editId, async (id) => {
   const request = ++editRequest
@@ -536,6 +539,7 @@ async function reviewChanges() {
     await focusStep()
     return
   }
+  editSuccess.value = ''
   pendingChanges.value = describeEventChanges(original.value, form.value)
   if (pendingChanges.value.length === 0) {
     errorMessage.value = 'Nothing has changed yet, so there is nothing to save.'
@@ -563,7 +567,7 @@ async function saveChanges({ announce, title, message }) {
       await createAnnouncement(editId.value, body, announceAttempt.requestId)
     }
     showAnnounceDialog.value = false
-    await router.push({ path: '/organiser/events', query: { updated: editId.value, ...(announce ? { announced: '1' } : {}) } })
+    await finishEditing(announce)
   } catch (error) {
     saveError.value = changesSaved.value
       ? `Your changes are saved, but the announcement couldn't be posted: ${error.message}`
@@ -573,10 +577,21 @@ async function saveChanges({ announce, title, message }) {
   }
 }
 
+async function finishEditing(announced = false) {
+  if (props.embedded) {
+    original.value = JSON.parse(JSON.stringify(form.value))
+    changesSaved.value = false
+    editSuccess.value = announced ? 'Event updated and announcement posted.' : 'Event updated.'
+    emit('saved')
+  } else {
+    await router.push({ path: '/organiser/events', query: { updated: editId.value, ...(announced ? { announced: '1' } : {}) } })
+  }
+}
+
 function closeAnnounceDialog() {
   showAnnounceDialog.value = false
-  // Saved already and the organiser skipped the failed announcement: carry on to My events
-  if (changesSaved.value) router.push({ path: '/organiser/events', query: { updated: editId.value } })
+  // Keep saved changes when the organiser skips a failed announcement.
+  if (changesSaved.value) finishEditing()
 }
 
 async function publish() {
@@ -632,9 +647,11 @@ async function publish() {
 <template>
   <div class="design-baseline create-event-page col-12 mx-auto">
     <header class="create-heading">
-      <h1>{{ isEditing ? 'Edit event' : 'Create an event' }}</h1>
+      <component :is="props.embedded ? 'h2' : 'h1'">{{ isEditing ? 'Edit event' : 'Create an event' }}</component>
       <p>{{ isEditing ? 'Update the details below. Saving changes the live event straight away.' : 'Start with the essentials. You can review everything before it goes live.' }}</p>
     </header>
+
+    <p v-if="editSuccess" class="alert alert-success" role="status">{{ editSuccess }}</p>
 
     <!-- Edit mode: still loading the event, or the reason it can't be edited -->
     <div v-if="isEditing && editLoading" class="text-center my-5" role="status">
@@ -1123,7 +1140,7 @@ async function publish() {
 
 <style scoped>
 .create-heading { margin: 1rem 0 1.5rem; padding: 1.5rem clamp(1rem, 3vw, 2rem); border-left: 5px solid var(--bookedz-primary-dark); border-radius: 0 20px 20px 0; background: var(--bookedz-glass-active); }
-.create-heading h1 { margin: 0 0 .4rem; color: var(--bookedz-ink); font-size: clamp(1.7rem, 3vw, 2.3rem); font-weight: 700; letter-spacing: -.035em; }
+.create-heading :is(h1, h2) { margin: 0 0 .4rem; color: var(--bookedz-ink); font-size: clamp(1.7rem, 3vw, 2.3rem); font-weight: 700; letter-spacing: -.035em; }
 .create-heading p:last-child { margin: 0; color: var(--bookedz-muted); }
 .create-kicker { margin: 0 0 .35rem; color: var(--bookedz-primary-dark); font-size: .875rem; font-weight: 650; }
 .creation-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(15rem, .85fr); align-items: start; gap: 1.25rem; }

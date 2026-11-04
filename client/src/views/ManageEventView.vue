@@ -11,6 +11,7 @@ import WeatherTool from '../components/event-operations/WeatherTool.vue'
 import { TASK_STATUSES } from '../utils/feature4.js'
 import { defineAsyncComponent } from 'vue'
 // Tools from other features are loaded only when their tab opens (they subscribe/fetch on mount).
+const EventEditor = defineAsyncComponent(() => import('./CreateEventView.vue'))
 const StaffStationView = defineAsyncComponent(() => import('./checkin/StaffStationView.vue'))
 const VenueQrView = defineAsyncComponent(() => import('./checkin/VenueQrView.vue'))
 const AttendanceDashboardView = defineAsyncComponent(() => import('./checkin/AttendanceDashboardView.vue'))
@@ -20,10 +21,13 @@ const route = useRoute()
 const router = useRouter()
 const coreTabs = ['tasks', 'announcements', 'budget', 'weather']
 // Check-in, venue QR, attendance and floor plan need the live database, so they only exist there.
-const tabs = api.USING_SUPABASE ? [...coreTabs, 'check-in', 'venue-qr', 'attendance', 'floor-plan'] : coreTabs
-const TAB_LABELS = { tasks: 'Tasks', announcements: 'Announcements', budget: 'Budget', weather: 'Weather', 'check-in': 'Check-in station', 'venue-qr': 'Venue QR', attendance: 'Attendance', 'floor-plan': 'Floor plan' }
-const TAB_HINTS = { tasks: 'Plan the work', announcements: 'Tell attendees', budget: 'Track costs', weather: 'Venue plan', 'check-in': 'Scan arrivals', 'venue-qr': 'Entrance display', attendance: 'Live arrivals', 'floor-plan': 'Layout and programme' }
+const tabs = api.USING_SUPABASE ? ['edit', ...coreTabs, 'check-in', 'venue-qr', 'attendance', 'floor-plan'] : ['edit', ...coreTabs]
+const TAB_LABELS = { edit: 'Edit event', tasks: 'Tasks', announcements: 'Announcements', budget: 'Budget', weather: 'Weather', 'check-in': 'Check-in station', 'venue-qr': 'Venue QR', attendance: 'Attendance', 'floor-plan': 'Floor plan' }
+const TAB_HINTS = { edit: 'Event details', tasks: 'Plan the work', announcements: 'Tell attendees', budget: 'Track costs', weather: 'Venue plan', 'check-in': 'Scan arrivals', 'venue-qr': 'Entrance display', attendance: 'Live arrivals', 'floor-plan': 'Layout and programme' }
 const activeTab = computed(() => tabs.includes(route.query.tab) ? route.query.tab : 'tasks')
+const editVisited = ref(false)
+watch(activeTab, tab => { if (tab === 'edit') editVisited.value = true }, { immediate: true })
+watch(() => route.params.id, () => { editVisited.value = activeTab.value === 'edit' })
 const workspace = ref(null)
 const loading = ref(false)
 const loadError = ref('')
@@ -78,6 +82,21 @@ async function load() {
 watch(() => route.params.id, load, { immediate: true })
 watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => { if (tab === 'weather' && eventId && isOwner.value) refreshWeather() })
 onBeforeUnmount(() => { epoch++; weatherRequest++ })
+
+async function refreshEditedEvent() {
+  const ticket = epoch
+  try {
+    const result = await api.getEventOperations(String(route.params.id))
+    if (ticket === epoch) {
+      workspace.value.event = result.event
+      workspace.value.announcements = result.announcements
+      publishState.value = result.event.status || publishState.value
+      publishError.value = ''
+    }
+  } catch {
+    if (ticket === epoch) publishError.value = 'Changes saved. Refresh the page to update the workspace summary.'
+  }
+}
 
 async function mutate(tool, action, operation, apply, message) {
   if (pending[tool] || !isOwner.value) return
@@ -178,6 +197,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
       <div v-if="errors[activeTab]" class="alert alert-danger" role="alert">{{ errors[activeTab] }} <button v-if="retries[activeTab]" type="button" class="btn btn-sm btn-outline-danger" :disabled="pending[activeTab]" @click="retries[activeTab]()">Retry save</button></div>
       <p v-if="pending[activeTab]" role="status" class="text-secondary">Saving…</p><p v-else-if="successes[activeTab]" role="status" class="text-success">{{ successes[activeTab] }}</p>
     </div>
+    <EventEditor v-if="editVisited" v-show="activeTab === 'edit'" :key="'edit-' + workspace.event.id" embedded @saved="refreshEditedEvent" />
     <TaskBoard v-show="activeTab === 'tasks'" :key="'tasks-' + workspace.event.id" :tasks="workspace.tasks" :pending="pending.tasks" :action-error="errors.tasks" @create="saveTask($event, 'create')" @update="saveTask($event, 'update')" @delete="saveTask($event, 'delete')" @save-board="saveBoard" @cancel-action="cancelDestructiveAction('tasks')" />
     <AnnouncementManager v-show="activeTab === 'announcements'" :key="'posts-' + workspace.event.id" :posts="workspace.announcements" :pending="pending.announcements" :action-error="errors.announcements" @create="saveAnnouncement($event, 'create')" @update="saveAnnouncement($event, 'update')" @delete="saveAnnouncement($event, 'delete')" @cancel-action="cancelDestructiveAction('announcements')" />
     <BudgetTracker v-show="activeTab === 'budget'" :key="'budget-' + workspace.event.id" :budget="workspace.budget" :custom-categories="workspace.budgetCategories || []" :pending="pending.budget" :action-error="errors.budget" @save-limit="saveLimit" @save-item="saveItem" @delete-item="deleteItem" @save-category="saveCategory" @delete-category="deleteCategory" @cancel-action="cancelDestructiveAction('budget')" />
