@@ -1,5 +1,21 @@
 # Decisions
 
+4 November 2026 — Huxley, Go together in live mode: two new migrations,
+`20261104120000_group_event_kind.sql` (adds the `group` event kind on its own, because a new enum
+value can only be used after it commits) and `20261104120100_go_together_groups.sql`. A group is an
+event row with kind `group`, so joining, spots (the host holds one), approvals and leaving reuse
+registrations and `_admission_status`; `groups` links it to its official event with visibility and
+the invite token. Chat, before/after ideas, votes and availability cells have their own tables with
+RLS on and no grants: the browser uses only SECURITY DEFINER functions (`group_list`, `group_view`,
+`create_group`, `join_group`, chat, plan and availability functions) that check membership. Private
+groups are seen or joined only by their people or with the invite token. The migration redefines
+`event_publicly_listed`, `can_view_event`, `_admission_status`, `event_availability`,
+`register_for_event` (one marked change) and the events read policy to cover groups. Deleting an
+official event deletes its groups. Signed-out visitors see no groups, because member names are only
+for signed-in people. Recommendations skip hangouts and groups. Checked in local PGlite with
+`server/checks/groups-db.check.mjs`; not applied to the hosted project. Timothy should review it
+before it is pushed.
+
 4 November 2026 — Huxley, groups are no longer called hangouts in code: a Go together group is
 stored as `kind: 'group'` with a `group` field (`visibility`, `inviteToken`, `eventId`) instead of
 `kind: 'hangout'` with a `hangout` field, and the planner-only fields (`mode`, `stage`,

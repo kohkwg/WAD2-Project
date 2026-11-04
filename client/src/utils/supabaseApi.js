@@ -197,6 +197,14 @@ export async function getEvent(eventId) {
   return event
 }
 
+// Several events at once (the official events Go together groups are for); missing or
+// hidden ones are left out
+export async function getEventsByIds(eventIds) {
+  const ids = [...new Set(eventIds.filter(Boolean))]
+  if (!ids.length) return []
+  return toEventsWithCounts(check(await supabase.from('events').select(EVENT_COLUMNS).in('id', ids)))
+}
+
 export async function getAnnouncements(eventId) {
   const rows = check(await supabase.from('announcements')
     .select('id,event_id,body,is_automatic,created_at')
