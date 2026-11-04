@@ -1,522 +1,166 @@
 <script setup>
-import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import { RouterLink } from 'vue-router'
-import { getCurrentUser, getEvents } from '../utils/api.js'
-import islandImage from '../assets/illustrations/singapore-clean.webp'
-import BumpValue from '../components/ui/BumpValue.vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { getEvents, getJios, JIOS_AVAILABLE } from '../utils/api.js'
+import JioCard from '../components/community/JioCard.vue'
+import StartJioDialog from '../components/community/StartJioDialog.vue'
+import SkeletonList from '../components/ui/SkeletonList.vue'
 import { toast } from '../composables/useToast'
 
-// Posts are kept in this browser only (no shared backend table yet).
-const STORAGE_KEY = 'bookedz-community-posts'
-const MAX_LENGTH = 280
-
-const user = ref(null)
-const posts = ref(load())
-const draft = ref('')
-const query = ref('')
-
-// Attached photos/videos live in IndexedDB (too big for localStorage); a post only
-// keeps { kind, id } and the object URLs below are rebuilt on load.
-const MAX_MEDIA_BYTES = 25 * 1024 * 1024
-const attachment = ref(null) // { file, url, kind }
-const attachError = ref('')
-const fileInput = ref(null)
-const mediaUrls = ref({}) // post id -> object URL
-
-function mediaDb() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('bookedz-community', 1)
-    req.onupgradeneeded = () => req.result.createObjectStore('media')
-    req.onsuccess = () => resolve(req.result)
-    req.onerror = () => reject(req.error)
-  })
-}
-async function mediaTx(mode, run) {
-  const db = await mediaDb()
-  try {
-    return await new Promise((resolve, reject) => {
-      const req = run(db.transaction('media', mode).objectStore('media'))
-      req.onsuccess = () => resolve(req.result)
-      req.onerror = () => reject(req.error)
-    })
-  } finally { db.close() }
-}
-const putMedia = (id, blob) => mediaTx('readwrite', store => store.put(blob, id))
-const getMedia = (id) => mediaTx('readonly', store => store.get(id))
-const deleteMedia = (id) => mediaTx('readwrite', store => store.delete(id))
-
-async function restoreMedia() {
-  for (const post of posts.value) {
-    if (!post.media || mediaUrls.value[post.id]) continue
-    try {
-      const blob = await getMedia(post.media.id)
-      if (blob) mediaUrls.value = { ...mediaUrls.value, [post.id]: URL.createObjectURL(blob) }
-    } catch { /* media unavailable: show the text only */ }
-  }
-}
-
-function clearAttachment() {
-  if (attachment.value) URL.revokeObjectURL(attachment.value.url)
-  attachment.value = null
-  if (fileInput.value) fileInput.value.value = ''
-}
-function onFilePicked(event) {
-  const file = event.target.files?.[0]
-  if (!file) return
-  attachError.value = ''
-  const kind = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : ''
-  if (!kind) { attachError.value = 'Choose a photo or a video.'; event.target.value = ''; return }
-  if (file.size > MAX_MEDIA_BYTES) { attachError.value = 'That file is over 25 MB.'; event.target.value = ''; return }
-  clearAttachment()
-  attachment.value = { file, kind, url: URL.createObjectURL(file) }
-}
-
-// Images are saved by key, not URL, because built asset URLs change between builds.
-const IMAGES = { island: { src: islandImage, alt: 'Illustrated map of Singapore' } }
-
-function samplePosts() {
-  const now = Date.now()
-  const minutes = (n) => now - n * 60 * 1000
-  return [
-    { id: 'sample-1', authorId: 'sample', handle: 'ethan', text: 'the vue workshop sounds so fun, who else is going?', eventId: 'e2', createdAt: minutes(25), likedBy: [], baseLikes: 12 },
-    { id: 'sample-2', authorId: 'sample', handle: 'mei', text: 'what event should i go to...', createdAt: minutes(95), likedBy: [], baseLikes: 3 },
-    { id: 'sample-3', authorId: 'sample', handle: 'priya', text: 'this event is going to be so fun!', eventId: 'e1', image: 'island', createdAt: minutes(240), likedBy: [], baseLikes: 27 },
-  ]
-}
-
-// Sample posts always appear (they can be liked but not deleted); a saved copy,
-// with this browser's like, replaces its sample.
-function load() {
-  let saved = []
-  try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY))
-    if (Array.isArray(parsed)) saved = parsed
-  } catch { /* unreadable storage: start from the samples */ }
-  // Saved copies of samples take the sample's current text and event link; only likes and replies are kept.
-  const samples = new Map(samplePosts().map(p => [p.id, p]))
-  saved = saved.map(p => samples.has(p.id) ? { ...samples.get(p.id), likedBy: p.likedBy || [], replies: p.replies } : p)
-  const have = new Set(saved.map(p => p.id))
-  return [...saved, ...samplePosts().filter(p => !have.has(p.id))]
-}
-function persist() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(posts.value)) } catch { /* storage unavailable */ }
-}
-
-// Below lg the composer scrolls away; once it is above the viewport a floating
-// button takes you back to it.
-const composerEl = ref(null)
-const draftEl = ref(null)
-const composerPassed = ref(false)
-let observer = null
-watch(composerEl, (el) => {
-  observer?.disconnect()
-  composerPassed.value = false
-  if (!el || typeof IntersectionObserver === 'undefined') return
-  observer = new IntersectionObserver(([entry]) => {
-    composerPassed.value = !entry.isIntersecting && entry.boundingClientRect.bottom < 0
-  })
-  observer.observe(el)
-}, { flush: 'post' })
-onBeforeUnmount(() => {
-  observer?.disconnect()
-  clearAttachment()
-  Object.values(mediaUrls.value).forEach(url => URL.revokeObjectURL(url))
-})
-
-async function goToComposer() {
-  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  composerEl.value?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
-  await nextTick()
-  draftEl.value?.focus({ preventScroll: true })
-}
-
-// Posts can name the event they are about, so "this event" always has a link.
+// Community is the open jio hub: people post "I'm going to this event, who's coming?",
+// others join, then RSVP to the event itself. Official events stay in Discover.
+const route = useRoute()
+const router = useRouter()
+const jios = ref([])
 const events = ref([])
-const eventsById = computed(() => new Map(events.value.map(event => [event.id, event])))
-const draftEventId = ref('')
-const eventFilter = ref('')
-const eventDate = (event) => new Date(event.startTime || event.start_time).toLocaleDateString('en-SG', { timeZone: 'Asia/Singapore', weekday: 'short', day: 'numeric', month: 'short' })
-const taggedEvents = computed(() => events.value.filter(event => posts.value.some(post => post.eventId === event.id)))
+const loading = ref(true)
+const error = ref('')
+const filter = ref('all')
+const query = ref('')
+const composerFor = ref(null) // null closed; '' open with no event; an event id to preselect
+const highlightId = ref('')
 
-// Relative times ("25m") move on while the page is open.
-const clock = ref(Date.now())
-let clockTimer = null
-onMounted(() => { clockTimer = setInterval(() => { clock.value = Date.now() }, 30000) })
-onBeforeUnmount(() => clearInterval(clockTimer))
+const FILTERS = [
+  { key: 'all', label: 'All jios' },
+  { key: 'week', label: 'This week' },
+  { key: 'joined', label: 'I’m going' },
+  { key: 'hosting', label: 'Hosting' },
+]
 
-onMounted(async () => {
-  restoreMedia()
-  try { user.value = await getCurrentUser() } catch { user.value = null }
-  try { events.value = await getEvents() } catch { events.value = [] }
-})
-
-const handle = computed(() => user.value?.email?.split('@')[0] || '')
-const remaining = computed(() => MAX_LENGTH - draft.value.length)
-const canPost = computed(() => !!user.value && (draft.value.trim().length > 0 || !!attachment.value) && remaining.value >= 0 && !posting.value)
-const posting = ref(false)
-
-const visiblePosts = computed(() => {
-  const q = query.value.trim().toLowerCase()
-  const list = [...posts.value].sort((a, b) => b.createdAt - a.createdAt).filter(p => !eventFilter.value || p.eventId === eventFilter.value)
-  if (!q) return list
-  return list.filter(p => p.text.toLowerCase().includes(q) || p.handle.toLowerCase().includes(q) || (p.replies || []).some(r => r.text.toLowerCase().includes(q)))
-})
-
-async function submit() {
-  if (!canPost.value) return
-  posting.value = true
-  attachError.value = ''
-  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const attached = attachment.value
+async function load() {
+  error.value = ''
   try {
-    if (attached) await putMedia(id, attached.file)
-  } catch {
-    attachError.value = 'Could not save that file in this browser. Try a smaller one.'
-    posting.value = false
-    return
+    const [jioList, eventList] = await Promise.all([getJios(), getEvents()])
+    jios.value = jioList
+    events.value = eventList.filter((e) => e.kind !== 'hangout' && e.status === 'published' && new Date(e.startTime) > new Date())
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    loading.value = false
   }
-  posts.value = [...posts.value, {
-    id,
-    authorId: user.value.id,
-    handle: handle.value,
-    text: draft.value.trim(),
-    eventId: draftEventId.value || undefined,
-    media: attached ? { kind: attached.kind, id } : undefined,
-    createdAt: Date.now(),
-    likedBy: [],
-  }]
-  if (attached) {
-    mediaUrls.value = { ...mediaUrls.value, [id]: attached.url } // keep the preview's URL
-    attachment.value = null
-    if (fileInput.value) fileInput.value.value = ''
-  }
-  draft.value = ''
-  draftEventId.value = ''
-  persist()
-  posting.value = false
-  toast('Posted')
 }
 
-const justLiked = ref(null) // the heart only pops for the post you just liked, not on page load
-function toggleLike(post) {
-  if (!user.value) return
-  justLiked.value = post.likedBy.includes(user.value.id) ? null : post.id
-  const id = user.value.id
-  post.likedBy = post.likedBy.includes(id) ? post.likedBy.filter(x => x !== id) : [...post.likedBy, id]
-  persist()
-}
-const likeCount = (post) => (post.baseLikes || 0) + post.likedBy.length
-// Replies are stored on their post (post.replies), shown in an expandable thread.
-const openThreads = ref({}) // post id -> true when the thread is open
-const replyDrafts = ref({}) // post id -> text being typed
-const replyCount = (post) => (post.replies || []).length
-const toggleThread = (post) => { openThreads.value = { ...openThreads.value, [post.id]: !openThreads.value[post.id] } }
-const canReply = (post) => !!user.value && (replyDrafts.value[post.id] || '').trim().length > 0
+let refreshTimer
+onMounted(async () => {
+  if (!JIOS_AVAILABLE) { loading.value = false; return }
+  await load()
+  // ?start=<event id> opens Start a jio with that event chosen (linked from event pages)
+  if (typeof route.query.start === 'string') openComposer(route.query.start)
+  if (typeof route.query.jio === 'string') focusJio(route.query.jio)
+  refreshTimer = setInterval(load, 30000)
+  window.addEventListener('focus', load)
+})
+onBeforeUnmount(() => { clearInterval(refreshTimer); window.removeEventListener('focus', load) })
 
-function addReply(post) {
-  if (!canReply(post)) return
-  post.replies = [...(post.replies || []), {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    authorId: user.value.id,
-    handle: handle.value,
-    text: replyDrafts.value[post.id].trim(),
-    createdAt: Date.now(),
-  }]
-  replyDrafts.value = { ...replyDrafts.value, [post.id]: '' }
-  persist()
+function openComposer(eventId = '') {
+  composerFor.value = events.value.some((e) => e.id === eventId) ? eventId : ''
 }
-function removeReply(post, reply) {
-  post.replies = post.replies.filter(r => r.id !== reply.id)
-  persist()
+function closeComposer() {
+  composerFor.value = null
+  if (route.query.start) router.replace({ query: { ...route.query, start: undefined } })
 }
-const liked = (post) => !!user.value && post.likedBy.includes(user.value.id)
-
-function remove(post) {
-  if (post.media) {
-    deleteMedia(post.media.id).catch(() => {})
-    if (mediaUrls.value[post.id]) URL.revokeObjectURL(mediaUrls.value[post.id])
-    const { [post.id]: _gone, ...rest } = mediaUrls.value
-    mediaUrls.value = rest
-  }
-  posts.value = posts.value.filter(p => p.id !== post.id)
-  persist()
+async function onCreated(jio) {
+  closeComposer()
+  toast('Your jio is live')
+  await load()
+  filter.value = 'all'
+  focusJio(jio.id)
+}
+async function focusJio(id) {
+  highlightId.value = id
+  await nextTick()
+  document.getElementById(`jio-${id}`)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' })
+  setTimeout(() => { if (highlightId.value === id) highlightId.value = '' }, 2000)
 }
 
-function ago(ts) {
-  const s = Math.max(0, Math.floor((clock.value - ts) / 1000))
-  if (s < 60) return 'now'
-  if (s < 3600) return `${Math.floor(s / 60)}m`
-  if (s < 86400) return `${Math.floor(s / 3600)}h`
-  return new Date(ts).toLocaleDateString('en-SG', { day: 'numeric', month: 'short' })
-}
+const weekEnd = () => Date.now() + 7 * 86400000
+const visible = computed(() => {
+  const q = query.value.trim().toLowerCase()
+  return jios.value.filter((jio) => {
+    if (filter.value === 'week' && new Date(jio.startTime) > weekEnd()) return false
+    if (filter.value === 'joined' && !['confirmed', 'pending'].includes(jio.myStatus)) return false
+    if (filter.value === 'hosting' && jio.myStatus !== 'host') return false
+    if (!q) return true
+    return [jio.note, jio.host.name, jio.event?.title, jio.event?.venue?.name].some((text) => text?.toLowerCase().includes(q))
+  })
+})
+const counts = computed(() => ({
+  all: jios.value.length,
+  week: jios.value.filter((j) => new Date(j.startTime) <= weekEnd()).length,
+  joined: jios.value.filter((j) => ['confirmed', 'pending'].includes(j.myStatus)).length,
+  hosting: jios.value.filter((j) => j.myStatus === 'host').length,
+}))
+watch(filter, () => { highlightId.value = '' })
 </script>
 
 <template>
   <div class="container community-page">
-    <div class="community-feed">
-      <h1 class="page-title mb-3 community-title">Community</h1>
-
-      <div class="community-side">
-      <form class="community-search" role="search" @submit.prevent>
-        <label class="visually-hidden" for="community-search">Search posts</label>
-        <input id="community-search" v-model="query" type="search" class="form-control" placeholder="Search posts" autocomplete="off">
-        <label v-if="taggedEvents.length" class="visually-hidden" for="community-event-filter">Show posts about</label>
-        <select v-if="taggedEvents.length" id="community-event-filter" v-model="eventFilter" class="form-select mt-2">
-          <option value="">Posts about any event</option>
-          <option v-for="event in taggedEvents" :key="event.id" :value="event.id">{{ event.title }}</option>
-        </select>
-      </form>
-
-      <form v-if="user" ref="composerEl" class="community-composer" @submit.prevent="submit">
-        <span class="community-avatar" aria-hidden="true">{{ handle.charAt(0).toUpperCase() }}</span>
-        <div class="flex-grow-1">
-          <label class="visually-hidden" for="community-draft">What's happening?</label>
-          <textarea id="community-draft" ref="draftEl" v-model="draft" class="form-control" rows="2" placeholder="What's happening?" maxlength="280" />
-          <div v-if="attachment" class="community-attachment mt-2">
-            <img v-if="attachment.kind === 'image'" :src="attachment.url" alt="Selected photo preview">
-            <video v-else :src="attachment.url" controls preload="metadata" aria-label="Selected video preview" />
-            <button class="community-attachment-remove" type="button" aria-label="Remove attachment" @click="clearAttachment">&times;</button>
-          </div>
-          <p v-if="attachError" class="small text-danger mt-2 mb-0" role="alert">{{ attachError }}</p>
-          <label v-if="events.length" class="visually-hidden" for="community-draft-event">Event this post is about</label>
-          <select v-if="events.length" id="community-draft-event" v-model="draftEventId" class="form-select form-select-sm mt-2">
-            <option value="">No event tagged</option>
-            <option v-for="event in events" :key="event.id" :value="event.id">{{ event.title }} ({{ eventDate(event) }})</option>
-          </select>
-          <div class="d-flex align-items-center gap-3 mt-2">
-            <input ref="fileInput" class="visually-hidden" type="file" accept="image/*,video/*" tabindex="-1" @change="onFilePicked">
-            <button class="community-attach" type="button" aria-label="Add photo or video" title="Add photo or video" @click="fileInput.click()">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
-            </button>
-            <span class="ms-auto" />
-            <span class="small" :class="remaining < 20 ? 'text-danger' : 'text-secondary'" aria-live="polite">{{ remaining }}</span>
-            <button class="btn btn-primary btn-sm px-3" type="submit" :disabled="!canPost">Post</button>
-          </div>
-        </div>
-      </form>
-      <p v-else class="community-signin">
-        <RouterLink to="/login?redirect=/community">Sign in</RouterLink> to post and like.
-      </p>
-
+    <header class="community-hero">
+      <div>
+        <h1 class="page-title m-0">Open jios</h1>
+        <p class="community-lede">Going to an event? Find people to go with, or start a jio and let others join you.</p>
       </div>
-
-      <div class="community-main">
-      <TransitionGroup tag="ul" name="list-fade" class="community-posts list-unstyled mb-0 stagger-in">
-        <li v-for="post in visiblePosts" :key="post.id" class="community-post">
-          <span class="community-avatar" aria-hidden="true">{{ post.handle.charAt(0).toUpperCase() }}</span>
-          <div class="flex-grow-1 min-w-0">
-            <div class="d-flex align-items-baseline gap-2">
-              <strong>{{ post.handle }}</strong>
-              <span class="text-secondary small">· {{ ago(post.createdAt) }}</span>
-              <button v-if="user && user.id === post.authorId" class="btn btn-link btn-sm ms-auto p-0 text-secondary" type="button" @click="remove(post)">Delete</button>
-            </div>
-            <p class="community-text mb-2">{{ post.text }}</p>
-            <RouterLink v-if="eventsById.get(post.eventId)" :to="`/events/${post.eventId}/rsvp`" class="community-event mb-2">
-              <span class="community-event-label">About</span>
-              <strong>{{ eventsById.get(post.eventId).title }}</strong>
-              <span class="text-secondary small">{{ eventDate(eventsById.get(post.eventId)) }}</span>
-            </RouterLink>
-            <img v-if="IMAGES[post.image]" class="community-image mb-2" :src="IMAGES[post.image].src" :alt="IMAGES[post.image].alt" loading="lazy">
-            <template v-if="post.media && mediaUrls[post.id]">
-              <img v-if="post.media.kind === 'image'" class="community-image mb-2" :src="mediaUrls[post.id]" alt="Photo attached to this post" loading="lazy">
-              <video v-else class="community-image mb-2" :src="mediaUrls[post.id]" controls preload="metadata" aria-label="Video attached to this post" />
-            </template>
-            <div class="d-flex align-items-center gap-3">
-              <button class="community-like" type="button" :aria-pressed="liked(post)" :disabled="!user" @click="toggleLike(post)">
-                <span class="like-heart" :class="{ 'is-popping': liked(post) && justLiked === post.id }" aria-hidden="true">{{ liked(post) ? '♥' : '♡' }}</span>
-                <BumpValue :value="likeCount(post)" />
-                <span class="visually-hidden">likes</span>
-              </button>
-              <button class="community-like" type="button" :aria-expanded="!!openThreads[post.id]" :aria-controls="`replies-${post.id}`" @click="toggleThread(post)">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12Z"/></svg>
-                <span>{{ replyCount(post) }}</span>
-                <span class="visually-hidden">replies</span>
-              </button>
-            </div>
-
-            <div v-if="openThreads[post.id]" :id="`replies-${post.id}`" class="community-thread">
-              <ul v-if="replyCount(post)" class="list-unstyled mb-2">
-                <li v-for="reply in post.replies" :key="reply.id" class="community-reply">
-                  <span class="community-avatar community-avatar-sm" aria-hidden="true">{{ reply.handle.charAt(0).toUpperCase() }}</span>
-                  <div class="flex-grow-1 min-w-0">
-                    <div class="d-flex align-items-baseline gap-2">
-                      <strong>{{ reply.handle }}</strong>
-                      <span class="text-secondary small">· {{ ago(reply.createdAt) }}</span>
-                      <button v-if="user && user.id === reply.authorId" class="btn btn-link btn-sm ms-auto p-0 text-secondary" type="button" @click="removeReply(post, reply)">Delete</button>
-                    </div>
-                    <p class="community-text mb-0">{{ reply.text }}</p>
-                  </div>
-                </li>
-              </ul>
-              <p v-else class="small text-secondary mb-2">No replies yet.</p>
-              <form v-if="user" class="d-flex gap-2" @submit.prevent="addReply(post)">
-                <label class="visually-hidden" :for="`reply-${post.id}`">Reply to {{ post.handle }}</label>
-                <input :id="`reply-${post.id}`" v-model="replyDrafts[post.id]" type="text" class="form-control form-control-sm" placeholder="Post your reply" maxlength="280" autocomplete="off">
-                <button class="btn btn-primary btn-sm px-3" type="submit" :disabled="!canReply(post)">Reply</button>
-              </form>
-              <p v-else class="small text-secondary mb-0"><RouterLink to="/login?redirect=/community">Sign in</RouterLink> to reply.</p>
-            </div>
-          </div>
-        </li>
-      </TransitionGroup>
-
-      <p v-if="!visiblePosts.length" class="text-secondary text-center py-5" role="status">
-        {{ query.trim() || eventFilter ? 'No posts match your search.' : 'No posts yet. Be the first to say something.' }}
-      </p>
+      <div v-if="JIOS_AVAILABLE" class="community-hero-actions">
+        <button type="button" class="btn btn-primary" @click="openComposer()">Start a jio</button>
+        <RouterLink to="/community/plan" class="btn btn-outline-secondary">Plan a hangout</RouterLink>
       </div>
+    </header>
+
+    <div v-if="!JIOS_AVAILABLE" class="community-soon" role="status">
+      <h2 class="section-title">Coming soon</h2>
+      <p>Open jios are coming to the live app. You can try them now in demo mode.</p>
+      <RouterLink to="/discover" class="btn btn-outline-secondary">Browse events</RouterLink>
     </div>
 
-    <button v-if="user && composerPassed" class="community-fab" type="button" aria-label="Create new post" @click="goToComposer">
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-    </button>
+    <template v-else>
+      <div class="community-tools">
+        <div class="community-filters" role="group" aria-label="Show jios">
+          <button v-for="f in FILTERS" :key="f.key" type="button" class="community-filter" :aria-pressed="filter === f.key" @click="filter = f.key">
+            {{ f.label }} <span class="tnum">{{ counts[f.key] }}</span>
+          </button>
+        </div>
+        <label class="visually-hidden" for="jio-search">Search jios</label>
+        <input id="jio-search" v-model="query" type="search" class="form-control community-search" placeholder="Search events, hosts or notes…" autocomplete="off" />
+      </div>
+
+      <SkeletonList v-if="loading" :count="3" label="Loading open jios…" />
+      <div v-else-if="error" class="community-empty" role="alert">
+        <h2 class="section-title">Couldn’t load jios</h2>
+        <p>{{ error }}</p>
+        <button type="button" class="btn btn-outline-secondary" @click="load">Try again</button>
+      </div>
+      <TransitionGroup v-else-if="visible.length" tag="div" name="list-fade" class="community-feed stagger-in">
+        <JioCard v-for="jio in visible" :key="jio.id" :jio="jio" :highlight="highlightId === jio.id" @changed="load" />
+      </TransitionGroup>
+      <div v-else class="community-empty" role="status">
+        <h2 class="section-title">{{ query || filter !== 'all' ? 'No jios match' : 'No open jios yet' }}</h2>
+        <p>{{ filter === 'hosting' ? 'You aren’t hosting any jios.' : filter === 'joined' ? 'You haven’t joined any jios yet.' : 'Be the first: pick an event and ask who wants to come.' }}</p>
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+          <button type="button" class="btn btn-primary" @click="openComposer()">Start a jio</button>
+          <button v-if="query || filter !== 'all'" type="button" class="btn btn-outline-secondary" @click="query = ''; filter = 'all'">Show all jios</button>
+        </div>
+      </div>
+    </template>
+
+    <StartJioDialog v-if="composerFor !== null" :events="events" :event-id="composerFor" @close="closeComposer" @created="onCreated" />
   </div>
 </template>
 
 <style scoped>
-.community-page { padding-block: 1.5rem 3rem; }
-.like-heart { display: inline-block; }
-.like-heart.is-popping { animation: like-pop var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
-@keyframes like-pop { 0% { transform: scale(.6); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .like-heart.is-popping { animation: none; } }
-.community-event { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 8px 12px; border: 1px solid var(--bookedz-border); border-radius: 10px; background: var(--bookedz-hover); color: var(--bookedz-ink); text-decoration: none; font-size: .9rem; }
-.community-event:hover { border-color: var(--bookedz-control-border); }
-.community-event-label { font-size: .75rem; font-weight: 700; color: var(--bookedz-primary-dark); }
-.community-feed {
-  max-width: 600px;
-  margin-inline: auto;
-}
-/* lg and up: posts take ~70% on the left; search + composer stay fixed on the
-   right while only the posts scroll with the page. */
-@media (min-width: 992px) {
-  .community-feed {
-    max-width: none;
-    display: grid;
-    grid-template-columns: 7fr 3fr;
-    grid-template-areas: 'title side' 'main side';
-    column-gap: 1.5rem;
-    align-items: start;
-  }
-  .community-title { grid-area: title; }
-  .community-main { grid-area: main; min-width: 0; }
-  .community-side {
-    grid-area: side;
-    position: sticky;
-    top: 7rem;
-  }
-}
-.community-search { margin-bottom: 1rem; }
-.community-composer { scroll-margin-top: 7rem; }
-.community-attach {
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--bookedz-primary-dark);
-}
-.community-attach:hover { background: var(--bookedz-border); }
-.community-attachment { position: relative; }
-.community-attachment img,
-.community-attachment video {
-  display: block;
-  width: 100%;
-  max-height: 16rem;
-  object-fit: cover;
-  border: 1px solid var(--bookedz-border);
-  border-radius: 1rem;
-}
-.community-attachment-remove {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 2.75rem;
-  height: 2.75rem;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
-  font-size: 1.5rem;
-  line-height: 1;
-}
-.community-thread {
-  margin-top: 0.5rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--bookedz-border);
-}
-.community-reply { display: flex; gap: 0.5rem; padding-block: 0.5rem; }
-.community-avatar-sm { width: 1.75rem; height: 1.75rem; font-size: 0.8rem; }
-.community-fab {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1030;
-  width: 3.5rem;
-  height: 3.5rem;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  background: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
-  box-shadow: var(--bookedz-shadow, 0 6px 18px rgba(0, 0, 0, 0.35));
-}
-.community-fab:focus-visible { outline: 3px solid var(--bookedz-ink); outline-offset: 3px; }
-@media (min-width: 992px) { .community-fab { display: none; } }
-.community-composer,
-.community-post {
-  display: flex;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid var(--bookedz-border);
-  background: var(--bookedz-surface);
-}
-.community-composer { border-radius: 1rem; margin-bottom: 1rem; }
-.community-posts { border-radius: 1rem; overflow: hidden; }
-.community-post + .community-post { border-top: 0; }
-.community-post:first-child { border-radius: 1rem 1rem 0 0; }
-.community-post:last-child { border-radius: 0 0 1rem 1rem; }
-.community-post:only-child { border-radius: 1rem; }
-.community-avatar {
-  flex: none;
-  width: 2.5rem;
-  height: 2.5rem;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
-  font-weight: 700;
-}
-.community-text { white-space: pre-wrap; overflow-wrap: anywhere; }
-.community-image {
-  display: block;
-  width: 100%;
-  max-height: 22rem;
-  object-fit: cover;
-  border: 1px solid var(--bookedz-border);
-  border-radius: 1rem;
-}
-.community-like {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 2.75rem;
-  padding: 0 0.5rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--bookedz-muted);
-}
-.community-like:hover:not(:disabled),
-.community-like[aria-pressed='true'] { color: var(--bookedz-primary-dark); }
-.community-signin {
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border: 1px dashed var(--bookedz-border);
-  border-radius: 1rem;
-  color: var(--bookedz-muted);
-}
-.min-w-0 { min-width: 0; }
+.community-page { max-width: 820px; padding-block: 1.5rem 3rem; }
+.community-hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+.community-lede { margin: 8px 0 0; max-width: 46ch; color: var(--bookedz-muted); }
+.community-hero-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.community-hero-actions .btn { min-height: 44px; }
+.community-tools { display: grid; gap: 12px; margin-bottom: 18px; }
+.community-filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.community-filters::-webkit-scrollbar { display: none; }
+.community-filter { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .88rem; transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease); }
+.community-filter span { padding: 0 6px; border-radius: 99px; background: var(--bookedz-hover); font-size: .75rem; }
+.community-filter[aria-pressed='true'] { background: var(--bookedz-ink); border-color: var(--bookedz-ink); color: var(--bookedz-surface); }
+.community-filter[aria-pressed='true'] span { background: color-mix(in srgb, var(--bookedz-surface) 20%, transparent); }
+.community-search { min-height: 44px; }
+.community-feed { display: grid; gap: 14px; }
+.community-empty,.community-soon { padding: 32px 20px; border: 1px dashed var(--bookedz-border); border-radius: 20px; background: var(--bookedz-surface); text-align: center; }
+.community-empty p,.community-soon p { color: var(--bookedz-muted); }
 </style>

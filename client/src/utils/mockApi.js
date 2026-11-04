@@ -5,10 +5,11 @@
 // database. api.js picks one of the two — pages never import this file directly.
 // If you change what a function returns here, change supabaseApi.js to match.
 
-import { createSeedData } from './mockData.js'
+import { createSeedData, addSampleJios } from './mockData.js'
 import { calculateWaitlistScore } from './waitlistScore.js'
 import { OFFER_HOURS, ACTIVE_STATUSES } from './helpers.js'
 import { joinOutcome } from './hangouts.js'
+import { isJio, jioErrors, jioEventData } from './jios.js'
 import { rankSlots, heatmap, previewSlot, rescueSuggestions, normaliseIntervals, rangeBounds } from './hangoutSlots.js'
 import { retime, generatePlan, swapAlternatives, eventListing, placeListing, memberWeights, MAX_STOPS } from './itinerary.js'
 import { buildPlanView, resolveRefs } from './hangoutPlan.js'
@@ -39,6 +40,8 @@ function loadDb() {
       db.feature4 = emptyOperations()
       saveDb(db)
     }
+    // Demo data saved before open jios existed gets the sample jios once
+    if (db.jioSeedVersion !== 1) { addSampleJios(db); saveDb(db) }
     return db
   }
 
@@ -567,6 +570,91 @@ export async function reopenHangoutPlan(eventId) {
   event.hangout.plan = { ...event.hangout.plan, finalizedAt: null, changedAt: new Date().toISOString() }
   saveDb(db)
   return planView(db, event, actor)
+}
+
+// ---------------------------------------------------------------------------
+// Open jios (Community): a host asks others to go to one event together
+// ---------------------------------------------------------------------------
+
+function jioView(db, jio) {
+  const counted = withCounts(db, jio)
+  const target = db.events.find((e) => e.id === jio.hangout.eventId)
+  const rsvps = db.rsvps.filter((r) => r.eventId === jio.id)
+  const name = (id) => db.users.find((u) => u.id === id)?.name || 'Someone'
+  const mine = rsvps.find((r) => r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status))
+  const myEventRsvp = target && db.rsvps.find((r) => r.eventId === target.id && r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status))
+  return {
+    id: jio.id,
+    note: jio.description || '',
+    capacity: jio.capacity,
+    spotsLeft: counted.spotsLeft,
+    joinMode: jio.joinMode || 'open',
+    createdAt: jio.createdAt,
+    startTime: jio.startTime,
+    endTime: jio.endTime,
+    host: { id: jio.organiserId, name: name(jio.organiserId) },
+    members: rsvps.filter((r) => r.status === 'confirmed').map((r) => ({ id: r.userId, name: name(r.userId) })),
+    pendingCount: rsvps.filter((r) => r.status === 'pending').length,
+    myStatus: jio.organiserId === CURRENT_ORGANISER_ID || jio.organiserId === CURRENT_USER_ID ? 'host' : mine?.status || null,
+    myRsvpId: mine?.id || null,
+    myEventStatus: myEventRsvp?.status || null,
+    commentCount: (db.jioComments || []).filter((c) => c.jioId === jio.id).length,
+    event: target ? { ...withCounts(db, target), category: target.tags?.[0] || '' } : null,
+  }
+}
+
+// Upcoming public jios, soonest first
+export async function getJios() {
+  await fakeDelay()
+  const db = loadFreshDb()
+  return db.events
+    .filter((e) => isJio(e) && e.hangout.visibility === 'public' && e.status === 'published' && new Date(e.endTime) > new Date())
+    .map((e) => jioView(db, e))
+    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+}
+
+export async function createJio({ eventId, note = '', capacity = 4, joinMode = 'open' }) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const official = db.events.filter((e) => e.kind !== 'hangout')
+  const errors = jioErrors({ eventId, note, capacity }, official)
+  if (errors.length) throw new Error(errors[0].message)
+  const target = official.find((e) => e.id === eventId)
+  const jio = { ...jioEventData(target, { note, capacity, joinMode }), id: newId('jio'), organiserId: CURRENT_ORGANISER_ID, status: 'published', createdAt: new Date().toISOString() }
+  db.events.push(jio)
+  saveDb(db)
+  return jioView(db, jio)
+}
+
+export async function getJioComments(jioId) {
+  await fakeDelay()
+  const db = loadDb()
+  const name = (id) => db.users.find((u) => u.id === id)?.name || 'Someone'
+  return (db.jioComments || [])
+    .filter((c) => c.jioId === jioId)
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .map((c) => ({ ...c, name: name(c.userId), mine: c.userId === CURRENT_USER_ID }))
+}
+
+export async function addJioComment(jioId, text) {
+  await fakeDelay()
+  const db = loadDb()
+  const clean = String(text || '').trim()
+  if (!clean) throw new Error('Write something first.')
+  if (clean.length > 280) throw new Error('Keep comments to 280 characters or fewer.')
+  if (!db.events.some((e) => e.id === jioId && isJio(e))) throw new Error('This jio isn’t available any more.')
+  db.jioComments = db.jioComments || []
+  const comment = { id: newId('c'), jioId, userId: CURRENT_USER_ID, text: clean, createdAt: new Date().toISOString() }
+  db.jioComments.push(comment)
+  saveDb(db)
+  return comment
+}
+
+export async function deleteJioComment(commentId) {
+  await fakeDelay()
+  const db = loadDb()
+  db.jioComments = (db.jioComments || []).filter((c) => !(c.id === commentId && c.userId === CURRENT_USER_ID))
+  saveDb(db)
 }
 
 // Joining a hangout. The demo has no invite enforcement; live checks the token.
