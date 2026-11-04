@@ -163,8 +163,13 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 ## 6. Pages
 
 ### Landing (`/`)
-Illustrated island with headline, description and search in one column. Below 992px the
-copy and artwork stack. Decorative art never pretends to be a real map.
+The front door, with no island map. **Signed-out visitors** see the sign-in / create account
+form (with a "Browse events without signing in" link to Discover); `/login` links open this
+page and keep `?redirect=` so sign-in returns to where they were going. **Signed-in people**
+see an account summary: greeting and name, email, counts (going, all upcoming RSVPs, saved),
+a waitlist offer if one is open, their next confirmed plan, their interests, and links to
+Discover, My RSVPs and Community (plus Sign out in the live app). The demo account always
+sees the summary, with a note that it is a sample account stored in this browser.
 
 ### Discover (`/discover`)
 Order: search → category chips (with result count and sort) → timeline beside a OneMap
@@ -302,6 +307,9 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 4 November work and still need fixing. No real-user testing has been done yet.
 
 ## 11. Change log
+
+- **4 Nov 2026:** The landing page replaced its animated island map with sign-in for visitors
+  and an account summary for signed-in people; `/login` now redirects to it.
 
 - **4 Nov 2026:** Combined all design documents into this file. Decisions: no "Picked for
   you" strip on Discover; category-coloured pins with orange stars for picks; "RSVP" and

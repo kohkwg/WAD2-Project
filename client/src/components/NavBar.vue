@@ -49,7 +49,7 @@ function closeMenu() {
 async function logOut() {
   signingOut.value = true
   authError.value = ''
-  try { await signOut(); user.value = null; await router.push('/login') }
+  try { await signOut(); user.value = null; await router.push('/') }
   catch { authError.value = 'Sign out failed. Please try again.' }
   finally { signingOut.value = false }
 }
@@ -95,7 +95,7 @@ function resetDemo() {
       <button ref="menuToggle" class="navbar-toggler" type="button" aria-controls="mainNav" :aria-expanded="menuOpen" aria-label="Toggle navigation" @click="menuOpen = !menuOpen"><svg class="toggler-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
       <RouterLink class="topbar-brand" to="/" aria-label="Bookedz home" translate="no"><svg class="brand-symbol" viewBox="0 0 32 36" fill="none" aria-hidden="true"><path d="M4 4h15a9 9 0 0 1 0 18H4V4Z" fill="currentColor"/><path d="M4 14h15a9 9 0 0 1 0 18H4V14Z" fill="currentColor"/><path d="m11 17 4 4 8-9" stroke="var(--bookedz-surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Bookedz</RouterLink>
       <div class="nav-account">
-        <RouterLink v-if="USING_SUPABASE && !hasSession" to="/login" class="nav-sign-in">Sign in <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 10h12m-4-4 4 4-4 4"/></svg></RouterLink>
+        <RouterLink v-if="USING_SUPABASE && !hasSession" to="/" class="nav-sign-in">Sign in <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 10h12m-4-4 4 4-4 4"/></svg></RouterLink>
         <button v-else-if="!USING_SUPABASE" type="button" class="nav-quiet" @click="resetDemo">Reset demo data</button>
       </div>
     </header>

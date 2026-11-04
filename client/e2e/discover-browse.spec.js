@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test'
 
-test('landing search, interest shortcuts and card navigation retain browsing state', async ({ page }, testInfo) => {
+// The landing hero with search and the island map was removed (DESIGN.md, Landing), so these
+// hero journeys are skipped; the same filters are covered on Discover.
+test.skip('landing search, interest shortcuts and card navigation retain browsing state', async ({ page }, testInfo) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await mockEvents(page)

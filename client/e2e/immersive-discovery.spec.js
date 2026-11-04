@@ -6,19 +6,12 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/common/elastic/search**', route => route.fulfill({json:{results:[]}}))
 })
 
-test('illustrated landing retains artwork while Discover uses the committed street-map workspace', async ({ page }, testInfo) => {
+test('Discover uses the committed street-map workspace', async ({ page }, testInfo) => {
   const errors=[]
   page.on('pageerror', error=>errors.push(error.message))
   await page.setViewportSize({width:1440,height:1000})
-  await page.goto('/')
-  const art=page.locator('.hero-illustration')
-  await expect(art).toHaveAttribute('data-loaded','true')
-  await expect(art.locator('image').first()).toHaveAttribute('href',/singapore-anchored-boats-plate\.webp/)
-  await page.getByRole('button',{name:'Pause island animations',exact:true}).click()
-  await expect(page.getByRole('button',{name:'Play island animations',exact:true})).toHaveAttribute('aria-pressed','true')
-  await page.getByRole('button',{name:'Play island animations',exact:true}).click()
-  await page.screenshot({path:testInfo.outputPath('merged-landing-desktop.png')})
-  await page.getByRole('button',{name:'Explore events',exact:true}).click()
+  // The landing page no longer has the island map (DESIGN.md, Landing); start from Discover
+  await page.goto('/discover')
   await expect(page.locator('.discovery-event-row').first()).toBeVisible()
   const map=page.getByRole('region',{name:'Explore events on the Singapore map',exact:true})
   await expect(map).toBeVisible()
@@ -32,14 +25,13 @@ test('illustrated landing retains artwork while Discover uses the committed stre
   expect(errors).toEqual([])
 })
 
-test('retained landing reflows on mobile and template picker keeps both workflows available', async ({ page }, testInfo) => {
+test('landing reflows on mobile and the template picker keeps both workflows available', async ({ page }, testInfo) => {
   await page.setViewportSize({width:375,height:900})
   await page.emulateMedia({reducedMotion:'reduce'})
   await page.goto('/')
-  await expect(page.locator('.hero-illustration')).toHaveAttribute('data-loaded','true')
+  await expect(page.getByRole('heading',{level:1,name:'Alex'})).toBeVisible()
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
-  await expect(page.locator('[data-flyer-wheel]')).toHaveCSS('animation-name','none')
-  await page.screenshot({path:testInfo.outputPath('merged-landing-mobile.png')})
+  await page.screenshot({path:testInfo.outputPath('landing-account-mobile.png')})
   await page.goto('/organiser/events/new')
   await expect(page.getByRole('heading',{name:'What are you making?',exact:true})).toBeVisible()
   await page.getByRole('button',{name:/A Bookedz event for the public/}).click()
