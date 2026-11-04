@@ -45,8 +45,8 @@ export const setEventPublished = (eventId, published) => backend.setEventPublish
 export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
 
 // ---------- Go together groups (Community) ----------
-// Live mode needs migrations 20261104120000 and 20261104120100 (see decisions.md); until
-// they're pushed, the live calls say Go together isn't set up yet.
+// Live mode uses migrations 20261104142732 and 20261104142907 (see decisions.md); a database
+// without them makes the live calls say Go together isn't set up yet.
 const groupsBackend = USING_SUPABASE ? supabaseGroupsApi : mockApi
 export const GROUPS_AVAILABLE = true
 export const getGroups = () => groupsBackend.getGroups() // public upcoming groups, plus private ones you're in

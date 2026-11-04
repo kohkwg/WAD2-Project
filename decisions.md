@@ -1,8 +1,8 @@
 # Decisions
 
 4 November 2026 — Huxley, Go together in live mode: two new migrations,
-`20261104120000_group_event_kind.sql` (adds the `group` event kind on its own, because a new enum
-value can only be used after it commits) and `20261104120100_go_together_groups.sql`. A group is an
+`20261104142732_group_event_kind.sql` (adds the `group` event kind on its own, because a new enum
+value can only be used after it commits) and `20261104142907_go_together_groups.sql`. A group is an
 event row with kind `group`, so joining, spots (the host holds one), approvals and leaving reuse
 registrations and `_admission_status`; `groups` links it to its official event with visibility and
 the invite token. Chat, before/after ideas, votes and availability cells have their own tables with
@@ -13,8 +13,11 @@ groups are seen or joined only by their people or with the invite token. The mig
 `register_for_event` (one marked change) and the events read policy to cover groups. Deleting an
 official event deletes its groups. Signed-out visitors see no groups, because member names are only
 for signed-in people. Recommendations skip hangouts and groups. Checked in local PGlite with
-`server/checks/groups-db.check.mjs`; not applied to the hosted project. Timothy should review it
-before it is pushed.
+`server/checks/groups-db.check.mjs`, then applied to the hosted Bookerz project on the same day at
+Huxley's request, before Timothy's review (he should still look it over). The connector recorded
+them as versions 20261104142732 and 20261104142907, so the files carry those names. Before applying,
+the hosted definitions of the five redefined functions were checked to match the hangouts migration;
+afterwards a smoke test ran as real users inside a rolled-back transaction (nothing was kept).
 
 4 November 2026 — Huxley, groups are no longer called hangouts in code: a Go together group is
 stored as `kind: 'group'` with a `group` field (`visibility`, `inviteToken`, `eventId`) instead of

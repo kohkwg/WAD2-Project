@@ -1,4 +1,4 @@
-// Isolated PostgreSQL verification of supabase/migrations/20261104120100_go_together_groups.sql. Never reads .env or
+// Isolated PostgreSQL verification of supabase/migrations/20261104142907_go_together_groups.sql. Never reads .env or
 // uses a database URL. Pass the path to a temporary PGlite runtime module; no
 // application dependency is added. Usage:
 //   node server/checks/groups-db.check.mjs <tmp>/node_modules/@electric-sql/pglite/dist/index.js

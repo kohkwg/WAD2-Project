@@ -1,6 +1,6 @@
 // Go together groups in live mode. Same functions and shapes as the group section of
 // mockApi.js; the rules are enforced by the SECURITY DEFINER functions in
-// supabase/migrations/20261104120100_go_together_groups.sql.
+// supabase/migrations/20261104142907_go_together_groups.sql.
 import { supabase } from './supabase.js'
 import { getCurrentUser, getEventsByIds } from './supabaseApi.js'
 import { livePlanView, suggestionFrom } from './groups.js'
