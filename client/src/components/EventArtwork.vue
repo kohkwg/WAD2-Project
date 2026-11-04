@@ -1,20 +1,12 @@
 <script setup>
 import { computed } from 'vue'
+import { groupOfCategory } from '@/lib/eventGroups'
 
 const props = defineProps({
   category: { type: String, default: '' },
 })
 
-const kind = computed(() => {
-  const value = props.category.toLowerCase().replace(/[_-]/g, ' ')
-  if (/sport|fitness|active|football|futsal/.test(value)) return 'sports'
-  if (/music|concert|nightlife/.test(value)) return 'music'
-  if (/food|dining|cook|culinary/.test(value)) return 'food'
-  if (/art|culture|craft|photo|film|design/.test(value)) return 'arts'
-  if (/tech|career|education|network|business|professional/.test(value)) return 'city'
-  if (/outdoor|nature|wellness|community|social|volunteer/.test(value)) return 'garden'
-  return 'festival'
-})
+const kind = computed(() => groupOfCategory(props.category)?.art || 'festival')
 
 const palette = computed(() => ({
   sports: { base: '#dceee3', deep: '#6eab83', light: '#fff8f1', accent: '#ff6b35' },

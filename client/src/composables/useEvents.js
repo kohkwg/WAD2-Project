@@ -80,8 +80,9 @@ export function useEvents() {
     try {
       const page = filters.page || 1
       const mapMode = filters.forMap === true
-      const from = mapMode ? 0 : (page - 1) * PAGE_SIZE
-      const to = from + (mapMode ? 200 : PAGE_SIZE) - 1
+      const size = filters.limit || PAGE_SIZE
+      const from = mapMode ? 0 : (page - 1) * size
+      const to = from + (mapMode ? 200 : size) - 1
 
       if (!USING_SUPABASE) {
         const rows = demoDiscoveryEvents(await getEvents(), filters)
