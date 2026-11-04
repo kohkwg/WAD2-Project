@@ -4,7 +4,7 @@
 .design-baseline.design-baseline { position: relative; isolation: isolate; --db-r: 24px; --db-tilt: 1.2deg; }
 
 /* Soft colour blobs live on the body so they have no visible box edges. */
-body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community-page, .group-page, .my-rsvps-page)) {
+body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community-page, .group-page, .my-rsvps-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page)) {
   background:
     radial-gradient(34rem 24rem at 12% 0%, color-mix(in srgb, var(--bookedz-fill) 22%, transparent), transparent 70%),
     radial-gradient(32rem 22rem at 95% 0%, color-mix(in srgb, var(--bookedz-teal) 20%, transparent), transparent 70%),
@@ -294,4 +294,75 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 @media (prefers-reduced-motion: reduce) {
   :is(.community-page.community-page, .group-page.group-page, .my-rsvps-page.my-rsvps-page) :is(.btn:not(:disabled):hover, .group-card:hover, .community-filter[aria-pressed='true'], .rsvp-tabs button[aria-selected=true]) { transform: none; }
   .group-page.group-page .group-event { rotate: 0deg; transition: none; }
+}
+.design-baseline.design-baseline .hangout-head .hangout-washi { background: var(--bookedz-pink); color: #3b0a24; }
+.design-baseline.design-baseline.hangout-wizard :is(.hangout-panel) { box-shadow: 6px 6px 0 var(--bookedz-pink); }
+:root[data-theme="dark"] .design-baseline.design-baseline.hangout-wizard .hangout-panel { box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-pink) 60%, transparent); }
+
+/* ---- Remaining pages: same elements, no layout changes --------------------------------
+   My RSVPs, Community, Discover, event RSVP page, sign-in and ticket pages. Scoped to each
+   page's own root class, so views and components stay untouched. */
+:is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) { --db-r: 24px; }
+
+/* Hero */
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvps-heading, .community-hero) {
+  position: relative; overflow: hidden; padding: clamp(1.4rem, 4vw, 2.4rem);
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r);
+  background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 70%);
+  box-shadow: 6px 6px 0 var(--bookedz-ink);
+}
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvps-heading, .community-hero) h1 {
+  font-size: clamp(2.1rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -.03em;
+  background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvps-heading p, .community-lede) { color: var(--bookedz-ink); font-weight: 500; }
+.my-rsvps-page:is(*, *) .header-star { color: var(--bookedz-fill); opacity: .35; }
+:root[data-theme="dark"] :is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvps-heading, .community-hero) { border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill); }
+
+/* Cards as tickets */
+:is(.my-rsvps-page, .community-page, .public-event-page, .ticket-page, .auth-wrap):is(*, *) :is(.card, .plans-summary > div, .next-event, .saved-event, .rsvp-empty, .jio-card, .community-soon, .auth-card) {
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal);
+}
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvp-empty, .community-soon) { border-style: dashed; border-color: var(--bookedz-control-border); box-shadow: none; }
+:root[data-theme="dark"] :is(.my-rsvps-page, .community-page, .public-event-page, .ticket-page, .auth-wrap):is(*, *) :is(.card, .plans-summary > div, .next-event, .saved-event, .jio-card, .auth-card) {
+  border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent);
+}
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.event-title, .section-title, .plans-summary dd) { font-family: var(--bookedz-heading); font-weight: 900; }
+
+/* Tabs and filters become pills */
+.my-rsvps-page:is(*, *) .rsvp-tabs { border-bottom: 0; gap: 8px; padding: 6px 4px 10px; }
+.my-rsvps-page:is(*, *) .rsvp-tabs button { border: 2px solid var(--bookedz-control-border); border-radius: 99px; padding: 8px 14px; font-weight: 700; background: var(--bookedz-surface); color: var(--bookedz-ink); }
+.my-rsvps-page:is(*, *) .rsvp-tabs button::after { display: none; }
+.my-rsvps-page:is(*, *) .rsvp-tabs button[aria-selected=true] { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); transform: translateY(-2px) rotate(-.8deg); box-shadow: 3px 3px 0 var(--bookedz-ink); }
+:root[data-theme="dark"] .my-rsvps-page:is(*, *) .rsvp-tabs button[aria-selected=true] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--bookedz-fill); }
+.community-page:is(*, *) :is(.community-filters button, .community-filters .btn, .community-filters a) { border-width: 2px; border-radius: 99px; font-weight: 700; }
+
+/* Buttons, inputs, alerts */
+:is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) .btn { border-radius: 99px; border-width: 2px; }
+:is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) .btn-primary { border-color: var(--bookedz-ink); }
+:root[data-theme="dark"] :is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) .btn-primary { border-color: var(--bookedz-fill); }
+:is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) :is(.form-control, .form-select) { border-width: 2px; border-radius: 14px; }
+:is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) :is(.form-control, .form-select):focus { border-color: var(--bookedz-fill); box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--bookedz-fill) 28%, transparent); }
+:is(.my-rsvps-page, .community-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) .alert { border-width: 2px; border-radius: 16px; }
+@media (hover: hover) {
+  :is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) .btn:not(:disabled):hover { transform: translateY(-2px) rotate(-.6deg); }
+  :is(.my-rsvps-page, .community-page):is(*, *) :is(.saved-event, .jio-card):hover { transform: translate(-2px, -3px) rotate(-.4deg); box-shadow: 9px 10px 0 var(--bookedz-teal); }
+}
+
+/* Discover: search, category pills, event rows and map frame */
+.discover-page:is(*, *) .discovery-search .search-toolbar { border: 2px solid var(--bookedz-control-border); border-radius: 99px; }
+.discover-page:is(*, *) .category-shortcut { border: 2px solid var(--bookedz-control-border); font-weight: 700; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp); }
+.discover-page:is(*, *) .category-shortcut[aria-pressed=true] { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); transform: translateY(-2px) rotate(-.8deg); box-shadow: 3px 3px 0 var(--bookedz-ink); }
+:root[data-theme="dark"] .discover-page:is(*, *) .category-shortcut[aria-pressed=true] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--bookedz-fill); }
+.discover-page:is(*, *) .discovery-event-row { border: 2px solid var(--bookedz-border); border-radius: 18px; box-shadow: none; transition: box-shadow var(--bookedz-motion-normal) var(--bookedz-ease), border-color var(--bookedz-motion-normal) var(--bookedz-ease); }
+.discover-page:is(*, *) .discovery-event-row:is(:hover, :focus-within) { border-color: var(--bookedz-ink); box-shadow: 4px 4px 0 var(--bookedz-teal); }
+.discover-page:is(*, *) .discovery-event-row.is-selected { border-color: var(--bookedz-fill); }
+.discover-page:is(*, *) .discovery-event-row h3 { font-family: var(--bookedz-heading); font-weight: 900; }
+.discover-page:is(*, *) .discovery-street-map { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal); }
+.discover-page:is(*, *) :is(.empty-state, .loading-state) { border: 2px dashed var(--bookedz-control-border); border-radius: var(--db-r); }
+:root[data-theme="dark"] .discover-page:is(*, *) .discovery-street-map { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+:root[data-theme="dark"] .discover-page:is(*, *) .discovery-event-row:is(:hover, :focus-within) { border-color: var(--bookedz-border); box-shadow: 4px 4px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .discover-page:is(*, *) .discovery-event-row { transition: none; }
+  :is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) :is(.btn:not(:disabled):hover, .saved-event:hover, .jio-card:hover, .rsvp-tabs button[aria-selected=true], .category-shortcut[aria-pressed=true]) { transform: none; }
 }

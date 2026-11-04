@@ -1,4 +1,5 @@
 <script setup>
+import '../../assets/design-baseline.css'
 // Feature 3: participant's ticket. Shows their personal QR for staff to scan.
 // Mostly BOILERPLATE (loading + layout). The one interesting bit is the small
 // live subscription so the page flips to "checked in" the moment staff scan it.
