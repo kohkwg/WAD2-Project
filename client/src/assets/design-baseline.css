@@ -4,7 +4,7 @@
 .design-baseline.design-baseline { position: relative; isolation: isolate; --db-r: 24px; --db-tilt: 1.2deg; }
 
 /* Soft colour blobs live on the body so they have no visible box edges. */
-body:has(:is(.design-baseline, .account-page)) {
+body:has(:is(.design-baseline, .account-page, .organiser-events-page)) {
   background:
     radial-gradient(34rem 24rem at 12% 0%, color-mix(in srgb, var(--bookedz-fill) 22%, transparent), transparent 70%),
     radial-gradient(32rem 22rem at 95% 0%, color-mix(in srgb, var(--bookedz-teal) 20%, transparent), transparent 70%),
@@ -139,3 +139,72 @@ body:has(:is(.design-baseline, .account-page)) {
 @media (hover: hover) { .account-page.account-page .btn:not(:disabled):hover { transform: translateY(-2px) rotate(-.6deg); } }
 @media (max-width: 767.98px) { .account-page.account-page .account-heading { box-shadow: 4px 4px 0 var(--bookedz-ink); } }
 @media (prefers-reduced-motion: reduce) { .account-page.account-page .btn:not(:disabled):hover { transform: none; } }
+
+/* ---- My events (OrganiserEventsView + OrganiserEventCard) ---------------------------
+   CSS only, scoped to .organiser-events-page, so the view and card component stay untouched. */
+.organiser-events-page.organiser-events-page { position: relative; isolation: isolate; --db-r: 24px; max-width: none; }
+.organiser-events-page.organiser-events-page .organiser-heading {
+  position: relative; overflow: hidden; padding: clamp(1.4rem, 4vw, 2.4rem);
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r);
+  background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 70%);
+  box-shadow: 6px 6px 0 var(--bookedz-ink);
+}
+.organiser-events-page.organiser-events-page .organiser-heading::after {
+  content: '★'; position: absolute; right: 14%; top: 50%; translate: 0 -50%; rotate: 12deg;
+  font-size: clamp(4rem, 11vw, 7rem); line-height: 1; color: var(--bookedz-fill); opacity: .3; pointer-events: none;
+}
+.organiser-events-page.organiser-events-page .organiser-heading > * { position: relative; z-index: 1; }
+.organiser-events-page.organiser-events-page .organiser-heading h1 {
+  font-size: clamp(2.1rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -.03em;
+  background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+:root[data-theme="dark"] .organiser-events-page.organiser-events-page .organiser-heading { border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill); }
+
+/* Search, filter pills, sort */
+.organiser-events-page.organiser-events-page .event-search input,
+.organiser-events-page.organiser-events-page .event-sort select { border-width: 2px; border-radius: 99px; border-color: var(--bookedz-control-border); }
+.organiser-events-page.organiser-events-page .event-search input:focus,
+.organiser-events-page.organiser-events-page .event-sort select:focus { outline: none; border-color: var(--bookedz-fill); box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--bookedz-fill) 28%, transparent); }
+.organiser-events-page.organiser-events-page .event-tabs button { border-width: 2px; border-color: var(--bookedz-control-border); font-weight: 700; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp), background-color var(--bookedz-motion-fast) var(--bookedz-ease); }
+.organiser-events-page.organiser-events-page .event-tabs button[aria-selected=true] { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); transform: translateY(-2px) rotate(-.8deg); box-shadow: 3px 3px 0 var(--bookedz-ink); }
+:root[data-theme="dark"] .organiser-events-page.organiser-events-page .event-tabs button[aria-selected=true] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--bookedz-fill); }
+.organiser-events-page.organiser-events-page .events-section-title { font-weight: 900; }
+
+/* Event cards as tickets */
+.organiser-events-page.organiser-events-page .organiser-event-card {
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal);
+  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease);
+}
+.organiser-events-page.organiser-events-page .organiser-event-card.event-state-drafts { border-style: dashed; box-shadow: 6px 6px 0 var(--bookedz-mango); }
+:root[data-theme="dark"] .organiser-events-page.organiser-events-page .organiser-event-card { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+@media (hover: hover) { .organiser-events-page.organiser-events-page .organiser-event-card:hover { transform: translate(-2px, -3px) rotate(-.4deg); box-shadow: 9px 10px 0 var(--bookedz-teal); } }
+.organiser-events-page.organiser-events-page .card-date { border-radius: 22px 22px 0 0; background: linear-gradient(120deg, var(--bookedz-teal-soft), var(--bookedz-mango-soft)); border-bottom: 2px dashed var(--bookedz-control-border); }
+.organiser-events-page.organiser-events-page .card-date strong { font-weight: 900; font-size: 2.1rem; }
+.organiser-events-page.organiser-events-page .event-title { font-family: var(--bookedz-heading); font-weight: 900; }
+.organiser-events-page.organiser-events-page .capacity-track { height: .55rem; border-radius: 99px; overflow: hidden; }
+.organiser-events-page.organiser-events-page .status-pill { border: 2px solid var(--bookedz-control-border); font-weight: 700; }
+
+/* Buttons */
+.organiser-events-page.organiser-events-page .btn { border-radius: 99px; border-width: 2px; }
+.organiser-events-page.organiser-events-page .btn-primary { border-color: var(--bookedz-ink); }
+:root[data-theme="dark"] .organiser-events-page.organiser-events-page .btn-primary { border-color: var(--bookedz-fill); }
+@media (hover: hover) { .organiser-events-page.organiser-events-page .btn:not(:disabled):hover { transform: translateY(-2px) rotate(-.6deg); } }
+.organiser-events-page.organiser-events-page .empty-events { border: 2px dashed var(--bookedz-control-border); border-radius: var(--db-r); }
+.organiser-events-page.organiser-events-page .pending-summary { border-width: 2px; border-radius: var(--db-r); }
+@media (max-width: 767.98px) { .organiser-events-page.organiser-events-page .organiser-heading { box-shadow: 4px 4px 0 var(--bookedz-ink); } }
+@media (prefers-reduced-motion: reduce) {
+  .organiser-events-page.organiser-events-page :is(.organiser-event-card, .event-tabs button) { transition: none; }
+  .organiser-events-page.organiser-events-page :is(.organiser-event-card:hover, .btn:not(:disabled):hover, .event-tabs button[aria-selected=true]) { transform: none; }
+}
+
+/* ---- Hangouts get their own colourway: teal + pink, while Official events stay orange ----- */
+.design-baseline.design-baseline .hangout-head {
+  background: linear-gradient(120deg, var(--bookedz-teal-soft), var(--bookedz-pink-soft) 75%);
+}
+.design-baseline.design-baseline .hangout-head::after { color: var(--bookedz-teal); opacity: .4; }
+.design-baseline.design-baseline .hangout-head h1 {
+  background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-teal-ink)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.design-baseline.design-baseline .hangout-head .hangout-washi { background: var(--bookedz-pink); color: #3b0a24; }
+.design-baseline.design-baseline.hangout-wizard :is(.hangout-panel) { box-shadow: 6px 6px 0 var(--bookedz-pink); }
+:root[data-theme="dark"] .design-baseline.design-baseline.hangout-wizard .hangout-panel { box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-pink) 60%, transparent); }
