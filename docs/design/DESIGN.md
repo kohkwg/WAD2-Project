@@ -111,6 +111,8 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 | Capacity | **spots**: "19 spots left", "20 spots in total", "Full" | places, seats, taken |
 | Organiser's list | **Guest list** / **RSVPs** | Attendees list, registrations (in UI text) |
 | Waitlist offer | "A spot opened up", "Confirm my spot" | Claim, accept offer |
+| Going to an event with others | **jio** / **open jio**; **Start a jio**, **Join jio**, **Ask to join** (host approves), **Leave jio** | Group, meetup, squad |
+| Planning a friends' outing | **hangout**; **Plan a hangout** | Event (hangouts are not official events) |
 
 - **Sentence case** for headings, labels, buttons and tags. No all-caps eyebrows or
   labels. The only exception is the hangout invite slips and vote stamps, whose short
@@ -194,13 +196,33 @@ Waitlist offers come first, with a live countdown that shows seconds in the last
 Then the totals, then tabs (Upcoming, Saved, Past, Cancelled). Updates every 30 seconds
 and on focus; the Refresh button stays as a fallback.
 
-### Community
-Posts can be tagged with an event and show it as a linked card; a dropdown filters posts
-by event. Likes animate only for the post you just liked. Posts are stored per browser
-until a shared table exists.
+### Community: open jios (`/community`)
+Community is where people find others to go to events with. **Official events live in
+Discover; jios and hangouts live in Community**, and neither appears in the other's lists
+(Discover and My events exclude hangouts).
+
+- **A jio** is tied to one official event: the host's note, the event card (title, time,
+  venue, category tint), who is going (avatars), spots left (2 to 8 including the host) and
+  whether anyone can join or the host approves each person.
+- **Feed:** soonest first, with filter chips (All jios, This week, I'm going, Hosting) and a
+  search over events, hosts and notes. It refreshes every 30 seconds and on focus.
+- **Start a jio:** a dialog to pick an upcoming event, add a note and choose spots and who can
+  join. Event pages link to it with the event already chosen (`/community?start=<id>`).
+- **Joining** takes a spot in the jio, then offers a one-tap step to RSVP to the event itself
+  ("RSVP", "Join waitlist" or "Request a spot"), because the event's own capacity and approval
+  rules still decide that. Members can leave (with a confirm step) and see the plan.
+- **Chat:** each jio has a short message thread for meeting points and questions.
+- **Plan a hangout** (`/community/plan`) opens the hangout planner (find a time with friends,
+  shape a plan, vote on stops). Hosts and members reach a jio's plan through "Plan the day" /
+  "See the plan".
+- **Event pages** show "Go with others": the event's open jios (linking to the card in
+  Community) and Start a jio.
+- **Live mode:** jios are demo-only for now; the live app shows a "Coming soon" note until a
+  Supabase migration for jio comments is agreed with Timothy.
 
 ### Create event (organiser)
-Template choice (Official or Hangout) as two whole-card buttons, then a four-step studio
+Official events only (hangouts are planned from Community; old `?template=hangout` links go to
+`/community/plan`). A four-step studio
 (Basics, Venue, RSVP questions, Review) with a live preview. New events default to the next
 whole hour for two hours; moving the start keeps the length, and an end before the start is
 flagged beside the field. Back is hidden on the first step. Tags match the Discover chips.
@@ -219,7 +241,7 @@ Floor plans and programmes use the shared fonts and theme panels. Profile uses l
 fieldsets, checkmarked interests and explicit saving and error states.
 
 ### Hangouts
-Hangouts keep their ticket and washi-tape motif (stamped labels, vote stamps) inside the
+Hangouts (including jios' plans) are reached from Community and keep their ticket and washi-tape motif (stamped labels, vote stamps) inside the
 shared palette and type. This is the one place stamped uppercase labels are allowed.
 
 ## 7. Motion
@@ -303,6 +325,10 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **4 Nov 2026:** Community became the open jio hub: jios tied to one event, Start a jio,
+  join then RSVP prompt, jio chat, filters and search. The hangout planner moved from Create
+  event to Community (`/community/plan`). Discover and My events list official events only.
+  Event pages show "Go with others". Text posts were removed.
 - **4 Nov 2026:** Combined all design documents into this file. Decisions: no "Picked for
   you" strip on Discover; category-coloured pins with orange stars for picks; "RSVP" and
   "spots" as standard words; sentence case; one date style. Added bulk approve and reject

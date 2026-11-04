@@ -48,7 +48,8 @@ async function loadEvents() {
   now.value = Date.now()
   errorMessage.value = ''
   try {
-    const rows = await getOrganiserEvents()
+    // My events lists official events; hangouts and jios are managed from Community
+    const rows = (await getOrganiserEvents()).filter((event) => event.kind !== 'hangout')
     if (mounted && request === requestId) events.value = rows
   } catch (error) {
     if (mounted && request === requestId) errorMessage.value = 'Could not load your events: ' + error.message
