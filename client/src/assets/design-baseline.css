@@ -366,3 +366,41 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
   .discover-page:is(*, *) .discovery-event-row { transition: none; }
   :is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) :is(.btn:not(:disabled):hover, .saved-event:hover, .jio-card:hover, .rsvp-tabs button[aria-selected=true], .category-shortcut[aria-pressed=true]) { transform: none; }
 }
+
+/* Discover, ticket-style pass (Vivienne): layered over the block above; wins on specificity. */
+.discover-page.discover-page .discovery-search .search-toolbar { border: 2px solid var(--bookedz-ink); border-radius: 999px; background: var(--bookedz-surface); box-shadow: 5px 5px 0 var(--bookedz-teal); }
+.discover-page.discover-page .discovery-search .filter-toggle { border: 2px solid var(--bookedz-ink); border-radius: 999px; font-weight: 700; }
+.discover-page.discover-page .discovery-search .filter-toggle.is-active { background: var(--bookedz-fill); color: var(--bookedz-on-action); }
+.discover-page.discover-page .discovery-search .filter-panel { border: 2px solid var(--bookedz-ink); border-radius: 20px; box-shadow: 5px 5px 0 var(--bookedz-mango); }
+.discover-page.discover-page .category-shortcut { border: 2px solid var(--bookedz-ink); }
+.discover-page.discover-page .category-shortcut:hover { transform: translateY(-2px) rotate(-1deg); }
+.discover-page.discover-page .results-sort select { border: 2px solid var(--bookedz-ink); border-radius: 999px; padding: 0 14px; background: var(--bookedz-surface); font-weight: 600; }
+.discover-page.discover-page .pane-switch { border: 2px solid var(--bookedz-ink); }
+.discover-page.discover-page .event-timeline::before { width: 0; background: none; border-left: 2px dashed var(--bookedz-ink); opacity: .35; }
+.discover-page.discover-page .timeline-date::after { background: var(--bookedz-fill); border: 2px solid var(--bookedz-ink); width: 12px; height: 12px; right: -7px; top: 10px; }
+.discover-page.discover-page .date-label { font-weight: 800; }
+.discover-page.discover-page .weekday { color: var(--bookedz-teal-ink); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.discover-page.discover-page .discovery-event-row { border: 2px solid var(--bookedz-ink); box-shadow: 5px 5px 0 var(--bookedz-teal); background: var(--bookedz-surface); }
+.discover-page.discover-page .discovery-event-row:is(:hover, :focus-within) { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--bookedz-teal); }
+.discover-page.discover-page .discovery-event-row.is-selected { border-color: var(--bookedz-ink); box-shadow: 6px 6px 0 var(--bookedz-fill); background: color-mix(in srgb, var(--bookedz-orange-soft) 55%, var(--bookedz-surface)); }
+.discover-page.discover-page .row-cover { border: 2px solid var(--bookedz-ink); border-radius: 12px; }
+.discover-page.discover-page .row-picked { background: var(--bookedz-pink); color: #3b0a24; border-radius: 999px; padding: 2px 9px; rotate: -2deg; }
+.discover-page.discover-page .discovery-street-map { box-shadow: 6px 6px 0 var(--bookedz-mango); }
+.discover-page.discover-page :is(.empty-state, .loading-state) { background: var(--bookedz-surface); box-shadow: 5px 5px 0 var(--bookedz-mango); }
+.discover-page.discover-page :is(.event-pagination, .event-more) .btn { border: 2px solid var(--bookedz-ink); border-radius: 999px; font-weight: 700; }
+:root[data-theme="dark"] .discover-page.discover-page :is(.search-toolbar, .discovery-event-row, .category-shortcut, .results-sort select, .pane-switch) { border-color: var(--bookedz-fill); }
+:root[data-theme="dark"] .discover-page.discover-page .discovery-event-row { box-shadow: 5px 5px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .discover-page.discover-page :is(.discovery-event-row:is(:hover, :focus-within), .category-shortcut:hover) { transform: none; }
+}
+/* Discover: the removable "active filter" chips duplicate the category pills and Filters panel. */
+.discover-page.discover-page .discovery-search .active-filters { display: none; }
+.discover-page.discover-page :is(.event-pagination, .event-more) .btn { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-action); box-shadow: 4px 4px 0 var(--bookedz-ink); }
+.discover-page.discover-page :is(.event-pagination, .event-more) .btn:disabled { opacity: .6; }
+:root[data-theme="dark"] .discover-page.discover-page :is(.event-pagination, .event-more) .btn { border-color: var(--bookedz-fill); box-shadow: 4px 4px 0 color-mix(in srgb, var(--bookedz-fill) 60%, transparent); }
+/* Keep the bookmark tooltip above the next ticket row (the row shadow/transform makes each row its own layer). */
+.discover-page.discover-page .discovery-event-row { position: relative; }
+.discover-page.discover-page .discovery-event-row:is(:hover, :focus-within) { z-index: 6; }
+/* The tooltip anchors to the row's nearest positioned ancestor; make that the bookmark itself so it sits beside the button. */
+.discover-page.discover-page .row-actions .event-bookmark { position: relative; }
+.discover-page.discover-page .row-actions .bookmark-tooltip { top: auto; bottom: calc(100% + 6px); z-index: 7; }

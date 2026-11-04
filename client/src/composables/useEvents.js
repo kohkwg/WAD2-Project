@@ -122,6 +122,8 @@ export function useEvents() {
         q = q.lte('start_time', end.toISOString())
       }
       if (filters.availableOnly) q = q.or('spots_left.gt.0,capacity.is.null')
+      // Count official events only, so "Show N more" matches the rows the list can actually show
+      q = q.or('kind.is.null,kind.eq.official')
 
       if (filters.sort === 'popular') q = q.order('confirmed_count', { ascending: false })
       q = q.order('start_time', { ascending: true }).order('id', { ascending: true })
