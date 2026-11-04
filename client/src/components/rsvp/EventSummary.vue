@@ -2,6 +2,7 @@
 import { ref, computed, useId, watch } from 'vue'
 import { formatEventTime, formatAddress } from '../../utils/helpers.js'
 import EventArtwork from '../EventArtwork.vue'
+import BumpValue from '../ui/BumpValue.vue'
 
 // Read-only card with an event's key details.
 // Used on the RSVP page and the "Review" step of Create Event.
@@ -52,7 +53,7 @@ const descriptionToShow = computed(() => {
 
       <div class="event-facts" aria-label="Event details">
         <div class="event-fact"><span class="fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg></span><span><strong>{{ event.capacity }}</strong><small>spots in total</small></span></div>
-        <div v-if="event.spotsLeft != null" class="event-fact"><span class="fact-icon fact-icon--coral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z"/><path d="M15 6v12" stroke-dasharray="2 2"/></svg></span><span><strong>{{ event.spotsLeft }}</strong><small>spots left</small></span></div>
+        <div v-if="event.spotsLeft != null" class="event-fact"><span class="fact-icon fact-icon--coral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z"/><path d="M15 6v12" stroke-dasharray="2 2"/></svg></span><span><strong><BumpValue :value="event.spotsLeft" /></strong><small>spots left</small></span></div>
       </div>
 
     <div class="event-cover">

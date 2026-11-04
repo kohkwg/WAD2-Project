@@ -3,6 +3,8 @@ import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink } from 'vue-router'
 import { getCurrentUser, getEvents } from '../utils/api.js'
 import islandImage from '../assets/illustrations/singapore-clean.webp'
+import BumpValue from '../components/ui/BumpValue.vue'
+import { toast } from '../composables/useToast'
 
 // Posts are kept in this browser only (no shared backend table yet).
 const STORAGE_KEY = 'bookedz-community-posts'
@@ -136,6 +138,12 @@ const eventFilter = ref('')
 const eventDate = (event) => new Date(event.startTime || event.start_time).toLocaleDateString('en-SG', { timeZone: 'Asia/Singapore', weekday: 'short', day: 'numeric', month: 'short' })
 const taggedEvents = computed(() => events.value.filter(event => posts.value.some(post => post.eventId === event.id)))
 
+// Relative times ("25m") move on while the page is open.
+const clock = ref(Date.now())
+let clockTimer = null
+onMounted(() => { clockTimer = setInterval(() => { clock.value = Date.now() }, 30000) })
+onBeforeUnmount(() => clearInterval(clockTimer))
+
 onMounted(async () => {
   restoreMedia()
   try { user.value = await getCurrentUser() } catch { user.value = null }
@@ -186,10 +194,13 @@ async function submit() {
   draftEventId.value = ''
   persist()
   posting.value = false
+  toast('Posted')
 }
 
+const justLiked = ref(null) // the heart only pops for the post you just liked, not on page load
 function toggleLike(post) {
   if (!user.value) return
+  justLiked.value = post.likedBy.includes(user.value.id) ? null : post.id
   const id = user.value.id
   post.likedBy = post.likedBy.includes(id) ? post.likedBy.filter(x => x !== id) : [...post.likedBy, id]
   persist()
@@ -232,7 +243,7 @@ function remove(post) {
 }
 
 function ago(ts) {
-  const s = Math.max(0, Math.floor((Date.now() - ts) / 1000))
+  const s = Math.max(0, Math.floor((clock.value - ts) / 1000))
   if (s < 60) return 'now'
   if (s < 3600) return `${Math.floor(s / 60)}m`
   if (s < 86400) return `${Math.floor(s / 3600)}h`
@@ -290,7 +301,7 @@ function ago(ts) {
       </div>
 
       <div class="community-main">
-      <ul class="community-posts list-unstyled mb-0">
+      <TransitionGroup tag="ul" name="list-fade" class="community-posts list-unstyled mb-0">
         <li v-for="post in visiblePosts" :key="post.id" class="community-post">
           <span class="community-avatar" aria-hidden="true">{{ post.handle.charAt(0).toUpperCase() }}</span>
           <div class="flex-grow-1 min-w-0">
@@ -312,8 +323,8 @@ function ago(ts) {
             </template>
             <div class="d-flex align-items-center gap-3">
               <button class="community-like" type="button" :aria-pressed="liked(post)" :disabled="!user" @click="toggleLike(post)">
-                <span aria-hidden="true">{{ liked(post) ? '♥' : '♡' }}</span>
-                <span>{{ likeCount(post) }}</span>
+                <span class="like-heart" :class="{ 'is-popping': liked(post) && justLiked === post.id }" aria-hidden="true">{{ liked(post) ? '♥' : '♡' }}</span>
+                <BumpValue :value="likeCount(post)" />
                 <span class="visually-hidden">likes</span>
               </button>
               <button class="community-like" type="button" :aria-expanded="!!openThreads[post.id]" :aria-controls="`replies-${post.id}`" @click="toggleThread(post)">
@@ -347,7 +358,7 @@ function ago(ts) {
             </div>
           </div>
         </li>
-      </ul>
+      </TransitionGroup>
 
       <p v-if="!visiblePosts.length" class="text-secondary text-center py-5" role="status">
         {{ query.trim() || eventFilter ? 'No posts match your search.' : 'No posts yet. Be the first to say something.' }}
@@ -363,6 +374,10 @@ function ago(ts) {
 
 <style scoped>
 .community-page { padding-block: 1.5rem 3rem; }
+.like-heart { display: inline-block; }
+.like-heart.is-popping { animation: like-pop var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
+@keyframes like-pop { 0% { transform: scale(.6); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .like-heart.is-popping { animation: none; } }
 .community-event { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 8px 12px; border: 1px solid var(--bookedz-border); border-radius: 10px; background: var(--bookedz-hover); color: var(--bookedz-ink); text-decoration: none; font-size: .9rem; }
 .community-event:hover { border-color: var(--bookedz-control-border); }
 .community-event-label { font-size: .75rem; font-weight: 700; color: var(--bookedz-primary-dark); }
