@@ -3,6 +3,7 @@
 // members (who is in which organiser's club) and attendanceHistory.
 //
 // Dates are worked out from "now", so the demo never goes out of date.
+import { jioEventData } from './jios.js'
 
 // An exact time N days from today, e.g. daysFromNow(5, 19) → 5 days later at 7:00 pm
 function daysFromNow(days, hour, minute = 0) {
@@ -392,5 +393,30 @@ export function createSeedData() {
     requiresApproval: false, isOutdoor: true, venue: { ...smuGreen },
     backupVenue: { ...smuAdmin }, questions: [], status: 'published', createdAt: daysAgo(1),
   })
-  return { users, events, rsvps, members, attendanceHistory }
+  const db = { users, events, rsvps, members, attendanceHistory }
+  addSampleJios(db)
+  return db
+}
+
+// Sample open jios from other students (Community). Also added once to demo data saved
+// before jios existed. Each jio is a public hangout tied to one upcoming official event.
+export function addSampleJios(db) {
+  db.jioComments = db.jioComments || []
+  const now = Date.now()
+  const upcoming = (id) => db.events.find((e) => e.id === id && e.kind !== 'hangout' && e.status === 'published' && new Date(e.startTime) > now)
+  const samples = [
+    { id: 'jio1', eventId: 'e1', host: 'u2', capacity: 4, note: 'First time going, would love a group to sit with. Meeting at the SMU Green entrance 15 min before.', members: ['u3'] },
+    { id: 'jio2', eventId: 'e2', host: 'u5', capacity: 3, note: 'Anyone keen to pair up? I can share my laptop setup notes.', members: [] },
+    { id: 'jio3', eventId: 'e3', host: 'u4', capacity: 5, note: 'Need a few more for a proper team. All levels welcome!', members: ['u6', 'u3'] },
+  ]
+  for (const sample of samples) {
+    const target = upcoming(sample.eventId)
+    if (!target || db.events.some((e) => e.id === sample.id)) continue
+    db.events.push({ ...jioEventData(target, sample), id: sample.id, organiserId: sample.host, status: 'published', createdAt: new Date(now - 3 * 3600e3).toISOString() })
+    for (const userId of sample.members) db.rsvps.push({ id: `r-${sample.id}-${userId}`, eventId: sample.id, userId, status: 'confirmed', answers: {}, createdAt: new Date(now - 3600e3).toISOString(), offerExpiresAt: null })
+  }
+  if (db.events.some((e) => e.id === 'jio1') && !db.jioComments.some((c) => c.id === 'c-jio1')) {
+    db.jioComments.push({ id: 'c-jio1', jioId: 'jio1', userId: 'u3', text: 'Count me in! I’ll bring a mat.', createdAt: new Date(now - 2 * 3600e3).toISOString() })
+  }
+  db.jioSeedVersion = 1
 }

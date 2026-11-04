@@ -32,7 +32,7 @@ test('illustrated landing retains artwork while Discover uses the committed stre
   expect(errors).toEqual([])
 })
 
-test('retained landing reflows on mobile and template picker keeps both workflows available', async ({ page }, testInfo) => {
+test('retained landing reflows on mobile and Create event and the Community planner both open', async ({ page }, testInfo) => {
   await page.setViewportSize({width:375,height:900})
   await page.emulateMedia({reducedMotion:'reduce'})
   await page.goto('/')
@@ -40,12 +40,10 @@ test('retained landing reflows on mobile and template picker keeps both workflow
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
   await expect(page.locator('[data-flyer-wheel]')).toHaveCSS('animation-name','none')
   await page.screenshot({path:testInfo.outputPath('merged-landing-mobile.png')})
+  // Create event makes official events only; hangouts are planned from Community (DESIGN.md, Community)
   await page.goto('/organiser/events/new')
-  await expect(page.getByRole('heading',{name:'What are you making?',exact:true})).toBeVisible()
-  await page.getByRole('button',{name:/A Bookedz event for the public/}).click()
   await expect(page.getByLabel('Event title',{exact:true})).toBeVisible()
-  await page.getByRole('link',{name:'Choose a different template',exact:false}).click()
-  await page.getByRole('button',{name:/Plan an outing with friends/}).click()
-  await expect(page).toHaveURL(/template=hangout/)
+  await page.goto('/organiser/events/new?template=hangout')
+  await expect(page).toHaveURL(/\/community\/plan$/)
   await expect(page.locator('main input').first()).toBeVisible()
 })
