@@ -708,6 +708,12 @@ It covers starting a group, listing, the host's spot, private groups and invite 
 chat, ideas and votes, the host's pick, availability windows and leavers, and deleting the official
 event. `livePlanView.test.js` checks that the live plan is shaped like the demo's.
 
+Friends in Community (stubbed friends backend, demo mode):
+
+```sh
+VITE_USE_MOCK=true pnpm --dir client exec playwright test e2e/community-friends.spec.js e2e/discovery-list-palette.spec.js
+```
+
 `groups.test.js` also checks `isOfficialEvent` (groups and older hangout rows stay out of event
 lists) and that demo data saved with hangout-shaped groups is upgraded to `kind: 'group'`.
 
