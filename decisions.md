@@ -5,6 +5,14 @@ removed from `/`. Signed-out visitors sign in or create an account there; signed
 the demo account see an account summary. `/login` redirects to `/` with its `?redirect=`. The
 island art components stay in the repo, unused. No backend changes.
 
+4 November 2026 — Huxley, Community becomes open jios: Community is strictly for jios
+(people asking others to go to one specific official event together) and the hangout planner,
+which moves out of Create event to `/community/plan`. Official events stay in Discover and My
+events; hangouts no longer appear there. Joining a jio takes a spot and then prompts an RSVP to
+the event (the event's own rules apply). The old Community text posts are removed. Built in demo
+mode first; the live app shows "Coming soon" until a jio comments migration is agreed with
+Timothy. No SQL or hosted changes.
+
 4 November 2026 — Huxley, design consistency pass: one design document,
 [DESIGN.md](docs/design/DESIGN.md), replaces the design system, design review and
 implementation record. Discover does **not** show the "Picked for you" strip (this

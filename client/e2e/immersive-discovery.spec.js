@@ -25,19 +25,17 @@ test('Discover uses the committed street-map workspace', async ({ page }, testIn
   expect(errors).toEqual([])
 })
 
-test('landing reflows on mobile and the template picker keeps both workflows available', async ({ page }, testInfo) => {
+test('landing reflows on mobile and Create event and the Community planner both open', async ({ page }, testInfo) => {
   await page.setViewportSize({width:375,height:900})
   await page.emulateMedia({reducedMotion:'reduce'})
   await page.goto('/')
   await expect(page.getByRole('heading',{level:1,name:'Alex'})).toBeVisible()
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
   await page.screenshot({path:testInfo.outputPath('landing-account-mobile.png')})
+  // Create event makes official events only; hangouts are planned from Community (DESIGN.md, Community)
   await page.goto('/organiser/events/new')
-  await expect(page.getByRole('heading',{name:'What are you making?',exact:true})).toBeVisible()
-  await page.getByRole('button',{name:/A Bookedz event for the public/}).click()
   await expect(page.getByLabel('Event title',{exact:true})).toBeVisible()
-  await page.getByRole('link',{name:'Choose a different template',exact:false}).click()
-  await page.getByRole('button',{name:/Plan an outing with friends/}).click()
-  await expect(page).toHaveURL(/template=hangout/)
+  await page.goto('/organiser/events/new?template=hangout')
+  await expect(page).toHaveURL(/\/community\/plan$/)
   await expect(page.locator('main input').first()).toBeVisible()
 })
