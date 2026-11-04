@@ -131,6 +131,6 @@ onUnmounted(() => clearInterval(timer))
 </template>
 
 <style scoped>
-.venue-qr-page{max-width:760px}.venue-qr-page .ticket-kicker{margin-bottom:.5rem}.venue-qr-stock{display:flex;width:min(100%,520px);padding:1.5rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:24px;background:#fff;flex-direction:column;box-shadow:0 12px 34px rgba(41,45,50,.08)}.venue-qr-page :deep(.qr-code){width:min(420px,100%);padding:12px;border:1px solid #eee7dc;border-radius:12px;background:#fff}.venue-qr-page .progress{background:#eee7dc;border-radius:999px}.venue-qr-page .progress-bar{background:var(--bookedz-coral-dark,#aa3e2c);border-radius:999px}.venue-qr-page .alert{border-radius:14px}
+.venue-qr-page{max-width:760px}.venue-qr-page .ticket-kicker{margin-bottom:.5rem}.venue-qr-stock{display:flex;width:min(100%,520px);padding:1.5rem;border:1px solid var(--bookedz-border,#e9ded3);border-radius:24px;background:#fff;flex-direction:column;box-shadow:0 12px 34px rgba(41,45,50,.08)}.venue-qr-page :deep(.qr-code){width:min(420px,100%);padding:12px;border:1px solid #e9ded3;border-radius:12px;background:#fff}.venue-qr-page .progress{background:#e9ded3;border-radius:999px}.venue-qr-page .progress-bar{background:var(--bookedz-coral-dark,#9a3412);border-radius:999px}.venue-qr-page .alert{border-radius:14px}
 @media(max-width:575.98px){.venue-qr-stock{padding:1rem;border-radius:18px}}
 </style>

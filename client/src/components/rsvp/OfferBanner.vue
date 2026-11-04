@@ -12,16 +12,17 @@ const props = defineProps({
 const emit = defineEmits(['confirm', 'decline'])
 
 const timeLeft = computed(() => formatTimeLeft(props.rsvp.offerExpiresAt, props.now))
-const isExpired = computed(() => timeLeft.value === 'expired')
+const isExpired = computed(() => !(Date.parse(props.rsvp.offerExpiresAt) > props.now))
 </script>
 
 <template>
   <div
-    class="offer-banner d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3"
+    class="offer-banner d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 attention-once"
     :class="isExpired ? 'offer-expired' : 'offer-active'"
   >
     <div>
-      <h2 class="h6 fw-semibold mb-0">A spot opened up for {{ rsvp.event.title }}</h2>
+      <p class="offer-eyebrow">Waitlist offer</p>
+      <h2 class="event-title mb-0">A spot opened up for {{ rsvp.event.title }}</h2>
       <div class="small">{{ formatEventTime(rsvp.event) }}</div>
       <div v-if="!isExpired" class="small mt-1">
         Time left to confirm: <strong>{{ timeLeft }}</strong>
@@ -55,9 +56,10 @@ const isExpired = computed(() => timeLeft.value === 'expired')
 </template>
 
 <style scoped>
-.offer-banner { margin-bottom: 1rem; padding: 1.15rem 1.25rem; border: 1px solid color-mix(in srgb,var(--bookedz-yellow) 55%,var(--bookedz-border)); border-radius: 18px; color: var(--bookedz-ink); background: color-mix(in srgb,var(--bookedz-yellow) 18%,var(--bookedz-surface)); }
-.offer-banner h2 { font-size: 1.1rem; }
-.offer-expired { border-color: var(--bookedz-border, #e5ded2); color: var(--bookedz-muted); background: var(--bookedz-glass-solid); }
+.offer-banner { margin-bottom: 1rem; padding: 1.3rem 1.5rem; border: 1px solid color-mix(in srgb,var(--bookedz-primary-dark) 30%,var(--bookedz-border)); border-radius: 18px; color: var(--bookedz-ink); background: var(--bookedz-mango); }
+.offer-eyebrow { font-size:var(--text-caption); font-weight: 700; margin: 0 0 8px; color: var(--bookedz-primary-dark); }
+
+.offer-expired { border-color: var(--bookedz-border, #e9ded3); color: var(--bookedz-muted); background: var(--bookedz-glass-solid); }
 .offer-banner button { min-height: 44px; }
 /* Phones: full-width stacked actions instead of two squeezed buttons with wrapping labels */
 @media (max-width: 575.98px) { .offer-actions { flex-direction: column; } }

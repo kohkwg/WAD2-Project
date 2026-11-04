@@ -48,8 +48,8 @@ test('public announcement feed precedes RSVP actions on mobile and survives subm
   await page.goto('/events/e2/rsvp')
 
   const feed = page.getByRole('region', { name: 'Event announcements' })
-  // The redesigned RSVP form's heading is "Count me in"
-  const form = page.getByRole('heading', { name: 'Count me in', exact: true })
+  // The RSVP form's heading is "Your RSVP"; Intro to Vue needs approval, so its button is "Request a spot"
+  const form = page.getByRole('heading', { name: 'Your RSVP', exact: true })
   await expect(feed).toContainText(/long public update/)
   await expect(form).toBeVisible()
   const feedBox = await feed.boundingBox()
@@ -57,7 +57,7 @@ test('public announcement feed precedes RSVP actions on mobile and survives subm
   expect(feedBox.y).toBeLessThan(formBox.y)
   expect(await page.evaluate(() => {
     const feedNode = document.querySelector('#public-announcements-heading')
-    const formNode = [...document.querySelectorAll('h2')].find(node => node.textContent.trim() === 'Count me in')
+    const formNode = [...document.querySelectorAll('h2')].find(node => node.textContent.trim() === 'Your RSVP')
     return Boolean(feedNode.compareDocumentPosition(formNode) & Node.DOCUMENT_POSITION_FOLLOWING)
   })).toBe(true)
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -68,7 +68,7 @@ test('public announcement feed precedes RSVP actions on mobile and survives subm
   await expect(requiredRadio).toHaveAttribute('required', '')
   await expect(requiredRadio).toBeVisible()
   await expect(group.getByRole('radio', { name: 'No' })).toBeVisible()
-  await page.getByRole('button', { name: 'RSVP', exact: true }).click()
+  await page.locator('.rsvp-form').getByRole('button', { name: 'Request a spot', exact: true }).click()
   const alert = page.getByRole('alert').filter({ hasText: /please answer/i })
   await expect(alert).toBeVisible()
   await expect(requiredRadio).toHaveAttribute('aria-invalid', 'true')
@@ -76,7 +76,7 @@ test('public announcement feed precedes RSVP actions on mobile and survives subm
   await expect(alert).toBeFocused()
 
   await requiredRadio.check()
-  await page.getByRole('button', { name: 'RSVP', exact: true }).click()
+  await page.locator('.rsvp-form').getByRole('button', { name: 'Request a spot', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'RSVP sent', exact: true })).toBeVisible()
   await expect(feed).toContainText(/long public update/)
 })
@@ -91,7 +91,7 @@ test('public list cards and loading/errors use clear status semantics', async ({
   await expect(page.getByRole('heading', { name: 'My events', exact: true })).toBeVisible()
   const cardHeading = page.getByRole('heading', { name: 'Intro to Vue Workshop', exact: true })
   await expect(cardHeading).toBeVisible()
-  expect(await cardHeading.evaluate(node => node.tagName)).toBe('H2')
+  expect(await cardHeading.evaluate(node => node.tagName)).toBe('H3')
   // Redesigned My events cards: one labelled progress bar per event with a capacity, and "N of M confirmed"
   await expect(page.getByRole('progressbar', { name: /^Confirmed RSVPs for / })).toHaveCount(3)
   await expect(page.locator('.capacity-copy').first()).toContainText(/of \d+ confirmed/)

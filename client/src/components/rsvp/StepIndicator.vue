@@ -41,11 +41,11 @@ const percentDone = computed(() => ((props.current - 1) / (props.steps.length - 
 .step-jump { display: flex; align-items: center; gap: .55rem; min-width: 0; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .step-jump:hover .step-label { text-decoration: underline; }
 .step-label { min-width: 0; font-size: .84rem; line-height: 1.2; }
-.step-item.is-current { color: var(--bookedz-ink); font-weight: 650; }
-.step-item.is-current .step-number { transform: scale(1.08); border-color: var(--bookedz-primary-dark); background: var(--bookedz-primary-dark); color: var(--bookedz-surface); }
-.step-item.is-complete .step-number { border-color: var(--bookedz-success); background: var(--bookedz-success); color: var(--bookedz-surface); }
+.step-item.is-current { background: var(--bookedz-peach); border-radius: 10px; color: var(--bookedz-ink); font-weight: 650; }
+.step-item.is-current .step-number { transform: scale(1.08); border-color: var(--bookedz-primary); background: var(--bookedz-primary); color: var(--bookedz-on-action); }
+.step-item.is-complete .step-number { border-color: var(--bookedz-success); background: var(--bookedz-teal); color: var(--bookedz-on-action); }
 .progress-track { height: .3rem; overflow: hidden; border-radius: 99px; background: var(--bookedz-glass-active); }
-.progress-fill { width: 100%; height: 100%; transform: scaleX(var(--step-progress)); transform-origin: left; border-radius: inherit; background: var(--bookedz-primary-dark); transition: transform .35s cubic-bezier(.2,.7,.2,1); }
+.progress-fill { width: 100%; height: 100%; transform: scaleX(var(--step-progress)); transform-origin: left; border-radius: inherit; background: var(--bookedz-primary); transition: transform .35s cubic-bezier(.2,.7,.2,1); }
 @media (max-width: 575.98px) { .creation-steps { padding: .85rem; } .creation-steps ol { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: .85rem; } }
 @media (prefers-reduced-motion: reduce) { .step-number, .progress-fill { transition: none; } }
 </style>

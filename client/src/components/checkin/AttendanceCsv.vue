@@ -68,7 +68,7 @@ async function onFileChosen(e) {
 
 <template>
   <section class="card card-body">
-    <h2 class="h6 text-uppercase text-body-secondary">Import / export</h2>
+    <h2 class="h6 text-body-secondary">Import / export</h2>
     <p class="small text-body-secondary">
       Export the attendance list as CSV (organisers only). Import a CSV with <code>email</code> and/or
       <code>ticket_code</code> columns, plus optional <code>checked_in_at</code>, to check people in.
@@ -114,5 +114,5 @@ async function onFileChosen(e) {
 </template>
 
 <style scoped>
-.card{border:1px solid var(--bookedz-border,#e5ded2);border-radius:18px;background:#fffdfa}.card-body{padding:1.25rem}.card .btn{border-radius:11px;min-height:40px}.card .btn-outline-primary{--bs-btn-color:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-border-color:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-hover-bg:var(--bookedz-coral-dark,#aa3e2c);--bs-btn-hover-border-color:var(--bookedz-coral-dark,#aa3e2c)}
+.card{border:1px solid var(--bookedz-border,#e9ded3);border-radius:18px;background:#ffffff}.card-body{padding:1.25rem}.card .btn{border-radius:11px;min-height:40px}.card .btn-outline-primary{--bs-btn-color:var(--bookedz-coral-dark,#9a3412);--bs-btn-border-color:var(--bookedz-coral-dark,#9a3412);--bs-btn-hover-bg:var(--bookedz-coral-dark,#9a3412);--bs-btn-hover-border-color:var(--bookedz-coral-dark,#9a3412)}
 </style>

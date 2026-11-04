@@ -99,20 +99,17 @@ onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('point
         <div class="search-field">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
           <label for="event-search" class="visually-hidden">Search by title, description or venue</label>
-          <input id="event-search" ref="searchInput" v-model="search" type="search" autocomplete="off" placeholder="Search events, activities or places…" />
+          <input id="event-search" ref="searchInput" v-model="search" type="search" autocomplete="off" placeholder="Search events or places…" />
           <button v-if="search" type="button" class="clear-search" aria-label="Clear search" @click="clearSearch">×</button>
         </div>
         <button ref="toggle" type="button" class="filter-toggle" :class="{ 'is-active': activeCount > 0 }" :aria-expanded="expanded" aria-controls="event-filter-panel" @click="expanded = !expanded">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16" /><circle cx="9" cy="7" r="3" /><circle cx="15" cy="17" r="3" /></svg>
-          Filters 
+          Filters<span v-if="activeCount" class="filter-count">{{ activeCount }}<span class="visually-hidden"> active</span></span>
         </button>
       </div>
       <div v-if="expanded" id="event-filter-panel" class="filter-panel" role="region" aria-label="Event filters">
-       <header class="panel-heading">
-  <strong>Filters</strong>
-  <button type="button" class="close-panel"
-    aria-label="Close filters" @click="close(true)">×</button>
-</header>
+        <!-- The Filters button above already names this panel, so it has no second "Filters" title -->
+        <button type="button" class="close-panel" aria-label="Close filters" @click="close(true)">×</button>
 
 <fieldset class="filter-section">
   <legend>When</legend>
@@ -198,8 +195,9 @@ svg { flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; strok
 .clear-search { position: absolute; right: 0; width: 40px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--bookedz-muted); font-size: 1.4rem; }
 .filter-toggle { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 8px 14px; border: 0; border-radius: 12px; background: var(--bookedz-glass-active); color: var(--bookedz-ink); font-size: .9rem; font-weight: 650; }
 .filter-toggle svg { width: 20px; height: 20px; }
-.filter-toggle.is-active { background: var(--bookedz-primary-dark); color: #fff; }
-.filter-count { display: grid; place-items: center; min-width: 20px; height: 20px; padding-inline: 4px; border-radius: 99px; background: rgb(255 255 255 / 22%); font-size: .75rem; }
+/* Surface-coloured text stays readable on primary-dark in both themes (white was 1.7:1 in dark) */
+.filter-toggle.is-active { background: var(--bookedz-primary-dark); color: var(--bookedz-surface); }
+.filter-count { display: grid; place-items: center; min-width: 20px; height: 20px; padding-inline: 5px; border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-primary-dark); font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .filter-panel { position: absolute; z-index: 30; top: calc(100% + 8px); left: 0; width: 100%; padding: 22px; box-shadow: var(--bookedz-search-shadow); max-height: min(620px, 75svh); overflow-y: auto; overflow-x: hidden; }
 .filter-section { display: block; float: none; min-width: 0; margin: 0 0 22px; padding: 0; border: 0; }
 .filter-section legend { float: none; width: auto; margin: 0 0 12px; font-size: .95rem; font-weight: 700; color: var(--bookedz-ink); }
@@ -221,23 +219,27 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--bookedz-pri
 .search-toolbar, .filter-panel { border-radius: 8px; }
 .filter-toggle { border-radius: 5px; }
 .filter-panel { padding: 22px; }
-.panel-heading {
-  display: flex; align-items: center;
-  justify-content: space-between; margin-bottom: 22px;
-}
 .close-panel {
-  border: 0; background: transparent; color: var(--bookedz-muted);
-  font-size: 24px; padding: 0 5px; cursor: pointer;
+  position: absolute; top: 10px; right: 10px;
+  display: grid; place-items: center; width: 44px; height: 44px;
+  border: 0; border-radius: 12px; background: transparent;
+  color: var(--bookedz-muted); font-size: 24px; cursor: pointer;
 }
+.close-panel:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }
 .date-segments {
   display: flex; gap: 2px; padding: 3px; border-radius: 6px;
   background: var(--bookedz-canvas);
 }
 .date-segments button {
-  flex: 1; min-width: 0; border: 0; border-radius: 4px;
-  padding: 9px 5px; background: transparent;
-  color: var(--bookedz-ink); font: inherit; font-size: 12px;
+  flex: 1; min-width: 0; min-height: 44px; border: 0; border-radius: 4px;
+  padding: 8px 6px; background: transparent;
+  color: var(--bookedz-ink); font: inherit; font-size: .875rem;
   cursor: pointer;
+}
+/* Phones: five options don't fit one row at a readable size, so they wrap 3 + 2 */
+@media (max-width: 575.98px) {
+  .date-segments { flex-wrap: wrap; }
+  .date-segments button { flex: 1 1 30%; }
 }
 .date-segments button[aria-pressed="true"] {
   background: var(--bookedz-surface);
@@ -249,8 +251,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--bookedz-pri
   display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px;
 }
 .category-grid label {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 0; color: var(--bookedz-ink); cursor: pointer;
+  display: flex; align-items: center; gap: 10px; min-height: 44px;
+  padding: 6px 0; color: var(--bookedz-ink); cursor: pointer;
 }
 .category-grid input {
   width: 16px; height: 16px; margin: 0;
@@ -273,9 +275,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--bookedz-pri
 }
 .availability-switch:checked { background: var(--bookedz-primary-dark); }
 .availability-switch:checked::before { transform: translateX(14px); }
+/* Same look as the app's primary buttons: orange fill with dark text (5.2:1 light, 7.5:1 dark;
+   white on light orange was 1.7:1 in dark mode) */
 .show-events {
-  border-radius: 5px; background: var(--bookedz-primary-dark);
-  border-color: var(--bookedz-primary-dark); color: #fff;
+  border-radius: var(--bookedz-radius-control); background: var(--bookedz-fill);
+  border-color: var(--bookedz-fill); color: var(--bookedz-on-fill);
+  font-weight: 700; box-shadow: var(--bookedz-button-shadow);
+}
+/* Wider screens: a compact drop-down under the Filters button instead of a full-width sheet */
+@media (min-width: 768px) {
+  .filter-panel { left: auto; right: 0; width: min(100%, 36rem); }
+  .category-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 .active-filter { border-radius: 4px; }
 .custom-date-range {

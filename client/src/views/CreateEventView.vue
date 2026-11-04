@@ -7,12 +7,14 @@ import AddressSearch from '../components/rsvp/AddressSearch.vue'
 import VenueMap from '../components/VenueMap.vue'
 import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue'
+import HangoutWizard from '../components/hangout/HangoutWizard.vue'
 import { uploadCover } from '../lib/uploadCover.js'
 import { createEvent, getEvent, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
 import { PLANNER_AVAILABLE, searchEventTitles, fetchPlanSuggestion, addPlanToEvent } from '../utils/planSuggestions.js'
 import { normalizeTitle } from '../utils/planSuggestModel.js'
 import { describeEventChanges, formatAnnouncement } from '../utils/eventChanges.js'
+import { blankEventForm, errorsForStep } from '../utils/eventForm.js'
 
 // Multi-step form (progressive disclosure): one small chunk at a time instead of one long page.
 // The same wizard edits event details inside Manage event (edit mode).
@@ -56,22 +58,15 @@ async function chooseCover(event) {
   }
 }
 
-// Everything the organiser fills in, across all steps
-function blankForm() {
-  return {
-    title: '',
-    coverImageUrl: '',
-    description: '',
-    tags: [],
-    startTime: '', // from <input type="datetime-local">, e.g. "2026-10-20T19:00"
-    endTime: '',
-    capacity: 30,
-    venue: null, // { name, address, postal, lat, lng } from OneMap
-    isOutdoor: false,
-    backupVenue: null, // used by Denzel's rain check
-    requiresApproval: false,
-    questions: [], // [{ id, text, type: 'text' | 'yesno', required }]
-  }
+// Everything the organiser fills in, across all steps (its fields and checks: utils/eventForm.js)
+// A new event starts at the next whole hour (at least 30 minutes away) and lasts two hours,
+// so the dates are never blank and the end can't start out before the start.
+function withDefaultTimes(f) {
+  const start = new Date(Date.now() + 30 * 60000)
+  start.setMinutes(0, 0, 0)
+  start.setHours(start.getHours() + 1)
+  const end = new Date(start.getTime() + 2 * 60 * 60000)
+  return { ...f, startTime: toDateTimeInputValue(start), endTime: toDateTimeInputValue(end) }
 }
 // Starting points chosen on the template picker (?preset=). They only pre-fill; everything stays editable.
 const PRESETS = {
@@ -79,12 +74,25 @@ const PRESETS = {
   work: { tags: ['career'], capacity: 25, description: 'What is the agenda, and who should attend? Add dress code or anything to prepare.', question: 'Which team or company are you from?' },
 }
 function presetForm() {
-  const form = blankForm()
+  const form = withDefaultTimes(blankEventForm())
   const preset = PRESETS[route.query.preset]
   if (!preset || route.params.id) return form
   return { ...form, tags: [...preset.tags], capacity: preset.capacity, description: preset.description, questions: [{ id: crypto.randomUUID(), text: preset.question, type: 'text', required: false }] }
 }
 const form = ref(presetForm())
+// Moving the start keeps the event's length; an end that falls before the start is moved after it.
+// Only for edits to the same form, not when a saved event is loaded into it.
+watch(() => [form.value, form.value.startTime], ([currentForm, start], [previousForm, previous]) => {
+  if (currentForm !== previousForm) return
+  const s = Date.parse(start), p = Date.parse(previous), e = Date.parse(form.value.endTime)
+  if (!Number.isFinite(s)) return
+  const length = Number.isFinite(p) && Number.isFinite(e) && e > p ? e - p : 2 * 60 * 60000
+  if (!Number.isFinite(e) || e <= s || Number.isFinite(p)) form.value.endTime = toDateTimeInputValue(new Date(s + length))
+})
+const endBeforeStart = computed(() => {
+  const s = Date.parse(form.value.startTime), e = Date.parse(form.value.endTime)
+  return Number.isFinite(s) && Number.isFinite(e) && e <= s
+})
 
 // ---------- Edit mode: change a published event ----------
 
@@ -96,6 +104,7 @@ const editBlocked = ref('') // why this event can't be edited (not yours, alread
 const minCapacity = ref(1) // can't go below the people already confirmed or offered a place
 const hasRsvps = ref(false) // once anyone has RSVP'd, existing questions can't be removed
 const venueLocked = ref(false) // the rain switch already moved the event to its backup venue
+const hangoutEvent = ref(null) // a hangout being edited; the Hangout wizard handles it
 
 const venueCopy = (venue) => (venue ? { name: venue.name, address: venue.address || '', postal: venue.postal || '', lat: venue.lat ?? null, lng: venue.lng ?? null } : null)
 function formFromEvent(event) {
@@ -104,8 +113,8 @@ function formFromEvent(event) {
     coverImageUrl: event.coverImageUrl || '',
     description: event.description || '',
     tags: [...(event.tags || [])],
-    startTime: toDateTimeInputValue(new Date(event.startTime)),
-    endTime: toDateTimeInputValue(new Date(event.endTime)),
+    startTime: Number.isFinite(Date.parse(event.startTime)) ? toDateTimeInputValue(new Date(event.startTime)) : '',
+    endTime: Number.isFinite(Date.parse(event.endTime)) ? toDateTimeInputValue(new Date(event.endTime)) : '',
     capacity: event.capacity ?? '', // '' = no capacity limit (older events only)
     venue: venueCopy(event.venue),
     isOutdoor: Boolean(event.isOutdoor),
@@ -124,6 +133,7 @@ watch(editId, async (id) => {
   errorMessage.value = ''
   editBlocked.value = ''
   original.value = null
+  hangoutEvent.value = null
   if (!id) {
     form.value = presetForm()
     return
@@ -133,7 +143,8 @@ watch(editId, async (id) => {
     const event = await getEvent(id)
     if (request !== editRequest) return
     if (!event.isMine) editBlocked.value = 'You can only edit events you organise.'
-    else if (new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
+    else if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
+    else if (event.kind === 'hangout') hangoutEvent.value = event
     else {
       const rsvps = await getRsvpsForEvent(id)
       if (request !== editRequest) return
@@ -255,10 +266,6 @@ let planProgress = { programme: 0, tasks: 0 }
 let createdDates = null
 
 const canGenerate = computed(() => PLANNER_AVAILABLE && form.value.title.trim().length > 0 && !planBusy.value && !publishing.value && !eventCreated.value)
-const planHint = computed(() => {
-  if (!PLANNER_AVAILABLE) return 'Plan suggestions need a live connection.'
-  return form.value.title.trim() ? '' : 'Enter an event title to generate a plan.'
-})
 const planStale = computed(() => Boolean(planOffer.value || acceptedPlan.value) && normalizeTitle(form.value.title) !== planForTitle.value)
 
 async function generatePlan() {
@@ -352,52 +359,11 @@ async function finishPlan(eventId) {
 
 // ---------- Checking each step before moving on ----------
 
-const stepErrors = computed(() => {
-  return errorsForStep(form.value, step.value)
-})
+const stepErrors = computed(() => errorsForStep(form.value, step.value, ruleContext()))
 
-function errorsForStep(f, stepNumber, now = new Date()) {
-  const errors = []
-  const hasCoordinates = (place) => Number.isFinite(place?.lat) && Number.isFinite(place?.lng)
-
-  if (stepNumber === 1) {
-    if (f.title.trim() === '') errors.push('Give your event a title.')
-    if (f.startTime === '' || f.endTime === '') {
-      errors.push('Set a start and end time.')
-    } else if (new Date(f.endTime) <= new Date(f.startTime)) {
-      errors.push('The end time must be after the start time.')
-    } else if (new Date(f.startTime) < now) {
-      errors.push('The start time cannot be in the past.')
-    }
-    const keepsNoLimit = isEditing.value && original.value?.capacity === '' && f.capacity === ''
-    if (!keepsNoLimit && (!Number.isInteger(f.capacity) || f.capacity < 1)) {
-      errors.push('Capacity must be a whole number, at least 1.')
-    } else if (isEditing.value && !keepsNoLimit && f.capacity < minCapacity.value) {
-      errors.push(`Capacity can't be lower than ${minCapacity.value}: that many people are already confirmed or offered a place.`)
-    }
-    if (f.tags.length === 0) {
-      errors.push('Pick at least one tag (used for recommendations and waitlist scoring).')
-    }
-  }
-
-  if (stepNumber === 2) {
-    if (!f.venue) errors.push('Choose the venue from the address search.')
-    if (USING_SUPABASE && f.venue && !hasCoordinates(f.venue)) {
-      errors.push('Choose a venue result with map coordinates for live events.')
-    }
-    if (f.isOutdoor && !f.backupVenue) {
-      errors.push('Outdoor events need a backup venue in case of rain.')
-    }
-    if (USING_SUPABASE && f.backupVenue && !hasCoordinates(f.backupVenue)) {
-      errors.push('Choose a backup venue result with map coordinates for live events.')
-    }
-  }
-
-  if (stepNumber === 3 && f.questions.some((question) => question.text.trim() === '')) {
-    errors.push('Every RSVP question needs some wording.')
-  }
-
-  return errors
+// What the shared form checks need from this page: edit-mode capacity limits and live mode
+function ruleContext() {
+  return { editing: isEditing.value, originalCapacity: original.value?.capacity, minCapacity: minCapacity.value, live: USING_SUPABASE }
 }
 
 async function focusStep() {
@@ -531,7 +497,7 @@ let announceAttempt = null
 
 async function reviewChanges() {
   if (savingChanges.value || uploadingCover.value) return
-  const invalidStep = [1, 2, 3].find((stepNumber) => errorsForStep(form.value, stepNumber).length > 0)
+  const invalidStep = [1, 2, 3].find((stepNumber) => errorsForStep(form.value, stepNumber, ruleContext()).length > 0)
   if (invalidStep) {
     direction.value = invalidStep < step.value ? -1 : 1
     step.value = invalidStep
@@ -596,7 +562,7 @@ function closeAnnounceDialog() {
 
 async function publish() {
   if (publishing.value || uploadingCover.value) return
-  const invalidStep = [1, 2].find((stepNumber) => errorsForStep(form.value, stepNumber).length > 0)
+  const invalidStep = [1, 2].find((stepNumber) => errorsForStep(form.value, stepNumber, ruleContext()).length > 0)
   if (invalidStep) {
     direction.value = invalidStep < step.value ? -1 : 1
     step.value = invalidStep
@@ -645,7 +611,10 @@ async function publish() {
 </script>
 
 <template>
-  <div class="design-baseline create-event-page col-12 mx-auto">
+  <!-- Hangouts are edited in the Hangout wizard, so Official-only fields (rain backup venue,
+       RSVP questions) never appear for them -->
+  <HangoutWizard v-if="hangoutEvent" :key="hangoutEvent.id" :edit-event="hangoutEvent" />
+  <div v-else class="design-baseline create-event-page col-12 mx-auto">
     <header class="create-heading">
       <component :is="props.embedded ? 'h2' : 'h1'">{{ isEditing ? 'Edit event' : 'Create an event' }}</component>
       <p>{{ isEditing ? 'Update the details below. Saving changes the live event straight away.' : 'Start with the essentials. You can review everything before it goes live.' }}</p>
@@ -754,10 +723,12 @@ async function publish() {
                 id="end"
                 type="datetime-local"
                 class="form-control"
-                :aria-describedby="showErrors && stepErrors.length ? 'validation-error-list' : undefined"
                 v-model="form.endTime"
                 :min="form.startTime || nowForInput"
+                :aria-invalid="endBeforeStart || undefined"
+                :aria-describedby="endBeforeStart ? 'end-error' : (showErrors && stepErrors.length ? 'validation-error-list' : undefined)"
               />
+              <p v-if="endBeforeStart" id="end-error" class="small text-danger mt-1 mb-0" role="alert">The event has to end after it starts.</p>
             </div>
             <div class="col-md-4 mb-3">
               <label for="capacity" class="form-label">Capacity</label>
@@ -786,7 +757,7 @@ async function publish() {
                   v-model="form.tags"
                   autocomplete="off"
                 />
-                <label class="btn btn-sm btn-outline-primary" :for="'tag-' + tag">{{ tag }}</label>
+                <label class="tag-chip cat-tint" :class="`cat-${tag}`" :for="'tag-' + tag">{{ tag.charAt(0).toUpperCase() + tag.slice(1) }}</label>
               </template>
             </div>
             <div v-if="suggestedTags.length > 0" class="small mt-2">
@@ -830,7 +801,7 @@ async function publish() {
           </div>
           <AddressSearch
             v-else
-            label="Search for the venue (OneMap)"
+            label="Search for the venue"
             input-id="venue-search"
             @select="setVenue"
           />
@@ -998,6 +969,16 @@ async function publish() {
               </li>
             </ol>
           </EventSummary>
+          <!-- Offered on Review, when the title, tags, times and size are all known. Plans are only
+               added by publish(), so editing an event doesn't offer one -->
+          <section v-if="!isEditing" class="plan-offer" aria-labelledby="plan-offer-heading">
+            <h3 id="plan-offer-heading" class="h6 mb-1">Want a head start?</h3>
+            <p class="plan-offer-copy">Suggest a programme and tasks from similar past events. You pick what to keep; they're added when you publish.</p>
+            <button v-if="PLANNER_AVAILABLE" type="button" class="btn btn-outline-primary btn-sm" :disabled="!canGenerate" @click="generatePlan">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M10 1.5l1.7 4.8 4.8 1.7-4.8 1.7L10 14.5l-1.7-4.8-4.8-1.7 4.8-1.7zM16 12l.8 2.2L19 15l-2.2.8L16 18l-.8-2.2L13 15l2.2-.8z"/></svg>Suggest programme &amp; tasks
+            </button>
+            <p v-else class="plan-offer-copy mb-0">Available when you're signed in on the live site.</p>
+          </section>
         </div>
 
         </div>
@@ -1061,24 +1042,17 @@ async function publish() {
 
       <!-- Back / Next / Publish -->
       <div class="card-footer d-flex justify-content-between creation-actions">
+        <!-- Hidden on the first step rather than greyed out; the spacer keeps Next on the right -->
         <button
+          v-if="step > 1"
           type="button"
           class="btn btn-outline-secondary"
-          :disabled="step === 1"
           @click="previousStep"
         >
           Back
         </button>
+        <span v-else aria-hidden="true"></span>
         <div class="d-flex gap-2 creation-actions-end">
-          <!-- Plans are only added by publish(), so editing an event doesn't offer one -->
-          <template v-if="!isEditing">
-            <span :title="planHint || undefined">
-              <button type="button" class="btn btn-outline-primary" :disabled="!canGenerate" :aria-describedby="planHint ? 'plan-hint' : undefined" @click="generatePlan">
-                <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" class="me-1" aria-hidden="true"><path d="M10 1.5l1.7 4.8 4.8 1.7-4.8 1.7L10 14.5l-1.7-4.8-4.8-1.7 4.8-1.7zM16 12l.8 2.2L19 15l-2.2.8L16 18l-.8-2.2L13 15l2.2-.8z"/></svg>Generate plan
-              </button>
-            </span>
-            <span v-if="planHint" id="plan-hint" class="visually-hidden">{{ planHint }}</span>
-          </template>
           <button v-if="step < steps.length" type="button" class="btn btn-primary" @click="nextStep">
             Next
           </button>
@@ -1139,11 +1113,13 @@ async function publish() {
 </template>
 
 <style scoped>
-.create-heading { margin: 1rem 0 1.5rem; padding: 1.5rem clamp(1rem, 3vw, 2rem); border-left: 5px solid var(--bookedz-primary-dark); border-radius: 0 20px 20px 0; background: var(--bookedz-glass-active); }
+.create-heading { margin: 0 0 1rem; padding: 1.1rem clamp(1rem, 3vw, 1.75rem); border-left: 5px solid var(--bookedz-primary-dark); border-radius: 0 20px 20px 0; background: linear-gradient(120deg,var(--bookedz-peach),var(--bookedz-mango)); }
 .create-heading :is(h1, h2) { margin: 0 0 .4rem; color: var(--bookedz-ink); font-size: clamp(1.7rem, 3vw, 2.3rem); font-weight: 700; letter-spacing: -.035em; }
 .create-heading p:last-child { margin: 0; color: var(--bookedz-muted); }
 .create-kicker { margin: 0 0 .35rem; color: var(--bookedz-primary-dark); font-size: .875rem; font-weight: 650; }
 .creation-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(15rem, .85fr); align-items: start; gap: 1.25rem; }
+.plan-offer { margin-top: 1.25rem; padding: 1rem; border: 1px dashed var(--bookedz-control-border); border-radius: 14px; background: var(--bookedz-glass-solid); }
+.plan-offer-copy { margin: 0 0 .75rem; color: var(--bookedz-muted); font-size: .875rem; }
 .plan-panel { margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 14px; background: var(--bookedz-surface); }
 .plan-panel:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
 .plan-panel-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
@@ -1162,18 +1138,19 @@ async function publish() {
 .title-suggestion-kind { flex: none; color: var(--bookedz-muted); font-size: .78rem; font-weight: 700; }
 .create-event-page :deep(.card) { border: 1px solid var(--bookedz-border); border-radius: 20px; box-shadow: var(--bookedz-card-shadow) !important; }
 .create-event-page :deep(.card-body) { padding: clamp(1rem, 3vw, 2rem) !important; }
-.create-event-page :deep(.card-footer) { position: sticky; bottom: 0; z-index: 2; padding: .85rem clamp(1rem, 3vw, 2rem); border-color: var(--bookedz-border); background: var(--bookedz-glass-solid) !important; backdrop-filter: blur(14px); }
+/* Sits above the phone tab bar when there is one (--bottom-nav-h, main.css) */
+.create-event-page :deep(.card-footer) { position: sticky; bottom: var(--bottom-nav-h, 0px); z-index: 2; padding: .85rem clamp(1rem, 3vw, 2rem); border-color: var(--bookedz-border); background: var(--bookedz-glass-solid) !important; backdrop-filter: blur(14px); }
 .create-event-page :deep(.card-footer .btn) { min-width: 6.5rem; min-height: 44px; }
 .create-event-page :deep(.form-control), .create-event-page :deep(.form-select) { border-radius: 10px; transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease; }
 .create-event-page :deep(.form-control:focus), .create-event-page :deep(.form-select:focus) { border-color: var(--bookedz-primary-dark); box-shadow: var(--bookedz-focus-glow); }
-.create-event-page :deep(.btn-success) { --bs-btn-color: var(--bookedz-on-fill); --bs-btn-hover-color: var(--bookedz-on-fill); --bs-btn-active-color: var(--bookedz-on-fill); --bs-btn-bg: var(--bookedz-fill); --bs-btn-border-color: var(--bookedz-fill); --bs-btn-hover-bg: var(--bookedz-fill); --bs-btn-hover-border-color: var(--bookedz-fill); --bs-btn-active-bg: var(--bookedz-fill-active); --bs-btn-active-border-color: var(--bookedz-fill-active); font-weight: 700; box-shadow: var(--bookedz-button-shadow); }
-.create-event-page :deep(.btn-success:not(:disabled):hover) { box-shadow: var(--bookedz-button-shadow-hover); }
+.create-event-page :deep(.btn-primary), .create-event-page :deep(.btn-success) { background: var(--bookedz-primary); border-color: var(--bookedz-primary); color: var(--bookedz-on-action); }
+.create-event-page :deep(.btn-primary:hover), .create-event-page :deep(.btn-success:hover) { background: var(--bookedz-primary-hover); border-color: var(--bookedz-primary-hover); }
 .event-preview { position: sticky; top: 1rem; padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 1.25rem; background: var(--bookedz-glass-solid); box-shadow: var(--bookedz-card-shadow); }
 .preview-heading { display: flex; align-items: center; gap: .55rem; margin: 0 0 .85rem; color: var(--bookedz-muted); font-size: .78rem; font-weight: 650; }
 .preview-pulse { width: .5rem; height: .5rem; border-radius: 50%; background: var(--bookedz-success); box-shadow: 0 0 0 .25rem var(--bookedz-glass-active); }
 .preview-card { overflow: hidden; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); }
 /* Same 16:9 crop as the event cards, so the preview shows what participants will see */
-.preview-art { position: relative; display: grid; aspect-ratio: 16 / 9; place-items: center; overflow: hidden; background: var(--bookedz-glass-active); background-position: center; background-size: cover; }
+.preview-art { position: relative; display: grid; aspect-ratio: 16 / 9; place-items: center; overflow: hidden; background: var(--bookedz-mango); background-position: center; background-size: cover; }
 .preview-art-mark svg { width: 80px; height: 60px; }
 .preview-art-mark { color: var(--bookedz-primary-dark); font-size: 3.3rem; line-height: 1; }
 .preview-tag { position: absolute; bottom: .65rem; left: .7rem; max-width: calc(100% - 1.4rem); overflow: hidden; padding: .25rem .55rem; border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
@@ -1181,7 +1158,7 @@ async function publish() {
 .preview-copy { padding: .9rem; }
 .preview-date { margin: 0 0 .35rem; color: var(--bookedz-primary-dark); font-size: .76rem; font-weight: 650; }
 .preview-copy h2 { margin: 0 0 .45rem; color: var(--bookedz-ink); font-size: 1.1rem; line-height: 1.2; overflow-wrap: anywhere; }
-.preview-description { display: -webkit-box; overflow: hidden; margin: 0 0 .8rem; color: var(--bookedz-muted); font-size: .82rem; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.preview-description { display: -webkit-box; overflow: hidden; margin: 0 0 .8rem; color: var(--bookedz-muted); font-size: .82rem; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; }
 .preview-meta { display: flex; gap: .5rem; align-items: baseline; margin-top: .4rem; color: var(--bookedz-ink); font-size: .78rem; }
 .preview-meta span:first-child { color: var(--bookedz-primary-dark); font-size: 1rem; }
 .preview-note { margin: .75rem 0 0; color: var(--bookedz-muted); font-size: .75rem; line-height: 1.4; }
@@ -1214,4 +1191,9 @@ async function publish() {
    colours instead of Bootstrap's default grey/blue, matching disabled .event-cta buttons */
 .create-event-page :deep(.btn-outline-primary), .create-event-page :deep(.btn-outline-secondary) { --bs-btn-disabled-color: var(--bookedz-disabled-ink); --bs-btn-disabled-bg: var(--bookedz-disabled-bg); --bs-btn-disabled-border-color: var(--bookedz-border); --bs-btn-disabled-opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .step-forward-enter-active, .step-forward-leave-active, .step-back-enter-active, .step-back-leave-active, .create-event-page :deep(.form-control), .create-event-page :deep(.form-select) { transition: none; } }
+/* Tags look exactly like Discover's category chips, so the preview matches what visitors see */
+.tag-chip { display: inline-flex; align-items: center; min-height: 44px; padding: 9px 15px; border: 1px solid transparent; border-radius: 99px; color: var(--bookedz-ink); font-size: 13px; cursor: pointer; transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease); }
+.tag-chip:hover { border-color: var(--bookedz-control-border); }
+.btn-check:checked + .tag-chip { background: var(--bookedz-ink); color: var(--bookedz-surface); }
+.btn-check:focus-visible + .tag-chip { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
 </style>

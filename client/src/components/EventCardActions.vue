@@ -87,7 +87,7 @@ const action = computed(() => {
   border: 1px solid var(--bookedz-primary-dark);
   border-radius: 6px;
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-button);
   font-weight: 600;
   text-decoration: none;
   text-align: center;
@@ -104,13 +104,13 @@ const action = computed(() => {
 }
 
 .card-action--rsvp {
-  background: var(--bookedz-primary-dark);
-  color: #fff;
+  background: var(--bookedz-primary);
+  color: var(--bookedz-on-action);
 }
 
 .card-action--rsvp:hover {
   filter: brightness(.94);
-  color: #fff;
+  color: var(--bookedz-on-action);
 }
 
 .registration-status {
@@ -125,8 +125,8 @@ const action = computed(() => {
 }
 
 .registration-status--confirmed {
-  background: #e5f2e8;
-  border-color: #c5ddcb;
+  background: #ffe4d6;
+  border-color: #ffe4d6;
   color: #285237;
 }
 
@@ -156,8 +156,8 @@ const action = computed(() => {
   min-height: 44px;
   padding: 10px 14px;
   border-radius: 6px;
-  font-family: inherit;
-  font-size: 14px;
+  font-family: var(--bookedz-body);
+  font-size: var(--text-button);
   font-weight: 600;
   line-height: 1.4;
   text-align: center;

@@ -136,8 +136,8 @@ const transformerConfig = {
     anchorSize: 12,
     anchorCornerRadius: 3,
     anchorFill: '#ffffff',
-    anchorStroke: '#aa3e2c',
-    borderStroke: '#aa3e2c',
+    anchorStroke: '#9a3412',
+    borderStroke: '#9a3412',
     // Keep the box at least minimum size and inside the floor area (in screen units)
     boundBoxFunc(oldBox, newBox) {
         const scale = stageWidth.value / 900
@@ -981,7 +981,7 @@ function addPerson() {
                                 }">
                                     <v-circle v-if="selectedPersonId === person.id" :config="{
                                         radius: person.radius + 6,
-                                        stroke: '#aa3e2c',
+                                        stroke: '#9a3412',
                                         strokeWidth: 2,
                                         dash: [5, 4],
                                         listening: false,
@@ -1138,12 +1138,12 @@ function addPerson() {
 <style scoped>
 .floor-editor,
 .floor-plan-viewer {
-    --floor-ink: var(--bookedz-ink, #292d32);
-    --floor-muted: var(--bookedz-muted, #63665e);
-    --floor-paper: var(--bookedz-cream, #fff9ef);
-    --floor-surface: var(--bookedz-surface, #fffdfa);
-    --floor-coral: var(--bookedz-coral-dark, #aa3e2c);
-    --floor-line: var(--bookedz-border, #e5ded2);
+    --floor-ink: var(--bookedz-ink, #1f2937);
+    --floor-muted: var(--bookedz-muted, #636975);
+    --floor-paper: var(--bookedz-cream, #fff8f1);
+    --floor-surface: var(--bookedz-surface, #ffffff);
+    --floor-coral: var(--bookedz-coral-dark, #9a3412);
+    --floor-line: var(--bookedz-border, #e9ded3);
     color: var(--floor-ink)
 }
 
@@ -1235,6 +1235,12 @@ function addPerson() {
 
 .floor-page-heading .btn-primary,
 .floor-editor .btn-primary {
+    --bs-btn-bg: var(--floor-coral);
+    --bs-btn-border-color: var(--floor-coral);
+    --bs-btn-color: var(--bookedz-on-action, #ffffff);
+    --bs-btn-hover-bg: var(--bookedz-primary-hover, #7c2d12);
+    --bs-btn-hover-border-color: var(--bookedz-primary-hover, #7c2d12);
+    --bs-btn-hover-color: var(--bookedz-on-action, #ffffff);
     border-radius: 12px;
     min-height: 42px
 }
@@ -1493,6 +1499,13 @@ function addPerson() {
 .floor-aux-panel :deep(.btn) {
     border-radius: 10px;
     min-height: 38px
+}
+
+.floor-aux-panel :deep(.btn-primary) {
+    --bs-btn-bg: var(--floor-coral);
+    --bs-btn-border-color: var(--floor-coral);
+    --bs-btn-hover-bg: var(--bookedz-primary-hover, #7c2d12);
+    --bs-btn-hover-border-color: var(--bookedz-primary-hover, #7c2d12)
 }
 
 .floor-aux-panel :deep(.btn-outline-primary) {
