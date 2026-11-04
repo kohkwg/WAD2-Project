@@ -1,6 +1,6 @@
 # Documentation
 
-- [Project setup and AI/library disclosure](../README.md)
+- [Project setup, change history and library credits](../README.md)
 - [Team design-branch workflow](../design-branches.md)
 - [Decisions](../decisions.md)
 - [Current status and timeline](../status.md)

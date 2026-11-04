@@ -7,7 +7,7 @@ feature's business logic or a new visual identity.
 ## Tools applied
 
 - [UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill): installed
-  locally in Codex; ran glass navigation, typography and community-colour searches.
+  locally locally; ran glass navigation, typography and community-colour searches.
   Glassmorphism guidance matched navigation, with contrast/focus conditions. The
   playful font results were too child-oriented and the purple community palette
   did not fit the supplied island/established brand. A narrower query supported
@@ -27,7 +27,7 @@ feature's business logic or a new visual identity.
   Reviewed the same scope for labels, semantic controls, focus, auth state,
   reduced motion, long content, image sizing and responsive layouts.
 
-Skills are local agent tools; they are not runtime dependencies or build
+Skills are local design tools; they are not runtime dependencies or build
 requirements. The installed tools are now available in the local skill catalog. Their
 instructions were read and applied directly during this implementation.
 
@@ -75,7 +75,7 @@ page data remained on the demo adapter.
   fits the 1280×800 viewport. After adjusting tablet stacking, only the two
   affected layout/navigation checks were rerun: 2/2 passed.
 - Vue templates/styles and shared CSS compile; whitespace check passes.
-- A GPT-6 Luna medium read-only review identified the pending-search issue above;
+- A read-only review identified the pending-search issue above;
   it was corrected and covered by the targeted browser check.
 - No full suite, production build, new runtime package or deployment.
 

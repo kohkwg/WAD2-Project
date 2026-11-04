@@ -21,7 +21,7 @@ const label = computed(() => {
 const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Math.min(100, Math.round((props.event.confirmedCount || 0) / props.event.capacity * 100))) : 0)
 </script>
 <template>
-  <article class="organiser-event-card" :class="[`event-state-${state}`, { 'just-created': justCreated }]">
+  <article class="organiser-event-card lift-on-hover" :class="[`event-state-${state}`, { 'just-created': justCreated }]">
     <header class="card-date"><div><strong>{{ validDate ? date.getDate() : '—' }}</strong><span>{{ dateCaption }}</span></div><span class="date-label">{{ label }}</span></header>
     <div class="event-card-copy">
       <h3 class="event-title">{{ event.title || 'Untitled draft' }}</h3>
@@ -31,7 +31,7 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
       <template v-else>
         <p class="capacity-copy"><strong>{{ event.confirmedCount || 0 }}</strong> {{ event.capacity == null ? 'confirmed · no capacity limit' : `of ${event.capacity} confirmed` }}</p>
         <div v-if="event.capacity > 0" class="capacity-track" role="progressbar" :aria-label="`Confirmed RSVPs for ${event.title}`" :aria-valuenow="Math.min(event.confirmedCount || 0, event.capacity)" aria-valuemin="0" :aria-valuemax="event.capacity"><span :style="{ width: capacityPercent + '%' }"></span></div>
-        <div class="event-statuses"><span v-if="state === 'upcoming' && event.pendingCount > 0" class="status-pill pending-pill">{{ event.pendingCount }} awaiting approval</span><span v-if="event.waitlistCount > 0" class="status-pill">{{ event.waitlistCount }} on waitlist</span><span v-if="event.offeredCount > 0" class="status-pill">{{ event.offeredCount }} offers out</span></div>
+        <div class="event-statuses"><span v-if="state === 'upcoming' && event.pendingCount > 0" class="status-pill pending-pill">{{ event.pendingCount }} awaiting approval</span><span v-if="event.waitlistCount > 0" class="status-pill">{{ event.waitlistCount }} on waitlist</span><span v-if="event.offeredCount > 0" class="status-pill">{{ event.offeredCount }} {{ event.offeredCount === 1 ? 'offer' : 'offers' }} out</span></div>
       </template>
     </div>
     <footer class="event-card-actions">

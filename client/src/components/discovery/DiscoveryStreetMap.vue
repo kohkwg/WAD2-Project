@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { searchPlace } from '../../lib/onemap'
+import { addOneMapTiles } from '../../lib/onemapTiles'
 import EventCardActions from '../EventCardActions.vue'
 
 const props = defineProps({
@@ -30,7 +31,7 @@ const selected = computed(() => props.events.find(event => event.id === selected
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const timeLabel = event => new Date(event.start_time).toLocaleString('en-SG', { timeZone: 'Asia/Singapore', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
 let fittedSignature = ''
-let map, tiles, markers, placeLayer, observer, opener, placeTimer, placeAbort
+let map, tiles, stopTiles, markers, placeLayer, observer, opener, placeTimer, placeAbort
 let renderFrame
 
 function choose(event, focusTitle = false) {
@@ -147,11 +148,15 @@ function retryTiles() { tileError.value = false; tiles?.redraw() }
 onMounted(() => {
   map = L.map(container.value, { scrollWheelZoom: false, zoomControl: false, minZoom: 11, maxZoom: 19 }).setView([1.3521, 103.8198], 11)
   L.control.zoom({ position: 'topright' }).addTo(map)
-  tiles = L.tileLayer('https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png', {
-    minZoom: 11, maxZoom: 19,
-    attribution: '<a href="https://www.onemap.gov.sg/" target="_blank" rel="noopener noreferrer">OneMap</a> © contributors | <a href="https://www.sla.gov.sg/" target="_blank" rel="noopener noreferrer">Singapore Land Authority</a>',
-  }).addTo(map)
-  tiles.on('tileerror', () => { tileError.value = true })
+  // Night tiles in dark mode, so the map does not glare inside the dark interface.
+  stopTiles = addOneMapTiles(map)
+  tiles = stopTiles.layer
+  // Edge tiles over the sea or Johor are missing from OneMap; only warn when nothing loaded.
+  let loadedTiles = 0, failedTiles = 0
+  tiles.on('loading', () => { loadedTiles = 0; failedTiles = 0 })
+  tiles.on('tileload', () => { loadedTiles++; tileError.value = false })
+  tiles.on('tileerror', () => { failedTiles++ })
+  tiles.on('load', () => { tileError.value = failedTiles > 0 && loadedTiles === 0 })
   markers = L.layerGroup().addTo(map)
   placeLayer = L.layerGroup().addTo(map)
   map.on('zoomend', () => { zoomed.value = map.getZoom() >= 14; scheduleMarkers() })
@@ -183,7 +188,7 @@ watch(() => props.focusedEventId, id => {
   groupEvents.value = []
   showPoint(id)
 })
-onBeforeUnmount(() => { clearTimeout(placeTimer); placeAbort?.abort(); observer?.disconnect(); cancelAnimationFrame(renderFrame); map?.remove(); map = null })
+onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abort(); observer?.disconnect(); cancelAnimationFrame(renderFrame); map?.remove(); map = null })
 </script>
 
 <template>
@@ -235,6 +240,7 @@ onBeforeUnmount(() => { clearTimeout(placeTimer); placeAbort?.abort(); observer?
 :deep(.street-marker--selected .street-pin) { width: 38px; height: 38px; background: var(--bookedz-forest); outline: none; }
 :deep(.leaflet-control-zoom a) { width: 36px; height: 36px; line-height: 36px; background: var(--bookedz-surface); color: var(--bookedz-ink); }
 :deep(.leaflet-control-attribution) { background: var(--bookedz-surface); color: var(--bookedz-muted); font-size: 10px; }:deep(.leaflet-control-attribution a) { color: var(--bookedz-primary-dark); }
-@media(max-width:991px) { .street-map-canvas { height: 480px; } }
+@media(max-width:991px) { .street-map-canvas { height: clamp(480px,calc(100svh - 300px),640px); } }
+@media(max-width:767px) { .street-map-canvas { height: clamp(420px,calc(100svh - 320px),620px); } }
 @media(pointer:coarse) { .preview-close { width: 44px; height: 44px; }:deep(.leaflet-control-zoom a) { width: 44px; height: 44px; line-height: 44px; }.street-fit { top: 108px; } }
 </style>

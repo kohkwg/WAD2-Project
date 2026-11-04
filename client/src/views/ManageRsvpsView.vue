@@ -311,7 +311,7 @@ async function demoExpireOffers() {
     <section class="guest-summary mb-4" aria-label="RSVP status summary">
       <div class="capacity-overview">
         <div class="capacity-title"><div><h2>Places</h2><p>{{ spotsTaken }} of {{ event.capacity }} taken or offered</p></div><strong>{{ fillPercent }}<span>%</span></strong></div>
-        <div class="capacity-track" role="img" :aria-label="`Capacity: ${event.confirmedCount} confirmed, ${event.offeredCount} offers out, ${capacityParts.availableCount} available of ${event.capacity}`">
+        <div class="capacity-track" role="img" :aria-label="`Capacity: ${event.confirmedCount} confirmed, ${event.offeredCount} ${event.offeredCount === 1 ? 'offer' : 'offers'} out, ${capacityParts.availableCount} available of ${event.capacity}`">
           <span class="capacity-segment capacity-segment--confirmed" :style="{ transform: `scaleX(${capacityParts.confirmed / 100})` }"></span>
           <span class="capacity-segment capacity-segment--offered" :style="{ transform: `scaleX(${(capacityParts.confirmed + capacityParts.offered) / 100})` }"></span>
           <span class="capacity-segment capacity-segment--available" :style="{ transform: `scaleX(${(capacityParts.confirmed + capacityParts.offered + capacityParts.available) / 100})` }"></span>
