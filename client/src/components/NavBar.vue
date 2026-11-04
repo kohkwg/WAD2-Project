@@ -85,6 +85,10 @@ function resetDemo() {
         <button class="nav-quiet sidebar-sign-out" type="button" :disabled="signingOut" @click="logOut">{{ signingOut ? 'Signing out…' : 'Sign out' }}</button>
         <p v-if="authError" class="nav-auth-error" role="alert">{{ authError }}</p>
       </div>
+      <!-- Demo mode has no profile page, but still says whose data is on screen. -->
+      <div v-else-if="!USING_SUPABASE && user" class="sidebar-account">
+        <p class="nav-profile nav-profile--demo m-0"><span class="nav-avatar" aria-hidden="true">{{ accountName.charAt(0).toUpperCase() }}</span><span class="sidebar-profile-copy"><strong>{{ accountName }}</strong><span class="nav-account-name">Demo account</span></span></p>
+      </div>
     </div>
     <header class="app-topbar" :class="{ 'app-topbar--minimal': USING_SUPABASE && hasSession }">
       <!-- Own icon: Bootstrap's .navbar-toggler-icon only has an image inside a .navbar (none in light mode here) -->
@@ -143,6 +147,8 @@ function resetDemo() {
 .nav-quiet, .nav-profile { background: transparent; color: var(--bookedz-muted); }
 .nav-quiet:hover, .nav-profile:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }
 .nav-profile { padding: 4px 8px; }
+.nav-profile--demo { cursor: default; }
+.nav-profile--demo:hover { background: transparent; color: var(--bookedz-muted); }
 .nav-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--bookedz-glass-active); color: var(--bookedz-primary-dark); }
 .nav-account-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
 .nav-auth-error { flex-basis: 100%; margin: 0; color: var(--bookedz-danger); font-size: .875rem; text-align: right; }

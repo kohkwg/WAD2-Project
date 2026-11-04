@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { searchPlace } from '../../lib/onemap'
+import { addOneMapTiles } from '../../lib/onemapTiles'
 import EventCardActions from '../EventCardActions.vue'
 
 const props = defineProps({
@@ -31,7 +32,7 @@ const selected = computed(() => props.events.find(event => event.id === selected
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const timeLabel = event => new Date(event.start_time).toLocaleString('en-SG', { timeZone: 'Asia/Singapore', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
 let fittedSignature = ''
-let map, tiles, markers, placeLayer, observer, opener, placeTimer, placeAbort
+let map, tiles, stopTiles, markers, placeLayer, observer, opener, placeTimer, placeAbort
 let renderFrame
 
 function choose(event, focusTitle = false) {
@@ -151,16 +152,15 @@ onMounted(() => {
   // Half-step zoom lets "Show all" fit the events snugly instead of jumping out a whole level.
   // Zoom buttons are our own (bottom-right, in the app's style) rather than Leaflet's.
   map = L.map(container.value, { scrollWheelZoom: false, zoomControl: false, zoomSnap: 0.5, minZoom: 11, maxZoom: 19 }).setView([1.3521, 103.8198], 11)
-  tiles = L.tileLayer('https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png', {
-    minZoom: 11, maxZoom: 19,
-    attribution: '<a href="https://www.onemap.gov.sg/" target="_blank" rel="noopener noreferrer">OneMap</a> © contributors | <a href="https://www.sla.gov.sg/" target="_blank" rel="noopener noreferrer">Singapore Land Authority</a>',
-  }).addTo(map)
-  // Only warn when most of the background failed in a load; one stray missing tile isn't worth it
-  let tileLoads = 0, tileFailures = 0
-  tiles.on('loading', () => { tileLoads = 0; tileFailures = 0 })
-  tiles.on('tileload', () => { tileLoads++ })
-  tiles.on('tileerror', () => { tileFailures++ })
-  tiles.on('load', () => { tileError.value = tileFailures > tileLoads })
+  // Night tiles in dark mode, so the map does not glare inside the dark interface.
+  stopTiles = addOneMapTiles(map)
+  tiles = stopTiles.layer
+  // Edge tiles over the sea or Johor are missing from OneMap; only warn when nothing loaded.
+  let loadedTiles = 0, failedTiles = 0
+  tiles.on('loading', () => { loadedTiles = 0; failedTiles = 0 })
+  tiles.on('tileload', () => { loadedTiles++; tileError.value = false })
+  tiles.on('tileerror', () => { failedTiles++ })
+  tiles.on('load', () => { tileError.value = failedTiles > 0 && loadedTiles === 0 })
   markers = L.layerGroup().addTo(map)
   placeLayer = L.layerGroup().addTo(map)
   map.on('zoomend', () => { zoomLevel.value = map.getZoom(); zoomed.value = map.getZoom() >= 14; scheduleMarkers() })
@@ -204,7 +204,7 @@ watch(() => props.focusedEventId, id => {
   groupEvents.value = []
   showPoint(id)
 })
-onBeforeUnmount(() => { clearTimeout(placeTimer); placeAbort?.abort(); observer?.disconnect(); cancelAnimationFrame(renderFrame); map?.remove(); map = null })
+onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abort(); observer?.disconnect(); cancelAnimationFrame(renderFrame); map?.remove(); map = null })
 </script>
 
 <template>

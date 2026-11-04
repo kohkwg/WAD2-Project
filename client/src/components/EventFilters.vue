@@ -99,7 +99,7 @@ onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('point
         <div class="search-field">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
           <label for="event-search" class="visually-hidden">Search by title, description or venue</label>
-          <input id="event-search" ref="searchInput" v-model="search" type="search" autocomplete="off" placeholder="Search events, activities or places…" />
+          <input id="event-search" ref="searchInput" v-model="search" type="search" autocomplete="off" placeholder="Search events or places…" />
           <button v-if="search" type="button" class="clear-search" aria-label="Clear search" @click="clearSearch">×</button>
         </div>
         <button ref="toggle" type="button" class="filter-toggle" :class="{ 'is-active': activeCount > 0 }" :aria-expanded="expanded" aria-controls="event-filter-panel" @click="expanded = !expanded">

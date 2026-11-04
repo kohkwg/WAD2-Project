@@ -55,7 +55,7 @@ function selectFromRow(clickEvent) {
 </script>
 
 <template>
-  <article class="discovery-event-row" :class="{ 'is-selected': selected }" :data-event-id="event.id" @click="selectFromRow">
+  <article class="discovery-event-row lift-on-hover" :class="{ 'is-selected': selected }" :data-event-id="event.id" @click="selectFromRow">
     <button type="button" class="row-cover" :aria-label="`Show ${event.title} on map`" :aria-pressed="selected" @click="emit('select', event)">
       <img v-if="cover && failedCover !== cover" :src="cover" alt="" loading="lazy" @error="failedCover = cover" />
       <EventArtwork v-else :category="category" />
@@ -108,7 +108,7 @@ h3 { margin: 0; font-family: var(--bookedz-body); font-size: 15px; font-weight: 
 .row-actions :deep(.card-action--view) { display: none; }
 .row-actions :deep(.card-action--rsvp),.row-actions :deep(.registration-status) { max-width: 108px; padding: 8px 10px; min-height: 44px; font-size: 12px; }
 .row-actions :deep(.event-bookmark) { position: static; flex-shrink: 0; }
-@media(max-width:1199px) and (min-width:992px) { .discovery-event-row { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }.row-cover { width: 48px; height: 56px; }.row-actions { grid-column: 2; justify-content: flex-end; } }
+@media(max-width:1199px) and (min-width:768px) { .discovery-event-row { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }.row-cover { width: 48px; height: 56px; }.row-actions { grid-column: 2; justify-content: flex-end; } }
 @media(max-width:575px) { .discovery-event-row { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }.row-cover { width: 48px; height: 56px; }.row-actions { grid-column: 2; justify-content: flex-end; } }
 @media(pointer:coarse) { .row-title { min-height: 44px; } .row-details { min-height: 84px; } }
 </style>

@@ -15,7 +15,7 @@ those to Denzel before proceeding rather than closing or merging them yourself.
 
 Read [AGENTS.md](AGENTS.md), [README](README.md), [decisions](decisions.md),
 [status](status.md), [testing](docs/testing.md), [design system](docs/design/design-system.md)
-and [design review](docs/design/design-review.md). Local agent skills and original
+and [design review](docs/design/design-review.md). Local design skills and original
 materials in `docs/resources/` are optional and are not normal-clone dependencies.
 
 Verified remote: `https://github.com/kohkwg/WAD2-Project.git`.
@@ -204,7 +204,7 @@ both backup names in your handoff to your human. Denzel can now verify all six
 remote tips point to the same baseline. Backups are retained until integration is
 accepted; no cleanup/deletion is part of these instructions.
 
-### Bash/Linux agents: equivalent one-time replacement
+### Bash/Linux: equivalent one-time replacement
 
 Use this **instead of**, not after, the PowerShell backup/reset block. First read
 all safeguards above, preserve dirty/untracked work with the stash command from
@@ -344,7 +344,7 @@ Run only relevant checks for your changes; full suites and production builds wai
 for explicit instruction. Follow [testing](docs/testing.md) for exact commands.
 Report what you actually ran, viewport/theme/motion states, screenshots, remaining
 limits and any shared-file conflicts. Update feature-relevant status/design notes
-and preserve README's detailed teammate/AI/library disclosure. Do not claim an
+and preserve README's detailed teammate change history and library credits. Do not claim an
 older full-suite checkpoint verifies your new changes.
 
 Each teammate sends Denzel: branch name, final pushed SHA, baseline SHA, changed

@@ -21,6 +21,7 @@ import {
 } from '../utils/api.js'
 const FloorPlan = defineAsyncComponent(() => import('../editor.vue'))
 import { eventsOverlap } from '../utils/helpers.js'
+import { toast } from '@/composables/useToast'
 
 const pageMotion = ref(null)
 useDiscoveryMotion(pageMotion)
@@ -112,6 +113,9 @@ const formErrors = computed(() => {
   return errors
 })
 
+// The button names the action the press will take, matching the Discover list.
+const submitLabel = computed(() => !event.value.requiresApproval && event.value.spotsLeft <= 0 ? 'Join waitlist' : 'RSVP')
+
 // Tell them what will happen BEFORE they press the button
 const whatHappensNext = computed(() => {
   if (event.value.requiresApproval)
@@ -157,7 +161,10 @@ async function submitRsvp() {
       email: email.value.trim(),
       answers: answers.value,
     })
-    if (ticket === loadRequest) result.value = savedRsvp
+    if (ticket === loadRequest) {
+      result.value = savedRsvp
+      toast(savedRsvp?.status === 'confirmed' ? "You're in!" : savedRsvp?.status === 'pending' ? 'Request sent to the organiser' : 'Added to the waitlist')
+    }
     // Refresh "spots left" / waitlist count; a failed refresh must not hide the saved RSVP
     try {
       const refreshed = await getEvent(eventId.value)
@@ -325,7 +332,7 @@ async function submitRsvp() {
 
         <button type="submit" class="btn event-cta rsvp-submit" :disabled="submitting">
           <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          {{ submitting ? 'Sending…' : 'RSVP' }}
+          {{ submitting ? 'Sending…' : submitLabel }}
         </button>
       </form>
       </template>
