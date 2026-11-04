@@ -12,6 +12,7 @@
 import * as mockApi from './mockApi.js'
 import * as supabaseApi from './supabaseApi.js'
 import * as supabaseFeature4Api from './supabaseFeature4Api.js'
+import * as supabaseGroupsApi from './supabaseGroupsApi.js'
 import * as supabaseFeature4Weather from './supabaseFeature4Weather.js'
 import { isSupabaseConfigured } from './supabase.js'
 
@@ -42,35 +43,41 @@ export const createEvent = (eventData) => backend.createEvent(eventData)
 export const updateEvent = (eventId, changes) => backend.updateEvent(eventId, changes) // organiser edits a published event
 export const setEventPublished = (eventId, published) => backend.setEventPublished(eventId, published) // organiser: hide (draft) or show (published)
 export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
-export const getHangoutInvite = (token) => backend.getHangoutInvite(token) // private hangout preview
-export const joinHangout = (target) => backend.joinHangout(target) // { eventId, token? }; private hangouts need the invite token
-export const getHangoutTime = (eventId, options) => backend.getHangoutTime(eventId, options) // members, aggregate overlap, ranked slots
-export const saveHangoutAvailability = (eventId, intervals) => backend.saveHangoutAvailability(eventId, intervals) // own free times only
-export const clearHangoutAvailability = (eventId) => backend.clearHangoutAvailability(eventId)
-export const setHangoutRequired = (eventId, userId, required) => backend.setHangoutRequired(eventId, userId, required) // host
-export const previewHangoutSlot = (eventId, slot) => backend.previewHangoutSlot(eventId, slot)
-export const lockHangoutSlot = (eventId, slot) => backend.lockHangoutSlot(eventId, slot) // host
-export const unlockHangoutSlot = (eventId) => backend.unlockHangoutSlot(eventId) // host
-export const getHangoutPlan = (eventId) => backend.getHangoutPlan(eventId) // timed stops, issues, versioned vote counts
-export const generateHangoutPlan = (eventId, options) => backend.generateHangoutPlan(eventId, options) // host; { ok, plan } or { ok: false, reason, suggestions }
-export const previewHangoutStops = (eventId, refs) => backend.previewHangoutStops(eventId, refs) // host; retime without saving
-export const setHangoutStops = (eventId, refs) => backend.setHangoutStops(eventId, refs) // host
-export const addHangoutPlace = (eventId, place) => backend.addHangoutPlace(eventId, place) // host; itinerary-only place
-export const getHangoutAlternatives = (eventId, stopId) => backend.getHangoutAlternatives(eventId, stopId) // host
-export const voteHangoutStop = (eventId, stopId, value) => backend.voteHangoutStop(eventId, stopId, value) // +1 Keep, -1 Swap, 0 clear
-export const finalizeHangoutPlan = (eventId, options) => backend.finalizeHangoutPlan(eventId, options) // host; not a booking
-export const reopenHangoutPlan = (eventId) => backend.reopenHangoutPlan(eventId) // host
-export const setHangoutMeetingPoint = (eventId, text) => backend.setHangoutMeetingPoint(eventId, text) // host; up to 120 characters
 
-// ---------- Open jios (Community) ----------
-// Demo mode only for now: the hosted database has no jio comments table yet (see decisions.md).
-export const JIOS_AVAILABLE = !USING_SUPABASE
-const jiosOnly = (name) => (...args) => (JIOS_AVAILABLE ? mockApi[name](...args) : Promise.reject(new Error('Open jios are coming soon to the live app. Try them in demo mode.')))
-export const getJios = jiosOnly('getJios') // upcoming public jios with members, spots and the event
-export const createJio = jiosOnly('createJio') // { eventId, note, capacity, joinMode }
-export const getJioComments = jiosOnly('getJioComments')
-export const addJioComment = jiosOnly('addJioComment')
-export const deleteJioComment = jiosOnly('deleteJioComment')
+// ---------- Go together groups (Community) ----------
+// Live mode uses migrations 20261104142732 and 20261104142907 (see decisions.md); a database
+// without them makes the live calls say Go together isn't set up yet.
+const groupsBackend = USING_SUPABASE ? supabaseGroupsApi : mockApi
+export const GROUPS_AVAILABLE = true
+export const getGroups = () => groupsBackend.getGroups() // public upcoming groups, plus private ones you're in
+export const getGroup = (target) => groupsBackend.getGroup(target) // { id } or { token } from an invite link; includes the plan for members
+export const createGroup = (form) => groupsBackend.createGroup(form) // { eventId, note, capacity, joinMode, visibility }
+export const joinGroup = (target) => groupsBackend.joinGroup(target) // { id, token? }; private groups need the token
+export const getGroupComments = (groupId) => groupsBackend.getGroupComments(groupId)
+export const addGroupComment = (groupId, text) => groupsBackend.addGroupComment(groupId, text)
+export const deleteGroupComment = (commentId) => groupsBackend.deleteGroupComment(commentId)
+export const suggestGroupStop = (groupId, slot, item) => groupsBackend.suggestGroupStop(groupId, slot, item) // slot is 'before' or 'after'; a place, deal or { name }
+export const setGroupAvailability = (groupId, slot, cells) => groupsBackend.setGroupAvailability(groupId, slot, cells) // [cell start ISO]; when2meet-style
+export const voteGroupStop = (groupId, slot, suggestionId, keen) => groupsBackend.voteGroupStop(groupId, slot, suggestionId, keen)
+export const chooseGroupStop = (groupId, slot, suggestionId) => groupsBackend.chooseGroupStop(groupId, slot, suggestionId) // host; suggestionId or null
+export const removeGroupStop = (groupId, slot, suggestionId) => groupsBackend.removeGroupStop(groupId, slot, suggestionId)
+
+// Food places and deals near a point, from the Express server (/api/food/nearby).
+// Works in both modes; needs the server running.
+const SERVER = import.meta.env?.VITE_API_URL || 'http://127.0.0.1:3000'
+export async function getFoodNearby({ lat, lng, at, radius = 800 }) {
+  const params = new URLSearchParams({ lat: String(lat), lng: String(lng), radius: String(radius) })
+  if (at) params.set('at', at)
+  let response
+  try {
+    response = await fetch(`${SERVER}/api/food/nearby?${params}`)
+  } catch {
+    throw new Error('Food suggestions need the Bookedz server. Start it with pnpm --dir server dev.')
+  }
+  const body = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(body.message || 'Food suggestions are unavailable right now.')
+  return body
+}
 
 
 // ---------- Users ----------
