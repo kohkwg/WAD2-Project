@@ -4,15 +4,17 @@ import { formatShortDateTime } from '../../utils/helpers.js'
 
 // Table of RSVPs for the organiser. Used for both "Pending approval" and "Confirmed".
 // It doesn't change any data itself — it emits events and the parent page does the work.
-defineProps({
+const props = defineProps({
   rsvps: Array,
   questions: Array, // the event's custom questions, so we can show each answer
   showActions: Boolean, // true → show Approve / Reject buttons
   showRemove: Boolean, // true → show a Remove button (for people already accepted)
   busyId: String, // the RSVP currently being saved (its buttons are disabled)
   emptyText: String,
+  selectable: Boolean, // true → a checkbox per row for bulk actions
+  selectedIds: { type: Array, default: () => [] },
 })
-const emit = defineEmits(['approve', 'reject', 'remove', 'toggle-member'])
+const emit = defineEmits(['approve', 'reject', 'remove', 'toggle-member', 'update:selectedIds'])
 
 // Which row is showing "Remove them? Yes / Keep" (a second click, so one slip can't remove someone)
 const confirmRemoveId = ref(null)
@@ -35,6 +37,16 @@ async function keepAttendee(rsvpId) {
   document.getElementById(`remove-attendee-${rsvpId}`)?.focus()
 }
 
+// Bulk selection (pending tab): the parent owns the list of chosen RSVP ids
+function toggleSelected(rsvpId, on) {
+  const next = new Set(props.selectedIds)
+  on ? next.add(rsvpId) : next.delete(rsvpId)
+  emit('update:selectedIds', [...next])
+}
+function toggleAll(on) {
+  emit('update:selectedIds', on ? props.rsvps.map(rsvp => rsvp.id) : [])
+}
+
 function formatAnswer(question, answer) {
   if (answer === undefined || answer === '') return '—'
   if (question.type === 'yesno') return answer === 'yes' ? 'Yes' : 'No'
@@ -50,6 +62,9 @@ function formatAnswer(question, answer) {
         <caption class="visually-hidden">RSVPs</caption>
       <thead class="table-light">
         <tr>
+          <th v-if="selectable" scope="col" class="select-col">
+            <input class="form-check-input" type="checkbox" aria-label="Select all RSVPs" :checked="rsvps.length > 0 && selectedIds.length === rsvps.length" :indeterminate.prop="selectedIds.length > 0 && selectedIds.length < rsvps.length" @change="toggleAll($event.target.checked)" />
+          </th>
           <th scope="col">Name</th>
           <th scope="col" v-if="questions.length > 0">Answers</th>
           <th scope="col">Member</th>
@@ -59,7 +74,10 @@ function formatAnswer(question, answer) {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="rsvp in rsvps" :key="rsvp.id">
+        <tr v-for="rsvp in rsvps" :key="rsvp.id" :class="{ 'is-chosen': selectedIds.includes(rsvp.id) }">
+          <td v-if="selectable" class="select-col" data-label="Select">
+            <input class="form-check-input" type="checkbox" :aria-label="`Select ${rsvp.user.name}`" :checked="selectedIds.includes(rsvp.id)" :disabled="busyId === rsvp.id" @change="toggleSelected(rsvp.id, $event.target.checked)" />
+          </td>
           <td data-label="Name">
             <div class="fw-semibold">{{ rsvp.user.name }}</div>
             <div class="small text-secondary">{{ rsvp.user.email }}</div>
@@ -101,9 +119,10 @@ function formatAnswer(question, answer) {
             >
               Approve <span class="visually-hidden">{{ rsvp.user.name }}</span>
             </button>
+            <!-- Kept well apart from Approve so a slip doesn't reject someone; Reject also has an undo window -->
             <button
               type="button"
-              class="btn btn-outline-danger btn-sm"
+              class="btn btn-outline-danger btn-sm reject-btn"
               :disabled="busyId === rsvp.id"
               @click="emit('reject', rsvp.id)"
             >
@@ -173,4 +192,8 @@ function formatAnswer(question, answer) {
   .table td[data-label="Decision"] .btn + .btn { margin-left: .4rem; }
   .table td[data-label="Remove"] .btn { margin: .2rem .25rem .2rem 0; }
 }
+.reject-btn { margin-left: 1.5rem; }
+.select-col { width: 44px; }
+.select-col .form-check-input { width: 1.25rem; height: 1.25rem; margin: 0; }
+tr.is-chosen > td { background: color-mix(in srgb, var(--bookedz-primary) 8%, var(--bookedz-surface)); }
 </style>

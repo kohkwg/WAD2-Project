@@ -37,7 +37,7 @@ const availabilityLabel = computed(() => {
   if (props.event.spots_left == null) return ''
   const left = Number(props.event.spots_left)
   if (!Number.isFinite(left)) return ''
-  return left <= 0 ? 'Full · Join the waitlist' : `${left} ${left === 1 ? 'place' : 'places'} left`
+  return left <= 0 ? 'Full · Join the waitlist' : `${left} ${left === 1 ? 'spot' : 'spots'} left`
 })
 function avatarUrl(attendee) {
   const key = attendee.avatar_url || attendee.avatar_key

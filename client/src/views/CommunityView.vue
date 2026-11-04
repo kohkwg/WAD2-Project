@@ -301,7 +301,7 @@ function ago(ts) {
       </div>
 
       <div class="community-main">
-      <TransitionGroup tag="ul" name="list-fade" class="community-posts list-unstyled mb-0">
+      <TransitionGroup tag="ul" name="list-fade" class="community-posts list-unstyled mb-0 stagger-in">
         <li v-for="post in visiblePosts" :key="post.id" class="community-post">
           <span class="community-avatar" aria-hidden="true">{{ post.handle.charAt(0).toUpperCase() }}</span>
           <div class="flex-grow-1 min-w-0">

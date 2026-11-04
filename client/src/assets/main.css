@@ -285,3 +285,32 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
   .lift-on-hover:hover { transform: translateY(-2px); box-shadow: var(--bookedz-card-shadow); }
 }
 @media (prefers-reduced-motion: reduce) { .route-view, .value-bump { animation: none; } .lift-on-hover:hover { transform: none; } }
+
+/* Cards and rows that load together rise in one after another (first eight; the rest follow at once). */
+.stagger-in > * { animation: stagger-rise var(--bookedz-motion-normal) var(--bookedz-ease) both; }
+.stagger-in > :nth-child(2) { animation-delay: 40ms; }
+.stagger-in > :nth-child(3) { animation-delay: 80ms; }
+.stagger-in > :nth-child(4) { animation-delay: 120ms; }
+.stagger-in > :nth-child(5) { animation-delay: 160ms; }
+.stagger-in > :nth-child(6) { animation-delay: 200ms; }
+.stagger-in > :nth-child(7) { animation-delay: 240ms; }
+.stagger-in > :nth-child(n + 8) { animation-delay: 280ms; }
+@keyframes stagger-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Bars and panels that appear from the bottom edge slide up into place. */
+.slide-up-in { animation: slide-up-in var(--bookedz-motion-normal) var(--bookedz-ease) both; }
+@keyframes slide-up-in { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: none; } }
+
+/* Something that just appeared and needs attention glows once, then settles. */
+.attention-once { animation: attention-once 1.2s var(--bookedz-ease) 300ms 1; }
+@keyframes attention-once { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bookedz-primary) 45%, transparent); } 70% { box-shadow: 0 0 0 12px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* A control that was just turned on gives a small pop. */
+.pop-once { animation: pop-once var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
+@keyframes pop-once { 0% { transform: scale(1); } 45% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+/* Expanding details fade and slide down from the line above. */
+.reveal-down { animation: reveal-down var(--bookedz-motion-normal) var(--bookedz-ease) both; }
+@keyframes reveal-down { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) { .stagger-in > *, .slide-up-in, .attention-once, .pop-once, .reveal-down { animation: none; } }

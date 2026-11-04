@@ -1,5 +1,13 @@
 # Decisions
 
+4 November 2026 — Huxley, design consistency pass: one design document,
+[DESIGN.md](docs/design/DESIGN.md), replaces the design system, design review and
+implementation record. Discover does **not** show the "Picked for you" strip (this
+supersedes the 3 November instruction to retain it). Map pins use category colours, with
+orange stars for picks and neutral count clusters. Standard words are "RSVP" (or "Join
+waitlist" / "Request a spot") and "spots". Labels use sentence case except hangout stamps.
+No backend, database or scoring changes.
+
 3 November 2026 — merge-resolution implementation: preserve Aishani's committed
 recommendation and redesigned pages while integrating dev's Hangout functionality.
 Retain current shared palette/typography and add missing compatibility tokens.
@@ -172,7 +180,7 @@ based on `docs/resources/Bookedz_Design_Ideation_Spec.md`, explicitly supersedin
 the existing visual UI/UX. This supersedes earlier theme/shell preservation and tools-only scope
 for this redesign. Existing backend contracts, business rules, routes, data and
 teammate authorship remain. The implementation's visual choices and assets are
-documented in [the design system](docs/design/design-system.md). This does not
+documented in [the design document](docs/design/DESIGN.md). This does not
 authorise a commit, push, deployment, SQL change or hosted data mutation.
 
 | Date | Decision / approval | Status and limits |
@@ -302,7 +310,7 @@ Operational forms, alerts, QR/barcodes and task boards remain immediately usable
 There are no pinned scroll scenes. Later user-requested map loops have explicit
 pause/visibility/reduced-motion controls; this supersedes the earlier no-loop choice.
 
-See [the design system](docs/design/design-system.md) and actual evidence in
+See [the design document](docs/design/DESIGN.md) and actual evidence in
 [status](status.md). Automated Chromium does not establish Safari/iOS feel or
 physical camera/GPS behaviour. Map venues use real coordinates within a Singapore
 area envelope; the generalised illustration is not navigation or boundary validation.
@@ -350,7 +358,7 @@ and Vercel Web Interface Guidelines, a major navbar overhaul exploring liquid
 glass, session-dependent nav links, improved search placement and concealment of
 the illustrated map's rectangular blue edges. Preserve the existing Vue/Bootstrap
 stack and the targeted-only testing instruction. The implementation and review
-findings are recorded in `docs/design/design-review.md`; no hosted release or Git
+findings are recorded in `docs/design/DESIGN.md` (section 10); no hosted release or Git
 mutation is authorised by this request.
 
 

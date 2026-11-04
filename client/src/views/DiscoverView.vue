@@ -100,6 +100,8 @@ function selectMapEvent(event, { scroll = true } = {}) {
 const resultList = ref(null)
 const router = useRouter()
 const commonCategories = CATEGORIES
+// When nothing matches, offer a few other categories to jump to instead of a dead end.
+const emptySuggestions = computed(() => CATEGORIES.filter(category => !filters.value.categories.includes(category)).slice(0, 4))
 const activeCategory = computed(() => filters.value.categories.length === 1 ? filters.value.categories[0] : '')
 const categoryTitle = computed(() => activeCategory.value
   ? `${activeCategory.value.charAt(0).toUpperCase() + activeCategory.value.slice(1)} events` : 'Discover events')
@@ -154,7 +156,7 @@ const dateGroups = computed(() => {
     if (!groups.has(key)) groups.set(key, {
       key,
       date: key,
-      label: date.toLocaleDateString('en-US', { timeZone: 'Asia/Singapore', month: 'short', day: 'numeric' }),
+      label: date.toLocaleDateString('en-SG', { timeZone: 'Asia/Singapore', day: 'numeric', month: 'short' }),
       weekday: date.toLocaleDateString('en-US', { timeZone: 'Asia/Singapore', weekday: 'long' }),
       year: date.getFullYear() !== new Date().getFullYear() ? date.getFullYear() : '',
       events: [],
@@ -217,7 +219,8 @@ function goToPage(nextPage) {
         </nav>
         <div class="results-tools">
           <span aria-live="polite"><BumpValue :value="total" /> {{ total === 1 ? 'event' : 'events' }}</span>
-          <div v-if="smallScreen" class="pane-switch" role="group" aria-label="Show events as">
+          <div v-if="smallScreen" class="pane-switch" :class="{ 'is-map': mobilePane === 'map' }" role="group" aria-label="Show events as">
+            <span class="pane-thumb" aria-hidden="true"></span>
             <button type="button" :aria-pressed="mobilePane === 'list'" @click="showPane('list')">List</button>
             <button type="button" :aria-pressed="mobilePane === 'map'" @click="showPane('map')">Map</button>
           </div>
@@ -231,7 +234,14 @@ function goToPage(nextPage) {
           <!-- First load shows placeholder rows; later filter changes keep the old results visible (dimmed) until the new ones arrive. -->
           <SkeletonList v-if="loading && !events.length" :count="5" label="Finding your next event…" />
           <div v-else-if="error" class="empty-state" role="alert"><h2>We couldn’t load events</h2><p>{{ error }}</p><button type="button" class="btn btn-outline-danger" @click="refreshDiscovery">Try again</button></div>
-          <div v-else-if="!events.length && !loading" class="empty-state" role="status"><h2>No events found</h2><p>Try another search or clear your filters.</p><button type="button" class="btn btn-outline-secondary" @click="clearFilters">Clear search and filters</button></div>
+          <div v-else-if="!events.length && !loading" class="empty-state" role="status">
+            <h2>No events found</h2>
+            <p>{{ filters.categories.length ? 'Nothing in this category right now. Try another one:' : 'Try another search, or browse a category:' }}</p>
+            <div class="empty-suggestions">
+              <button v-for="category in emptySuggestions" :key="category" type="button" class="category-shortcut cat-tint" :class="`cat-${category}`" @click="search = ''; chooseCategory(category)">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</button>
+            </div>
+            <button type="button" class="btn btn-outline-secondary" @click="clearFilters">Clear search and filters</button>
+          </div>
           <div v-else class="event-timeline" :class="{ 'is-refreshing': loading }">
             <section v-for="group in dateGroups" :key="group.key" class="date-group" :aria-label="`${group.label}, ${group.weekday} ${group.year}`">
               <div class="timeline-date"><time :datetime="group.date"><span class="date-label">{{ group.label }}<template v-if="group.year">, {{ group.year }}</template></span><span class="weekday">{{ group.weekday }}</span></time></div>
@@ -271,14 +281,18 @@ function goToPage(nextPage) {
 .category-shortcut:hover { border-color: var(--bookedz-control-border); }
 .category-shortcut { transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease), transform var(--bookedz-motion-feedback) var(--bookedz-ease); }
 .category-shortcut:active { transform: scale(.95); }
+.category-shortcut[aria-pressed=true] { animation: pop-once var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
 .pane-switch button { transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .all-categories-link,.browse-back { display: inline-flex; align-items: center; min-height: 44px; padding: 6px; color: var(--bookedz-primary-dark); font-size: 12px; }
 .results-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--bookedz-muted); font-size: 12px; }
 .results-sort select { min-height: 44px; border: 0; background: transparent; color: var(--bookedz-ink); font: inherit; }
 /* Phones: List | Map segmented toggle (44px tall in all) */
-.pane-switch { display: inline-flex; padding: 2px; border-radius: 99px; background: var(--bookedz-hover); }
-.pane-switch button { min-width: 64px; min-height: 40px; padding: 6px 14px; border: 0; border-radius: 99px; background: transparent; color: var(--bookedz-muted); font-size: 12px; font-weight: 600; }
-.pane-switch button[aria-pressed=true] { background: var(--bookedz-surface); color: var(--bookedz-ink); box-shadow: var(--bookedz-tab-shadow); }
+.pane-switch { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; padding: 2px; border-radius: 99px; background: var(--bookedz-hover); }
+.pane-switch button { position: relative; z-index: 1; min-width: 64px; min-height: 40px; padding: 6px 14px; border: 0; border-radius: 99px; background: transparent; color: var(--bookedz-muted); font-size: 12px; font-weight: 600; }
+.pane-switch button[aria-pressed=true] { color: var(--bookedz-ink); }
+/* The white pill slides between List and Map instead of jumping */
+.pane-thumb { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); border-radius: 99px; background: var(--bookedz-surface); box-shadow: var(--bookedz-tab-shadow); transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp); }
+.pane-switch.is-map .pane-thumb { transform: translateX(100%); }
 
 .discovery-workspace { display: grid; grid-template-columns: minmax(0,.94fr) minmax(0,1.06fr); align-items: start; gap: 16px; min-width: 0; }
 .discovery-list,.discovery-map-column { min-width: 0; }
@@ -299,6 +313,7 @@ function goToPage(nextPage) {
 .event-pagination { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 18px; font-size: 12px; }
 .empty-state,.loading-state { padding: 28px 16px; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); color: var(--bookedz-muted); font-size: 14px; }
 .empty-state h2 { color: var(--bookedz-ink); font-size: 18px; }
+.empty-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 14px; }
 
 @media(max-width:767px) { .discovery-toolbar { flex-wrap: wrap; }.category-shortcuts { flex-basis: 100%; }.results-tools { width: 100%; justify-content: space-between; } }
 @media(max-width:991px) {

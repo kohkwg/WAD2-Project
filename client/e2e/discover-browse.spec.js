@@ -103,7 +103,7 @@ test('Discover orders sections, shows truthful urgency and reuses filtered event
   const closing = page.getByRole('region', { name: 'Closing soon', exact: true })
   await expect(closing.locator('.event-card')).toHaveCount(2)
   await expect(closing.getByText(/Registration closes/)).toBeVisible()
-  await expect(closing.getByText('Only 3 places left', { exact: true })).toBeVisible()
+  await expect(closing.getByText('Only 3 spots left', { exact: true })).toBeVisible()
   await expect(closing.getByRole('heading', { name: 'Full sports event' })).toHaveCount(0)
   await expect(closing.getByRole('heading', { name: 'Closed food event' })).toHaveCount(0)
   const headings = await page.locator('#event-directory h2').allTextContents()
