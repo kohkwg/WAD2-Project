@@ -1,8 +1,8 @@
 -- Go together groups for live mode (4 November 2026). Mirrors the demo backend in
 -- client/src/utils/mockApi.js and the rules in client/src/utils/groups.js; the client
 -- adapter is client/src/utils/supabaseGroupsApi.js. Needs 20261103120000_hangouts.sql
--- (event kinds, join modes, the shared admission rule) and 20261104120000_group_event_kind.sql.
--- Timothy should review it before it is pushed; check `supabase migration list` first.
+-- (event kinds, join modes, the shared admission rule) and 20261104142732_group_event_kind.sql.
+-- Applied to the hosted project on 4 November 2026; Timothy should still review it.
 --
 -- A group is an event row (kind 'group') so joining, spots, approvals and leaving reuse
 -- registrations. public.groups links it to the official event it is for. Chat messages,
