@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import L from 'leaflet'
+import { addOneMapTiles } from '@/lib/onemapTiles'
 import 'leaflet/dist/leaflet.css'
 // Leaflet's default pin image doesn't load with Vite, so we import the images ourselves
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
@@ -25,6 +26,7 @@ const emit = defineEmits(['move'])
 const mapDiv = ref(null) // the <div> Leaflet draws the map into
 let map = null
 let pin = null
+let stopTiles = null
 
 onMounted(() => {
   // Leaflet needs the real <div> on the page, so this has to wait until onMounted
@@ -32,13 +34,8 @@ onMounted(() => {
   // scrolling the page doesn't zoom the map by accident. Use the + / − buttons instead.
   map = L.map(mapDiv.value, { scrollWheelZoom: false }).setView([props.lat, props.lng], 17)
 
-  L.tileLayer('https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png', {
-    minZoom: 11,
-    maxZoom: 19,
-    attribution:
-      '<a href="https://www.onemap.gov.sg/" target="_blank">OneMap</a> © contributors | ' +
-      '<a href="https://www.sla.gov.sg/" target="_blank">Singapore Land Authority</a>', // required by OneMap
-  }).addTo(map)
+  // OneMap tiles with the required attribution; Night tiles follow the dark theme.
+  stopTiles = addOneMapTiles(map)
 
   pin = L.marker([props.lat, props.lng], {
     draggable: props.draggable,
@@ -71,6 +68,7 @@ watch(() => [props.lat, props.lng], ([lat, lng]) => {
 })
 
 onUnmounted(() => {
+  stopTiles?.()
   map?.remove() // clean up, otherwise Leaflet keeps listening after you press Back / Next
   map = null
   pin = null

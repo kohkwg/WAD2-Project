@@ -108,3 +108,15 @@ export function suggestTags(text) {
     TAG_KEYWORDS[tag].some((keyword) => words.some((word) => word.startsWith(keyword))),
   )
 }
+
+// OneMap returns addresses in capitals ("30 VICTORIA STREET SINGAPORE 187996").
+// Show them in normal case; leave mixed-case text and known short names alone.
+const ADDRESS_ACRONYMS = new Set(['SMU', 'NUS', 'NTU', 'SUTD', 'SUSS', 'SIM', 'MRT', 'LRT', 'CBD', 'SIS', 'SCIS', 'YMCA', 'NEX', 'UOB', 'OCBC', 'DBS'])
+export function formatAddress(address) {
+  const text = String(address || '').trim()
+  if (!text || /[a-z]/.test(text)) return text
+  return text.split(/(\s+)/).map(word => {
+    if (/^\s+$/.test(word) || /\d/.test(word) || ADDRESS_ACRONYMS.has(word.replace(/[^A-Z]/g, ''))) return word
+    return word.charAt(0) + word.slice(1).toLowerCase()
+  }).join('')
+}

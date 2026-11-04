@@ -246,3 +246,17 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
   margin-top: auto;
 }
 
+
+/* Category colours: one hue per category, shared by the Discover chips and event tags. */
+.cat-tech { --cat-hue: #3b82f6; }
+.cat-music { --cat-hue: #ec4899; }
+.cat-sports { --cat-hue: #14b8a6; }
+.cat-arts { --cat-hue: #f59e0b; }
+.cat-food { --cat-hue: #ff6b35; }
+.cat-volunteering { --cat-hue: #22c55e; }
+.cat-career { --cat-hue: #8b5cf6; }
+.cat-outdoors { --cat-hue: #65a30d; }
+.cat-gaming { --cat-hue: #6366f1; }
+.cat-wellness { --cat-hue: #06b6d4; }
+.cat-tint { background: color-mix(in srgb, var(--cat-hue, var(--bookedz-muted)) 20%, var(--bookedz-surface)); color: var(--bookedz-ink); }
+[data-theme='dark'] .cat-tint { background: color-mix(in srgb, var(--cat-hue, var(--bookedz-muted)) 30%, var(--bookedz-surface)); }

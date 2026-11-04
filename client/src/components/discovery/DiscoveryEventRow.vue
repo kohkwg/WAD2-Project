@@ -41,7 +41,7 @@ const status = computed(() => props.event.my_rsvp_status || props.event.registra
       <div class="row-title-line">
         <h3><RouterLink class="row-title" :to="`/events/${event.id}/rsvp`">{{ event.title }}</RouterLink></h3>
         <span v-if="picked" class="row-picked">Picked for you</span>
-        <span class="row-category">{{ category.replace(/[_-]/g, ' ') }}</span>
+        <span class="row-category cat-tint" :class="`cat-${String(category).toLowerCase()}`">{{ category.replace(/[_-]/g, ' ') }}</span>
       </div>
       <p class="row-facts"><time :datetime="event.start_time">{{ time }}</time> · {{ venue }}<template v-if="places"> · {{ places }}</template></p>
       <p v-if="selected" class="row-selected-info"><template v-if="match">{{ match }} · </template><span class="row-cat-text">{{ category.replace(/[_-]/g, ' ') }}</span><template v-if="places"> · {{ places }}</template><template v-if="event.friends_going"> · {{ event.friends_going }} friends going</template><RouterLink :to="`/events/${event.id}/rsvp`" class="row-view">View event ›</RouterLink></p>
@@ -66,7 +66,7 @@ h3 { margin: 0; font-family: var(--bookedz-body); font-size: 15px; font-weight: 
 .row-title { display: block; text-decoration: none; padding: 3px 0; border: 0; background: transparent; color: var(--bookedz-ink); font: inherit; text-align: left; overflow-wrap: anywhere; }
 .row-title:hover { text-decoration: underline; text-underline-offset: 3px; }
 .row-picked { padding: 1px 7px; border-radius: 5px; background: var(--bookedz-primary); color: var(--bookedz-on-action); font-size: 10px; font-weight: 700; }
-.row-category { padding: 1px 6px; border-radius: 5px; background: var(--bookedz-hover); color: var(--bookedz-muted); font-size: 10px; text-transform: capitalize; }
+.row-category { padding: 1px 6px; border-radius: 5px; font-size: 10px; font-weight: 600; text-transform: capitalize; }
 .row-facts,.row-reason,.row-going { margin: 3px 0 0; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
 .row-selected-info { display: flex; flex-wrap: wrap; gap: 0 4px; margin: 6px 0 0; font-size: 12px; color: var(--bookedz-primary-dark); }
 .row-cat-text { text-transform: capitalize; color: var(--bookedz-muted); }
@@ -78,7 +78,7 @@ h3 { margin: 0; font-family: var(--bookedz-body); font-size: 15px; font-weight: 
 .row-actions :deep(.card-action--view) { display: none; }
 .row-actions :deep(.card-action--rsvp),.row-actions :deep(.registration-status) { max-width: 108px; padding: 8px 10px; min-height: 44px; font-size: 12px; }
 .row-actions :deep(.event-bookmark) { position: static; flex-shrink: 0; }
-@media(max-width:1199px) and (min-width:992px) { .discovery-event-row { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }.row-cover { width: 48px; height: 56px; }.row-actions { grid-column: 2; justify-content: flex-end; } }
+@media(max-width:1199px) and (min-width:768px) { .discovery-event-row { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }.row-cover { width: 48px; height: 56px; }.row-actions { grid-column: 2; justify-content: flex-end; } }
 @media(max-width:575px) { .discovery-event-row { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }.row-cover { width: 48px; height: 56px; }.row-actions { grid-column: 2; justify-content: flex-end; } }
 @media(pointer:coarse) { .row-title { min-height: 44px; } }
 </style>
