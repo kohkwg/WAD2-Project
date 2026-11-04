@@ -241,7 +241,11 @@ the other counts (no duplicate tiles). With more than one pending RSVP, checkbox
 
 ### Manage event, check-in, floor plans, profile
 Manage event leads with event, time and active venue, then RSVP and check-in links and the
-Tasks / Announcements / Budget / Weather panels. Budget figures stay exact SGD cents.
+grouped tool navigation: General (Edit event, Announcements), Planning (Tasks, Budget,
+Floor plan), and On the day (Weather, Check-in station, Venue QR, Attendance). Each
+section opens a dropdown and names its active tool; phones expand the choices inline.
+Live-only tools stay hidden in demo. Existing `?tab=` links are retained. Budget
+figures stay exact SGD cents.
 Floor plans and programmes use the shared fonts and theme panels. Profile uses labelled
 fieldsets, checkmarked interests and explicit saving and error states.
 
