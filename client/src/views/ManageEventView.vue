@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import * as api from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
+import EventToolNavigation from '../components/event-operations/EventToolNavigation.vue'
 import TaskBoard from '../components/event-operations/TaskBoard.vue'
 import AnnouncementManager from '../components/event-operations/AnnouncementManager.vue'
 import BudgetTracker from '../components/event-operations/BudgetTracker.vue'
@@ -24,6 +25,11 @@ const coreTabs = ['tasks', 'announcements', 'budget', 'weather']
 const tabs = api.USING_SUPABASE ? ['edit', ...coreTabs, 'check-in', 'venue-qr', 'attendance', 'floor-plan'] : ['edit', ...coreTabs]
 const TAB_LABELS = { edit: 'Edit event', tasks: 'Tasks', announcements: 'Announcements', budget: 'Budget', weather: 'Weather', 'check-in': 'Check-in station', 'venue-qr': 'Venue QR', attendance: 'Attendance', 'floor-plan': 'Floor plan' }
 const TAB_HINTS = { edit: 'Event details', tasks: 'Plan the work', announcements: 'Tell attendees', budget: 'Track costs', weather: 'Venue plan', 'check-in': 'Scan arrivals', 'venue-qr': 'Entrance display', attendance: 'Live arrivals', 'floor-plan': 'Layout and programme' }
+const toolGroups = [
+  { id: 'general', label: 'General', hint: 'Details and updates', ids: ['edit', 'announcements'] },
+  { id: 'planning', label: 'Planning', hint: 'Tasks, costs and layout', ids: ['tasks', 'budget', 'floor-plan'] },
+  { id: 'on-the-day', label: 'On the day', hint: 'Venue and arrivals', ids: ['weather', 'check-in', 'venue-qr', 'attendance'] },
+].map(group => ({ ...group, tabs: group.ids.filter(id => tabs.includes(id)).map(id => ({ id, label: TAB_LABELS[id], hint: TAB_HINTS[id] })) }))
 const activeTab = computed(() => tabs.includes(route.query.tab) ? route.query.tab : 'tasks')
 const editVisited = ref(false)
 watch(activeTab, tab => { if (tab === 'edit') editVisited.value = true }, { immediate: true })
@@ -192,7 +198,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
         <p v-if="publishError" class="text-danger mb-0" role="alert">{{ publishError }}</p>
       </div>
     </header>
-    <nav class="nav event-tool-nav mb-4" aria-label="Event tools"><RouterLink v-for="tab in tabs" :key="tab" :aria-label="TAB_LABELS[tab]" :to="{ path: route.path, query: { ...route.query, tab } }" class="nav-link" :class="{ active: activeTab === tab }" :aria-current="activeTab === tab ? 'page' : undefined"><span class="tool-tab-label">{{ TAB_LABELS[tab] }}</span><span class="tool-tab-hint">{{ TAB_HINTS[tab] }}</span></RouterLink></nav>
+    <EventToolNavigation :groups="toolGroups" :active-tab="activeTab" />
     <div class="tool-feedback" aria-live="polite">
       <div v-if="errors[activeTab]" class="alert alert-danger" role="alert">{{ errors[activeTab] }} <button v-if="retries[activeTab]" type="button" class="btn btn-sm btn-outline-danger" :disabled="pending[activeTab]" @click="retries[activeTab]()">Retry save</button></div>
       <p v-if="pending[activeTab]" role="status" class="text-secondary">Saving…</p><p v-else-if="successes[activeTab]" role="status" class="text-success">{{ successes[activeTab] }}</p>
@@ -235,13 +241,6 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 .workspace-save-note, .workspace-quick-links > span { color: var(--bookedz-muted); font-size: .8rem; }
 .workspace-quick-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--bookedz-primary-dark); font-size: .84rem; font-weight: 600; text-decoration: none; }
 .workspace-quick-links a:hover, .workspace-back:hover { text-decoration: underline; }
-.event-tool-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: .5rem; max-width: none; padding: .45rem; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-glass-solid); }
-.event-tool-nav .nav-link { display: grid; align-content: center; min-height: 58px; gap: .1rem; padding: .55rem .7rem; border: 1px solid transparent; border-radius: .75rem; color: var(--bookedz-muted); text-align: left; text-decoration: none; transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease; }
-.event-tool-nav .nav-link:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }
-.event-tool-nav .nav-link.active { border-color: var(--bookedz-border); background: var(--bookedz-surface); box-shadow: var(--bookedz-tab-shadow); color: var(--bookedz-primary-dark); transform: translateY(-1px); }
-.tool-tab-label { font-size: .9rem; font-weight: 700; }
-.tool-tab-hint { color: var(--bookedz-muted); font-size: .72rem; }
-.event-tool-nav .nav-link.active .tool-tab-hint { color: var(--bookedz-muted); }
 .tool-feedback:empty { display: none; }
 .tool-feedback .alert { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
 .tool-feedback .btn { min-height: 44px; }
@@ -252,6 +251,6 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 :deep(.workspace-panel) { padding: clamp(1rem, 2vw, 1.35rem); border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
 :deep(.section-heading) { color: var(--bookedz-ink); font-weight: 700; }
 @media (max-width: 767.98px) { .workspace-overview { grid-template-columns: 1fr 1fr; } .workspace-address { grid-column: 1 / -1; } .workspace-quick-links { width: 100%; } }
-@media (max-width: 575.98px) { .workspace-overview { grid-template-columns: 1fr; } .workspace-address { grid-column: auto; } .workspace-link-groups { align-items: stretch; } .workspace-primary-links { align-items: stretch; } .workspace-primary-links .btn { width: 100%; } .event-tool-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); } .event-tool-nav .nav-link { min-height: 54px; } }
-@media (prefers-reduced-motion: reduce) { .event-tool-nav .nav-link { transition: none; } }
+@media (max-width: 575.98px) { .workspace-overview { grid-template-columns: 1fr; } .workspace-address { grid-column: auto; } .workspace-link-groups { align-items: stretch; } .workspace-primary-links { align-items: stretch; } .workspace-primary-links .btn { width: 100%; } }
+
 </style>

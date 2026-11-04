@@ -58,10 +58,12 @@ test('organiser layouts expose tools and capacity from actual RSVP data', async 
     await expect(page.getByRole('link', { name: 'Manage RSVPs', exact: true })).toBeVisible()
     const nav = page.getByRole('navigation', { name: 'Event tools' })
     for (const tab of ['Tasks', 'Announcements', 'Budget', 'Weather']) {
+      await nav.getByRole('button', { name: tab === 'Announcements' ? /^General/ : tab === 'Weather' ? /^On the day/ : /^Planning/ }).click()
       await nav.getByRole('link', { name: tab, exact: true }).click()
       await expect(page.getByRole('heading', { name: tab, exact: true })).toBeVisible()
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     }
+    await nav.getByRole('button', { name: /^Planning/ }).click()
     await nav.getByRole('link', { name: 'Tasks', exact: true }).click()
     await page.screenshot({ path: testInfo.outputPath(`event-tools-${width}.png`) })
     await page.goto('/organiser/events/e2/rsvps')
