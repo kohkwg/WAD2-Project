@@ -113,7 +113,7 @@ function initials(attendee) {
 .event-title { margin: 0 0 .75rem; overflow-wrap: anywhere; }
 .event-title a { color: var(--bookedz-ink); text-decoration: none; }
 .event-title a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.event-description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; color: var(--bookedz-muted); font-size:var(--text-body); line-height: 1.5; margin: 0 0 .8rem; }
+.event-description { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; color: var(--bookedz-muted); font-size:var(--text-body); line-height: 1.5; margin: 0 0 .8rem; }
 .venue-line { display: flex; align-items: flex-start; gap: 7px; color: var(--bookedz-muted); font-size:var(--text-small); margin-bottom: 14px; }
 .venue-line svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; }
 .venue-line span { overflow-wrap: anywhere; }

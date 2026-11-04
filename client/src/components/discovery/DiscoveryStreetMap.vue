@@ -19,6 +19,7 @@ const groupEvents = ref([])
 const tileError = ref(false)
 const place = ref(null)
 const zoomed = ref(false)
+const zoomLevel = ref(11)
 const points = computed(() => props.events.flatMap(event => {
   const lat = event.lat ?? event.venue?.lat
   const lng = event.lng ?? event.venue?.lng
@@ -56,7 +57,7 @@ function dismiss() {
   emit('select', null)
   scheduleMarkers()
   if (opener?.isConnected && opener.getClientRects().length) opener.focus()
-  else container.value?.parentElement.querySelector('.street-fit')?.focus()
+  else container.value?.parentElement.querySelector('.street-chip--action, .street-zoom-plus')?.focus()
 }
 function fitEvents() {
   if (!map) return
@@ -144,21 +145,41 @@ function zoomOutAll() {
   fitEvents()
 }
 function retryTiles() { tileError.value = false; tiles?.redraw() }
+function zoomIn() { map?.zoomIn() }
+function zoomOut() { map?.zoomOut() }
 onMounted(() => {
-  map = L.map(container.value, { scrollWheelZoom: false, zoomControl: false, minZoom: 11, maxZoom: 19 }).setView([1.3521, 103.8198], 11)
-  L.control.zoom({ position: 'topright' }).addTo(map)
+  // Half-step zoom lets "Show all" fit the events snugly instead of jumping out a whole level.
+  // Zoom buttons are our own (bottom-right, in the app's style) rather than Leaflet's.
+  map = L.map(container.value, { scrollWheelZoom: false, zoomControl: false, zoomSnap: 0.5, minZoom: 11, maxZoom: 19 }).setView([1.3521, 103.8198], 11)
   tiles = L.tileLayer('https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png', {
     minZoom: 11, maxZoom: 19,
     attribution: '<a href="https://www.onemap.gov.sg/" target="_blank" rel="noopener noreferrer">OneMap</a> © contributors | <a href="https://www.sla.gov.sg/" target="_blank" rel="noopener noreferrer">Singapore Land Authority</a>',
   }).addTo(map)
-  tiles.on('tileerror', () => { tileError.value = true })
+  // Only warn when most of the background failed in a load; one stray missing tile isn't worth it
+  let tileLoads = 0, tileFailures = 0
+  tiles.on('loading', () => { tileLoads = 0; tileFailures = 0 })
+  tiles.on('tileload', () => { tileLoads++ })
+  tiles.on('tileerror', () => { tileFailures++ })
+  tiles.on('load', () => { tileError.value = tileFailures > tileLoads })
   markers = L.layerGroup().addTo(map)
   placeLayer = L.layerGroup().addTo(map)
-  map.on('zoomend', () => { zoomed.value = map.getZoom() >= 14; scheduleMarkers() })
+  map.on('zoomend', () => { zoomLevel.value = map.getZoom(); zoomed.value = map.getZoom() >= 14; scheduleMarkers() })
   // Wheel zoom only after clicking the map, so scrolling the page never gets trapped.
   map.on('click', () => map.scrollWheelZoom.enable())
   map.on('mouseout', () => map.scrollWheelZoom.disable())
-  observer = new ResizeObserver(() => { map?.invalidateSize({ pan: false }); scheduleMarkers() })
+  // A map hidden by the phone List | Map toggle has no size; when it's shown again, re-frame the
+  // selected event (or all events) instead of keeping a view worked out at zero size
+  let wasHidden = false
+  observer = new ResizeObserver(([entry]) => {
+    if (!entry.contentRect.width || !entry.contentRect.height) { wasHidden = true; return }
+    map?.invalidateSize({ pan: false })
+    if (wasHidden) {
+      wasHidden = false
+      if (selectedId.value) showPoint(selectedId.value)
+      else fitEvents()
+    }
+    scheduleMarkers()
+  })
   observer.observe(container.value)
   fitEvents()
   scheduleMarkers()
@@ -189,9 +210,13 @@ onBeforeUnmount(() => { clearTimeout(placeTimer); placeAbort?.abort(); observer?
 <template>
   <section class="discovery-street-map" aria-label="Explore events on the Singapore map" :aria-busy="loading" @keydown.esc="dismiss">
     <div ref="container" class="street-map-canvas" aria-label="Singapore street map. Use event pins or zoom controls to explore."></div>
-    <span class="street-map-count">{{ points.length }} {{ points.length === 1 ? 'event' : 'events' }} on the map</span>
-    <button type="button" class="street-fit" aria-label="Fit all events on map" @click="zoomOutAll">⌂</button>
-    <button v-if="zoomed" type="button" class="street-zoom-out" @click="zoomOutAll">← Zoom out to all events</button>
+    <!-- One chip: how many events are on the map, or the way back to all of them once zoomed in -->
+    <button v-if="zoomed" type="button" class="street-chip street-chip--action" @click="zoomOutAll">{{ points.length ? `← Show all ${points.length} ${points.length === 1 ? 'event' : 'events'}` : '← Zoom out' }}</button>
+    <span v-else class="street-chip">{{ points.length }} {{ points.length === 1 ? 'event' : 'events' }} on the map</span>
+    <div class="street-zoom" role="group" aria-label="Map zoom">
+      <button type="button" class="street-zoom-plus" aria-label="Zoom in" :disabled="zoomLevel >= 19" @click="zoomIn">+</button>
+      <button type="button" class="street-zoom-minus" aria-label="Zoom out" :disabled="zoomLevel <= 11" @click="zoomOut">−</button>
+    </div>
     <div v-if="loading" class="street-map-message" role="status">Finding events…</div>
     <div v-else-if="error" class="street-map-message" role="alert">{{ error }} <button type="button" @click="emit('retry')">Try again</button></div>
     <div v-else-if="!points.length && !place" class="street-map-message" role="status">{{ events.length ? 'These events have no map coordinates yet. Their details are available in the list.' : 'No events match your search.' }}</div>
@@ -211,12 +236,22 @@ onBeforeUnmount(() => { clearTimeout(placeTimer); placeAbort?.abort(); observer?
 </template>
 
 <style scoped>
-.discovery-street-map { position: relative; isolation: isolate; overflow: hidden; border: 1px solid var(--bookedz-border); border-radius: 16px; background: var(--bookedz-surface); }
-.street-map-canvas { position: relative; z-index: 0; width: 100%; height: clamp(480px,calc(100svh - 370px),720px); background: var(--bookedz-hover); }
-.street-map-count,.street-map-count { top: 12px; left: 12px; padding: 6px 11px; border-radius: 99px; font-size: 11px; font-weight: 600; }
-.street-zoom-out { position: absolute; z-index: 450; left: 12px; top: 58px; min-height: 40px; padding: 6px 14px; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-primary-dark); font-size: 12px; font-weight: 700; box-shadow: var(--bookedz-card-shadow); }
-.street-fit { top: 91px; right: 11px; width: 44px; height: 44px; border: 1px solid var(--bookedz-border); border-radius: 8px; font-size: 22px; }
-.street-preview { position: absolute; top: 12px; right: 64px; z-index: 500; width: min(245px,calc(100% - 80px)); max-height: calc(100% - 120px); overflow: auto; padding: 14px; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); color: var(--bookedz-ink); box-shadow: var(--bookedz-preview-shadow); }
+/* Framed like the app's cards: an 8px surface border, 20px corners and a soft shadow */
+.discovery-street-map { position: relative; isolation: isolate; overflow: hidden; padding: 8px; border: 1px solid var(--bookedz-border); border-radius: 20px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
+/* Desktop: the pinned card ends 48px above the screen bottom (84px = 18px above + 48px below +
+   the frame; --topbar-h is the top bar when it shows) */
+.street-map-canvas { position: relative; z-index: 0; width: 100%; height: max(440px,calc(100svh - 84px - var(--topbar-h, 0px))); overflow: hidden; border-radius: 14px; background: var(--bookedz-hover); }
+.street-chip { position: absolute; z-index: 450; top: 20px; left: 20px; display: inline-flex; align-items: center; min-height: 36px; max-width: calc(100% - 40px); padding: 6px 14px; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: 12px; font-weight: 600; box-shadow: var(--bookedz-card-shadow); }
+.street-chip--action { min-height: 44px; color: var(--bookedz-primary-dark); font-weight: 700; cursor: pointer; }
+.street-chip--action:hover { background: var(--bookedz-hover); }
+/* + and − in one stack at the bottom right, above the map credits */
+.street-zoom { position: absolute; z-index: 450; right: 20px; bottom: 36px; display: grid; overflow: hidden; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
+.street-zoom button { width: 40px; height: 40px; border: 0; background: transparent; color: var(--bookedz-ink); font-size: 20px; line-height: 1; }
+.street-zoom button + button { border-top: 1px solid var(--bookedz-border); }
+.street-zoom button:hover:not(:disabled) { background: var(--bookedz-hover); }
+.street-zoom button:disabled { color: var(--bookedz-disabled-ink); cursor: not-allowed; }
+.street-zoom button:focus-visible { outline-offset: -3px; }
+.street-preview { position: absolute; top: 20px; right: 20px; z-index: 500; width: min(245px,calc(100% - 40px)); max-height: calc(100% - 40px); overflow: auto; padding: 14px; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); color: var(--bookedz-ink); box-shadow: var(--bookedz-preview-shadow); }
 .street-preview h2 { font-family: var(--bookedz-body); font-size: 16px; line-height: 1.3; margin: 0 20px 6px 0; }
 .street-preview p { font-size: 12px; line-height: 1.5; margin: 4px 0; }
 .street-preview .street-picked { display: inline-block; margin: 0 0 6px; padding: 1px 8px; border-radius: 99px; background: var(--bookedz-primary); color: var(--bookedz-on-action); font-size: 11px; font-weight: 700; }
@@ -224,8 +259,8 @@ onBeforeUnmount(() => { clearTimeout(placeTimer); placeAbort?.abort(); observer?
 .preview-close { position: absolute; top: 0; right: 0; width: 36px; height: 36px; border: 0; background: transparent; color: var(--bookedz-muted); font-size: 22px; }
 .street-preview :deep(.card-action) { min-height: 40px; padding: 8px 10px; font-size: 12px; margin-top: 6px; }
 .street-cluster-list { list-style: none; padding: 0; margin: 0; }.street-cluster-list button { min-height: 44px; width: 100%; padding: 8px 0; text-align: left; border: 0; border-bottom: 1px solid var(--bookedz-border); background: transparent; color: var(--bookedz-ink); font: inherit; font-size: 12px; }
-.street-map-message,.street-tile-error { position: absolute; z-index: 480; left: 12px; right: 12px; bottom: 75px; padding: 10px; border-radius: 9px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: 12px; }
-.street-tile-error { bottom: 115px; }.street-map-message button,.street-tile-error button { min-height: 36px; border: 0; background: transparent; color: var(--bookedz-primary-dark); text-decoration: underline; }
+.street-map-message,.street-tile-error { position: absolute; z-index: 480; left: 20px; right: 76px; bottom: 20px; padding: 10px; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: 12px; box-shadow: var(--bookedz-card-shadow); }
+.street-tile-error { bottom: 72px; }.street-map-message button,.street-tile-error button { min-height: 36px; border: 0; background: transparent; color: var(--bookedz-primary-dark); text-decoration: underline; }
 :deep(.street-tip) { padding: 6px 10px; border: 0; border-radius: 8px; background: var(--bookedz-ink); color: var(--bookedz-surface); font-size: 12px; line-height: 1.35; }
 :deep(.street-tip::before) { border-top-color: var(--bookedz-ink); }
 :deep(.street-marker) { background: transparent; border: 0; display: grid; place-items: center; }
@@ -233,8 +268,8 @@ onBeforeUnmount(() => { clearTimeout(placeTimer); placeAbort?.abort(); observer?
 :deep(.street-marker--featured .street-pin) { background: #ec4899; }
 :deep(.street-pin--place) { background: var(--bookedz-forest); }
 :deep(.street-marker--selected .street-pin) { width: 38px; height: 38px; background: var(--bookedz-forest); outline: none; }
-:deep(.leaflet-control-zoom a) { width: 36px; height: 36px; line-height: 36px; background: var(--bookedz-surface); color: var(--bookedz-ink); }
 :deep(.leaflet-control-attribution) { background: var(--bookedz-surface); color: var(--bookedz-muted); font-size: 10px; }:deep(.leaflet-control-attribution a) { color: var(--bookedz-primary-dark); }
-@media(max-width:991px) { .street-map-canvas { height: 480px; } }
-@media(pointer:coarse) { .preview-close { width: 44px; height: 44px; }:deep(.leaflet-control-zoom a) { width: 44px; height: 44px; line-height: 44px; }.street-fit { top: 108px; } }
+/* Phones (Map pane): fit between the toolbar and the bottom tab bar */
+@media(max-width:767px) { .street-map-canvas { height: max(320px,calc(100svh - 330px - var(--bottom-nav-h, 0px))); } }
+@media(pointer:coarse) { .preview-close { width: 44px; height: 44px; }.street-zoom button { width: 44px; height: 44px; } }
 </style>
