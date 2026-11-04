@@ -7,5 +7,5 @@
 //   })
 export const feature1Routes = [
   { path: '/discover', name: 'discover', component: () => import('@/views/DiscoverView.vue'), meta: { title: 'Discover' } },
-  { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue'), meta: { title: 'Profile' } },
+  { path: '/profile', name: 'profile', component: () => import('@/views/ProfileTabsView.vue'), meta: { title: 'Profile' } },
 ]
