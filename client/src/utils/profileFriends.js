@@ -4,7 +4,7 @@ async function call(name, params) {
   if (!supabase) throw new Error('Sign in in live mode to use friends.')
   const { data, error } = await supabase.rpc(name, params)
   if (error) {
-    if (['PGRST202', '42883', '42P01', '42703'].includes(error.code)) throw new Error('Friends are not available yet. Your profile and groups are still available in their tabs.')
+    if (['PGRST202', '42883', '42P01', '42703'].includes(error.code)) throw new Error('Friends are not available yet. Your profile and Go together still work.')
     throw new Error(error.message || 'Could not update friends. Please retry.')
   }
   return data

@@ -50,7 +50,7 @@
   --bookedz-map-shadow: 0 4px 20px rgb(52 79 67 / 5%);
   --bookedz-preview-shadow: 0 18px 45px rgb(52 79 67 / 13%);
 
-  /* Compatibility tokens for incoming Hangout and motion components. */
+  /* Fill tokens shared by the Go together and motion components. */
   --bookedz-fill: #ff6b35;
   --bookedz-fill-active: #f75f27;
   --bookedz-on-fill: #1f2937;
@@ -84,7 +84,10 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 /* Laptops use NavBar's slim rail instead of the full sidebar, and pages fill the room it frees
    (Bootstrap's .container would otherwise stop at 960px and leave empty gutters) */
 @media(min-width:992px) and (max-width:1199.98px) { :root { --sidebar-w: 84px; } .app-main:not(.app-main--discover) { max-width: none; } }
-.app-shell { min-height: 100vh; padding-left: var(--sidebar-w); }
+/* NavBar's collapse button sets data-sidebar; it wins over the width defaults above */
+@media(min-width:992px) { :root[data-sidebar='collapsed'] { --sidebar-w: 76px; } :root[data-sidebar='expanded'] { --sidebar-w: 240px; } }
+.app-shell { min-height: 100vh; padding-left: var(--sidebar-w); transition: padding-left var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease); }
+@media(prefers-reduced-motion:reduce) { .app-shell { transition: none; } }
 @media(max-width:991.98px) { .app-shell { padding-left: 0; } }
 /* Phones: room for NavBar's fixed bottom tab bar, which only signed-in (and demo) users get */
 @media(max-width:767.98px) { .app-shell:has(.bottom-tabs) { --bottom-nav-h: calc(64px + env(safe-area-inset-bottom)); padding-bottom: var(--bottom-nav-h); } }
@@ -184,7 +187,7 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
   --bs-secondary-color: var(--bookedz-muted); --bs-secondary-rgb: 168,162,158;
   --bs-border-color: var(--bookedz-border); --bs-link-color: #ffb79a; --bs-link-hover-color: #ffb79a;
   --bs-link-color-rgb: 255,183,154; --bs-primary: #ff8a5b; --bs-primary-rgb: 255,138,91;
-  /* Compatibility tokens for incoming Hangout and motion components. */
+  /* Fill tokens shared by the Go together and motion components. */
   --bookedz-fill: #ff8a5b;
   --bookedz-fill-active: #ff7a45;
   --bookedz-on-fill: #1c1917;

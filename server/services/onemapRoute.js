@@ -116,7 +116,8 @@ function createOneMapRouting({ fetchImpl = globalThis.fetch, env = process.env, 
     return { ...value, cached: false };
   }
 
-  return { configured, route, cacheSize: () => cache.size };
+  // getToken is shared with the food-deal geocoder (OneMap search uses the same token).
+  return { configured, route, getToken, cacheSize: () => cache.size };
 }
 
 module.exports = { createOneMapRouting, parsePoint, singaporeParts, RouteError };

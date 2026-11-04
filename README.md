@@ -37,9 +37,14 @@ Use Node 22 and pnpm from the repository root; there is no root runner.
 pnpm --dir client install --frozen-lockfile --ignore-scripts
 pnpm --dir server install --frozen-lockfile --ignore-scripts
 pnpm --dir client dev
-# In another terminal for recommendations and image uploads:
+# In another terminal for recommendations, image uploads and food near events:
 pnpm --dir server dev
 ```
+
+Go together's before and after planner asks the server for food near the event
+(`/api/food/nearby`). Deals come from the ported OpenJio pipeline in `pipeline/` (see its
+README; it needs `GEMINI_API_KEY`), nearby places from Geoapify (`GEOAPIFY_API_KEY`). Both keys
+go in `server/.env`; without them the planner still takes typed places.
 
 Open [Discover](http://127.0.0.1:5173/discover). Use team-provided `.env.example`
 settings for live Supabase/R2. Without client keys, core demo flows use localStorage;
@@ -53,6 +58,38 @@ The history below is dated change history, not the current test or deployment
 status. Use the timeline for the latest verified checkpoint and remaining limits.
 
 ## Change history
+
+On 4 November 2026, Friends moved from Profile into a side panel in Community, and the Profile
+Groups tab was removed (its hosted tables were left alone). Go together, the group page and My RSVPs
+were restyled with Vivienne's design baseline, and the broken Edit event links now open Manage
+event's Edit tab. We changed `CommunityView.vue`, `GroupView.vue`, `MyRsvpsView.vue`,
+`ProfileTabsView.vue`, `components/community/FriendsPanel.vue` (moved from `components/profile`),
+`design-baseline.css`, the router and the two edit links, and replaced `e2e/profile-friends.spec.js`
+with `e2e/community-friends.spec.js`.
+
+On 4 November 2026, Go together got live mode. We wrote the migrations
+`supabase/migrations/20261104142732_group_event_kind.sql` and
+`20261104142907_go_together_groups.sql`, the live adapter `client/src/utils/supabaseGroupsApi.js`,
+`livePlanView` in `utils/groups.js`, `getEventsByIds` in `supabaseApi.js`, and the isolated
+database check `server/checks/groups-db.check.mjs`. Recommendations now skip groups. The migrations
+were tested in local PGlite and then applied to the hosted Bookerz project.
+
+On 4 November 2026, groups stopped being called hangouts in the code. A group is now stored as
+`kind: 'group'` with a `group` field, and older demo data is upgraded automatically. We changed
+`utils/groups.js`, `mockApi.js`, `mockData.js`, the event-list filters and the Community
+components, and removed the unused `utils/calendar.js` and the retired wizard's styles. The live
+hangout planner files keep their names until the group migration is agreed. No SQL or hosted
+changes were made.
+
+On 4 November 2026, Community became Go together. People start a **group** for an event,
+public or private, each with an invite link, and every group has its own page. Members plan
+food before and after the event there, choosing from nearby deals and places. We wrote
+`utils/groups.js`, the group functions in `mockApi.js`, `GroupView.vue`,
+`components/groups/*`, and the renamed Community components. Server side we wrote
+`server/services/foodDeals.js` and `server/routes/food.js`, with tests. The pipeline in
+`pipeline/` was copied from the OpenJio branch with small path and naming changes. The old
+hangout planner UI was removed, but its live files and the migration were kept. No SQL or
+hosted changes were made.
 
 On 3 November 2026, make a step-by-step UX pass. There were reports of the bugs
 and prof feedback, and previewed and approved each change before it was applied.

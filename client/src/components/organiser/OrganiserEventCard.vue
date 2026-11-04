@@ -36,11 +36,11 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
       </template>
     </div>
     <footer class="event-card-actions">
-      <RouterLink v-if="state === 'drafts'" :to="`/organiser/events/${event.id}/edit`" class="btn btn-primary">Edit draft</RouterLink>
+      <RouterLink v-if="state === 'drafts'" :to="`/organiser/events/${event.id}/manage?tab=edit`" class="btn btn-primary">Edit draft</RouterLink>
       <RouterLink v-else-if="state === 'past'" :to="`/organiser/events/${event.id}/attendance`" class="btn btn-primary">View results</RouterLink>
       <RouterLink v-else-if="state === 'upcoming' && event.pendingCount > 0" :to="`/organiser/events/${event.id}/rsvps?status=pending`" class="btn btn-primary">Review requests</RouterLink>
       <RouterLink v-else :to="`/organiser/events/${event.id}/manage?tab=tasks`" class="btn btn-primary">Manage event</RouterLink>
-      <RouterLink v-if="editable && state !== 'drafts'" :to="`/organiser/events/${event.id}/edit`" class="btn btn-outline-secondary">Edit details</RouterLink>
+      <RouterLink v-if="editable && state !== 'drafts'" :to="`/organiser/events/${event.id}/manage?tab=edit`" class="btn btn-outline-secondary">Edit details</RouterLink>
       <details class="event-more">
         <summary :aria-label="`More actions for ${event.title}`">•••</summary>
         <div class="event-menu">
