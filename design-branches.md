@@ -14,8 +14,7 @@ those to Denzel before proceeding rather than closing or merging them yourself.
 ## Read first and coordinate ownership
 
 Read [AGENTS.md](AGENTS.md), [README](README.md), [decisions](decisions.md),
-[status](status.md), [testing](docs/testing.md), [design system](docs/design/design-system.md)
-and [design review](docs/design/design-review.md). Local design skills and original
+[status](status.md), [testing](docs/testing.md), [design](docs/design/DESIGN.md). Local design skills and original
 materials in `docs/resources/` are optional and are not normal-clone dependencies.
 
 Verified remote: `https://github.com/kohkwg/WAD2-Project.git`.
@@ -79,7 +78,7 @@ on `origin/dev` without copying it into the working tree:
 git fetch origin --prune
 git show origin/dev:design-branches.md
 git show origin/dev:AGENTS.md
-git show origin/dev:docs/design/design-system.md
+git show origin/dev:docs/design/DESIGN.md
 ```
 
 Read the other linked files with the same `git show origin/dev:<path>` syntax.

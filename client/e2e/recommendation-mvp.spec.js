@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test'
 import { writeFile } from 'node:fs/promises'
 
-test('filtered discovery retains compact matching picks and explicitly labelled other picks', async ({ page }, testInfo) => {
+// Discover no longer shows the "Picked for you" strip (decisions.md, 4 November 2026), so these
+// strip journeys are skipped. Re-enable them if the strip returns.
+
+test.skip('filtered discovery retains compact matching picks and explicitly labelled other picks', async ({ page }, testInfo) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await fixture(page)
@@ -112,7 +115,7 @@ async function fixture(page) {
   return { failActions(value) { fail = value }, failReads(value) { failReads = value }, empty(value) { empty = value } }
 }
 
-test('recommendation MVP displays scores and supports save, dismiss, undo and retry', async ({ page }, testInfo) => {
+test.skip('recommendation MVP displays scores and supports save, dismiss, undo and retry', async ({ page }, testInfo) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   page.on('console', message => { if (message.type() === 'warning') errors.push(message.text()) })
@@ -177,7 +180,7 @@ async function dismissSketching(picks) {
   await dismiss.click()
 }
 
-test('mocked unavailable backend offers retry and empty results stay honest', async ({ page }, testInfo) => {
+test.skip('mocked unavailable backend offers retry and empty results stay honest', async ({ page }, testInfo) => {
   const state = await fixture(page)
   state.failReads(true)
   await page.setViewportSize({ width: 375, height: 900 })

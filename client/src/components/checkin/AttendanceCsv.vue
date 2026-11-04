@@ -68,7 +68,7 @@ async function onFileChosen(e) {
 
 <template>
   <section class="card card-body">
-    <h2 class="h6 text-uppercase text-body-secondary">Import / export</h2>
+    <h2 class="h6 text-body-secondary">Import / export</h2>
     <p class="small text-body-secondary">
       Export the attendance list as CSV (organisers only). Import a CSV with <code>email</code> and/or
       <code>ticket_code</code> columns, plus optional <code>checked_in_at</code>, to check people in.

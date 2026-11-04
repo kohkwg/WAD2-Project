@@ -23,8 +23,8 @@ event actions and participant/organiser screens share System/Light/Dark themes.
 Public event facts lead; RSVP actions sit beside them. Creation has a live preview;
 organiser tools and RSVP capacity/status visuals use actual event data.
 
-- [Design system](docs/design/design-system.md) and [review](docs/design/design-review.md)
-- [Implementation record](docs/design/implementation-plan.md) and [asset provenance](docs/design/assets.md)
+- [Design](docs/design/DESIGN.md): the single source of truth for how the app looks and reads
+- [Asset provenance](docs/design/assets.md)
 
 Latest refinements used targeted checks only. Full suites/production builds run
 only when explicitly requested; dated older counts are not fresh verification.
@@ -506,7 +506,7 @@ generalised Singapore coastline; the map illustration and brand vectors were
 made for the project. [Bricolage Grotesque](https://github.com/google/fonts/tree/main/ofl/bricolagegrotesque)
 is self-hosted under the SIL Open Font License, included beside the font. The
 previously installed Lenis, Motion for Vue and GSAP/ScrollTrigger are now used;
-retain their licences/attributions above. See [design artifacts](docs/design/design-system.md)
+retain their licences/attributions above. See [design](docs/design/DESIGN.md)
 and [asset provenance](docs/design/assets.md). No new runtime packages, backend
 schema changes or hosted writes were added during the redesign.
 
@@ -555,7 +555,7 @@ design tools. We refined shared typography/colour tokens, frosted navigation,
 session-dependent links, integrated discovery search and image-edge feathering.
 A read-only review helped identify a pending-search issue;
 we corrected it and added focused checks. No runtime library was added.
-[Design review and validation limits](docs/design/design-review.md) document the
+[Design verification and limits](docs/design/DESIGN.md#10-verification-history-and-limits) document the
 actual scope, Hallmark's remaining heuristics and unavailable browser renderer.
 
 

@@ -72,7 +72,7 @@ test('uploaded cover takes priority and missing cover uses authored category art
 
 test('availability distinguishes remaining places and full waitlists', async () => {
   const open = await renderCard({ spots_left: 1 })
-  checkMatch(open, /1 place left/)
+  checkMatch(open, /1 spot left/)
   const full = await renderCard({ spots_left: 0 })
   checkMatch(full, /Full · Join the waitlist/)
 })

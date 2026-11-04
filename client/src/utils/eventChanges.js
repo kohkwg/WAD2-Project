@@ -8,7 +8,7 @@ const sameText = (a, b) => (a || '').trim() === (b || '').trim()
 const sameTime = (a, b) => new Date(a).getTime() === new Date(b).getTime()
 const venueKey = (venue) => (venue ? [venue.name, venue.address || '', venue.lat ?? '', venue.lng ?? ''].join('|') : '')
 const venueName = (venue) => venue?.name || 'no venue'
-const capacityText = (capacity) => (capacity === '' || capacity == null ? 'no limit' : `${capacity} places`)
+const capacityText = (capacity) => (capacity === '' || capacity == null ? 'no limit' : `${capacity} spots`)
 const tagList = (tags) => [...(tags || [])].sort().join(', ') || 'none'
 
 // Returns [{ field, text }] in the order attendees care about most (time and place first)

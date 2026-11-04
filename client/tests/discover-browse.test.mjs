@@ -32,7 +32,7 @@ test('closing soon uses actual deadlines or five or fewer known places, capped a
   checkDeepEqual(result.map(item => item.id), ['first', 'later', 'extra'])
   checkTrue(result[0].reason.includes('Registration closes'))
   checkTrue(result[0].reason.includes('SGT'))
-  checkEqual(result[2].reason, 'Only 2 places left')
+  checkEqual(result[2].reason, 'Only 2 spots left')
 })
 
 test('closing soon excludes expired, full, unpublished, unknown availability and active registrations', () => {

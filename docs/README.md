@@ -7,9 +7,7 @@
 - [Testing and local operation](testing.md)
 - [Recommendation V1 design and schema mapping](recommendation-design.md)
 - [Contributor instructions](../AGENTS.md)
-- [Frontend design system](design/design-system.md)
-- [Design review and verification limits](design/design-review.md)
-- [Implementation record](design/implementation-plan.md)
+- [Design](design/DESIGN.md): visual language, words, components, pages and review checklist
 - [Component gallery](design/component-gallery.html) and [asset register](design/assets.md)
 
 Supplied resources remain unchanged under `resources/`. This small index preserves
