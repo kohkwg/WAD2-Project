@@ -28,7 +28,9 @@ async function fixture(page) {
   return { failCount(value) { fail = value } }
 }
 
-test('filter popover shares bar edges, overlays the hero and stays single-column across themes and widths', async ({ page }, testInfo) => {
+// The landing hero with search and the island map was removed (DESIGN.md, Landing), so these
+// hero journeys are skipped; the same filters are covered on Discover.
+test.skip('filter popover shares bar edges, overlays the hero and stays single-column across themes and widths', async ({ page }, testInfo) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await fixture(page)
@@ -72,7 +74,9 @@ test('filter popover shares bar edges, overlays the hero and stays single-column
   expect(errors).toEqual([])
 })
 
-test('live count, canonical URL, dates, extras and sorting agree between Landing and Discover', async ({ page }) => {
+// The landing hero with search and the island map was removed (DESIGN.md, Landing), so these
+// hero journeys are skipped; the same filters are covered on Discover.
+test.skip('live count, canonical URL, dates, extras and sorting agree between Landing and Discover', async ({ page }) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await fixture(page)
@@ -114,7 +118,9 @@ test('live count, canonical URL, dates, extras and sorting agree between Landing
   expect(errors).toEqual([])
 })
 
-test('outside click, Escape, keyboard selection and count retry preserve selected filters', async ({ page }) => {
+// The landing hero with search and the island map was removed (DESIGN.md, Landing), so these
+// hero journeys are skipped; the same filters are covered on Discover.
+test.skip('outside click, Escape, keyboard selection and count retry preserve selected filters', async ({ page }) => {
   const state = await fixture(page)
   await page.goto('/')
   await page.locator('.filter-toggle').focus()
