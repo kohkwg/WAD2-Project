@@ -5,7 +5,8 @@ import EventArtwork from '../components/EventArtwork.vue'
 import BumpValue from '../components/ui/BumpValue.vue'
 import GroupPlan from '../components/groups/GroupPlan.vue'
 import GroupChat from '../components/groups/GroupChat.vue'
-import { getGroup, joinGroup, cancelRsvp, getRsvpsForEvent, approveRsvp, rejectRsvp, GROUPS_AVAILABLE } from '../utils/api.js'
+import { getGroup, joinGroup, cancelRsvp, getRsvpsForEvent, approveRsvp, rejectRsvp } from '../utils/api.js'
+import '../assets/design-baseline.css'
 import { formatEventTime } from '../utils/helpers.js'
 import { toast } from '../composables/useToast'
 
@@ -25,7 +26,6 @@ const copied = ref(false)
 const token = computed(() => (typeof route.params.token === 'string' ? route.params.token : ''))
 
 async function load({ quiet = false } = {}) {
-  if (!GROUPS_AVAILABLE) { loading.value = false; return }
   if (!quiet) loading.value = true
   error.value = ''
   try {
@@ -118,11 +118,7 @@ const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 
   <div class="container group-page">
     <RouterLink to="/community" class="group-back">&larr; Go together</RouterLink>
 
-    <div v-if="!GROUPS_AVAILABLE" class="group-empty" role="status">
-      <h1 class="section-title">Coming soon</h1>
-      <p>Go together groups are coming to the live app. You can try them now in demo mode.</p>
-    </div>
-    <div v-else-if="loading" class="group-loading" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Loading the group…</div>
+    <div v-if="loading" class="group-loading" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Loading the group…</div>
     <div v-else-if="error" class="group-empty" role="alert">
       <h1 class="section-title">Can’t open this group</h1>
       <p>{{ error }}</p>

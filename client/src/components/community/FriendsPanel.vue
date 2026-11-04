@@ -1,7 +1,9 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as friends from '../../utils/profileFriends.js'
-const props = defineProps({ visible: { type: Boolean, default: true }, updates: { type: Number, default: 0 } })
+// Friends (live mode): find accounts by username, send and answer requests. Shown as a
+// small side panel in Community (compact) next to Go together.
+const props = defineProps({ visible: { type: Boolean, default: true }, updates: { type: Number, default: 0 }, compact: Boolean })
 let pendingUpdate = false
 
 const loading = ref(false)
@@ -89,9 +91,9 @@ const respond = (person, accept) => mutate(person.id, () => friends.respondToReq
 </script>
 
 <template>
-  <section class="friends-panel" aria-labelledby="friends-title">
-    <header class="friends-heading"><div><h2 id="friends-title">Friends</h2><p class="text-body-secondary mb-0">Find other accounts by username. You become friends when they accept.</p></div><button v-if="friends.USING_SUPABASE" class="btn btn-outline-secondary" type="button" :disabled="loading || Boolean(busy)" @click="refresh">Refresh friends</button></header>
-    <p v-if="!friends.USING_SUPABASE" class="alert alert-info">Sign in in live mode to add friends.</p>
+  <section class="friends-panel" :class="{ 'is-compact': compact }" aria-labelledby="friends-title">
+    <header class="friends-heading"><div><h2 id="friends-title">Friends</h2><p class="text-body-secondary mb-0">{{ compact ? 'Add people by username. You’re friends once they accept.' : 'Find other accounts by username. You become friends when they accept.' }}</p></div><button v-if="friends.USING_SUPABASE" class="btn btn-outline-secondary" :class="{ 'btn-sm': compact }" type="button" :disabled="loading || Boolean(busy)" @click="refresh">{{ compact ? 'Refresh' : 'Refresh friends' }}</button></header>
+    <p v-if="!friends.USING_SUPABASE" class="friends-demo">Friends work in the live app once you’re signed in.</p>
     <template v-else>
       <p v-if="loading" role="status">Loading friends…</p>
       <div v-if="error" class="alert alert-warning" role="alert">{{ error }} <button class="btn btn-outline-secondary" type="button" :disabled="loading || Boolean(busy)" @click="refresh">Retry friends</button></div>
@@ -133,4 +135,17 @@ h3 { font-size: 1.2rem; }
 .btn { min-height: 44px; }
 .alert { overflow-wrap: anywhere; }
 @media (max-width:575px) { .friend-form-row { flex-direction: column; } .friend-list li, .friend-actions { flex-wrap: wrap; } }
+.friends-demo { margin: 0; color: var(--bookedz-muted); font-size: .92rem; }
+/* Side-panel size: tighter spacing, stacked search, smaller headings and buttons */
+.is-compact { padding: 1.1rem; }
+.is-compact .friends-heading { gap: .5rem; margin-bottom: .75rem; }
+.is-compact .friends-heading h2 { margin: 0 0 .25rem; font-size: 1.3rem; }
+.is-compact .friends-heading p { font-size: .88rem; }
+.is-compact h3 { margin-bottom: .5rem; font-size: 1rem; }
+.is-compact .friend-section { margin-top: 1rem; padding-top: 1rem; }
+.is-compact .friend-form-row { flex-direction: column; gap: .5rem; }
+.is-compact .form-text { margin-top: 0; font-size: .8rem; }
+.is-compact .friend-list li { flex-wrap: wrap; gap: .5rem; padding: .6rem 0; }
+.is-compact .btn { min-height: 40px; }
+.is-compact .friend-actions { gap: .5rem; }
 </style>

@@ -48,7 +48,6 @@ export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
 // Live mode uses migrations 20261104142732 and 20261104142907 (see decisions.md); a database
 // without them makes the live calls say Go together isn't set up yet.
 const groupsBackend = USING_SUPABASE ? supabaseGroupsApi : mockApi
-export const GROUPS_AVAILABLE = true
 export const getGroups = () => groupsBackend.getGroups() // public upcoming groups, plus private ones you're in
 export const getGroup = (target) => groupsBackend.getGroup(target) // { id } or { token } from an invite link; includes the plan for members
 export const createGroup = (form) => groupsBackend.createGroup(form) // { eventId, note, capacity, joinMode, visibility }

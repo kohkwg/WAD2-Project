@@ -112,6 +112,7 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 | Organiser's list | **Guest list** / **RSVPs** | Attendees list, registrations (in UI text) |
 | Waitlist offer | "A spot opened up", "Confirm my spot" | Claim, accept offer |
 | Going to an event with others | **Go together** (the feature), **group**; **Start a group**, **Join group**, **Ask to join** (host approves), **Leave group**; **Public** / **Private**; **Invite link** | Jio, meetup, squad, hangout |
+| People you know | **Friends**; **Add friend**, **Friend requests**, **Find people** (by username) | Contacts, followers, friend groups |
 | A group's plan around the event | **before and after plan**; **when you're free** | hangout, itinerary |
 
 - **Sentence case** for headings, labels, buttons and tags. No all-caps eyebrows or
@@ -351,6 +352,9 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
   outline ease, slot times and picks fade in, Keen counts and filter counts bump, members
   and chat messages slide in, map pins drop in, and the group page refreshes every 20 seconds
   (chat every 15) and on focus. All of it is off with reduced motion.
+- **4 Nov 2026:** Community has a small **Friends** side panel (moved from Profile); the Profile
+  Groups tab is gone so "group" only means Go together. Go together, group pages and My RSVPs use the
+  festival-ticket look from `design-baseline.css` like My events and Create event.
 - **4 Nov 2026:** Stopped calling groups "hangouts" in code: a group is stored as `kind: 'group'`
   with a `group` field (visibility, invite link, event). Retired planner styles were removed.
 - **4 Nov 2026:** Members paint when they're free before and after the event on a
