@@ -1,7 +1,10 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { getEvents, getGroups, GROUPS_AVAILABLE } from '../utils/api.js'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { getEvents, getGroups } from '../utils/api.js'
+import { subscribeSocialUpdates } from '../utils/profileSocial.js'
+import FriendsPanel from '../components/community/FriendsPanel.vue'
+import '../assets/design-baseline.css'
 import GroupCard from '../components/community/GroupCard.vue'
 import StartGroupDialog from '../components/community/StartGroupDialog.vue'
 import SkeletonList from '../components/ui/SkeletonList.vue'
@@ -11,7 +14,7 @@ import { isOfficialEvent } from '../utils/groups.js'
 
 // Community is Go together: people start a group for an event ("who wants to come?"),
 // others join, then RSVP to the event itself. Private groups show here only for their
-// members. Official events stay in Discover.
+// members. Official events stay in Discover. Friends sit in a side panel (live mode).
 const route = useRoute()
 const router = useRouter()
 const groups = ref([])
@@ -43,15 +46,25 @@ async function load() {
 }
 
 let refreshTimer
+// Friend requests arrive in real time in live mode; the panel refreshes when this ticks
+const socialUpdates = ref(0)
+let stopSocial = () => {}
 onMounted(async () => {
-  if (!GROUPS_AVAILABLE) { loading.value = false; return }
+  stopSocial = subscribeSocialUpdates(() => { socialUpdates.value++ }, () => true)
   await load()
+  // /community#friends (old Profile → Friends links) opens at the Friends panel
+  if (route.hash === '#friends') {
+    await nextTick()
+    // Again once the cards above have settled, so the panel ends up at the top
+    const toFriends = () => document.getElementById('friends')?.scrollIntoView({ block: 'start', behavior: 'instant' })
+    toFriends(); setTimeout(toFriends, 400)
+  }
   // ?start=<event id> opens Start a group with that event chosen (linked from event pages)
   if (typeof route.query.start === 'string') openComposer(route.query.start)
   refreshTimer = setInterval(load, 30000)
   window.addEventListener('focus', load)
 })
-onBeforeUnmount(() => { clearInterval(refreshTimer); window.removeEventListener('focus', load) })
+onBeforeUnmount(() => { clearInterval(refreshTimer); window.removeEventListener('focus', load); stopSocial() })
 
 function openComposer(eventId = '') {
   composerFor.value = events.value.some((e) => e.id === eventId) ? eventId : ''
@@ -87,22 +100,18 @@ const counts = computed(() => ({
 <template>
   <div class="container community-page">
     <header class="community-hero">
-      <div>
+      <div class="community-hero-copy">
+        <p class="community-eyebrow">Community</p>
         <h1 class="page-title m-0">Go together</h1>
         <p class="community-lede">Going to an event? Join a group heading there, or start one: public for anyone, or private with an invite link for friends.</p>
       </div>
-      <div v-if="GROUPS_AVAILABLE" class="community-hero-actions">
+      <div class="community-hero-actions">
         <button type="button" class="btn btn-primary" @click="openComposer()">Start a group</button>
       </div>
     </header>
 
-    <div v-if="!GROUPS_AVAILABLE" class="community-soon" role="status">
-      <h2 class="section-title">Coming soon</h2>
-      <p>Go together is coming to the live app. You can try them now in demo mode.</p>
-      <RouterLink to="/discover" class="btn btn-outline-secondary">Browse events</RouterLink>
-    </div>
-
-    <template v-else>
+    <div class="community-layout">
+    <div class="community-main">
       <div class="community-tools">
         <div class="community-filters" role="group" aria-label="Show groups">
           <button v-for="f in FILTERS" :key="f.key" type="button" class="community-filter" :aria-pressed="filter === f.key" @click="filter = f.key">
@@ -130,14 +139,25 @@ const counts = computed(() => ({
           <button v-if="query || filter !== 'all'" type="button" class="btn btn-outline-secondary" @click="query = ''; filter = 'all'">Show all groups</button>
         </div>
       </div>
-    </template>
+    </div>
+
+    <!-- A small side panel: find people by username and handle friend requests -->
+    <aside id="friends" class="community-aside" aria-label="Friends">
+      <FriendsPanel compact :updates="socialUpdates" />
+    </aside>
+    </div>
 
     <StartGroupDialog v-if="composerFor !== null" :events="events" :event-id="composerFor" @close="closeComposer" @created="onCreated" />
   </div>
 </template>
 
 <style scoped>
-.community-page { max-width: 820px; padding-block: 1.5rem 3rem; }
+.community-page { max-width: 1180px; padding-block: 1.5rem 3rem; }
+.community-layout { display: grid; gap: 22px; align-items: start; }
+.community-main { min-width: 0; }
+.community-aside { min-width: 0; scroll-margin-top: 16px; }
+@media (min-width: 1200px) { .community-layout { grid-template-columns: minmax(0, 1fr) 320px; } .community-aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); } }
+.community-eyebrow { margin: 0 0 6px; color: var(--bookedz-muted); font-weight: 600; }
 .community-hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
 .community-lede { margin: 8px 0 0; max-width: 46ch; color: var(--bookedz-muted); }
 .community-hero-actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -151,6 +171,6 @@ const counts = computed(() => ({
 .community-filter[aria-pressed='true'] span { background: color-mix(in srgb, var(--bookedz-surface) 20%, transparent); }
 .community-search { min-height: 44px; }
 .community-feed { display: grid; gap: 14px; }
-.community-empty,.community-soon { padding: 32px 20px; border: 1px dashed var(--bookedz-border); border-radius: 20px; background: var(--bookedz-surface); text-align: center; }
-.community-empty p,.community-soon p { color: var(--bookedz-muted); }
+.community-empty { padding: 32px 20px; border: 1px dashed var(--bookedz-border); border-radius: 20px; background: var(--bookedz-surface); text-align: center; }
+.community-empty p { color: var(--bookedz-muted); }
 </style>

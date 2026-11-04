@@ -60,6 +60,8 @@ const router = createRouter({
     { path: '/j/:token', redirect: to => `/g/${to.params.token}` },
     { path: '/organiser/events/:id/rsvps', component: ManageRsvpsView, meta: { title: 'Manage RSVPs' } },
     { path: '/organiser/events/:id/manage', component: ManageEventView, meta: { title: 'Manage event' } },
+    // Editing moved into Manage event; older links and bookmarks still land there
+    { path: '/organiser/events/:id/edit', redirect: (to) => ({ path: `/organiser/events/${to.params.id}/manage`, query: { tab: 'edit' } }) },
 
     // Feature 1: public discovery (demo/live) and signed-in live profile (Aishani).
     ...feature1Routes,
