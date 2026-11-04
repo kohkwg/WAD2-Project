@@ -7,6 +7,7 @@ import StartGroupDialog from '../components/community/StartGroupDialog.vue'
 import SkeletonList from '../components/ui/SkeletonList.vue'
 import BumpValue from '../components/ui/BumpValue.vue'
 import { toast } from '../composables/useToast'
+import { isOfficialEvent } from '../utils/groups.js'
 
 // Community is Go together: people start a group for an event ("who wants to come?"),
 // others join, then RSVP to the event itself. Private groups show here only for their
@@ -33,7 +34,7 @@ async function load() {
   try {
     const [groupList, eventList] = await Promise.all([getGroups(), getEvents()])
     groups.value = groupList
-    events.value = eventList.filter((e) => e.kind !== 'hangout' && e.status === 'published' && new Date(e.startTime) > new Date())
+    events.value = eventList.filter((e) => isOfficialEvent(e) && e.status === 'published' && new Date(e.startTime) > new Date())
   } catch (e) {
     error.value = e.message
   } finally {

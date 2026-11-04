@@ -112,11 +112,10 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 | Organiser's list | **Guest list** / **RSVPs** | Attendees list, registrations (in UI text) |
 | Waitlist offer | "A spot opened up", "Confirm my spot" | Claim, accept offer |
 | Going to an event with others | **Go together** (the feature), **group**; **Start a group**, **Join group**, **Ask to join** (host approves), **Leave group**; **Public** / **Private**; **Invite link** | Jio, meetup, squad, hangout |
-| Planning a friends' outing | **hangout**; **Plan a hangout** | Event (hangouts are not official events) |
+| A group's plan around the event | **before and after plan**; **when you're free** | hangout, itinerary |
 
 - **Sentence case** for headings, labels, buttons and tags. No all-caps eyebrows or
-  labels. The only exception is the hangout invite slips and vote stamps, whose short
-  stamped labels are part of that feature's ticket motif.
+  labels.
 - **Dates and times** use the Singapore style everywhere: "Sat, 7 Nov, 10:00 am – 12:00 pm"
   (`formatEventTime`), "7 Nov" for timeline dates, "1 Nov, 1:39 pm" for timestamps.
   Day before month, 12-hour times with lower-case am/pm.
@@ -352,6 +351,8 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
   outline ease, slot times and picks fade in, Keen counts and filter counts bump, members
   and chat messages slide in, map pins drop in, and the group page refreshes every 20 seconds
   (chat every 15) and on focus. All of it is off with reduced motion.
+- **4 Nov 2026:** Stopped calling groups "hangouts" in code: a group is stored as `kind: 'group'`
+  with a `group` field (visibility, invite link, event). Retired planner styles were removed.
 - **4 Nov 2026:** Members paint when they're free before and after the event on a
   when2meet-style grid; each slot is the best shared stretch. Map pins keep fixed colours so they show in the dark theme.
 - **4 Nov 2026:** Community became **Go together**: groups (no longer "jios") with public or

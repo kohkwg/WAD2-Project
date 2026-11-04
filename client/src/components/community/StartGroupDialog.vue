@@ -1,8 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { createGroup } from '../../utils/api.js'
-import { groupErrors, NOTE_LIMIT } from '../../utils/groups.js'
-import { CAPACITY_RANGE } from '../../utils/hangouts.js'
+import { CAPACITY_RANGE, groupErrors, NOTE_LIMIT } from '../../utils/groups.js'
 import { formatEventTime } from '../../utils/helpers.js'
 
 // "Start a group": pick an upcoming event, add a note, spots and who can find it, then post it.

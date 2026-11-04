@@ -14,10 +14,10 @@ test('groupErrors checks the event, note, spots and visibility', () => {
 test('groupEventData makes a private group with an invite token and an empty plan', () => {
   const group = groupEventData(event, { visibility: 'private', token: 'abc' })
   assert.ok(isGroup(group))
-  assert.equal(group.hangout.visibility, 'private')
-  assert.equal(group.hangout.inviteToken, 'abc')
+  assert.equal(group.group.visibility, 'private')
+  assert.equal(group.group.inviteToken, 'abc')
   assert.deepEqual(group.plan, emptyPlan())
-  assert.equal(groupEventData(event, {}).hangout.inviteToken.length, 16)
+  assert.equal(groupEventData(event, {}).group.inviteToken.length, 16)
 })
 
 test('slotTimes fit an hour before and after with a 15-minute walk', () => {
@@ -64,4 +64,28 @@ test('fitSlots picks the longest stretch with the most people free', () => {
   // Nobody marked: the default hour
   assert.equal(f.after.fitted, false)
   assert.equal(f.after.start, slotTimes(event).after.start)
+})
+
+test('isOfficialEvent keeps groups and older hangout rows out of event lists', async () => {
+  const { isOfficialEvent, isPrivateGroup } = await import('../groups.js')
+  const group = groupEventData(event, { visibility: 'private', token: 'abc' })
+  assert.equal(isOfficialEvent(event), true)
+  assert.equal(isOfficialEvent({ ...event, kind: 'official' }), true)
+  assert.equal(isOfficialEvent(group), false)
+  assert.equal(isOfficialEvent({ ...event, kind: 'hangout' }), false)
+  assert.equal(isPrivateGroup(group), true)
+})
+
+test('saved demo data with hangout-shaped groups is upgraded to kind group', async () => {
+  const { addSampleGroups } = await import('../mockData.js')
+  const old = { ...groupEventData(event, { token: 'tok' }), id: 'g9', status: 'published' }
+  old.kind = 'hangout'
+  old.hangout = { mode: 'group', stage: 'planning', ...old.group }
+  delete old.group
+  const db = { events: [event, old], rsvps: [], groupComments: [] }
+  addSampleGroups(db)
+  const g = db.events.find((e) => e.id === 'g9')
+  assert.equal(g.kind, 'group')
+  assert.deepEqual(g.group, { visibility: 'public', inviteToken: 'tok', eventId: 'e1' })
+  assert.equal(g.hangout, undefined)
 })

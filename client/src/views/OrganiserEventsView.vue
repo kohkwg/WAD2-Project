@@ -5,6 +5,7 @@ import { getOrganiserEvents, deleteEvent } from '../utils/api.js'
 import OrganiserEventCard from '../components/organiser/OrganiserEventCard.vue'
 import SkeletonList from '../components/ui/SkeletonList.vue'
 import { organiserEventState, organiserEventCounts, filterOrganiserEvents } from '../utils/organiserEvents.js'
+import { isOfficialEvent } from '../utils/groups.js'
 
 const route = useRoute()
 const events = ref([])
@@ -49,7 +50,7 @@ async function loadEvents() {
   errorMessage.value = ''
   try {
     // My events lists official events; Go together groups are managed from Community
-    const rows = (await getOrganiserEvents()).filter((event) => event.kind !== 'hangout')
+    const rows = (await getOrganiserEvents()).filter(isOfficialEvent)
     if (mounted && request === requestId) events.value = rows
   } catch (error) {
     if (mounted && request === requestId) errorMessage.value = 'Could not load your events: ' + error.message
