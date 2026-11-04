@@ -1,10 +1,13 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { signIn, signUp } from '../utils/api.js'
 
-// Supabase Auth: email + password. Only used when the app runs on Supabase
-// (the router skips this page in mock mode, where Alex is always logged in).
+// Supabase Auth: email + password. Shown on the landing page (/) for signed-out visitors;
+// in demo mode Alex is always signed in, so it never appears there.
+// After signing in it returns to ?redirect= if there is one, otherwise it tells the
+// landing page, which then shows the account summary.
+const emit = defineEmits(['signed-in'])
 
 const route = useRoute()
 const router = useRouter()
@@ -52,7 +55,8 @@ async function submit() {
       }
     }
     // Back to the page they were trying to open (the router put it in ?redirect=)
-    router.push(route.query.redirect || '/events')
+    if (typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')) router.push(route.query.redirect)
+    else emit('signed-in')
   } catch (error) {
     errorMessage.value = error.message
   } finally {
@@ -67,6 +71,7 @@ async function submit() {
       <p class="auth-kicker">Your next good day starts here</p>
       <h1 class="auth-title">Find your people.<br />Make a plan.</h1>
       <p class="auth-copy">Sign in to keep your event plans close, or create an account to join in.</p>
+      <RouterLink to="/discover" class="auth-browse">Just looking? Browse events without signing in</RouterLink>
     </div>
     <div class="card auth-card">
       <div class="card-body p-4 p-md-5">
@@ -146,6 +151,7 @@ async function submit() {
 .auth-copy { max-width: 34ch; margin: 1.25rem 0 0; color: var(--bookedz-ink-soft, #636975); font-size: 1.05rem; line-height: 1.6; }
 /* Theme tokens: a fixed light card stayed light in dark mode, hiding the (white) labels.
    --bookedz-peach is the palette's #ffe4d6 in light mode and its dark equivalent in dark mode. */
+.auth-browse { display: inline-flex; align-items: center; min-height: 44px; margin-top: 1rem; color: var(--bookedz-primary-dark); font-weight: 600; }
 .auth-card { border: 1px solid var(--bookedz-border, #e9ded3); border-radius: 24px; background: var(--bookedz-surface); box-shadow: var(--bookedz-shadow); }
 .auth-tabs { padding: .3rem; border-radius: 14px; background: var(--bookedz-peach); }
 .auth-tabs .nav-link { border-radius: 11px; color: var(--bookedz-muted); }

@@ -1,5 +1,10 @@
 # Decisions
 
+4 November 2026 — Huxley, landing page becomes the sign-in page: the animated island map is
+removed from `/`. Signed-out visitors sign in or create an account there; signed-in people and
+the demo account see an account summary. `/login` redirects to `/` with its `?redirect=`. The
+island art components stay in the repo, unused. No backend changes.
+
 4 November 2026 — Huxley, Community becomes open jios: Community is strictly for jios
 (people asking others to go to one specific official event together) and the hangout planner,
 which moves out of Create event to `/community/plan`. Official events stay in Discover and My
