@@ -1,14 +1,13 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getGroups, GROUPS_AVAILABLE } from '../../utils/api.js'
+import { getGroups } from '../../utils/api.js'
 
 // On an event page: Go together groups for this event (public ones and any you're in), and a way to start one.
 const props = defineProps({ eventId: { type: String, required: true } })
 const groups = ref([])
 const loaded = ref(false)
 async function load() {
-  if (!GROUPS_AVAILABLE) return
   try { groups.value = (await getGroups()).filter((group) => group.event?.id === props.eventId) } catch { groups.value = [] }
   loaded.value = true
 }
@@ -18,7 +17,7 @@ const openSpots = computed(() => groups.value.filter((group) => group.spotsLeft 
 </script>
 
 <template>
-  <section v-if="GROUPS_AVAILABLE && loaded" class="event-groups card" aria-labelledby="event-groups-title">
+  <section v-if="loaded" class="event-groups card" aria-labelledby="event-groups-title">
     <div class="card-body">
       <div class="event-groups-head">
         <h2 id="event-groups-title" class="h5 m-0">Go together</h2>

@@ -59,6 +59,14 @@ status. Use the timeline for the latest verified checkpoint and remaining limits
 
 ## Change history
 
+On 4 November 2026, Friends moved from Profile into a side panel in Community, and the Profile
+Groups tab was removed (its hosted tables were left alone). Go together, the group page and My RSVPs
+were restyled with Vivienne's design baseline, and the broken Edit event links now open Manage
+event's Edit tab. We changed `CommunityView.vue`, `GroupView.vue`, `MyRsvpsView.vue`,
+`ProfileTabsView.vue`, `components/community/FriendsPanel.vue` (moved from `components/profile`),
+`design-baseline.css`, the router and the two edit links, and replaced `e2e/profile-friends.spec.js`
+with `e2e/community-friends.spec.js`.
+
 On 4 November 2026, Go together got live mode. We wrote the migrations
 `supabase/migrations/20261104142732_group_event_kind.sql` and
 `20261104142907_go_together_groups.sql`, the live adapter `client/src/utils/supabaseGroupsApi.js`,

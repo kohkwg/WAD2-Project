@@ -1,10 +1,10 @@
-/* "Festival ticket" treatment for Create event, scoped to .design-baseline so the rest of
-   the app is untouched. Uses the existing Hawker Glow tokens, so light/dark both work.
+/* "Festival ticket" treatment (Vivienne), scoped per page: Create event (.design-baseline),
+   Profile, My events, and Go together / group page / My RSVPs (sections at the end). Uses the existing Hawker Glow tokens, so light/dark both work.
    Remove the class (and CSS import) from the three create views to revert. */
 .design-baseline.design-baseline { position: relative; isolation: isolate; --db-r: 24px; --db-tilt: 1.2deg; }
 
 /* Soft colour blobs live on the body so they have no visible box edges. */
-body:has(:is(.design-baseline, .account-page, .organiser-events-page)) {
+body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community-page, .group-page, .my-rsvps-page)) {
   background:
     radial-gradient(34rem 24rem at 12% 0%, color-mix(in srgb, var(--bookedz-fill) 22%, transparent), transparent 70%),
     radial-gradient(32rem 22rem at 95% 0%, color-mix(in srgb, var(--bookedz-teal) 20%, transparent), transparent 70%),
@@ -81,7 +81,7 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page)) {
   .design-baseline.design-baseline .btn:not(:disabled):hover { transform: none; }
 }
 
-/* ---- Profile (edit / groups / friends) ----------------------------------------------
+/* ---- Profile ----------------------------------------------
    Pure CSS, scoped to .account-page from ProfileTabsView, so no profile component or logic
    file needs to change. Same look as Manage Event. */
 .account-page.account-page { position: relative; isolation: isolate; --db-r: 24px; }
@@ -102,20 +102,13 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page)) {
 .account-page.account-page .account-heading p { font-weight: 500; max-width: 46ch; margin-bottom: 0; }
 :root[data-theme="dark"] .account-page.account-page .account-heading { border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill); }
 
-/* Tab bar */
-.account-page.account-page .account-nav { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: var(--bookedz-surface); }
-:root[data-theme="dark"] .account-page.account-page .account-nav { border-color: var(--bookedz-border); }
-.account-page.account-page .account-nav a { border-radius: 99px; }
-.account-page.account-page .account-nav a.active { border-color: var(--bookedz-ink); background: var(--bookedz-orange-soft); transform: translateY(-1px); }
-:root[data-theme="dark"] .account-page.account-page .account-nav a.active { border-color: var(--bookedz-fill); }
 
 /* Panels as ticket cards */
-.account-page.account-page :is(.profile-form, .friends-panel, .groups-panel) {
+.account-page.account-page :is(.profile-form) {
   border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: var(--bookedz-surface); box-shadow: 6px 6px 0 var(--bookedz-teal);
 }
-.account-page.account-page :is(.friends-panel, .groups-panel) { padding: clamp(1.1rem, 4vw, 2rem); }
-:root[data-theme="dark"] .account-page.account-page :is(.profile-form, .friends-panel, .groups-panel) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
-.account-page.account-page :is(.profile-section legend, .friends-heading h2, .groups-heading h2) { font-family: var(--bookedz-heading); font-weight: 900; }
+.account-page.account-page :root[data-theme="dark"] .account-page.account-page :is(.profile-form) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+.account-page.account-page :is(.profile-section legend) { font-family: var(--bookedz-heading); font-weight: 900; }
 .account-page.account-page :is(.profile-section, .profile-actions) { border-color: var(--bookedz-control-border); border-style: dashed; }
 .account-page.account-page .profile-interests { border: 0; }
 
@@ -192,3 +185,113 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page)) {
   .organiser-events-page.organiser-events-page :is(.organiser-event-card:hover, .btn:not(:disabled):hover, .event-tabs button[aria-selected=true]) { transform: none; }
 }
 
+/* ---- Go together (CommunityView, GroupCard, FriendsPanel) ---------------------------------
+   Same ticket look as My events. CSS only, scoped to .community-page. */
+.community-page.community-page { position: relative; isolation: isolate; --db-r: 24px; }
+.community-page.community-page .community-hero,
+.group-page.group-page .group-hero,
+.my-rsvps-page.my-rsvps-page .rsvps-heading {
+  position: relative; overflow: hidden; padding: clamp(1.4rem, 4vw, 2.4rem);
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r);
+  background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 70%);
+  box-shadow: 6px 6px 0 var(--bookedz-ink);
+}
+.community-page.community-page .community-hero::after,
+.group-page.group-page .group-hero::after {
+  content: '★'; position: absolute; right: clamp(.8rem, 4vw, 2.2rem); top: 50%; translate: 0 -50%; rotate: 12deg;
+  font-size: clamp(4rem, 11vw, 7rem); line-height: 1; color: var(--bookedz-fill); opacity: .3; pointer-events: none;
+}
+/* Keep the star clear of the Start a group button, as on My events */
+.community-page.community-page .community-hero::after { right: 14%; }
+@media (max-width: 767.98px) { .community-page.community-page .community-hero::after { right: 1rem; top: 1.6rem; translate: 0; font-size: 4rem; } }
+.community-page.community-page .community-hero > *,
+.group-page.group-page .group-hero > *,
+.my-rsvps-page.my-rsvps-page .rsvps-heading > * { position: relative; z-index: 1; }
+.community-page.community-page .community-hero h1,
+.group-page.group-page .group-hero h1,
+.my-rsvps-page.my-rsvps-page .rsvps-heading h1 {
+  font-size: clamp(2.1rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -.03em;
+  background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.community-page.community-page :is(.community-lede, .community-eyebrow),
+.group-page.group-page .group-hero p,
+.my-rsvps-page.my-rsvps-page .rsvps-heading p { color: var(--bookedz-ink); font-weight: 500; }
+:root[data-theme="dark"] :is(.community-page.community-page .community-hero, .group-page.group-page .group-hero, .my-rsvps-page.my-rsvps-page .rsvps-heading) {
+  border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill);
+}
+
+/* Filter pills and search */
+.community-page.community-page .community-filter { border-width: 2px; border-color: var(--bookedz-control-border); font-weight: 700; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp), background-color var(--bookedz-motion-fast) var(--bookedz-ease); }
+.community-page.community-page .community-filter[aria-pressed='true'] { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); transform: translateY(-2px) rotate(-.8deg); box-shadow: 3px 3px 0 var(--bookedz-ink); }
+:root[data-theme="dark"] .community-page.community-page .community-filter[aria-pressed='true'] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--bookedz-fill); }
+.community-page.community-page .community-filters { padding: 4px 4px 8px; }
+.community-page.community-page .community-search { border-width: 2px; border-radius: 99px; border-color: var(--bookedz-control-border); }
+.community-page.community-page .community-search:focus,
+.community-page.community-page .friends-panel .form-control:focus { outline: none; border-color: var(--bookedz-fill); box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--bookedz-fill) 28%, transparent); }
+
+/* Group cards as tickets; the ones you're in get a mango shadow */
+.community-page.community-page .group-card {
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal);
+  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease);
+}
+.community-page.community-page .group-card.is-joined { box-shadow: 6px 6px 0 var(--bookedz-mango); }
+:root[data-theme="dark"] .community-page.community-page .group-card { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+@media (hover: hover) { .community-page.community-page .group-card:hover { transform: translate(-2px, -3px) rotate(-.3deg); box-shadow: 9px 10px 0 var(--bookedz-teal); } }
+.community-page.community-page .community-empty { border: 2px dashed var(--bookedz-control-border); border-radius: var(--db-r); }
+
+/* Friends side panel */
+.community-page.community-page .friends-panel { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-pink); }
+:root[data-theme="dark"] .community-page.community-page .friends-panel { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-pink) 55%, transparent); }
+.community-page.community-page .friends-panel h2 { font-weight: 900; }
+.community-page.community-page .friends-panel .form-control { border-width: 2px; border-radius: 14px; }
+.community-page.community-page .friend-section { border-top-style: dashed; border-color: var(--bookedz-control-border); }
+
+/* ---- Group page (GroupView) ------------------------------------------------------------------ */
+.group-page.group-page { position: relative; isolation: isolate; --db-r: 24px; }
+.group-page.group-page .group-hero { flex-wrap: wrap; }
+.group-page.group-page .group-avatar { border: 2px solid var(--bookedz-ink); background: var(--bookedz-surface); }
+:root[data-theme="dark"] .group-page.group-page .group-avatar { border-color: var(--bookedz-fill); }
+.group-page.group-page .group-card { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal); }
+:root[data-theme="dark"] .group-page.group-page .group-card { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+.group-page.group-page .group-card .section-title { font-weight: 900; }
+/* The event it's for: a taped-on ticket stub */
+.group-page.group-page .group-event { position: relative; border: 2px dashed var(--bookedz-control-border); border-radius: var(--db-r); rotate: -.6deg; transition: rotate var(--bookedz-motion-slip) var(--bookedz-ease); }
+.group-page.group-page .group-event:hover { rotate: 0deg; }
+.group-page.group-page .group-event { margin-top: .4rem; }
+.group-page.group-page .group-event::before { content: ''; position: absolute; top: -.7rem; left: 50%; width: 5rem; height: 1.3rem; translate: -50% 0; rotate: -3deg; background: color-mix(in srgb, var(--bookedz-pink) 55%, transparent); border-radius: 3px; pointer-events: none; }
+.group-page.group-page .group-note { font-weight: 600; }
+
+/* ---- My RSVPs (MyRsvpsView and its cards) ------------------------------------------------------ */
+.my-rsvps-page.my-rsvps-page { position: relative; isolation: isolate; --db-r: 24px; }
+.my-rsvps-page.my-rsvps-page .header-star { color: var(--bookedz-fill); opacity: .45; font-size: clamp(3.5rem, 10vw, 6rem); }
+.my-rsvps-page.my-rsvps-page .plans-summary > div { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 4px 4px 0 var(--bookedz-teal); }
+.my-rsvps-page.my-rsvps-page .plans-summary dd { font-weight: 900; }
+:root[data-theme="dark"] .my-rsvps-page.my-rsvps-page .plans-summary > div { border-color: var(--bookedz-border); box-shadow: 4px 4px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+/* Tabs become pills, like My events */
+.my-rsvps-page.my-rsvps-page .rsvp-tabs { gap: 8px; padding: 4px 4px 8px; border-bottom: 0; }
+.my-rsvps-page.my-rsvps-page .rsvp-tabs button { min-height: 44px; padding: 8px 16px; border: 2px solid var(--bookedz-control-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-weight: 700; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp), background-color var(--bookedz-motion-fast) var(--bookedz-ease); }
+.my-rsvps-page.my-rsvps-page .rsvp-tabs button::after { display: none; }
+.my-rsvps-page.my-rsvps-page .rsvp-tabs button[aria-selected=true] { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); transform: translateY(-2px) rotate(-.8deg); box-shadow: 3px 3px 0 var(--bookedz-ink); }
+:root[data-theme="dark"] .my-rsvps-page.my-rsvps-page .rsvp-tabs button[aria-selected=true] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--bookedz-fill); }
+.my-rsvps-page.my-rsvps-page .rsvp-tabs span { background: color-mix(in srgb, currentColor 14%, transparent); }
+/* Cards as tickets */
+.my-rsvps-page.my-rsvps-page :is(.next-event, .rsvp-row, .saved-event) { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal); }
+.my-rsvps-page.my-rsvps-page .next-event { box-shadow: 6px 6px 0 var(--bookedz-mango); }
+:root[data-theme="dark"] .my-rsvps-page.my-rsvps-page :is(.next-event, .rsvp-row, .saved-event) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+.my-rsvps-page.my-rsvps-page .offer-banner { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-mango); }
+:root[data-theme="dark"] .my-rsvps-page.my-rsvps-page .offer-banner { border-color: var(--bookedz-border); }
+.my-rsvps-page.my-rsvps-page .rsvp-empty { border: 2px dashed var(--bookedz-control-border); border-radius: var(--db-r); }
+
+/* Buttons on these pages: pill shape, stamp press */
+:is(.community-page.community-page, .group-page.group-page, .my-rsvps-page.my-rsvps-page) .btn { border-radius: 99px; border-width: 2px; }
+:is(.community-page.community-page, .group-page.group-page, .my-rsvps-page.my-rsvps-page) .btn-primary { border-color: var(--bookedz-ink); }
+:root[data-theme="dark"] :is(.community-page.community-page, .group-page.group-page, .my-rsvps-page.my-rsvps-page) .btn-primary { border-color: var(--bookedz-fill); }
+@media (hover: hover) { :is(.community-page.community-page, .group-page.group-page, .my-rsvps-page.my-rsvps-page) .btn:not(:disabled):hover { transform: translateY(-2px) rotate(-.6deg); } }
+@media (max-width: 767.98px) {
+  :is(.community-page.community-page .community-hero, .group-page.group-page .group-hero, .my-rsvps-page.my-rsvps-page .rsvps-heading) { box-shadow: 4px 4px 0 var(--bookedz-ink); }
+  .group-page.group-page .group-event { rotate: 0deg; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.community-page.community-page, .group-page.group-page, .my-rsvps-page.my-rsvps-page) :is(.btn:not(:disabled):hover, .group-card:hover, .community-filter[aria-pressed='true'], .rsvp-tabs button[aria-selected=true]) { transform: none; }
+  .group-page.group-page .group-event { rotate: 0deg; transition: none; }
+}

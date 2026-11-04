@@ -1,5 +1,17 @@
 # Decisions
 
+4 November 2026 — Huxley, Community gets Friends; Profile loses its tabs: at the team's request
+Vivienne's Profile **Groups** (friend circles) are removed from the app, because Go together groups
+already use the word and two kinds of group were confusing. Her **Friends** stay and move to a small
+side panel in Community (beside the groups from 1200px, below them on smaller screens), so Profile
+is just Edit profile; `/profile?tab=friends` goes to `/community#friends`. Only the client code went:
+the hosted `profile_groups` tables and functions, `docs/sql/profile-groups-draft.sql` and its check
+are left until the team decides whether to drop them. Go together, the group page and My RSVPs now
+use her "festival ticket" look (header card with a star, outlined cards with hard shadows, pill tabs
+and buttons), added as page-scoped sections in `design-baseline.css`. The removed
+`/organiser/events/:id/edit` page redirects to Manage event's Edit tab, and the My events and Manage
+RSVPs buttons link there directly.
+
 4 November 2026 — Huxley, Go together in live mode: two new migrations,
 `20261104142732_group_event_kind.sql` (adds the `group` event kind on its own, because a new enum
 value can only be used after it commits) and `20261104142907_go_together_groups.sql`. A group is an
