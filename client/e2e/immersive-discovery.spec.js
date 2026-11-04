@@ -25,17 +25,17 @@ test('Discover uses the committed street-map workspace', async ({ page }, testIn
   expect(errors).toEqual([])
 })
 
-test('landing reflows on mobile and Create event and the Community planner both open', async ({ page }, testInfo) => {
+test('landing reflows on mobile and Create event and Community both open', async ({ page }, testInfo) => {
   await page.setViewportSize({width:375,height:900})
   await page.emulateMedia({reducedMotion:'reduce'})
   await page.goto('/')
   await expect(page.getByRole('heading',{level:1,name:'Alex'})).toBeVisible()
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
   await page.screenshot({path:testInfo.outputPath('landing-account-mobile.png')})
-  // Create event makes official events only; hangouts are planned from Community (DESIGN.md, Community)
+  // Create event makes official events only; going with others happens in Community (DESIGN.md, Community)
   await page.goto('/organiser/events/new')
   await expect(page.getByLabel('Event title',{exact:true})).toBeVisible()
   await page.goto('/organiser/events/new?template=hangout')
-  await expect(page).toHaveURL(/\/community\/plan$/)
-  await expect(page.locator('main input').first()).toBeVisible()
+  await expect(page).toHaveURL(/\/community$/)
+  await expect(page.getByRole('heading',{level:1,name:'Go together'})).toBeVisible()
 })

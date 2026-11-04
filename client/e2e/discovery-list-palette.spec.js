@@ -65,7 +65,7 @@ test('supplied palette reaches actual surfaces, headings and actions in both the
       await expect(page.locator('body')).toHaveCSS('background-color',rgb(palette[theme][0]))
       await expect(page.locator('body')).toHaveCSS('color',rgb(palette[theme][2]))
       await expect(page.locator('.app-sidebar')).toHaveCSS('background-color',rgb(palette[theme][1]))
-      if(path==='/my-rsvps')await expect(page.locator('.rsvps-heading')).toHaveCSS('background-color',rgb(palette[theme][6]))
+      if(path==='/my-rsvps')await expect(page.locator('.rsvps-heading')).toHaveCSS('background-image',new RegExp(rgb(palette[theme][6]).replace(/[()]/g,'\\$&')))
       if(path==='/organiser/events')await expect(page.locator('.organiser-heading')).toHaveCSS('background-image',new RegExp(rgb(palette[theme][6]).replace(/[()]/g,'\\$&')))
       if(path==='/organiser/events/new')await expect(page.getByRole('button',{name:'Next',exact:true})).toHaveCSS('background-color',rgb(palette[theme][4]))
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)

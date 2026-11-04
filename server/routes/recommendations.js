@@ -146,9 +146,11 @@ router.get('/', requireAuth, async (req, res) => {
         excludedIds.add(preference.event_id);
       }
     }
+    // Only official events are recommended; hangouts and Go together groups live in Community
     const candidateEvents = events.filter(event =>
       event.organiser_id !== userId
       && !excludedIds.has(event.id)
+      && (!event.kind || event.kind === 'official')
     );
     for (const event of candidateEvents) {
       if (!Array.isArray(event.tags)) throw new Error('Incomplete candidate interest mapping');

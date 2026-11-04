@@ -7,7 +7,6 @@ import AddressSearch from '../components/rsvp/AddressSearch.vue'
 import VenueMap from '../components/VenueMap.vue'
 import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue'
-import HangoutWizard from '../components/hangout/HangoutWizard.vue'
 import { uploadCover } from '../lib/uploadCover.js'
 import { createEvent, getEvent, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
@@ -15,6 +14,7 @@ import { PLANNER_AVAILABLE, searchEventTitles, fetchPlanSuggestion, addPlanToEve
 import { normalizeTitle } from '../utils/planSuggestModel.js'
 import { describeEventChanges, formatAnnouncement } from '../utils/eventChanges.js'
 import { blankEventForm, errorsForStep } from '../utils/eventForm.js'
+import { isOfficialEvent } from '../utils/groups.js'
 
 // Multi-step form (progressive disclosure): one small chunk at a time instead of one long page.
 // The same wizard edits event details inside Manage event (edit mode).
@@ -104,7 +104,6 @@ const editBlocked = ref('') // why this event can't be edited (not yours, alread
 const minCapacity = ref(1) // can't go below the people already confirmed or offered a place
 const hasRsvps = ref(false) // once anyone has RSVP'd, existing questions can't be removed
 const venueLocked = ref(false) // the rain switch already moved the event to its backup venue
-const hangoutEvent = ref(null) // a hangout being edited; the Hangout wizard handles it
 
 const venueCopy = (venue) => (venue ? { name: venue.name, address: venue.address || '', postal: venue.postal || '', lat: venue.lat ?? null, lng: venue.lng ?? null } : null)
 function formFromEvent(event) {
@@ -133,7 +132,6 @@ watch(editId, async (id) => {
   errorMessage.value = ''
   editBlocked.value = ''
   original.value = null
-  hangoutEvent.value = null
   if (!id) {
     form.value = presetForm()
     return
@@ -144,7 +142,7 @@ watch(editId, async (id) => {
     if (request !== editRequest) return
     if (!event.isMine) editBlocked.value = 'You can only edit events you organise.'
     else if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
-    else if (event.kind === 'hangout') hangoutEvent.value = event
+    else if (!isOfficialEvent(event)) editBlocked.value = 'Groups are managed from their page in Community.'
     else {
       const rsvps = await getRsvpsForEvent(id)
       if (request !== editRequest) return
@@ -611,10 +609,7 @@ async function publish() {
 </script>
 
 <template>
-  <!-- Hangouts are edited in the Hangout wizard, so Official-only fields (rain backup venue,
-       RSVP questions) never appear for them -->
-  <HangoutWizard v-if="hangoutEvent" :key="hangoutEvent.id" :edit-event="hangoutEvent" />
-  <div v-else class="design-baseline create-event-page col-12 mx-auto">
+  <div class="design-baseline create-event-page col-12 mx-auto">
     <header class="create-heading">
       <component :is="props.embedded ? 'h2' : 'h1'">{{ isEditing ? 'Edit event' : 'Create an event' }}</component>
       <p>{{ isEditing ? 'Update the details below. Saving changes the live event straight away.' : 'Start with the essentials. You can review everything before it goes live.' }}</p>

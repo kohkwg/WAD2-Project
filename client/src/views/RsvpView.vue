@@ -1,14 +1,14 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useDiscoveryMotion } from '../composables/useDiscoveryMotion'
 import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnouncementFeed from '../components/event-operations/AnnouncementFeed.vue'
 import ClashWarning from '../components/rsvp/ClashWarning.vue'
 import VenueMap from '../components/VenueMap.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
-import HangoutPage from '../components/hangout/HangoutPage.vue'
-import EventJios from '../components/community/EventJios.vue'
+import EventGroups from '../components/community/EventGroups.vue'
+import { isGroup } from '../utils/groups.js'
 import {
   getEvent,
   getUser,
@@ -27,6 +27,7 @@ import { toast } from '@/composables/useToast'
 const pageMotion = ref(null)
 useDiscoveryMotion(pageMotion)
 const route = useRoute()
+const router = useRouter()
 const eventId = computed(() => String(route.params.id))
 
 const event = ref(null)
@@ -59,6 +60,8 @@ watch(eventId, async (id) => {
   try {
     const loadedEvent = await getEvent(id)
     if (ticket !== loadRequest) return
+    // Go together groups have their own page
+    if (isGroup(loadedEvent)) { router.replace(`/groups/${loadedEvent.id}`); return }
     event.value = loadedEvent
     for (const question of loadedEvent.questions) answers.value[question.id] = ''
     const sessionUser = await getCurrentUser()
@@ -197,8 +200,12 @@ async function submitRsvp() {
 </script>
 
 <template>
-  <!-- Hangout-template events keep this URL but show the hangout page instead of the RSVP form. -->
-  <HangoutPage v-if="!loading && event?.kind === 'hangout'" :event="event" :my-rsvps="myRsvps" />
+  <!-- Plans from the retired planner (live rows still stored as kind 'hangout'): point people to Community -->
+  <div v-if="!loading && event?.kind === 'hangout'" class="container py-5 text-center">
+    <h1 class="page-title">This plan has moved</h1>
+    <p class="text-meta">Plans with friends now happen in Go together groups.</p>
+    <RouterLink to="/community" class="btn btn-primary">Go to Community</RouterLink>
+  </div>
   <div v-else ref="pageMotion" class="public-event-page">
   <div class="rsvp-intro">
     <RouterLink to="/events" class="rsvp-back">&larr; All events</RouterLink>
@@ -224,7 +231,7 @@ async function submitRsvp() {
         </p>
       </EventSummary>
       <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
-      <EventJios v-if="event && !event.isOnTeam" :event-id="eventId" />
+      <EventGroups v-if="event && !event.isOnTeam" :event-id="eventId" />
       <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
       <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>
