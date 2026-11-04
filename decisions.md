@@ -1,5 +1,10 @@
 # Decisions
 
+4 November 2026 — Huxley, landing page becomes the sign-in page: the animated island map is
+removed from `/`. Signed-out visitors sign in or create an account there; signed-in people and
+the demo account see an account summary. `/login` redirects to `/` with its `?redirect=`. The
+island art components stay in the repo, unused. No backend changes.
+
 4 November 2026 — Huxley, design consistency pass: one design document,
 [DESIGN.md](docs/design/DESIGN.md), replaces the design system, design review and
 implementation record. Discover does **not** show the "Picked for you" strip (this

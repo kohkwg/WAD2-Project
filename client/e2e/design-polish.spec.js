@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test'
 
-test('search stays with its hero and preserves pending text when views change', async ({ page }, testInfo) => {
+// The landing hero with search and the island map was removed (DESIGN.md, Landing), so these
+// hero journeys are skipped; the same filters are covered on Discover.
+test.skip('search stays with its hero and preserves pending text when views change', async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
   await expect(page.locator('.hero-map')).toBeVisible()
