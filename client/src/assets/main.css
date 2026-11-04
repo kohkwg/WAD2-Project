@@ -259,3 +259,25 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 .cat-wellness { --cat-hue: #06b6d4; }
 .cat-tint { background: color-mix(in srgb, var(--cat-hue, var(--bookedz-muted)) 20%, var(--bookedz-surface)); color: var(--bookedz-ink); }
 [data-theme='dark'] .cat-tint { background: color-mix(in srgb, var(--cat-hue, var(--bookedz-muted)) 30%, var(--bookedz-surface)); }
+
+/* Page change: a short fade so navigation feels connected rather than a hard cut. */
+.route-view { animation: route-in var(--bookedz-motion-normal) var(--bookedz-ease) both; }
+@keyframes route-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* List changes: new items rise in, removed ones fade, the rest slide into place. */
+.list-fade-enter-active { transition: opacity var(--bookedz-motion-normal) var(--bookedz-ease), transform var(--bookedz-motion-normal) var(--bookedz-ease); }
+.list-fade-leave-active { transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease); }
+.list-fade-enter-from { opacity: 0; transform: translateY(8px); }
+.list-fade-leave-to { opacity: 0; }
+.list-fade-move { transition: transform var(--bookedz-motion-normal) var(--bookedz-ease); }
+
+/* A number that just changed gives a small nudge. */
+.value-bump { display: inline-block; animation: value-bump var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
+@keyframes value-bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+
+/* Hover lift for interactive cards on devices with a pointer. */
+@media (hover: hover) {
+  .lift-on-hover { transition: transform var(--bookedz-motion-fast) var(--bookedz-ease), box-shadow var(--bookedz-motion-fast) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease); }
+  .lift-on-hover:hover { transform: translateY(-2px); box-shadow: var(--bookedz-card-shadow); }
+}
+@media (prefers-reduced-motion: reduce) { .route-view, .value-bump { animation: none; } .lift-on-hover:hover { transform: none; } }

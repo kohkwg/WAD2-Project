@@ -5,6 +5,8 @@ import NextEventCard from '../components/rsvp/NextEventCard.vue'
 import ParticipantRsvpRow from '../components/rsvp/ParticipantRsvpRow.vue'
 import SavedEventCard from '../components/rsvp/SavedEventCard.vue'
 import RsvpEmptyState from '../components/rsvp/RsvpEmptyState.vue'
+import SkeletonList from '../components/ui/SkeletonList.vue'
+import { toast } from '../composables/useToast'
 import { groupRsvps, eventCalendar } from '../utils/rsvpOverview.js'
 import {
   getMyRsvps,
@@ -104,6 +106,7 @@ async function moveTab(event, index) {
 // `now` ticks every 30 seconds so the offer countdown moves
 const now = ref(Date.now())
 let timer = null
+let clock = null
 let mounted = false
 let loadRequest = 0
 let refreshing = false
@@ -167,6 +170,8 @@ onMounted(async () => {
     now.value = Date.now()
     refreshRsvps()
   }, 30000)
+  // While a waitlist offer is open, the countdown moves every second.
+  clock = setInterval(() => { if (offers.value.length) now.value = Date.now() }, 1000)
   window.addEventListener('focus', onFocus)
 })
 
@@ -174,6 +179,7 @@ onUnmounted(() => {
   mounted = false
   loadRequest++
   clearInterval(timer)
+  clearInterval(clock)
   window.removeEventListener('focus', onFocus)
 })
 
@@ -194,6 +200,7 @@ async function answerOffer(rsvpId, accept) {
     statusMessage.value = accept
       ? 'Spot confirmed. See you there!'
       : 'Offer declined. The spot goes to the next person on the waitlist.'
+    toast(accept ? 'Spot confirmed' : 'Offer declined')
     focusMessage(statusAlert)
   } catch (error) {
     if (!mounted) return
@@ -249,7 +256,7 @@ async function cancel(rsvpId) {
       <div><h1 class="page-title">My RSVPs</h1><p>Your plans, saved favourites and good times to come.</p></div>
       <span class="header-star" aria-hidden="true">✳</span>
     </header>
-    <div v-if="loading" class="text-center my-5" role="status"><span class="spinner-border text-primary" aria-hidden="true"></span><span class="visually-hidden">Loading your RSVPs…</span></div>
+    <SkeletonList v-if="loading" class="mt-4" :count="3" label="Loading your RSVPs…" />
     <template v-else>
       <div v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success mt-3" role="status" aria-live="polite">{{ statusMessage }}</div>
       <div v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger mt-3" role="alert">{{ errorMessage }}</div>

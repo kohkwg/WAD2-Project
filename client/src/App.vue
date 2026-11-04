@@ -3,6 +3,7 @@ import { nextTick, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import ScrollExperience from './components/ScrollExperience.vue'
+import ToastHost from './components/ui/ToastHost.vue'
 
 const route = useRoute()
 const main = ref(null)
@@ -21,12 +22,14 @@ watch(() => route.path, async () => {
   <div class="app-shell">
   <NavBar />
   <main id="main-content" ref="main" class="container app-main" :class="{ 'app-main--discover': route.path === '/discover' || route.path === '/' }" tabindex="-1">
-    <RouterView />
+    <!-- Keyed by path so each page fades in; opacity only, so sticky and fixed children keep working. -->
+    <div :key="route.path" class="route-view"><RouterView /></div>
   </main>
   <footer class="app-footer">
     <div class="container"><div><RouterLink to="/" class="footer-home-link" aria-label="Bookedz home">Bookedz</RouterLink><span class="ms-3">A little island. A lot to discover.</span></div><span>Explore Singapore. Make a little room for something new.</span></div>
   </footer>
   </div>
+  <ToastHost />
 </template>
 
 <style scoped>

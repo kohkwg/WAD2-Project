@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { getOrganiserEvents, deleteEvent } from '../utils/api.js'
 import OrganiserEventCard from '../components/organiser/OrganiserEventCard.vue'
+import SkeletonList from '../components/ui/SkeletonList.vue'
 import { organiserEventState, organiserEventCounts, filterOrganiserEvents } from '../utils/organiserEvents.js'
 
 const route = useRoute()
@@ -126,7 +127,7 @@ async function removeEvent(eventId) {
     <div v-if="justUpdatedId" class="alert alert-success" role="status">Changes saved. {{ route.query.announced ? 'An announcement about them is now on the event page.' : 'No announcement was posted.' }}</div>
     <div v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success" role="status">{{ statusMessage }}</div>
     <div v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }} <button type="button" class="btn btn-outline-secondary" :disabled="busyId !== null" @click="loadEvents">Retry loading events</button></div>
-    <div v-if="loading" class="text-center my-5" role="status"><span class="spinner-border text-primary" aria-hidden="true"></span><span class="visually-hidden">Loading your events…</span></div>
+    <SkeletonList v-if="loading" variant="card" :count="3" label="Loading your events…" />
     <template v-else>
       <aside v-if="pendingCount > 0" class="pending-summary" aria-label="Pending RSVP requests"><p><span aria-hidden="true">!</span><strong>{{ pendingCount }}</strong> {{ pendingCount === 1 ? 'RSVP is' : 'RSVPs are' }} waiting for your approval across {{ pendingEvents.length }} {{ pendingEvents.length === 1 ? 'event' : 'events' }}.</p><button type="button" class="btn btn-primary" @click="reviewAll">Review all requests</button></aside>
       <div class="events-controls">
@@ -137,7 +138,7 @@ async function removeEvent(eventId) {
       <div v-if="pendingOnly" class="request-filter">Showing events with pending requests. <button type="button" @click="pendingOnly = false">Show all {{ activeTab }} events</button></div>
       <section id="organiser-events-panel" :key="activeTab" role="tabpanel" :aria-labelledby="`organiser-tab-${activeTab}`" tabindex="0">
         <h2 ref="resultsHeading" tabindex="-1" class="events-section-title section-title">{{ sectionTitle }} <span>{{ visibleEvents.length }} {{ visibleEvents.length === 1 ? 'event' : 'events' }}</span></h2>
-        <div v-if="visibleEvents.length" class="organiser-grid"><OrganiserEventCard v-for="event in visibleEvents" :key="event.id" :event="event" :now="now" :confirming="confirmDeleteId === event.id" :busy="busyId === event.id" :disabled="busyId !== null" :just-created="event.id === justCreatedId" @ask-delete="askDelete" @keep="keepEvent" @delete="removeEvent" /></div>
+        <TransitionGroup v-if="visibleEvents.length" tag="div" name="list-fade" class="organiser-grid"><OrganiserEventCard v-for="event in visibleEvents" :key="event.id" :event="event" :now="now" :confirming="confirmDeleteId === event.id" :busy="busyId === event.id" :disabled="busyId !== null" :just-created="event.id === justCreatedId" @ask-delete="askDelete" @keep="keepEvent" @delete="removeEvent" /></TransitionGroup>
         <div v-else-if="!errorMessage" class="empty-events"><span aria-hidden="true">{{ search.trim() ? '⌕' : '✳' }}</span><h3 class="event-title">{{ emptyTitle }}</h3><p>{{ emptyCopy }}</p><button v-if="search.trim()" type="button" class="btn btn-outline-secondary" @click="search = ''">Clear search</button><button v-else-if="pendingOnly" type="button" class="btn btn-outline-secondary" @click="pendingOnly = false">Show all upcoming events</button><RouterLink v-else-if="activeTab !== 'past'" to="/organiser/events/new" class="btn btn-primary">{{ counts.all ? 'Create event' : 'Create your first event' }}</RouterLink><RouterLink v-else to="/discover" class="btn btn-outline-secondary">Explore events</RouterLink></div>
       </section>
       <div v-if="activeTab === 'upcoming' && counts.past > 0" class="past-shortcut"><p><strong>Past events · {{ counts.past }}</strong> Results and attendance for events that have ended.</p><button type="button" @click="selectTab('past')">Show past events</button></div>

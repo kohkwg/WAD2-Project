@@ -21,7 +21,7 @@ const label = computed(() => {
 const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Math.min(100, Math.round((props.event.confirmedCount || 0) / props.event.capacity * 100))) : 0)
 </script>
 <template>
-  <article class="organiser-event-card" :class="[`event-state-${state}`, { 'just-created': justCreated }]">
+  <article class="organiser-event-card lift-on-hover" :class="[`event-state-${state}`, { 'just-created': justCreated }]">
     <header class="card-date"><div><strong>{{ validDate ? date.getDate() : '—' }}</strong><span>{{ dateCaption }}</span></div><span class="date-label">{{ label }}</span></header>
     <div class="event-card-copy">
       <h3 class="event-title">{{ event.title || 'Untitled draft' }}</h3>

@@ -45,7 +45,9 @@ export function formatTimeLeft(expiresAt, now) {
   if (msLeft <= 0) return 'expired'
   const hours = Math.floor(msLeft / (60 * 60 * 1000))
   const minutes = Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000))
-  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+  // In the last hour the seconds matter, so the countdown shows them.
+  const seconds = Math.floor((msLeft % (60 * 1000)) / 1000)
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m ${String(seconds).padStart(2, '0')}s`
 }
 
 // <input type="datetime-local"> wants "2026-10-14T19:30" (local time, no seconds)

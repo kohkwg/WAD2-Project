@@ -32,7 +32,7 @@ const status = computed(() => props.event.my_rsvp_status || props.event.registra
 </script>
 
 <template>
-  <article class="discovery-event-row" :class="{ 'is-selected': selected }" :data-event-id="event.id">
+  <article class="discovery-event-row lift-on-hover" :class="{ 'is-selected': selected }" :data-event-id="event.id">
     <button type="button" class="row-cover" :aria-label="`Show ${event.title} on map`" :aria-pressed="selected" @click="emit('select', event)">
       <img v-if="cover && failedCover !== cover" :src="cover" alt="" loading="lazy" @error="failedCover = cover" />
       <EventArtwork v-else :category="category" />
