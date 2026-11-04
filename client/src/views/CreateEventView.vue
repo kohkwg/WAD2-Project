@@ -1096,7 +1096,7 @@ async function publish() {
 .preview-copy { padding: .9rem; }
 .preview-date { margin: 0 0 .35rem; color: var(--bookedz-primary-dark); font-size: .76rem; font-weight: 650; }
 .preview-copy h2 { margin: 0 0 .45rem; color: var(--bookedz-ink); font-size: 1.1rem; line-height: 1.2; overflow-wrap: anywhere; }
-.preview-description { display: -webkit-box; overflow: hidden; margin: 0 0 .8rem; color: var(--bookedz-muted); font-size: .82rem; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.preview-description { display: -webkit-box; overflow: hidden; margin: 0 0 .8rem; color: var(--bookedz-muted); font-size: .82rem; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; }
 .preview-meta { display: flex; gap: .5rem; align-items: baseline; margin-top: .4rem; color: var(--bookedz-ink); font-size: .78rem; }
 .preview-meta span:first-child { color: var(--bookedz-primary-dark); font-size: 1rem; }
 .preview-note { margin: .75rem 0 0; color: var(--bookedz-muted); font-size: .75rem; line-height: 1.4; }

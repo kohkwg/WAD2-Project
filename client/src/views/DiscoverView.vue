@@ -46,7 +46,8 @@ function chooseCategory(category = '') {
   searchControl.value?.flushSearch()
   filters.value = { ...filters.value, categories: category ? [category] : [] }
 }
-const smallScreen = ref(false)
+// Set before the first render so phones never flash both panes
+const smallScreen = ref(window.matchMedia('(max-width: 767px)').matches)
 let smallMedia
 const updateSmallScreen = () => { smallScreen.value = smallMedia?.matches ?? false }
 onMounted(() => {
@@ -70,21 +71,32 @@ onMounted(() => {
   updateRowFade()
 })
 onBeforeUnmount(() => rowObserver?.disconnect())
-const streetMap = ref(null)
-const selectedEventId = ref(null)
-// Below md the list and map share one space, so showing an event on the map switches to it.
-function selectMapEvent(event) {
-  selectedEventId.value = event.id
-  if (smallScreen.value) showMap()
-}
-async function showMap() {
+// Phones show the list or the map (List | Map toggle); from 768px both sit side by side.
+// The pane is the remembered view mode, so it survives returning to Discover.
+// Coming back to the list returns to the same scroll spot instead of jumping around.
+const mobilePane = viewMode
+const toolbar = ref(null)
+let listScrollY = 0
+async function showPane(pane) {
+  if (pane === mobilePane.value) return
   searchControl.value?.flushSearch()
-  viewMode.value = 'map'
+  if (pane === 'map') listScrollY = window.scrollY
+  mobilePane.value = pane
   await nextTick()
-  streetMap.value?.focus({ preventScroll: true })
+  if (pane === 'list') window.scrollTo({ top: listScrollY, behavior: 'instant' })
+  else {
+    // Keep the toggle and the map in view (the sticky top bar covers the first 72px)
+    const top = toolbar.value.getBoundingClientRect().top + window.scrollY - 80
+    if (window.scrollY > top) window.scrollTo({ top: Math.max(0, top), behavior: 'instant' })
+  }
 }
-const showListPane = computed(() => !smallScreen.value || viewMode.value === 'list')
-const showMapPane = computed(() => !smallScreen.value || viewMode.value === 'map')
+const selectedEventId = ref(null)
+// Row clicks pass { scroll: false } and just select; on phones the thumbnail's "Show on map"
+// opens the Map pane instead of scrolling down the page
+function selectMapEvent(event, { scroll = true } = {}) {
+  selectedEventId.value = event.id
+  if (scroll && smallScreen.value) showPane('map')
+}
 const resultList = ref(null)
 const router = useRouter()
 const commonCategories = CATEGORIES
@@ -198,29 +210,23 @@ function goToPage(nextPage) {
   <div ref="pageRoot" class="discover-page" tabindex="-1">
     <h1 class="visually-hidden">{{ categoryTitle }}</h1>
       <div class="discovery-search"><EventFilters ref="searchControl" v-model="filters" v-model:search="search" :total="total" :loading="loading" :error="error" show-active @show="showList" @retry="refreshDiscovery" /></div>
-      <div class="discovery-toolbar">
+      <div ref="toolbar" class="discovery-toolbar">
         <nav ref="categoryRow" class="category-shortcuts" :class="{ 'fade-start': rowFade.start, 'fade-end': rowFade.end }" aria-label="Event categories" @scroll.passive="updateRowFade">
           <button type="button" class="category-shortcut" :aria-pressed="!filters.categories.length" @click="chooseCategory()">All</button>
           <button v-for="category in commonCategories" :key="category" type="button" class="category-shortcut cat-tint" :class="`cat-${category}`" :aria-pressed="filters.categories.includes(category)" @click="chooseCategory(category)">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</button>
         </nav>
         <div class="results-tools">
           <span aria-live="polite"><BumpValue :value="total" /> {{ total === 1 ? 'event' : 'events' }}</span>
-          <div v-if="smallScreen" class="view-toggle" role="group" aria-label="Show events as">
-            <button type="button" :aria-pressed="viewMode === 'list'" @click="showList">
-              <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M7 5h10M7 10h10M7 15h10M3 5h.01M3 10h.01M3 15h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
-              List
-            </button>
-            <button type="button" :aria-pressed="viewMode === 'map'" @click="showMap">
-              <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M2.5 5 7 3l6 2 4.5-2v12L13 17l-6-2-4.5 2V5ZM7 3v12M13 5v12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /></svg>
-              Map
-            </button>
+          <div v-if="smallScreen" class="pane-switch" role="group" aria-label="Show events as">
+            <button type="button" :aria-pressed="mobilePane === 'list'" @click="showPane('list')">List</button>
+            <button type="button" :aria-pressed="mobilePane === 'map'" @click="showPane('map')">Map</button>
           </div>
           <label class="results-sort"><span class="visually-hidden">Sort by</span><select v-model="sort" name="sort" aria-label="Sort events"><option value="soonest">Soonest first</option><option value="popular">Most popular</option></select></label>
 
         </div>
       </div>
-      <div class="discovery-workspace" id="event-directory">
-        <section v-show="showListPane" ref="resultList" class="discovery-list" aria-label="Upcoming events" :aria-busy="loading" tabindex="-1">
+      <div class="discovery-workspace" :data-pane="smallScreen ? mobilePane : undefined" id="event-directory">
+        <section ref="resultList" class="discovery-list" aria-label="Upcoming events" :aria-busy="loading" tabindex="-1">
           <h2 class="visually-hidden">What’s coming up</h2>
           <!-- First load shows placeholder rows; later filter changes keep the old results visible (dimmed) until the new ones arrive. -->
           <SkeletonList v-if="loading && !events.length" :count="5" label="Finding your next event…" />
@@ -238,7 +244,7 @@ function goToPage(nextPage) {
             <button type="button" class="btn btn-outline-secondary" :disabled="page === 1 || loading" @click="goToPage(page - 1)">Previous</button><span>{{ page }} / {{ totalPages }}</span><button type="button" class="btn btn-outline-secondary" :disabled="page === totalPages || loading" @click="goToPage(page + 1)">Next</button>
           </nav>
         </section>
-        <div v-show="showMapPane" ref="streetMap" class="discovery-map-column" tabindex="-1">
+        <div class="discovery-map-column">
           <DiscoveryStreetMap :events="mappedPageEvents" :search-text="search" :focused-event-id="selectedEventId" :prominent-ids="discoveryPicks.map(event => event.id)" :loading="loading" :error="error" @select="selectedEventId = $event" @retry="refreshDiscovery" />
         </div>
       </div>
@@ -265,19 +271,18 @@ function goToPage(nextPage) {
 .category-shortcut:hover { border-color: var(--bookedz-control-border); }
 .category-shortcut { transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease), transform var(--bookedz-motion-feedback) var(--bookedz-ease); }
 .category-shortcut:active { transform: scale(.95); }
-.view-toggle button { transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease); }
+.pane-switch button { transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .all-categories-link,.browse-back { display: inline-flex; align-items: center; min-height: 44px; padding: 6px; color: var(--bookedz-primary-dark); font-size: 12px; }
 .results-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--bookedz-muted); font-size: 12px; }
 .results-sort select { min-height: 44px; border: 0; background: transparent; color: var(--bookedz-ink); font: inherit; }
+/* Phones: List | Map segmented toggle (44px tall in all) */
+.pane-switch { display: inline-flex; padding: 2px; border-radius: 99px; background: var(--bookedz-hover); }
+.pane-switch button { min-width: 64px; min-height: 40px; padding: 6px 14px; border: 0; border-radius: 99px; background: transparent; color: var(--bookedz-muted); font-size: 12px; font-weight: 600; }
+.pane-switch button[aria-pressed=true] { background: var(--bookedz-surface); color: var(--bookedz-ink); box-shadow: var(--bookedz-tab-shadow); }
 
 .discovery-workspace { display: grid; grid-template-columns: minmax(0,.94fr) minmax(0,1.06fr); align-items: start; gap: 16px; min-width: 0; }
 .discovery-list,.discovery-map-column { min-width: 0; }
-.discovery-map-column { position: sticky; top: 18px; }
-.discovery-map-column:focus { outline: none; }
-.view-toggle { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--bookedz-hover); }
-.view-toggle button { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border: 0; border-radius: 9px; background: transparent; color: var(--bookedz-muted); font: inherit; font-size: 13px; font-weight: 700; }
-.view-toggle button[aria-pressed=true] { background: var(--bookedz-surface); color: var(--bookedz-ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-.view-toggle button:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
+.discovery-map-column { position: sticky; top: calc(var(--topbar-h, 0px) + 18px); }
 
 .event-timeline { --date-column: 66px; position: relative; }
 .event-timeline::before { content: ''; position: absolute; left: var(--date-column); top: 8px; bottom: 12px; width: 1px; background: var(--bookedz-border); }
@@ -300,10 +305,12 @@ function goToPage(nextPage) {
   .discover-page { padding: 18px 12px 32px; }
   .discovery-workspace { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
 }
-/* Below md the list and map take turns, chosen with the List / Map toggle. */
+/* Phones: one pane at a time; tablets and up keep the list and the pinned map side by side */
 @media(max-width:767px) {
-  .discovery-workspace { display: block; }
+  .discovery-workspace { display: block; min-width: 0; }
   .discovery-map-column { position: relative; top: auto; }
+  .discovery-workspace[data-pane='list'] .discovery-map-column,
+  .discovery-workspace[data-pane='map'] .discovery-list { display: none; }
 }
 @media(max-width:575px) { .event-timeline { --date-column: 52px; }.date-events { padding-left: 10px; }.date-label { font-size: 12px; }.weekday { font-size: 10px; }.results-tools { width: 100%; justify-content: space-between; }.category-shortcut { padding-inline: 12px; } }
 </style>
