@@ -1,4 +1,5 @@
 <script setup>
+import '../assets/design-baseline.css'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useDiscoveryMotion } from '../composables/useDiscoveryMotion'

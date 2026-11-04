@@ -1,4 +1,5 @@
 <script setup>
+import '../assets/design-baseline.css'
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import OfferBanner from '../components/rsvp/OfferBanner.vue'
 import NextEventCard from '../components/rsvp/NextEventCard.vue'
