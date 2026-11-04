@@ -154,7 +154,11 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 
 - **Navigation:** sidebar on desktop, a floating frosted top bar where needed, a bottom tab
   bar on phones for signed-in and demo users. Personal links follow the session; Discover
-  is public. The menu closes on route change or Escape.
+  is public. The menu closes on route change or Escape. From 992px a **Collapse sidebar**
+  button at the bottom of the sidebar turns it into a 76px icon rail (Discover, Community, My
+  RSVPs, My events, Settings, Theme, account); each icon's name shows as a tooltip on hover or
+  keyboard focus, and the page widens with it. The choice is saved as `bookedz-sidebar`; until
+  someone chooses, it starts collapsed below 1200px and expanded above.
 - **Theme:** System / Light / Dark, defaulting to the OS and saved as `bookedz-color-theme`.
   Bootstrap's `data-bs-theme`, native controls, map tiles and the browser colour follow it.
 - **Breakpoints:** phones below 768px (Bootstrap md), tablets 768 to 991px, desktop 992px
@@ -224,9 +228,14 @@ and My events exclude groups).
 - **Joining** takes a spot in the group, then offers a one-tap step to RSVP to the event itself
   ("RSVP", "Join waitlist" or "Request a spot"), because the event's own capacity and approval
   rules still decide that.
-- **Before and after:** two slots fitted around the event (an hour, ending 15 minutes before
-  the start; an hour, starting 15 minutes after the end), named by time of day (Lunch, Dinner…).
-  Members suggest a spot from nearby food deals (from the Telegram and deal-site pipeline) or
+- **Before and after:** a slot each side of the event, named by time of day (Lunch, Dinner…).
+  Availability is when2meet style: each side is a column of 15-minute cells covering three
+  hours (leaving 15 minutes to walk over). Members press and drag down "You" to paint the times
+  they're free (touch works too; Space toggles one cell; All, Clear and "I can't make it" are
+  shortcuts). "Group" shades each cell by how many are free; pointing at one names them. The
+  slot is the longest stretch (45 minutes or more) with the most people free for all of it,
+  outlined on the Group column, nearest the event on a tie. The card lists who's free then, who
+  isn't and who hasn't marked anything. Until then it uses a default hour. Members suggest a spot from nearby food deals (from the Telegram and deal-site pipeline) or
   nearby places (Geoapify / OpenStreetMap), or type one; everyone marks the ideas they're
   **Keen** on; the host **Picks** one per slot. A OneMap map shows the venue (★), ideas
   (numbered) and picks (orange ✓). Deals show distance, a walk estimate and a link to the post.
@@ -338,6 +347,13 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **4 Nov 2026:** Collapsible sidebar (icon rail with tooltips, remembered). Go together
+  pages got more motion and live updates: painted cells pop, the group heatmap and best
+  outline ease, slot times and picks fade in, Keen counts and filter counts bump, members
+  and chat messages slide in, map pins drop in, and the group page refreshes every 20 seconds
+  (chat every 15) and on focus. All of it is off with reduced motion.
+- **4 Nov 2026:** Members paint when they're free before and after the event on a
+  when2meet-style grid; each slot is the best shared stretch. Map pins keep fixed colours so they show in the dark theme.
 - **4 Nov 2026:** Community became **Go together**: groups (no longer "jios") with public or
   private visibility and invite links, a page per group, and a before and after food planner
   with nearby deals and places. The old hangout planner (find a time, itinerary, On the day)

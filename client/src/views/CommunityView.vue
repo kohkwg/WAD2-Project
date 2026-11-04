@@ -5,6 +5,7 @@ import { getEvents, getGroups, GROUPS_AVAILABLE } from '../utils/api.js'
 import GroupCard from '../components/community/GroupCard.vue'
 import StartGroupDialog from '../components/community/StartGroupDialog.vue'
 import SkeletonList from '../components/ui/SkeletonList.vue'
+import BumpValue from '../components/ui/BumpValue.vue'
 import { toast } from '../composables/useToast'
 
 // Community is Go together: people start a group for an event ("who wants to come?"),
@@ -104,7 +105,7 @@ const counts = computed(() => ({
       <div class="community-tools">
         <div class="community-filters" role="group" aria-label="Show groups">
           <button v-for="f in FILTERS" :key="f.key" type="button" class="community-filter" :aria-pressed="filter === f.key" @click="filter = f.key">
-            {{ f.label }} <span class="tnum">{{ counts[f.key] }}</span>
+            {{ f.label }} <span class="tnum"><BumpValue :value="counts[f.key]" /></span>
           </button>
         </div>
         <label class="visually-hidden" for="group-search">Search groups</label>

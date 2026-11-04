@@ -126,7 +126,9 @@ async function submit() {
 .group-visibility { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .group-vis-option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--bookedz-border); border-radius: 14px; cursor: pointer; transition: border-color var(--bookedz-motion-fast) var(--bookedz-ease), background-color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .group-vis-option > span { display: grid; gap: 2px; }
-.group-vis-option.is-on { border-color: var(--bookedz-primary); background: var(--bookedz-orange-soft); }
+.group-vis-option.is-on { border-color: var(--bookedz-primary); background: var(--bookedz-orange-soft); animation: vis-pick var(--bookedz-motion-fast, .16s) var(--bookedz-ease-stamp, ease-out); }
+@keyframes vis-pick { 50% { transform: scale(1.02); } }
+@media (prefers-reduced-motion: reduce) { .group-vis-option.is-on { animation: none; } }
 .group-vis-option .form-check-input { margin-top: 4px; flex: none; }
 .group-error { margin: 6px 0 0; color: var(--bookedz-danger); font-size: .88rem; }
 .group-form-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }

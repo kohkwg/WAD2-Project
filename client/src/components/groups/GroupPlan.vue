@@ -1,12 +1,15 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import GroupMap from './GroupMap.vue'
-import { getFoodNearby, suggestGroupStop, voteGroupStop, chooseGroupStop, removeGroupStop } from '../../utils/api.js'
+import AvailabilityPainter from './AvailabilityPainter.vue'
+import BumpValue from '../ui/BumpValue.vue'
+import { getFoodNearby, suggestGroupStop, voteGroupStop, chooseGroupStop, removeGroupStop, setGroupAvailability } from '../../utils/api.js'
 import { SLOTS, SUGGESTION_NAME_LIMIT } from '../../utils/groups.js'
 import { toast } from '../../composables/useToast'
 
-// Before / after the event: members suggest a nearby place or food deal for each slot,
-// mark the ones they're keen on, and the host picks one. Times fit around the event.
+// Before / after the event: members paint when they're free each side of it, when2meet
+// style (the slot is the longest stretch with the most people free), suggest a nearby place or food deal, mark the ones
+// they're keen on, and the host picks one.
 const props = defineProps({ group: { type: Object, required: true } })
 const emit = defineEmits(['update:plan'])
 const isHost = computed(() => props.group.myStatus === 'host')
@@ -44,6 +47,9 @@ async function act(key, fn, message) {
 }
 const vote = (slot, s) => act(`vote-${s.id}`, () => voteGroupStop(props.group.id, slot, s.id, !s.myVote))
 const choose = (slot, s) => act(`pick-${s.id}`, () => chooseGroupStop(props.group.id, slot, s && s.id !== plan.value[slot].chosenId ? s.id : null), s && s.id !== plan.value[slot].chosenId ? `${s.name} is the plan for ${plan.value[slot].label.toLowerCase()}` : 'Pick cleared')
+const firstName = (p) => (p.me ? 'You' : p.name.split(/\s+/)[0])
+const names = (list) => list.map(firstName).join(', ')
+const saveAvailability = (slot, cells) => act(`avail-${slot}`, () => setGroupAvailability(props.group.id, slot, cells))
 const remove = (slot, s) => act(`remove-${s.id}`, () => removeGroupStop(props.group.id, slot, s.id), 'Idea removed')
 
 async function suggest(slot, item) {
@@ -72,20 +78,31 @@ const validLabel = { valid: 'On at this time', unknown: 'Check times' }
   <section class="group-plan" aria-labelledby="group-plan-title">
     <div class="group-plan-head">
       <h2 id="group-plan-title" class="section-title m-0">Before and after</h2>
-      <p class="text-meta text-secondary m-0">Grab food together around the event. Suggest a spot, mark the ones you’re keen on{{ isHost ? ', then pick one.' : '; the host picks.' }}</p>
+      <p class="text-meta text-secondary m-0">Grab food together around the event. Mark when you’re free, suggest a spot and mark the ones you’re keen on{{ isHost ? ', then pick one.' : '; the host picks.' }}</p>
     </div>
 
     <div class="group-slots">
       <article v-for="slot in SLOTS" :key="slot" class="group-slot" :aria-labelledby="`slot-${slot}`">
         <header class="group-slot-head">
           <div>
-            <h3 :id="`slot-${slot}`" class="group-slot-title">{{ slotTitle(slot) }}</h3>
-            <p class="text-meta text-secondary m-0 tnum">{{ slotWhen(slot) }}</p>
+            <Transition name="list-fade" mode="out-in"><h3 :id="`slot-${slot}`" :key="slotTitle(slot)" class="group-slot-title">{{ slotTitle(slot) }}</h3></Transition>
+            <Transition name="list-fade" mode="out-in"><p :key="slotWhen(slot)" class="text-meta text-secondary m-0 tnum">{{ slotWhen(slot) }}</p></Transition>
           </div>
           <span v-if="chosen(slot)" class="group-slot-badge pop-once">Planned</span>
         </header>
 
-        <p v-if="chosen(slot)" class="group-slot-chosen">
+        <p class="group-slot-fit text-caption m-0" aria-live="polite">
+          <template v-if="plan[slot].fitted">
+            <strong>Best time, {{ plan[slot].coming.length }} of {{ plan[slot].memberCount }} free:</strong> {{ names(plan[slot].coming) }}.
+            <template v-if="plan[slot].cant.length"> Not free then: {{ names(plan[slot].cant) }}.</template>
+          </template>
+          <template v-else>Nobody has marked a free stretch of 45 minutes or more yet, so this is a default hour.</template>
+          <template v-if="plan[slot].noReply.length"> Not marked yet: {{ names(plan[slot].noReply) }}.</template>
+        </p>
+
+        <AvailabilityPainter :slot="slot" :cells="plan[slot].cells" :my-cells="plan[slot].myCells" :member-count="plan[slot].memberCount" :best="plan[slot].fitted ? { start: plan[slot].start, end: plan[slot].end } : null" @save="saveAvailability(slot, $event)" />
+
+        <p v-if="chosen(slot)" :key="chosen(slot).id" class="group-slot-chosen pop-in">
           <strong>{{ chosen(slot).name }}</strong>{{ chosen(slot).detail ? ` · ${chosen(slot).detail}` : '' }}
         </p>
 
@@ -100,7 +117,7 @@ const validLabel = { valid: 'On at this time', unknown: 'Check times' }
             </div>
             <div class="group-idea-actions">
               <button type="button" class="btn btn-sm group-keen" :class="s.myVote ? 'is-on' : ''" :aria-pressed="s.myVote" :disabled="busy === `vote-${s.id}`" @click="vote(slot, s)">
-                Keen <span class="tnum">{{ s.votes }}</span>
+                Keen <span class="tnum"><BumpValue :value="s.votes" /></span>
               </button>
               <button v-if="isHost" type="button" class="btn btn-sm" :class="s.id === plan[slot].chosenId ? 'btn-outline-secondary' : 'btn-primary'" :disabled="busy === `pick-${s.id}`" @click="choose(slot, s)">
                 {{ s.id === plan[slot].chosenId ? 'Unpick' : 'Pick' }}
@@ -173,6 +190,14 @@ const validLabel = { valid: 'On at this time', unknown: 'Check times' }
 .group-slot-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .group-slot-title { margin: 0; font: 600 1.05rem var(--bookedz-heading); }
 .group-slot-badge { padding: 3px 10px; border-radius: 99px; background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); font-size: var(--text-caption); font-weight: 700; }
+.group-slot-fit { color: var(--bookedz-muted); overflow-wrap: anywhere; }
+@keyframes chosen-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+.pop-in { animation: chosen-in var(--bookedz-motion-normal, .24s) var(--bookedz-ease-stamp, ease-out); }
+.group-keen { transition: background-color var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease), border-color var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease), transform var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease); }
+.group-keen:active { transform: scale(.94); }
+.group-slot { transition: border-color var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease), box-shadow var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease); }
+.group-slot:has(.group-slot-badge) { border-color: color-mix(in srgb, var(--bookedz-teal-ink) 50%, var(--bookedz-border)); }
+@media (prefers-reduced-motion: reduce) { .pop-in, .group-keen, .group-slot { animation: none; transition: none; } }
 .group-slot-chosen { margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--bookedz-orange-soft); overflow-wrap: anywhere; }
 .group-ideas,.group-options { display: grid; gap: 8px; }
 .group-idea,.group-option { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 8px 10px; border: 1px solid var(--bookedz-border); border-radius: 12px; }

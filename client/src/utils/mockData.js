@@ -3,7 +3,7 @@
 // members (who is in which organiser's club) and attendanceHistory.
 //
 // Dates are worked out from "now", so the demo never goes out of date.
-import { isGroup, groupEventData, emptyPlan } from './groups.js'
+import { isGroup, groupEventData, emptyPlan, slotCells } from './groups.js'
 
 // An exact time N days from today, e.g. daysFromNow(5, 19) → 5 days later at 7:00 pm
 function daysFromNow(days, hour, minute = 0) {
@@ -400,7 +400,7 @@ export function createSeedData() {
 
 // Sample Go together groups from other students (Community), tied to upcoming official
 // events. Also brings demo data saved by older versions up to date (open jios became groups).
-export const GROUP_SEED_VERSION = 2
+export const GROUP_SEED_VERSION = 4
 export function addSampleGroups(db) {
   db.groupComments = db.groupComments || []
   // Older demo data: jio comments become group comments; groups get an invite link and a plan
@@ -422,6 +422,7 @@ export function addSampleGroups(db) {
     e.hangout.inviteToken = e.hangout.inviteToken || `inv-${e.id}`
     e.hangout.visibility = e.hangout.visibility === 'private' ? 'private' : 'public'
     e.plan = e.plan || emptyPlan()
+    e.plan.availability = e.plan.availability || {}
   }
   const now = Date.now()
   const upcoming = (id) => db.events.find((e) => e.id === id && e.kind !== 'hangout' && e.status === 'published' && new Date(e.startTime) > now)
@@ -443,6 +444,12 @@ export function addSampleGroups(db) {
   const first = db.events.find((e) => e.id === 'grp1')
   if (first && !first.plan.before.suggestions.length) {
     first.plan.before.suggestions.push({ id: 's-grp1', kind: 'custom', refId: null, name: 'Lau Pa Sat', detail: null, priceText: null, address: '18 Raffles Quay', lat: 1.2806, lng: 103.8504, sourceUrl: null, suggestedBy: 'u3', votes: ['u3', 'u2'], createdAt: new Date(now - 2 * 3600e3).toISOString() })
+  }
+  // …and two members have marked when they're free (version 4; version 3 used minutes)
+  if (first) {
+    const before = slotCells(first, 'before')
+    const old = Object.values(first.plan.availability || {}).some((a) => Object.values(a).some((v) => !Array.isArray(v)))
+    if (old || !Object.keys(first.plan.availability || {}).length) first.plan.availability = { u2: { before: before.slice(4), after: [] }, u3: { before: before.slice(7) } }
   }
   db.groupSeedVersion = GROUP_SEED_VERSION
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import EventArtwork from '../components/EventArtwork.vue'
 import BumpValue from '../components/ui/BumpValue.vue'
@@ -40,6 +40,11 @@ async function load({ quiet = false } = {}) {
   }
 }
 watch(() => [route.params.id, route.params.token], () => load(), { immediate: true })
+// Live: pick up others joining, marking times and suggesting spots every 20 s and on focus
+const refresh = () => { if (!document.hidden && group.value && !busy.value) load({ quiet: true }) }
+let timer
+onMounted(() => { timer = setInterval(refresh, 20000); window.addEventListener('focus', refresh) })
+onBeforeUnmount(() => { clearInterval(timer); window.removeEventListener('focus', refresh) })
 
 const event = computed(() => group.value?.event)
 const isHost = computed(() => group.value?.myStatus === 'host')
@@ -158,12 +163,12 @@ const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 
           <h2 id="group-people-title" class="section-title m-0"><BumpValue :value="people.length" /> going</h2>
           <span class="text-meta text-secondary">{{ full ? 'Full' : `${group.spotsLeft} ${group.spotsLeft === 1 ? 'spot' : 'spots'} left` }}</span>
         </div>
-        <ul class="list-unstyled m-0 group-people stagger-in">
+        <TransitionGroup tag="ul" name="person-in" class="list-unstyled m-0 group-people">
           <li v-for="person in people" :key="person.id" class="group-person">
             <span class="group-mini" aria-hidden="true">{{ initials(person.name) }}</span>
             <span>{{ person.name }}<span v-if="person.host" class="text-caption text-secondary"> · host</span></span>
           </li>
-        </ul>
+        </TransitionGroup>
 
         <ul v-if="requests.length" class="list-unstyled m-0 group-requests" aria-label="Requests to join">
           <li v-for="request in requests" :key="request.id" class="group-request">
@@ -203,7 +208,7 @@ const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 
         <div class="group-share">
           <label class="visually-hidden" for="group-invite-link">Invite link</label>
           <input id="group-invite-link" class="form-control" :value="inviteUrl" readonly @focus="$event.target.select()" />
-          <button type="button" class="btn btn-primary" @click="copyLink">{{ copied ? 'Copied' : 'Copy link' }}</button>
+          <button type="button" class="btn btn-primary" @click="copyLink"><Transition name="list-fade" mode="out-in"><span :key="copied">{{ copied ? 'Copied ✓' : 'Copy link' }}</span></Transition></button>
           <button v-if="canShare" type="button" class="btn btn-outline-secondary" @click="share">Share</button>
         </div>
       </section>
@@ -250,6 +255,14 @@ const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 
 .group-people-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .group-people { display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .group-person { display: flex; align-items: center; gap: 8px; }
+.person-in-enter-active { transition: opacity var(--bookedz-motion-normal) var(--bookedz-ease), transform var(--bookedz-motion-slip, .25s) var(--bookedz-ease-stamp, ease-out); }
+.person-in-enter-from { opacity: 0; transform: scale(.6); }
+.person-in-leave-active { transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease); }
+.person-in-leave-to { opacity: 0; }
+.person-in-move { transition: transform var(--bookedz-motion-normal) var(--bookedz-ease); }
+.group-card { animation: stagger-rise var(--bookedz-motion-reveal, .42s) var(--bookedz-ease) both; }
+.group-card:nth-of-type(2) { animation-delay: 60ms; } .group-card:nth-of-type(3) { animation-delay: 120ms; } .group-card:nth-of-type(4) { animation-delay: 180ms; } .group-card:nth-of-type(5) { animation-delay: 240ms; }
+@media (prefers-reduced-motion: reduce) { .person-in-enter-active, .person-in-leave-active, .person-in-move { transition: none; } .group-card { animation: none; } }
 .group-requests { display: grid; gap: 8px; }
 .group-request { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: var(--bookedz-hover); }
 .group-actions { display: flex; flex-wrap: wrap; gap: 8px; }

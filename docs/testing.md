@@ -704,7 +704,15 @@ tokens, slot times and meal names, suggestion duplicates. Browser (demo data, fo
 join a group, RSVP prompt, open the group page, suggest a deal for lunch before, chat; start a
 private group from an event page, pick a typed idea for after, open it by invite link, an invalid
 link; groups stay out of Discover and My events. Results: 3 server, 4 unit and 8 browser tests
-passed. The full client unit run still has the same 7 failures as before this work. Manually,
+passed. The full client unit run still has the same 7 failures as before this work.
+Availability grid (added later the same day): unit tests for the 15-minute cells and picking
+the best shared stretch; the first browser test now drags across five cells with the mouse,
+toggles one with Space and marks "I can't make it" for after. 6 unit and 3 Go together browser
+tests passed. Touch painting and the dark theme were checked by hand in the browser.
+Sidebar: `e2e/sidebar-collapse.spec.js` (collapse to 76px, tooltip label, remembered after
+reload, expand). The navigation specs (`navbar-account`, `shared-ui`, `design-polish`,
+`landing-page`) had the same 5 failures before and after this change, so the sidebar didn't
+cause them; they were already failing on this branch. Manually,
 `GET /api/food/nearby` near SMU Campus Green on a weekday lunchtime returned a real deal (560 m)
 from the existing pipeline output; places were not checked because no Geoapify key is set, and
 the pipeline itself was not re-run.
