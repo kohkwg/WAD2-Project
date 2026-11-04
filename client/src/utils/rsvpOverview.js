@@ -21,6 +21,42 @@ export function groupRsvps(rows, now) {
   return { upcoming, past, cancelled, next: upcoming.find(row => row.status === 'confirmed') || null }
 }
 
+// Singapore calendar day number, so "Starts tomorrow" doesn't depend on the device's time zone
+const sgDay = ms => Math.floor((ms + 8 * 3600000) / 86400000)
+const ACTIVE_RSVP = {
+  confirmed: { badge: "You're going", action: { label: 'View your RSVP', hash: '' } },
+  pending: { badge: 'Pending approval', action: { label: 'View your RSVP', hash: '' } },
+  waitlisted: { badge: 'On the waitlist', action: { label: 'View your RSVP', hash: '' } },
+  offered: { badge: 'Spot offered to you', action: { label: 'Review offer', hash: '#rsvp', primary: true } },
+}
+const FEW_SPOTS = 5
+
+// One badge (why to act now) and one main action for a saved event card. Your own RSVP comes first,
+// then availability, then timing. Labels match EventCardActions on Discover.
+export function savedEventState(event, rsvpStatus = null, now = Date.now()) {
+  if (event.status === 'cancelled') return { ended: true, badge: 'Cancelled', action: { label: 'View event', hash: '' } }
+  if (eventEnded(event, now) || event.status === 'completed') return { ended: true, badge: 'Ended', action: { label: 'View event', hash: '' } }
+  if (ACTIVE_RSVP[rsvpStatus]) return { ended: false, ...ACTIVE_RSVP[rsvpStatus] }
+  const limited = event.capacity != null && Number.isFinite(Number(event.spotsLeft))
+  const spots = limited ? Math.max(0, Number(event.spotsLeft)) : null
+  if (spots === 0) return { ended: false, badge: 'Full · waitlist open', action: { label: 'Join waitlist', hash: '#waitlist', primary: true } }
+  const rsvp = { label: 'RSVP', hash: '#rsvp', primary: true }
+  if (spots != null && spots <= FEW_SPOTS) return { ended: false, badge: `${spots} ${spots === 1 ? 'spot' : 'spots'} left`, action: rsvp }
+  const start = Date.parse(event.startTime)
+  if (!Number.isFinite(start)) return { ended: false, badge: '', action: rsvp }
+  if (start <= now) return { ended: false, badge: 'Happening now', action: rsvp }
+  const days = sgDay(start) - sgDay(now)
+  const badge = days === 0 ? 'Starts today' : days === 1 ? 'Starts tomorrow' : days <= 13 ? `Starts in ${days} days` : ''
+  return { ended: false, badge, action: rsvp }
+}
+
+// Upcoming saves first (soonest first), then ended or cancelled ones (most recent first)
+export function sortSavedEvents(events, now = Date.now()) {
+  const closed = event => event.status === 'cancelled' || event.status === 'completed' || eventEnded(event, now)
+  const start = event => Date.parse(event.startTime) || 0
+  return [...events].sort((a, b) => (closed(a) - closed(b)) || (closed(a) ? start(b) - start(a) : start(a) - start(b)) || String(a.id).localeCompare(String(b.id)))
+}
+
 export function directionsUrl(event) {
   const venue = event.venue
   if (!venue) return ''

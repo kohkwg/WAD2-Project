@@ -44,13 +44,18 @@ watch([filters, search, sort, page, viewMode], () => {
 }, { deep: true, flush: 'sync' })
 const pageRoot = ref(null)
 useDiscoveryMotion(pageRoot)
+// Saved, All and the category groups are one row of choices: picking one clears the others
 function chooseCategory(category = '') {
   searchControl.value?.flushSearch()
-  filters.value = { ...filters.value, categories: category ? [category] : [] }
+  filters.value = { ...filters.value, saved: false, categories: category ? [category] : [] }
 }
 function chooseGroup(group) {
   searchControl.value?.flushSearch()
-  filters.value = { ...filters.value, categories: [...group.categories] }
+  filters.value = { ...filters.value, saved: false, categories: [...group.categories] }
+}
+function chooseSaved() {
+  searchControl.value?.flushSearch()
+  filters.value = { ...filters.value, saved: !filters.value.saved, categories: [] }
 }
 // Set before the first render so phones never flash both panes
 const smallScreen = ref(window.matchMedia('(max-width: 991px)').matches)
@@ -109,12 +114,13 @@ const commonCategories = CATEGORIES
 // When nothing matches, offer a few other categories to jump to instead of a dead end.
 const emptySuggestions = computed(() => EVENT_GROUPS.filter(group => !sameCategories(filters.value.categories, group.categories)).slice(0, 4))
 const activeCategory = computed(() => filters.value.categories.length === 1 ? filters.value.categories[0] : '')
-const categoryTitle = computed(() => activeCategory.value
+const categoryTitle = computed(() => filters.value.saved && loggedIn.value ? 'Your saved events' : activeCategory.value
   ? `${activeCategory.value.charAt(0).toUpperCase() + activeCategory.value.slice(1)} events` : 'Discover events')
 const clock = ref(Date.now())
 const STEP = 10
 const visibleCount = ref(STEP)
-const baseQuery = () => discoveryEventQuery(filters.value, { search: search.value, sort: sort.value, page: 1, now: clock.value })
+// Saved needs a session; a remembered Saved choice is ignored while signed out
+const baseQuery = () => discoveryEventQuery({ ...filters.value, saved: filters.value.saved && loggedIn.value }, { search: search.value, sort: sort.value, page: 1, now: clock.value })
 const eventQuery = computed(() => ({ ...baseQuery(), limit: visibleCount.value }))
 // The map always gets every matching event, whatever the list has revealed so far.
 const mapQuery = computed(() => ({ ...baseQuery(), forMap: true }))
@@ -128,10 +134,20 @@ function openEventAction(event, action) {
 }
 const { events, total, loading, error, fetchEvents } = useEvents()
 const { events: mapEvents, loading: mapLoading, fetchEvents: fetchMapEvents } = useEvents()
+// The Saved chip's count: every upcoming saved event Discover can show, whatever else is filtered
+const { total: savedCount, fetchEvents: fetchSavedCount } = useEvents()
+function refreshSavedCount() {
+  if (loggedIn.value) fetchSavedCount({ savedOnly: true, countOnly: true })
+  else savedCount.value = 0
+}
 function refreshDiscovery() {
   fetchEvents(eventQuery.value)
   fetchMapEvents(mapQuery.value)
+  refreshSavedCount()
 }
+// Shown once there is something saved, and kept while selected so it can be turned off again
+const showSavedChip = computed(() => loggedIn.value && (savedCount.value > 0 || filters.value.saved))
+const savedSelected = computed(() => filters.value.saved && loggedIn.value)
 async function showList() {
   searchControl.value?.flushSearch()
   viewMode.value = 'list'
@@ -144,13 +160,16 @@ async function changeListingPreference(payload) {
   if (!loggedIn.value || actionPending.value) return
   await updatePreference(payload.event, payload.action)
   if (!actionError.value) {
-    toast(payload.action === 'save' ? `Saved ${payload.event.title}` : `Removed ${payload.event.title} from saved`)
+    if (payload.action === 'save') {
+      // Says where saves go, and goes there in one tap
+      toast('Saved to your list', { duration: 6000, action: { label: 'View saved', onClick: () => router.push({ path: '/my-rsvps', query: { tab: 'saved' } }) } })
+    } else toast(`Removed ${payload.event.title} from saved`)
     refreshDiscovery()
   }
 }
 const loggedIn = ref(false)
 const remaining = computed(() => Math.max(0, total.value - events.value.length))
-const filtersActive = computed(() => Boolean(search.value || filters.value.when || filters.value.extras.length || filters.value.categories.length))
+const filtersActive = computed(() => Boolean(search.value || filters.value.when || filters.value.extras.length || filters.value.categories.length || savedSelected.value))
 // Only real recommendations earn a "Picked for you" badge; signed-out visitors have none.
 const discoveryPicks = computed(() => loggedIn.value ? recommended.value : [])
 watch([filters, search, sort], () => { visibleCount.value = STEP }, { deep: true })
@@ -180,7 +199,7 @@ const dateGroups = computed(() => {
   return [...groups.values()]
 })
 watch(() => route.query, query => {
-  const hasFilters = ['search', 'when', 'extras', 'categories', 'category'].some(key => Object.hasOwn(query, key))
+  const hasFilters = ['search', 'when', 'extras', 'categories', 'category', 'saved'].some(key => Object.hasOwn(query, key))
   if (hasFilters) {
     const next = discoveryFiltersFromQuery(query)
     if (JSON.stringify(filters.value) !== JSON.stringify(next)) filters.value = next
@@ -226,7 +245,8 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
       <div class="discovery-search"><EventFilters ref="searchControl" v-model="filters" v-model:search="search" :total="total" :loading="loading" :error="error" show-active @show="showList" @retry="refreshDiscovery" /></div>
       <div ref="toolbar" class="discovery-toolbar">
         <nav ref="categoryRow" class="category-shortcuts" :class="{ 'fade-start': rowFade.start, 'fade-end': rowFade.end }" aria-label="Event categories" @scroll.passive="updateRowFade">
-          <button type="button" class="category-shortcut" :aria-pressed="!filters.categories.length" @click="chooseCategory()">All</button>
+          <button v-if="showSavedChip" type="button" class="category-shortcut saved-shortcut" :aria-pressed="savedSelected" :aria-label="`Saved events, ${savedCount}`" @click="chooseSaved"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z" /></svg>Saved<span class="saved-count" aria-hidden="true">{{ savedCount }}</span></button>
+          <button type="button" class="category-shortcut" :aria-pressed="!filters.categories.length && !savedSelected" @click="chooseCategory()">All</button>
           <button v-for="group in EVENT_GROUPS" :key="group.id" type="button" class="category-shortcut cat-tint" :class="`cat-${group.categories[0]}`" :aria-pressed="sameCategories(filters.categories, group.categories)" @click="chooseGroup(group)">{{ group.label }}</button>
         </nav>
         <div class="results-tools">
@@ -247,12 +267,19 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
           <SkeletonList v-if="loading && !events.length" :count="5" label="Finding your next event…" />
           <div v-else-if="error" class="empty-state" role="alert"><h2>We couldn’t load events</h2><p>{{ error }}</p><button type="button" class="btn btn-outline-danger" @click="refreshDiscovery">Try again</button></div>
           <div v-else-if="!events.length && !loading" class="empty-state" role="status">
+            <template v-if="savedSelected">
+              <h2>No saved events here</h2>
+              <p>{{ search || filters.when || filters.extras.length ? 'None of your saved events match these filters.' : 'Tap the bookmark on any event to keep it here. Past saves stay in My RSVPs.' }}</p>
+              <button type="button" class="btn btn-outline-secondary" @click="chooseCategory()">Browse all events</button>
+            </template>
+            <template v-else>
             <h2>No events found</h2>
             <p>{{ filters.categories.length ? 'Nothing in this group right now. Try another one:' : 'Try another search, or browse a category:' }}</p>
             <div class="empty-suggestions">
               <button v-for="group in emptySuggestions" :key="group.id" type="button" class="category-shortcut cat-tint" :class="`cat-${group.categories[0]}`" @click="search = ''; chooseGroup(group)">{{ group.label }}</button>
             </div>
             <button type="button" class="btn btn-outline-secondary" @click="clearFilters">Clear search and filters</button>
+            </template>
           </div>
           <div v-else class="event-timeline" :class="{ 'is-refreshing': loading }">
             <section v-for="group in dateGroups" :key="group.key" class="date-group" :aria-label="`${group.label}, ${group.weekday} ${group.year}`">
@@ -292,6 +319,10 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
 .category-shortcut:hover { border-color: var(--bookedz-control-border); }
 .category-shortcut { transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease), transform var(--bookedz-motion-feedback) var(--bookedz-ease); }
 .category-shortcut:active { transform: scale(.95); }
+/* Saved: bookmark icon + count, drawn in the chip's own colour so it follows the theme and pressed state */
+.saved-shortcut { gap: 6px; }
+.saved-shortcut svg { flex: none; width: 16px; height: 16px; fill: currentColor; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.saved-count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: color-mix(in srgb, currentColor 16%, transparent); font-size: .72rem; font-weight: 700; }
 .category-shortcut[aria-pressed=true] { animation: pop-once var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
 .pane-switch button { transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .all-categories-link,.browse-back { display: inline-flex; align-items: center; min-height: 44px; padding: 6px; color: var(--bookedz-primary-dark); font-size: 12px; }

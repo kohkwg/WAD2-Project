@@ -1,5 +1,12 @@
 # Project status and timeline
 
+5 November, saved events made findable — Save/Saved wording, a "View saved" toast action,
+`/my-rsvps?tab=saved`, a Saved chip on Discover (list, map and count via `savedOnly`) and saved cards
+with a badge, one main action and ended saves last (decisions.md, 5 November). Five new unit tests,
+the four `saved-events.spec.js` cases and all eight `my-rsvps.spec.js` cases pass on a demo-mode
+server; screenshots checked in both themes at 375 and 1280px. The live Saved chip query was exercised
+only through a mocked Supabase client, not against Bookerz. No commit, push or hosted changes.
+
 4 November, local stash conflict repair — combined the background page selectors
 and retained the added local styles in `design-baseline.css`; Community keeps dev's
 Groups/Friends imports rather than imports for removed Jio components. Both files

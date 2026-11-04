@@ -1,5 +1,21 @@
 # Decisions
 
+5 November 2026 — saved events are one journey, adopted after reviewing rendered previews. The
+words are **Save** / **Saved** everywhere: the bookmark reads "Save {event}" / "Remove {event} from
+saved" with the tooltips "Save event" / "Remove from saved". Saving on Discover shows "Saved to your
+list" with a **View saved** button that opens `/my-rsvps?tab=saved`; My RSVPs now opens the tab named
+in `?tab=` and keeps the URL in step (Upcoming drops it). Signed-in visitors with at least one
+upcoming save get a **Saved** chip, with a count, leading Discover's category row. It is a peer of
+All and the category groups (picking one clears the others), stays visible while selected so it can
+be turned off, is kept in the URL as `saved=true`, and filters the list, map and count through the
+events query (`savedOnly`: the caller's own `user_event_preferences` ids under RLS). Signed-out
+visitors never see it. Saved cards lead to an RSVP: one badge (your own RSVP first, then Full or
+5 or fewer spots, then timing in Singapore days), one main action matching `EventCardActions`
+(RSVP, Join waitlist, Review offer, View your RSVP, or View event once ended or cancelled), and the
+filled bookmark removes the save. Upcoming saves come first; ended and cancelled ones are greyed and
+listed last. Discover is Aishani's (F1) and My RSVPs sits with Gregory's RSVP work (F2), so both
+should look this over.
+
 4 November 2026 — Huxley, Community gets Friends; Profile loses its tabs: at the team's request
 Vivienne's Profile **Groups** (friend circles) are removed from the app, because Go together groups
 already use the word and two kinds of group were confusing. Her **Friends** stay and move to a small

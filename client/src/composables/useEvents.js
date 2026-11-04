@@ -102,6 +102,24 @@ export function useEvents() {
         matchingVenueIds = (data || []).map(v => v.id)
       }
 
+      // Saved only: read the caller's own saved event ids first (RLS keeps this to their rows)
+      let savedIds = null
+      if (filters.savedOnly) {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const userId = sessionData.session?.user.id
+        savedIds = []
+        if (userId) {
+          const saved = await supabase.from('user_event_preferences').select('event_id')
+            .eq('user_id', userId).eq('save_active', true)
+          if (saved.error) throw saved.error
+          savedIds = [...new Set((saved.data || []).map(row => row.event_id))]
+        }
+        if (!savedIds.length) {
+          if (currentRequest === requestId) { events.value = []; total.value = 0 }
+          return
+        }
+      }
+
       let q = supabase
         .from('events_with_counts')
         .select(filters.countOnly ? 'id' : '*', { count: 'exact', ...(filters.countOnly ? { head: true } : {}) })
@@ -122,6 +140,7 @@ export function useEvents() {
         q = q.lte('start_time', end.toISOString())
       }
       if (filters.availableOnly) q = q.or('spots_left.gt.0,capacity.is.null')
+      if (savedIds) q = q.in('id', savedIds)
       // Count official events only, so "Show N more" matches the rows the list can actually show
       q = q.or('kind.is.null,kind.eq.official')
 
