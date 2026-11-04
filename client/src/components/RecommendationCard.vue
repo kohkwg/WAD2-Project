@@ -147,7 +147,7 @@ function onAction() {
 .pick-title { margin: 0 0 .4rem; overflow-wrap: anywhere; }
 .pick-title a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: none; }
 .pick-title a:hover { text-decoration: underline; }
-.pick-description { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-size:var(--text-body); line-height: 1.5; color: var(--bookedz-muted); margin: .5rem 0 0; }
+.pick-description { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-size:var(--text-body); line-height: 1.5; color: var(--bookedz-muted); margin: .5rem 0 0; }
 .pick-date, .pick-spots, .pick-venue { margin: 0; font-size:var(--text-small); color: var(--bookedz-muted, #636975); }
 .pick-venue { display: flex; align-items: flex-start; gap: 6px; margin-top: .45rem; overflow-wrap: anywhere; }
 .pick-venue svg { flex: 0 0 16px; width: 16px; height: 16px; margin-top: 2px; }
@@ -182,7 +182,7 @@ function onAction() {
 .recommendation-card--strip .pick-venue { order: 3; margin: 0; font-size: 11px; }
 .recommendation-card--strip .pick-venue svg,.recommendation-card--strip .pick-reason svg { display: none; }
 .recommendation-card--strip .pick-spots { order: 4; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--bookedz-muted); font-size: 11px; }
-.recommendation-card--strip .pick-reason { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; order: 5; margin: 0; color: var(--bookedz-primary-dark); font-size: 11px; line-height: 1.4; }
+.recommendation-card--strip .pick-reason { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; order: 5; margin: 0; color: var(--bookedz-primary-dark); font-size: 11px; line-height: 1.4; }
 .recommendation-card--strip .pick-explanation { order: 6; margin: 0; font-size: 11px; }
 .recommendation-card--strip .pick-explanation summary { min-height: 30px; padding: 6px 0; }
 .recommendation-card--strip .pick-preferences { order: 7; margin: 0; font-size: 11px; }
