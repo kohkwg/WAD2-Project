@@ -13,25 +13,24 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page)) {
 }
 
 /* Hero */
-.design-baseline.design-baseline :is(.create-heading, .hangout-head, .workspace-header, .rsvp-heading, .organiser-heading) {
+.design-baseline.design-baseline :is(.create-heading, .workspace-header, .rsvp-heading, .organiser-heading) {
   position: relative; margin: .5rem 0 1.75rem; padding: clamp(1.4rem, 4vw, 2.4rem); overflow: hidden;
   border: 2px solid var(--bookedz-ink); border-left-width: 2px; border-radius: var(--db-r);
   background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 70%);
   box-shadow: 6px 6px 0 var(--bookedz-ink);
 }
-.design-baseline.design-baseline :is(.create-heading, .hangout-head, .workspace-header, .rsvp-heading, .organiser-heading)::after {
+.design-baseline.design-baseline :is(.create-heading, .workspace-header, .rsvp-heading, .organiser-heading)::after {
   content: '★'; position: absolute; right: clamp(.8rem, 4vw, 2.2rem); top: 50%; translate: 0 -50%; rotate: 12deg;
   font-size: clamp(4rem, 12vw, 7rem); line-height: 1; color: var(--bookedz-fill); opacity: .35; pointer-events: none;
 }
-.design-baseline.design-baseline :is(.create-heading, .hangout-head, .workspace-header, .rsvp-heading, .organiser-heading) h1 {
+.design-baseline.design-baseline :is(.create-heading, .workspace-header, .rsvp-heading, .organiser-heading) h1 {
   font-size: clamp(2.1rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -.03em;
   background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-:root[data-theme="dark"] .design-baseline.design-baseline :is(.create-heading, .hangout-head, .workspace-header, .rsvp-heading, .organiser-heading) {
+:root[data-theme="dark"] .design-baseline.design-baseline :is(.create-heading, .workspace-header, .rsvp-heading, .organiser-heading) {
   background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 80%); border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill);
 }
-.design-baseline.design-baseline :is(.create-heading p, .hangout-head p, .workspace-header p, .rsvp-heading p, .organiser-heading p) { color: var(--bookedz-ink); font-weight: 500; max-width: 46ch; }
-.design-baseline.design-baseline .hangout-washi { display: inline-block; padding: .2rem .8rem; background: var(--bookedz-teal); color: #0b3b36; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; rotate: -2deg; }
+.design-baseline.design-baseline :is(.create-heading p, .workspace-header p, .rsvp-heading p, .organiser-heading p) { color: var(--bookedz-ink); font-weight: 500; max-width: 46ch; }
 
 /* Step indicator becomes chunky pills */
 .design-baseline.design-baseline .creation-steps { padding: .9rem 1rem; border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: var(--bookedz-surface); }
@@ -44,14 +43,14 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page)) {
 .design-baseline.design-baseline .progress-fill { background: linear-gradient(90deg, var(--bookedz-teal), var(--bookedz-fill), var(--bookedz-mango)); }
 
 /* Form card as a ticket: side notches + dashed tear line above the footer */
-.design-baseline.design-baseline :is(.creation-form-card, .hangout-panel, .workspace-panel) {
+.design-baseline.design-baseline :is(.creation-form-card, .workspace-panel) {
   position: relative; border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal);
   background:
     radial-gradient(circle 14px at 0 3.5rem, var(--bookedz-canvas) 98%, transparent) left / 51% 100% no-repeat,
     radial-gradient(circle 14px at 100% 3.5rem, var(--bookedz-canvas) 98%, transparent) right / 51% 100% no-repeat,
     var(--bookedz-surface);
 }
-:root[data-theme="dark"] .design-baseline.design-baseline :is(.creation-form-card, .hangout-panel, .workspace-panel) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+:root[data-theme="dark"] .design-baseline.design-baseline :is(.creation-form-card, .workspace-panel) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
 .design-baseline.design-baseline .card-footer { border-top: 2px dashed var(--bookedz-control-border); border-radius: 0 0 var(--db-r) var(--db-r); }
 .design-baseline.design-baseline :is(.step-heading, .step-subheading) { font-family: var(--bookedz-heading); font-weight: 900; }
 
@@ -73,16 +72,12 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page)) {
 .design-baseline.design-baseline .preview-card { border: 2px solid var(--bookedz-ink); border-radius: 18px; }
 :root[data-theme="dark"] .design-baseline.design-baseline .preview-card { border-color: var(--bookedz-border); }
 
-/* Hangout choice cards */
-.design-baseline.design-baseline .mode-card { border-width: 2px; border-radius: 18px; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp); }
-.design-baseline.design-baseline .mode-card.is-selected { transform: translateY(-3px) rotate(-.8deg); border-color: var(--bookedz-fill); box-shadow: 4px 4px 0 var(--bookedz-fill); }
-
 @media (max-width: 767.98px) {
   .design-baseline.design-baseline .event-preview { rotate: 0deg; }
-  .design-baseline.design-baseline :is(.create-heading, .hangout-head, .workspace-header, .rsvp-heading, .organiser-heading) { box-shadow: 4px 4px 0 var(--bookedz-ink); }
+  .design-baseline.design-baseline :is(.create-heading, .workspace-header, .rsvp-heading, .organiser-heading) { box-shadow: 4px 4px 0 var(--bookedz-ink); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .design-baseline.design-baseline .event-preview, .design-baseline.design-baseline .mode-card { transition: none; }
+  .design-baseline.design-baseline .event-preview { transition: none; }
   .design-baseline.design-baseline .btn:not(:disabled):hover { transform: none; }
 }
 
@@ -197,14 +192,3 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page)) {
   .organiser-events-page.organiser-events-page :is(.organiser-event-card:hover, .btn:not(:disabled):hover, .event-tabs button[aria-selected=true]) { transform: none; }
 }
 
-/* ---- Hangouts get their own colourway: teal + pink, while Official events stay orange ----- */
-.design-baseline.design-baseline .hangout-head {
-  background: linear-gradient(120deg, var(--bookedz-teal-soft), var(--bookedz-pink-soft) 75%);
-}
-.design-baseline.design-baseline .hangout-head::after { color: var(--bookedz-teal); opacity: .4; }
-.design-baseline.design-baseline .hangout-head h1 {
-  background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-teal-ink)); -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-.design-baseline.design-baseline .hangout-head .hangout-washi { background: var(--bookedz-pink); color: #3b0a24; }
-.design-baseline.design-baseline.hangout-wizard :is(.hangout-panel) { box-shadow: 6px 6px 0 var(--bookedz-pink); }
-:root[data-theme="dark"] .design-baseline.design-baseline.hangout-wizard .hangout-panel { box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-pink) 60%, transparent); }

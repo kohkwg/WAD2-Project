@@ -111,12 +111,11 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 | Capacity | **spots**: "19 spots left", "20 spots in total", "Full" | places, seats, taken |
 | Organiser's list | **Guest list** / **RSVPs** | Attendees list, registrations (in UI text) |
 | Waitlist offer | "A spot opened up", "Confirm my spot" | Claim, accept offer |
-| Going to an event with others | **jio** / **open jio**; **Start a jio**, **Join jio**, **Ask to join** (host approves), **Leave jio** | Group, meetup, squad |
-| Planning a friends' outing | **hangout**; **Plan a hangout** | Event (hangouts are not official events) |
+| Going to an event with others | **Go together** (the feature), **group**; **Start a group**, **Join group**, **Ask to join** (host approves), **Leave group**; **Public** / **Private**; **Invite link** | Jio, meetup, squad, hangout |
+| A group's plan around the event | **before and after plan**; **when you're free** | hangout, itinerary |
 
 - **Sentence case** for headings, labels, buttons and tags. No all-caps eyebrows or
-  labels. The only exception is the hangout invite slips and vote stamps, whose short
-  stamped labels are part of that feature's ticket motif.
+  labels.
 - **Dates and times** use the Singapore style everywhere: "Sat, 7 Nov, 10:00 am – 12:00 pm"
   (`formatEventTime`), "7 Nov" for timeline dates, "1 Nov, 1:39 pm" for timestamps.
   Day before month, 12-hour times with lower-case am/pm.
@@ -154,7 +153,11 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 
 - **Navigation:** sidebar on desktop, a floating frosted top bar where needed, a bottom tab
   bar on phones for signed-in and demo users. Personal links follow the session; Discover
-  is public. The menu closes on route change or Escape.
+  is public. The menu closes on route change or Escape. From 992px a **Collapse sidebar**
+  button at the bottom of the sidebar turns it into a 76px icon rail (Discover, Community, My
+  RSVPs, My events, Settings, Theme, account); each icon's name shows as a tooltip on hover or
+  keyboard focus, and the page widens with it. The choice is saved as `bookedz-sidebar`; until
+  someone chooses, it starts collapsed below 1200px and expanded above.
 - **Theme:** System / Light / Dark, defaulting to the OS and saved as `bookedz-color-theme`.
   Bootstrap's `data-bs-theme`, native controls, map tiles and the browser colour follow it.
 - **Breakpoints:** phones below 768px (Bootstrap md), tablets 768 to 991px, desktop 992px
@@ -201,33 +204,50 @@ Waitlist offers come first, with a live countdown that shows seconds in the last
 Then the totals, then tabs (Upcoming, Saved, Past, Cancelled). Updates every 30 seconds
 and on focus; the Refresh button stays as a fallback.
 
-### Community: open jios (`/community`)
+### Community: Go together (`/community`)
 Community is where people find others to go to events with. **Official events live in
-Discover; jios and hangouts live in Community**, and neither appears in the other's lists
-(Discover and My events exclude hangouts).
+Discover; groups live in Community**, and neither appears in the other's lists (Discover
+and My events exclude groups).
 
-- **A jio** is tied to one official event: the host's note, the event card (title, time,
+- **A group** is tied to one official event: the host's note, the event card (title, time,
   venue, category tint), who is going (avatars), spots left (2 to 8 including the host) and
   whether anyone can join or the host approves each person.
-- **Feed:** soonest first, with filter chips (All jios, This week, I'm going, Hosting) and a
-  search over events, hosts and notes. It refreshes every 30 seconds and on focus.
-- **Start a jio:** a dialog to pick an upcoming event, add a note and choose spots and who can
-  join. Event pages link to it with the event already chosen (`/community?start=<id>`).
-- **Joining** takes a spot in the jio, then offers a one-tap step to RSVP to the event itself
+- **Public or private.** Public groups are listed in Community and on the event page. Private
+  groups only open with their invite link (and stay visible to their members). Both have an
+  invite link (`/g/<token>`), shown only to members, with Copy link and the phone share sheet.
+- **Feed:** soonest first, with filter chips (All groups, This week, I'm going, Hosting) and a
+  search over events, hosts and notes. It refreshes every 30 seconds and on focus. Cards show
+  Join group and Open group; everything else is on the group page.
+- **Start a group:** a dialog to pick an upcoming event, add a note, choose spots, who can join
+  and Public or Private. Event pages link to it with the event already chosen
+  (`/community?start=<id>`). Starting a group opens its page.
+- **Group page** (`/groups/<id>`, also where invite links land): the event, who's going, Join or
+  Leave (with a confirm step), the host's join requests (Accept / Decline), the invite link, the
+  before and after plan and the chat. Invite visitors see "You're invited".
+- **Joining** takes a spot in the group, then offers a one-tap step to RSVP to the event itself
   ("RSVP", "Join waitlist" or "Request a spot"), because the event's own capacity and approval
-  rules still decide that. Members can leave (with a confirm step) and see the plan.
-- **Chat:** each jio has a short message thread for meeting points and questions.
-- **Plan a hangout** (`/community/plan`) opens the hangout planner (find a time with friends,
-  shape a plan, vote on stops). Hosts and members reach a jio's plan through "Plan the day" /
-  "See the plan".
-- **Event pages** show "Go with others": the event's open jios (linking to the card in
-  Community) and Start a jio.
-- **Live mode:** jios are demo-only for now; the live app shows a "Coming soon" note until a
-  Supabase migration for jio comments is agreed with Timothy.
+  rules still decide that.
+- **Before and after:** a slot each side of the event, named by time of day (Lunch, Dinner…).
+  Availability is when2meet style: each side is a column of 15-minute cells covering three
+  hours (leaving 15 minutes to walk over). Members press and drag down "You" to paint the times
+  they're free (touch works too; Space toggles one cell; All, Clear and "I can't make it" are
+  shortcuts). "Group" shades each cell by how many are free; pointing at one names them. The
+  slot is the longest stretch (45 minutes or more) with the most people free for all of it,
+  outlined on the Group column, nearest the event on a tie. The card lists who's free then, who
+  isn't and who hasn't marked anything. Until then it uses a default hour. Members suggest a spot from nearby food deals (from the Telegram and deal-site pipeline) or
+  nearby places (Geoapify / OpenStreetMap), or type one; everyone marks the ideas they're
+  **Keen** on; the host **Picks** one per slot. A OneMap map shows the venue (★), ideas
+  (numbered) and picks (orange ✓). Deals show distance, a walk estimate and a link to the post.
+  When the server isn't running, the planner says so and still takes typed places.
+- **Event pages** show "Go together": the event's public groups (and private ones you're in)
+  and Start a group.
+- **Live mode:** groups are demo-only for now; the live app shows a "Coming soon" note until a
+  Supabase migration for group comments and plans is agreed with Timothy. Food suggestions
+  come from the Express server in both modes.
 
 ### Create event (organiser)
-Official events only (hangouts are planned from Community; old `?template=hangout` links go to
-`/community/plan`). A four-step studio
+Official events only (going with others happens in Community; old `?template=hangout` links go
+to `/community`). A four-step studio
 (Basics, Venue, RSVP questions, Review) with a live preview. New events default to the next
 whole hour for two hours; moving the start keeps the length, and an end before the start is
 flagged beside the field. Back is hidden on the first step. Tags match the Discover chips.
@@ -244,10 +264,6 @@ Manage event leads with event, time and active venue, then RSVP and check-in lin
 Tasks / Announcements / Budget / Weather panels. Budget figures stay exact SGD cents.
 Floor plans and programmes use the shared fonts and theme panels. Profile uses labelled
 fieldsets, checkmarked interests and explicit saving and error states.
-
-### Hangouts
-Hangouts (including jios' plans) are reached from Community and keep their ticket and washi-tape motif (stamped labels, vote stamps) inside the
-shared palette and type. This is the one place stamped uppercase labels are allowed.
 
 ## 7. Motion
 
@@ -330,6 +346,19 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **4 Nov 2026:** Collapsible sidebar (icon rail with tooltips, remembered). Go together
+  pages got more motion and live updates: painted cells pop, the group heatmap and best
+  outline ease, slot times and picks fade in, Keen counts and filter counts bump, members
+  and chat messages slide in, map pins drop in, and the group page refreshes every 20 seconds
+  (chat every 15) and on focus. All of it is off with reduced motion.
+- **4 Nov 2026:** Stopped calling groups "hangouts" in code: a group is stored as `kind: 'group'`
+  with a `group` field (visibility, invite link, event). Retired planner styles were removed.
+- **4 Nov 2026:** Members paint when they're free before and after the event on a
+  when2meet-style grid; each slot is the best shared stretch. Map pins keep fixed colours so they show in the dark theme.
+- **4 Nov 2026:** Community became **Go together**: groups (no longer "jios") with public or
+  private visibility and invite links, a page per group, and a before and after food planner
+  with nearby deals and places. The old hangout planner (find a time, itinerary, On the day)
+  was removed from the app; `/community/plan` and `/j/<token>` redirect.
 - **4 Nov 2026:** The landing page replaced its animated island map with sign-in for visitors
   and an account summary for signed-in people; `/login` now redirects to it.
 - **4 Nov 2026:** Community became the open jio hub: jios tied to one event, Start a jio,

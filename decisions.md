@@ -1,5 +1,59 @@
 # Decisions
 
+4 November 2026 — Huxley, Go together in live mode: two new migrations,
+`20261104142732_group_event_kind.sql` (adds the `group` event kind on its own, because a new enum
+value can only be used after it commits) and `20261104142907_go_together_groups.sql`. A group is an
+event row with kind `group`, so joining, spots (the host holds one), approvals and leaving reuse
+registrations and `_admission_status`; `groups` links it to its official event with visibility and
+the invite token. Chat, before/after ideas, votes and availability cells have their own tables with
+RLS on and no grants: the browser uses only SECURITY DEFINER functions (`group_list`, `group_view`,
+`create_group`, `join_group`, chat, plan and availability functions) that check membership. Private
+groups are seen or joined only by their people or with the invite token. The migration redefines
+`event_publicly_listed`, `can_view_event`, `_admission_status`, `event_availability`,
+`register_for_event` (one marked change) and the events read policy to cover groups. Deleting an
+official event deletes its groups. Signed-out visitors see no groups, because member names are only
+for signed-in people. Recommendations skip hangouts and groups. Checked in local PGlite with
+`server/checks/groups-db.check.mjs`, then applied to the hosted Bookerz project on the same day at
+Huxley's request, before Timothy's review (he should still look it over). The connector recorded
+them as versions 20261104142732 and 20261104142907, so the files carry those names. Before applying,
+the hosted definitions of the five redefined functions were checked to match the hangouts migration;
+afterwards a smoke test ran as real users inside a rolled-back transaction (nothing was kept).
+
+4 November 2026 — Huxley, groups are no longer called hangouts in code: a Go together group is
+stored as `kind: 'group'` with a `group` field (`visibility`, `inviteToken`, `eventId`) instead of
+`kind: 'hangout'` with a `hangout` field, and the planner-only fields (`mode`, `stage`,
+`dateRange`, `lockedSlot`) are dropped. Demo data saved in a browser is upgraded on load (group
+seed version 5). Event lists use one rule, `isOfficialEvent`, which also keeps older live hangout
+rows out. The live hangout planner (`supabaseHangoutsApi.js`, `/api/hangouts`, the `hangouts`
+table) keeps its name until the group migration is agreed with Timothy. The unused
+`utils/calendar.js` and the wizard's styles in `design-baseline.css` were removed.
+
+4 November 2026 — Huxley, collapsible sidebar: from 992px the sidebar can collapse to an icon
+rail with tooltips, remembered per browser (`bookedz-sidebar`). The old 992–1199px rail with
+small labels is replaced by this; it still starts collapsed there. Go together pages refresh on
+their own (group page every 20 seconds, chat every 15, and on focus) and gained small
+animations, all disabled with reduced motion.
+
+4 November 2026 — Huxley, Go together availability is when2meet style: in a group's before and
+after plan, each side of the event is a three-hour column of 15-minute cells that members paint
+when they're free (an earlier version offered fixed "from"/"until" choices; it was replaced). The
+slot is the longest stretch of at least 45 minutes with the most members free for all of it,
+nearest the event on a tie. Demo mode only, like the rest of groups.
+
+4 November 2026 — Huxley, Community becomes Go together: the focus is finding people to go to an
+event with. Posts are called **groups** (not jios) and are public (listed in Community and on the
+event page) or private (only reachable by invite link); both have an invite link for members.
+Each group has its own page (`/groups/<id>`; invite links `/g/<token>`) with the event, members,
+Join then RSVP prompt, chat and a **before and after** plan: members suggest food spots or deals
+for an hour before or after the event, mark ideas they're keen on and the host picks. The
+hangout planner (availability grid, itinerary, On the day) is removed from the client; its live
+files (`supabaseHangoutsApi.js`, `hangoutPlan.js`, `itinerary.js`), the migration and the Express
+`/api/hangouts` routes stay so nothing hosted changes. OpenJio's Python deals pipeline is copied
+into `pipeline/` and served by a new Express route, `/api/food` (deal drafts located with OneMap
+search, nearby places from Geoapify with a cache and daily cap, optional scheduled runs). Groups
+are demo-only until a migration for group comments and plans is agreed with Timothy. No SQL or
+hosted changes.
+
 4 November 2026 — Huxley, landing page becomes the sign-in page: the animated island map is
 removed from `/`. Signed-out visitors sign in or create an account there; signed-in people and
 the demo account see an account summary. `/login` redirects to `/` with its `?redirect=`. The

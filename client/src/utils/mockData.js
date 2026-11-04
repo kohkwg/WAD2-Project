@@ -3,7 +3,7 @@
 // members (who is in which organiser's club) and attendanceHistory.
 //
 // Dates are worked out from "now", so the demo never goes out of date.
-import { jioEventData } from './jios.js'
+import { isGroup, isOfficialEvent, groupEventData, emptyPlan, slotCells } from './groups.js'
 
 // An exact time N days from today, e.g. daysFromNow(5, 19) → 5 days later at 7:00 pm
 function daysFromNow(days, hour, minute = 0) {
@@ -394,29 +394,70 @@ export function createSeedData() {
     backupVenue: { ...smuAdmin }, questions: [], status: 'published', createdAt: daysAgo(1),
   })
   const db = { users, events, rsvps, members, attendanceHistory }
-  addSampleJios(db)
+  addSampleGroups(db)
   return db
 }
 
-// Sample open jios from other students (Community). Also added once to demo data saved
-// before jios existed. Each jio is a public hangout tied to one upcoming official event.
-export function addSampleJios(db) {
-  db.jioComments = db.jioComments || []
+// Sample Go together groups from other students (Community), tied to upcoming official
+// events. Also brings demo data saved by older versions up to date (open jios became groups).
+export const GROUP_SEED_VERSION = 5
+export function addSampleGroups(db) {
+  db.groupComments = db.groupComments || []
+  // Older demo data: jio comments become group comments; groups get an invite link and a plan
+  if (db.jioComments) {
+    for (const c of db.jioComments) db.groupComments.push({ id: c.id, groupId: c.jioId, userId: c.userId, text: c.text, createdAt: c.createdAt })
+    delete db.jioComments
+  }
+  delete db.jioSeedVersion
+  // The sample jios (jio1–3) keep their people and messages as grp1–3
+  for (const n of [1, 2, 3]) {
+    const old = db.events.find((e) => e.id === `jio${n}`)
+    if (!old) continue
+    old.id = `grp${n}`
+    for (const r of db.rsvps) if (r.eventId === `jio${n}`) r.eventId = `grp${n}`
+    for (const c of db.groupComments) if (c.groupId === `jio${n}`) { c.groupId = `grp${n}`; if (c.id === `c-jio${n}`) c.id = `c-grp${n}` }
+  }
+  // Version 5: groups were stored as kind 'hangout' with a hangout field; they are now kind 'group'
+  for (const e of db.events) {
+    if (e.kind !== 'hangout' || !e.hangout?.eventId) continue
+    const { visibility, inviteToken, eventId } = e.hangout
+    e.kind = 'group'
+    e.group = { visibility, inviteToken, eventId }
+    delete e.hangout
+  }
+  for (const e of db.events) {
+    if (!isGroup(e)) continue
+    e.group.inviteToken = e.group.inviteToken || `inv-${e.id}`
+    e.group.visibility = e.group.visibility === 'private' ? 'private' : 'public'
+    e.plan = e.plan || emptyPlan()
+    e.plan.availability = e.plan.availability || {}
+  }
   const now = Date.now()
-  const upcoming = (id) => db.events.find((e) => e.id === id && e.kind !== 'hangout' && e.status === 'published' && new Date(e.startTime) > now)
+  const upcoming = (id) => db.events.find((e) => e.id === id && isOfficialEvent(e) && e.status === 'published' && new Date(e.startTime) > now)
   const samples = [
-    { id: 'jio1', eventId: 'e1', host: 'u2', capacity: 4, note: 'First time going, would love a group to sit with. Meeting at the SMU Green entrance 15 min before.', members: ['u3'] },
-    { id: 'jio2', eventId: 'e2', host: 'u5', capacity: 3, note: 'Anyone keen to pair up? I can share my laptop setup notes.', members: [] },
-    { id: 'jio3', eventId: 'e3', host: 'u4', capacity: 5, note: 'Need a few more for a proper team. All levels welcome!', members: ['u6', 'u3'] },
+    { id: 'grp1', eventId: 'e1', host: 'u2', capacity: 4, note: 'First time going, would love a group to sit with. Meeting at the SMU Green entrance 15 min before.', members: ['u3'] },
+    { id: 'grp2', eventId: 'e2', host: 'u5', capacity: 3, note: 'Anyone keen to pair up? I can share my laptop setup notes.', members: [] },
+    { id: 'grp3', eventId: 'e3', host: 'u4', capacity: 5, note: 'Need a few more for a proper team. All levels welcome!', members: ['u6', 'u3'] },
   ]
   for (const sample of samples) {
     const target = upcoming(sample.eventId)
     if (!target || db.events.some((e) => e.id === sample.id)) continue
-    db.events.push({ ...jioEventData(target, sample), id: sample.id, organiserId: sample.host, status: 'published', createdAt: new Date(now - 3 * 3600e3).toISOString() })
+    db.events.push({ ...groupEventData(target, { ...sample, token: `inv-${sample.id}` }), id: sample.id, organiserId: sample.host, status: 'published', createdAt: new Date(now - 3 * 3600e3).toISOString() })
     for (const userId of sample.members) db.rsvps.push({ id: `r-${sample.id}-${userId}`, eventId: sample.id, userId, status: 'confirmed', answers: {}, createdAt: new Date(now - 3600e3).toISOString(), offerExpiresAt: null })
   }
-  if (db.events.some((e) => e.id === 'jio1') && !db.jioComments.some((c) => c.id === 'c-jio1')) {
-    db.jioComments.push({ id: 'c-jio1', jioId: 'jio1', userId: 'u3', text: 'Count me in! I’ll bring a mat.', createdAt: new Date(now - 2 * 3600e3).toISOString() })
+  if (db.events.some((e) => e.id === 'grp1') && !db.groupComments.some((c) => c.id === 'c-grp1')) {
+    db.groupComments.push({ id: 'c-grp1', groupId: 'grp1', userId: 'u3', text: 'Count me in! I’ll bring a mat.', createdAt: new Date(now - 2 * 3600e3).toISOString() })
   }
-  db.jioSeedVersion = 1
+  // One idea already on grp1's plan, so the planner isn't empty in the demo
+  const first = db.events.find((e) => e.id === 'grp1')
+  if (first && !first.plan.before.suggestions.length) {
+    first.plan.before.suggestions.push({ id: 's-grp1', kind: 'custom', refId: null, name: 'Lau Pa Sat', detail: null, priceText: null, address: '18 Raffles Quay', lat: 1.2806, lng: 103.8504, sourceUrl: null, suggestedBy: 'u3', votes: ['u3', 'u2'], createdAt: new Date(now - 2 * 3600e3).toISOString() })
+  }
+  // …and two members have marked when they're free (version 4; version 3 used minutes)
+  if (first) {
+    const before = slotCells(first, 'before')
+    const old = Object.values(first.plan.availability || {}).some((a) => Object.values(a).some((v) => !Array.isArray(v)))
+    if (old || !Object.keys(first.plan.availability || {}).length) first.plan.availability = { u2: { before: before.slice(4), after: [] }, u3: { before: before.slice(7) } }
+  }
+  db.groupSeedVersion = GROUP_SEED_VERSION
 }

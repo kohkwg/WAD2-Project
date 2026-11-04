@@ -18,7 +18,18 @@ const isOnDiscover = computed(() => route.path === '/discover')
 const isMyEvents = computed(() => route.path.startsWith('/organiser/events') && route.path !== '/organiser/events/new')
 // Phones get a bottom tab bar for signed-in (and demo) users, except on bare invite pages
 const showBottomTabs = computed(() => hasSession.value && !route.path.startsWith('/j/'))
+// Laptops and desktops: the sidebar collapses to an icon rail. The choice is remembered;
+// until someone picks, it starts collapsed below 1200px. main.css reads data-sidebar for the width.
+const SIDEBAR_KEY = 'bookedz-sidebar'
+const readSidebar = () => { try { return localStorage.getItem(SIDEBAR_KEY) } catch { return null } }
+const collapsed = ref(readSidebar() ? readSidebar() === 'collapsed' : typeof window !== 'undefined' && window.innerWidth < 1200)
+watch(collapsed, (value) => { document.documentElement.dataset.sidebar = value ? 'collapsed' : 'expanded' }, { immediate: true })
+function toggleSidebar() {
+  collapsed.value = !collapsed.value
+  try { localStorage.setItem(SIDEBAR_KEY, collapsed.value ? 'collapsed' : 'expanded') } catch { /* private mode: not remembered */ }
+}
 const ICONS = {
+  collapse: 'M15 6l-6 6 6 6M20 4v16',
   discover: 'M3 11.5 12 4l9 7.5M5.5 10v10h13V10M10 20v-5h4v5',
   community: 'M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM22 20v-2a4 4 0 0 0-3-3.9M15.5 3.7a3.5 3.5 0 0 1 0 6.6',
   rsvps: 'M4 6.5h16V20H4zM4 11h16M8 3.5v5M16 3.5v5',
@@ -63,23 +74,26 @@ function resetDemo() {
 <template>
   <nav class="app-navbar" aria-label="Main navigation" @keydown.esc="closeMenu">
     <div v-if="menuOpen" class="sidebar-scrim" aria-hidden="true" @click="closeMenu"></div>
-    <div id="mainNav" class="app-sidebar" :class="{ show: menuOpen }">
+    <div id="mainNav" class="app-sidebar" :class="{ show: menuOpen, 'is-collapsed': collapsed }">
       <RouterLink class="sidebar-brand" to="/" aria-label="Bookedz" translate="no">
         <svg class="brand-symbol" viewBox="0 0 32 36" fill="none" aria-hidden="true"><path d="M4 4h15a9 9 0 0 1 0 18H4V4Z" fill="currentColor"/><path d="M4 14h15a9 9 0 0 1 0 18H4V14Z" fill="currentColor"/><path d="m11 17 4 4 8-9" stroke="var(--bookedz-surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Bookedz
       </RouterLink>
       <ul class="sidebar-links">
-        <li><RouterLink class="side-link" :class="{ active: isOnDiscover }" active-class="" exact-active-class="" to="/discover"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.discover" /></svg>Discover</RouterLink></li>
-        <li><RouterLink class="side-link" active-class="active" to="/community"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.community" /></svg>Community</RouterLink></li>
+        <li><RouterLink class="side-link" data-label="Discover" :class="{ active: isOnDiscover }" active-class="" exact-active-class="" to="/discover"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.discover" /></svg><span class="side-label">Discover</span></RouterLink></li>
+        <li><RouterLink class="side-link" data-label="Community" active-class="active" to="/community"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.community" /></svg><span class="side-label">Community</span></RouterLink></li>
         <template v-if="hasSession">
-          <li><RouterLink class="side-link" active-class="active" to="/my-rsvps"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg>My RSVPs</RouterLink></li>
-          <li><RouterLink class="side-link" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>My events</RouterLink></li>
+          <li><RouterLink class="side-link" data-label="My RSVPs" active-class="active" to="/my-rsvps"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg><span class="side-label">My RSVPs</span></RouterLink></li>
+          <li><RouterLink class="side-link" data-label="My events" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg><span class="side-label">My events</span></RouterLink></li>
         </template>
       </ul>
       <ul class="sidebar-links sidebar-links--secondary">
-        <li v-if="hasSession && USING_SUPABASE"><RouterLink class="side-link" active-class="active" to="/profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.settings" /></svg>Settings</RouterLink></li>
+        <li v-if="hasSession && USING_SUPABASE"><RouterLink class="side-link" data-label="Settings" active-class="active" to="/profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.settings" /></svg><span class="side-label">Settings</span></RouterLink></li>
         <li><label class="theme-control sidebar-theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9A9 9 0 0 1 12 3Z"/></svg><span aria-hidden="true">Theme</span><span class="visually-hidden">Color theme</span><select :value="themePreference" name="color-theme" @change="setTheme($event.target.value)"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></li>
       </ul>
+      <button type="button" class="side-link sidebar-collapse" :aria-expanded="!collapsed" aria-controls="mainNav" :aria-label="collapsed ? 'Expand sidebar' : 'Collapse sidebar'" :title="collapsed ? 'Expand sidebar' : 'Collapse sidebar'" @click="toggleSidebar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.collapse" /></svg><span class="side-label" aria-hidden="true">Collapse</span>
+      </button>
       <div v-if="USING_SUPABASE && hasSession" class="sidebar-account">
         <RouterLink to="/profile" class="nav-profile" aria-label="Your profile"><span class="nav-avatar" aria-hidden="true">{{ accountName.charAt(0).toUpperCase() }}</span><span class="sidebar-profile-copy"><strong>Profile</strong><span class="nav-account-name">{{ accountName }}</span></span></RouterLink>
         <button class="nav-quiet sidebar-sign-out" type="button" :disabled="signingOut" @click="logOut">{{ signingOut ? 'Signing out…' : 'Sign out' }}</button>
@@ -166,20 +180,31 @@ function resetDemo() {
 }
 @media(max-width:575.98px) { .nav-quiet { padding-inline: 8px; } .theme-control select { max-width: 70px; } }
 @media(prefers-reduced-motion:reduce) { .app-sidebar, .app-sidebar.show { transition: none; } }
-/* Laptops: a slim rail with each icon's short label underneath (no hover needed) gives the page
-   ~156px more room; from 1200px the full sidebar returns. The width is --sidebar-w in main.css. */
-@media (min-width: 992px) and (max-width: 1199.98px) {
-  .app-sidebar { padding: 18px 8px 12px; }
-  .sidebar-brand { justify-content: center; margin: 0 0 18px; gap: 0; font-size: 0; }
-  .side-link { flex-direction: column; justify-content: center; gap: 4px; min-height: 60px; padding: 8px 2px; font-size: .7rem; line-height: 1.15; text-align: center; }
-  .side-link svg { flex-basis: auto; }
-  .sidebar-theme { flex-direction: column; justify-content: center; gap: 2px; padding: 8px 2px; font-size: .7rem; }
-  .sidebar-theme select { margin: 0; max-width: 100%; font-size: .7rem; }
-  .sidebar-account .nav-profile { flex-direction: column; justify-content: center; gap: 4px; padding: 6px 2px; }
-  .sidebar-profile-copy { text-align: center; font-size: .7rem; }
-  .sidebar-account .nav-account-name { display: none; }
-  .sidebar-account .sidebar-sign-out { justify-content: center; padding-inline: 2px; font-size: .7rem; white-space: normal; }
+/* Laptops and desktops: the collapse button turns the sidebar into an icon rail; labels show
+   as tooltips on hover or keyboard focus. Width is --sidebar-w in main.css (data-sidebar). */
+.sidebar-collapse { display: none; width: 100%; margin-top: auto; border: 0; background: transparent; text-align: left; }
+.sidebar-collapse svg { transition: transform var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease); }
+.sidebar-collapse + .sidebar-account { margin-top: 0; }
+@media (min-width: 992px) {
+  .sidebar-collapse { display: flex; }
+  .app-sidebar { transition: width var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease), padding var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease); overflow-x: hidden; }
+  .side-label { transition: opacity var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease); white-space: nowrap; }
+  .app-sidebar.is-collapsed { padding: 18px 10px 12px; overflow: visible; }
+  .is-collapsed .sidebar-brand { justify-content: center; margin: 0 0 18px; gap: 0; font-size: 0; }
+  .is-collapsed .side-link { position: relative; justify-content: center; gap: 0; padding: 10px 0; }
+  .is-collapsed .side-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); opacity: 0; }
+  .is-collapsed .sidebar-collapse svg { transform: rotate(180deg); }
+  /* Tooltip: the link's own label, beside the rail */
+  .is-collapsed .side-link:not(.sidebar-collapse)::after { content: attr(data-label); position: absolute; left: calc(100% + 10px); top: 50%; z-index: 5; padding: 5px 10px; border-radius: 8px; background: var(--bookedz-ink); color: var(--bookedz-surface); font-size: .8rem; font-weight: 600; white-space: nowrap; pointer-events: none; opacity: 0; transform: translate(-4px, -50%); transition: opacity var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease), transform var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease); }
+  .is-collapsed .side-link:hover::after, .is-collapsed .side-link:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
+  .is-collapsed .sidebar-theme { flex-direction: column; justify-content: center; gap: 2px; padding: 8px 0; font-size: .7rem; }
+  .is-collapsed .sidebar-theme > span[aria-hidden] { display: none; }
+  .is-collapsed .sidebar-theme select { margin: 0; max-width: 100%; font-size: .7rem; }
+  .is-collapsed .sidebar-account .nav-profile { justify-content: center; padding: 6px 0; }
+  .is-collapsed .sidebar-profile-copy { display: none; }
+  .is-collapsed .sidebar-account .sidebar-sign-out { justify-content: center; padding-inline: 2px; font-size: .7rem; white-space: normal; }
 }
+@media (prefers-reduced-motion: reduce) { .app-sidebar, .side-label, .sidebar-collapse svg, .side-link::after { transition: none !important; } }
 /* Phones: fixed tab bar; main.css pads the page by --bottom-nav-h so nothing hides behind it */
 .bottom-tabs { display: none; }
 @media (max-width: 767.98px) {
