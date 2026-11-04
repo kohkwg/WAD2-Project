@@ -1,4 +1,5 @@
 <script setup>
+import '../assets/design-baseline.css'
 import { ref, computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { signIn, signUp } from '../utils/api.js'
