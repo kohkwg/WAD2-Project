@@ -83,7 +83,7 @@ test('shared public summary has a page heading and announces description disclos
     localStorage.setItem(key, JSON.stringify(db))
   }, STORE)
   await page.goto('/events/e-weather-demo/rsvp')
-  await expect(page.getByRole('heading', { level: 1, name: 'Campus Green Social · Weather demo' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Campus Green Social' })).toBeVisible()
   const disclosure = page.getByRole('button', { name: 'Show more', exact: true })
   await expect(disclosure).toHaveAttribute('aria-expanded', 'false')
   const controlledId = await disclosure.getAttribute('aria-controls')

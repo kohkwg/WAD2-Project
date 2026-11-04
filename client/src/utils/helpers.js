@@ -45,7 +45,9 @@ export function formatTimeLeft(expiresAt, now) {
   if (msLeft <= 0) return 'expired'
   const hours = Math.floor(msLeft / (60 * 60 * 1000))
   const minutes = Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000))
-  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`
+  // In the last hour the seconds matter, so the countdown shows them.
+  const seconds = Math.floor((msLeft % (60 * 1000)) / 1000)
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m ${String(seconds).padStart(2, '0')}s`
 }
 
 // <input type="datetime-local"> wants "2026-10-14T19:30" (local time, no seconds)
@@ -107,4 +109,16 @@ export function suggestTags(text) {
   return TAG_OPTIONS.filter((tag) =>
     TAG_KEYWORDS[tag].some((keyword) => words.some((word) => word.startsWith(keyword))),
   )
+}
+
+// OneMap returns addresses in capitals ("30 VICTORIA STREET SINGAPORE 187996").
+// Show them in normal case; leave mixed-case text and known short names alone.
+const ADDRESS_ACRONYMS = new Set(['SMU', 'NUS', 'NTU', 'SUTD', 'SUSS', 'SIM', 'MRT', 'LRT', 'CBD', 'SIS', 'SCIS', 'YMCA', 'NEX', 'UOB', 'OCBC', 'DBS'])
+export function formatAddress(address) {
+  const text = String(address || '').trim()
+  if (!text || /[a-z]/.test(text)) return text
+  return text.split(/(\s+)/).map(word => {
+    if (/^\s+$/.test(word) || /\d/.test(word) || ADDRESS_ACRONYMS.has(word.replace(/[^A-Z]/g, ''))) return word
+    return word.charAt(0) + word.slice(1).toLowerCase()
+  }).join('')
 }

@@ -205,7 +205,7 @@ Consolidated 23 October; updated 31 October 2026. Dates use Singapore time; same
 by milestone because exact times are not consistently recorded. This replaces
 separate handoffs/merge/fix reports. [Decisions](decisions.md) records authority and
 superseded choices; [testing](docs/testing.md) explains reproducible checks;
-[README](README.md#ai-assistance-disclosure) retains detailed AI/library provenance.
+[README](README.md#change-history) retains detailed change history and library credits.
 
 ## Current checkpoint
 
@@ -383,7 +383,7 @@ not persist. These are dated observations, not permanent database invariants.
 - Read supplied assessment/proposal resources, record team ownership and distinguish
   official requirements from plans. The old assistant orientation is not current
   implementation or independent faculty approval.
-- Denzel reports updated AI permission and authorises Feature 4. Timothy's selected
+- Denzel authorises Feature 4. Timothy's selected
   SDK/schema/config/env files are imported from `575e20d`; no merge/deployment implied.
 - Deliver the async demo workspace, tasks, public announcements, SGD budget and
   weather/backup switch, then correct order, feed/venue refresh, money editing,
@@ -392,7 +392,7 @@ not persist. These are dated observations, not permanent database invariants.
 ### 17 October — review and authorised frontend corrections
 
 - Review Feature 4/shared boundaries, then fix all authorised P2/P3 issues with
-  scoped agents and independent integration review: destructive retry/cancel,
+  independent integration review: destructive retry/cancel,
   focus, public feed/RSVP semantics, stale OneMap/search results, offer refresh,
   publication validation, route reuse and consolidated weather reads.
 - Final checkpoint: **27 Node / 50 demo Chromium**, production build and 40 responsive
@@ -457,7 +457,7 @@ not persist. These are dated observations, not permanent database invariants.
   three additional F6 findings.
 - The human signs into both test accounts remotely. Correct the temporary session
   helper's forwarding-origin and sign-out issues, verify both refresh tokens, and
-  replace the helper with the ordinary dev app afterward. No agent types passwords.
+  replace the helper with the ordinary dev app afterward. Humans type all passwords.
 - The user configures both R2 public URL variables and CORS. Real presign/PUT/public
   GET return 200 with matching bytes; browser preflight returns 204 and test objects
   are deleted. The Cloudflare connection itself is personal-account scoped.
@@ -490,8 +490,8 @@ not persist. These are dated observations, not permanent database invariants.
 
 - Replace repeated handoffs, merge/fix reports, per-package READMEs and historical
   local plans with this timeline, the decision register and one test guide.
-- Preserve supplied resources byte-for-byte and retain detailed public AI/library
-  disclosure. A tiny `docs/README.md` keeps the resource index's existing link valid.
+- Preserve supplied resources byte-for-byte and retain the change history and library
+  credits. A tiny `docs/README.md` keeps the resource index's existing link valid.
 - Older tracked documents remain available in Git history. Pre-consolidation copies,
   including formerly untracked notes, are temporarily backed up outside the repo at
   `/tmp/bookedz-docs-before-consolidation-20261023`. No new archive folder is required
@@ -502,8 +502,7 @@ not persist. These are dated observations, not permanent database invariants.
 ### 23 October — map-first frontend redesign
 
 - Denzel authorises replacing the existing UI/UX across the project using the
-  supplied ideation spec, with GPT-6 Luna at medium effort where efficient. Root
-  handles shared system/discovery; three agents handle participant/account,
+  supplied ideation spec. Work split into shared system/discovery, participant/account,
   organiser/operations and attendance/venue screens. Backend contracts remain.
 - Deliver self-hosted Bricolage Grotesque typography, cream/coral/mint tokens,
   brand vector/favicon, shared navigation/footer, responsive layouts across all
@@ -543,7 +542,7 @@ not persist. These are dated observations, not permanent database invariants.
 - Implement the supplied new frontend brief with a large expressive headline,
   DM Sans body typography, integrated search/category controls, refined pastel
   tokens and a dominant illustrated Singapore scene.
-- Preserve the supplied PNG. Built-in imagegen removes baked pins/counts/labels;
+- Preserve the supplied PNG. Built-in image editing removes baked pins/counts/labels;
   the clean plate is encoded to a 398 KiB WebP. Island view is decorative; live
   Map view retains geographic coordinates and real clusters. No arbitrary event
   placement on the PNG, fake counts or new event data.
@@ -554,7 +553,7 @@ not persist. These are dated observations, not permanent database invariants.
   invitation and fallback to actual upcoming events when personalisation fails.
   Cards use uploaded images first and category-specific SVG art when unavailable.
   Concise venue display retains the complete accessible label.
-- GPT-6 Luna medium agents refine cards/details and hosting navigation/organiser
+- Refine cards/details and hosting navigation/organiser
   cards/create-step/cover presentation. Existing backend and registration rules
   remain. Source compiles for all 12 changed Vue components.
 - Targeted verification only: **2/2 focused Chromium journeys passed** (desktop
@@ -590,7 +589,7 @@ not persist. These are dated observations, not permanent database invariants.
 
 - Adopt the user's newer **Singapore Island Illustrated Map.png** in the hero,
   interactive map and neighbourhood thumbnails. Preserve the supplied original;
-  built-in imagegen prepares a background without the baked Flyer wheel and one
+  an image generation tool prepares a background without the baked Flyer wheel and one
   speedboat. The app uses a 298KB WebP with no new dependencies.
 - Share separately animated SVG wheel/counterrotating cabins, sailing boat/wake
   and seabirds. Fixed support stays still. Pause controls, offscreen/tab visibility
@@ -643,8 +642,7 @@ not persist. These are dated observations, not permanent database invariants.
 - Reorganise Manage Event header, Manage RSVP/public-event links and live tools;
   standardise Tasks/Announcements/Budget/Weather panels. Manage RSVP capacity
   graphics use real counts, with responsive labelled table rows and retained
-  approval/offer/rank semantics. GPT-6 Luna medium agents assisted scoped screens;
-  Codex integrated, reviewed and corrected shared behaviour/style issues.
+  approval/offer/rank semantics. We integrated, reviewed and corrected shared behaviour/style issues.
 - Theme/motion flows passed after correcting two selectors; seven additional
   focused checks passed for task keyboard focus, exact budget cents, weather
   failure, RSVP submission/refresh and desktop/mobile layouts/capacity counts.

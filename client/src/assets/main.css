@@ -1,4 +1,3 @@
-/* Hallmark · checked: 2026-10-24 · genre: playful · scope: app · built: Bookedz · v3.0.0 (Hawker Glow) */
 /* Bookedz visual system using the Hawker Glow palette. Bootstrap 5 (MIT): https://getbootstrap.com/.
    Nunito (SIL OFL): local fonts/Nunito-OFL.txt. DM Sans (SIL OFL): local fonts/DM-Sans-OFL.txt.
    Bricolage Grotesque (SIL OFL): local fonts/OFL.txt; retained shared heading face. */
@@ -250,3 +249,39 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
   margin-top: auto;
 }
 
+
+/* Category colours: one hue per category, shared by the Discover chips and event tags. */
+.cat-tech { --cat-hue: #3b82f6; }
+.cat-music { --cat-hue: #ec4899; }
+.cat-sports { --cat-hue: #14b8a6; }
+.cat-arts { --cat-hue: #f59e0b; }
+.cat-food { --cat-hue: #ff6b35; }
+.cat-volunteering { --cat-hue: #22c55e; }
+.cat-career { --cat-hue: #8b5cf6; }
+.cat-outdoors { --cat-hue: #65a30d; }
+.cat-gaming { --cat-hue: #6366f1; }
+.cat-wellness { --cat-hue: #06b6d4; }
+.cat-tint { background: color-mix(in srgb, var(--cat-hue, var(--bookedz-muted)) 20%, var(--bookedz-surface)); color: var(--bookedz-ink); }
+[data-theme='dark'] .cat-tint { background: color-mix(in srgb, var(--cat-hue, var(--bookedz-muted)) 30%, var(--bookedz-surface)); }
+
+/* Page change: a short fade so navigation feels connected rather than a hard cut. */
+.route-view { animation: route-in var(--bookedz-motion-normal) var(--bookedz-ease) both; }
+@keyframes route-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* List changes: new items rise in, removed ones fade, the rest slide into place. */
+.list-fade-enter-active { transition: opacity var(--bookedz-motion-normal) var(--bookedz-ease), transform var(--bookedz-motion-normal) var(--bookedz-ease); }
+.list-fade-leave-active { transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease); }
+.list-fade-enter-from { opacity: 0; transform: translateY(8px); }
+.list-fade-leave-to { opacity: 0; }
+.list-fade-move { transition: transform var(--bookedz-motion-normal) var(--bookedz-ease); }
+
+/* A number that just changed gives a small nudge. */
+.value-bump { display: inline-block; animation: value-bump var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
+@keyframes value-bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+
+/* Hover lift for interactive cards on devices with a pointer. */
+@media (hover: hover) {
+  .lift-on-hover { transition: transform var(--bookedz-motion-fast) var(--bookedz-ease), box-shadow var(--bookedz-motion-fast) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease); }
+  .lift-on-hover:hover { transform: translateY(-2px); box-shadow: var(--bookedz-card-shadow); }
+}
+@media (prefers-reduced-motion: reduce) { .route-view, .value-bump { animation: none; } .lift-on-hover:hover { transform: none; } }

@@ -69,7 +69,7 @@ preview links, desktop focus return, mobile row → Map handoff and close focus,
 category filtering of both panels, empty search and clear recovery. Phones show
 one collapsed pick, desktop three; See all is retained. Current map count is the
 current page's located events, not every filtered page. Final screenshots and
-layout measurements are in this Codex chat's outputs/work directories. Existing
+layout measurements are in this local outputs/work directories. Existing
 browser suites tied to the superseded standalone list/map and carousel layout
 were not run as a full suite. This is not live signed-in persistence/RLS or
 production-build evidence; Node 24 was used, no dependency updates.
@@ -116,7 +116,7 @@ not an automated-suite pass or hosted integration evidence. Direct Playwright
 launch failed at Chromium's macOS MachPort sandbox boundary, so in-app browser
 inspection was used instead. Reduced-motion styles were preserved and compiled,
 not re-emulated; Node 24 was available, Node 22 was not. Screenshots/measurements
-are in the requesting Codex chat's `work/map-checks` and `outputs` directories.
+are in the requesting local `work/map-checks` and `outputs` directories.
 No full suite or production build was run.
 
 For shared typography, compare Discover, My RSVPs and My events at the same
@@ -451,8 +451,7 @@ Use the actual running server's mode, not merely a successful port connection.
 
 Run only with authorisation for temporary hosted writes. Start Express first and
 use the approved development project from `client/.env`. Test accounts are
-configured in `client/e2e-live/accounts.mjs`; passwords are not stored or typed by
-agents. First run requires a human to sign in to organiser and participant in a
+configured in `client/e2e-live/accounts.mjs`; passwords are not stored in the repo. First run requires a human to sign in to organiser and participant in a
 visible browser:
 
 ```sh

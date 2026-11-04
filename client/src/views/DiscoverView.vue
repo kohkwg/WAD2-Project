@@ -8,6 +8,9 @@ import { useEvents, useRecommendations } from '@/composables/useEvents'
 import DiscoveryEventRow from '@/components/discovery/DiscoveryEventRow.vue'
 import DiscoveryStreetMap from '@/components/discovery/DiscoveryStreetMap.vue'
 import EventFilters from '@/components/EventFilters.vue'
+import SkeletonList from '@/components/ui/SkeletonList.vue'
+import BumpValue from '@/components/ui/BumpValue.vue'
+import { toast } from '@/composables/useToast'
 import { useDiscoveryMotion } from '@/composables/useDiscoveryMotion'
 import { CATEGORIES } from '@/lib/constants'
 import { normalizeDiscoveryFilters, discoveryEventQuery, discoveryUrlQuery, discoveryFiltersFromQuery } from '@/lib/discoveryFilters'
@@ -23,7 +26,7 @@ function restoreBrowsing() {
     return { filters: clean, search: saved?.search || saved?.filters?.search || '',
       sort: (saved?.sort || saved?.filters?.sort) === 'popular' ? 'popular' : 'soonest',
       page: Number.isInteger(saved?.page) && saved.page > 0 ? saved.page : 1,
-      mode: 'list' }
+      mode: saved?.mode === 'map' ? 'map' : 'list' }
   } catch { return { filters: defaults(), search: '', sort: 'soonest', page: 1, mode: 'list' } }
 }
 const browsing = restoreBrowsing()
@@ -53,13 +56,30 @@ onMounted(() => {
   smallMedia.addEventListener('change', updateSmallScreen)
 })
 onBeforeUnmount(() => smallMedia?.removeEventListener('change', updateSmallScreen))
+// Fade whichever end of the category row has more chips to scroll to.
+const categoryRow = ref(null)
+const rowFade = ref({ start: false, end: false })
+function updateRowFade() {
+  const el = categoryRow.value
+  if (!el) return
+  rowFade.value = { start: el.scrollLeft > 4, end: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 }
+}
+let rowObserver
+onMounted(() => {
+  rowObserver = new ResizeObserver(updateRowFade)
+  if (categoryRow.value) rowObserver.observe(categoryRow.value)
+  updateRowFade()
+})
+onBeforeUnmount(() => rowObserver?.disconnect())
 // Phones show the list or the map (List | Map toggle); from 768px both sit side by side.
+// The pane is the remembered view mode, so it survives returning to Discover.
 // Coming back to the list returns to the same scroll spot instead of jumping around.
-const mobilePane = ref('list')
+const mobilePane = viewMode
 const toolbar = ref(null)
 let listScrollY = 0
 async function showPane(pane) {
   if (pane === mobilePane.value) return
+  searchControl.value?.flushSearch()
   if (pane === 'map') listScrollY = window.scrollY
   mobilePane.value = pane
   await nextTick()
@@ -100,7 +120,6 @@ function refreshDiscovery() {
 async function showList() {
   searchControl.value?.flushSearch()
   viewMode.value = 'list'
-  if (smallScreen.value) mobilePane.value = 'list'
   await nextTick()
   resultList.value?.focus({ preventScroll: true })
 }
@@ -109,7 +128,10 @@ const { recommended, loading: recLoading, error: recError, actionPending, action
 async function changeListingPreference(payload) {
   if (!loggedIn.value || actionPending.value) return
   await updatePreference(payload.event, payload.action)
-  if (!actionError.value) refreshDiscovery()
+  if (!actionError.value) {
+    toast(payload.action === 'save' ? `Saved ${payload.event.title}` : `Removed ${payload.event.title} from saved`)
+    refreshDiscovery()
+  }
 }
 const loggedIn = ref(false)
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)))
@@ -150,11 +172,14 @@ watch(() => route.query, query => {
     search.value = typeof query.search === 'string' ? query.search : ''
     sort.value = query.sort === 'popular' ? 'popular' : 'soonest'
   }
-  viewMode.value = 'list'
-  if (query.view === 'map') router.replace({ path: '/discover', query: { ...query, view: 'list' } })
+  // Older links used view=map; the URL keeps view=list and phones open on the map.
+  if (query.view === 'map') {
+    viewMode.value = 'map'
+    router.replace({ path: '/discover', query: { ...query, view: 'list' } })
+  }
 }, { immediate: true })
-watch([filters, search, sort, viewMode], () => {
-  const query = discoveryUrlQuery(filters.value, search.value, viewMode.value, sort.value)
+watch([filters, search, sort], () => {
+  const query = discoveryUrlQuery(filters.value, search.value, 'list', sort.value)
   const target = router.resolve({ path: '/discover', query })
   if (target.fullPath !== route.fullPath) router.replace({ path: '/discover', query })
 }, { deep: true })
@@ -186,12 +211,12 @@ function goToPage(nextPage) {
     <h1 class="visually-hidden">{{ categoryTitle }}</h1>
       <div class="discovery-search"><EventFilters ref="searchControl" v-model="filters" v-model:search="search" :total="total" :loading="loading" :error="error" show-active @show="showList" @retry="refreshDiscovery" /></div>
       <div ref="toolbar" class="discovery-toolbar">
-        <nav class="category-shortcuts" aria-label="Event categories">
+        <nav ref="categoryRow" class="category-shortcuts" :class="{ 'fade-start': rowFade.start, 'fade-end': rowFade.end }" aria-label="Event categories" @scroll.passive="updateRowFade">
           <button type="button" class="category-shortcut" :aria-pressed="!filters.categories.length" @click="chooseCategory()">All</button>
-          <button v-for="category in commonCategories" :key="category" type="button" class="category-shortcut" :class="`category-shortcut--${category}`" :aria-pressed="filters.categories.includes(category)" @click="chooseCategory(category)">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</button>
+          <button v-for="category in commonCategories" :key="category" type="button" class="category-shortcut cat-tint" :class="`cat-${category}`" :aria-pressed="filters.categories.includes(category)" @click="chooseCategory(category)">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</button>
         </nav>
         <div class="results-tools">
-          <span aria-live="polite">{{ total }} {{ total === 1 ? 'event' : 'events' }}</span>
+          <span aria-live="polite"><BumpValue :value="total" /> {{ total === 1 ? 'event' : 'events' }}</span>
           <div v-if="smallScreen" class="pane-switch" role="group" aria-label="Show events as">
             <button type="button" :aria-pressed="mobilePane === 'list'" @click="showPane('list')">List</button>
             <button type="button" :aria-pressed="mobilePane === 'map'" @click="showPane('map')">Map</button>
@@ -203,15 +228,16 @@ function goToPage(nextPage) {
       <div class="discovery-workspace" :data-pane="smallScreen ? mobilePane : undefined" id="event-directory">
         <section ref="resultList" class="discovery-list" aria-label="Upcoming events" :aria-busy="loading" tabindex="-1">
           <h2 class="visually-hidden">What’s coming up</h2>
-          <div v-if="loading" class="loading-state" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span><p>Finding your next event…</p></div>
+          <!-- First load shows placeholder rows; later filter changes keep the old results visible (dimmed) until the new ones arrive. -->
+          <SkeletonList v-if="loading && !events.length" :count="5" label="Finding your next event…" />
           <div v-else-if="error" class="empty-state" role="alert"><h2>We couldn’t load events</h2><p>{{ error }}</p><button type="button" class="btn btn-outline-danger" @click="refreshDiscovery">Try again</button></div>
-          <div v-else-if="!events.length" class="empty-state" role="status"><h2>No events found</h2><p>Try another search or clear your filters.</p><button type="button" class="btn btn-outline-secondary" @click="clearFilters">Clear search and filters</button></div>
-          <div v-else class="event-timeline">
+          <div v-else-if="!events.length && !loading" class="empty-state" role="status"><h2>No events found</h2><p>Try another search or clear your filters.</p><button type="button" class="btn btn-outline-secondary" @click="clearFilters">Clear search and filters</button></div>
+          <div v-else class="event-timeline" :class="{ 'is-refreshing': loading }">
             <section v-for="group in dateGroups" :key="group.key" class="date-group" :aria-label="`${group.label}, ${group.weekday} ${group.year}`">
               <div class="timeline-date"><time :datetime="group.date"><span class="date-label">{{ group.label }}<template v-if="group.year">, {{ group.year }}</template></span><span class="weekday">{{ group.weekday }}</span></time></div>
-              <div class="date-events">
+              <TransitionGroup tag="div" name="list-fade" class="date-events">
                 <DiscoveryEventRow v-for="event in group.events" :key="event.id" :event="event" :recommendation="recommendationById.get(event.id)" :selected="selectedEventId === event.id" :bookmark-enabled="loggedIn" :preference-pending="actionPending" @select="selectMapEvent" @preference="changeListingPreference" />
-              </div>
+              </TransitionGroup>
             </section>
           </div>
           <nav v-if="totalPages > 1 && !error" class="event-pagination" aria-label="Event pages">
@@ -235,18 +261,17 @@ function goToPage(nextPage) {
 .discovery-toolbar { display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 10px 20px; margin: 14px 0; }
 .category-shortcuts { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; flex: 1 1 0; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .category-shortcuts::-webkit-scrollbar { display: none; }
+.category-shortcuts.fade-end { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); }
+.category-shortcuts.fade-start { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px); mask-image: linear-gradient(to right, transparent, #000 48px); }
+.category-shortcuts.fade-start.fade-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); }
 .category-shortcut { flex: none; white-space: nowrap; }
-.category-shortcut--career,.category-shortcut--wellness { background: color-mix(in srgb, var(--bookedz-mint) 42%, var(--bookedz-surface)); }
-.category-shortcut--outdoors { background: color-mix(in srgb, var(--bookedz-mint) 65%, var(--bookedz-surface)); }
-.category-shortcut--gaming { background: var(--bookedz-glass-active); }
-.category-shortcut { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 9px 15px; border: 1px solid transparent; border-radius: 99px; background: var(--bookedz-hover); color: var(--bookedz-ink); font-size: 12px; }
-.category-shortcut--tech,.category-shortcut--sports { background: color-mix(in srgb, var(--bookedz-mint) 42%, var(--bookedz-surface)); }
-.category-shortcut--music { background: var(--bookedz-glass-active); }
-.category-shortcut--arts { background: var(--bookedz-mango); }
-.category-shortcut--food { background: color-mix(in srgb, var(--bookedz-yellow) 48%, var(--bookedz-surface)); }
-.category-shortcut--volunteering { background: color-mix(in srgb, var(--bookedz-mint) 65%, var(--bookedz-surface)); }
+.category-shortcut { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 9px 15px; border: 1px solid transparent; border-radius: 99px; color: var(--bookedz-ink); font-size: 12px; }
+.category-shortcut:not(.cat-tint) { background: var(--bookedz-hover); }
 .category-shortcut[aria-pressed=true] { background: var(--bookedz-ink); color: var(--bookedz-surface); }
 .category-shortcut:hover { border-color: var(--bookedz-control-border); }
+.category-shortcut { transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease), transform var(--bookedz-motion-feedback) var(--bookedz-ease); }
+.category-shortcut:active { transform: scale(.95); }
+.pane-switch button { transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .all-categories-link,.browse-back { display: inline-flex; align-items: center; min-height: 44px; padding: 6px; color: var(--bookedz-primary-dark); font-size: 12px; }
 .results-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--bookedz-muted); font-size: 12px; }
 .results-sort select { min-height: 44px; border: 0; background: transparent; color: var(--bookedz-ink); font: inherit; }
@@ -268,13 +293,17 @@ function goToPage(nextPage) {
 .date-label { font-size: 13px; font-weight: 700; }
 .weekday { margin-top: 2px; font-size: 10px; color: var(--bookedz-muted); }
 .date-events { display: grid; gap: 8px; padding-left: 12px; min-width: 0; }
+.event-timeline { transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease); }
+.event-timeline.is-refreshing { opacity: .55; }
+.date-group { animation: route-in var(--bookedz-motion-normal) var(--bookedz-ease) both; }
 .event-pagination { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 18px; font-size: 12px; }
 .empty-state,.loading-state { padding: 28px 16px; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); color: var(--bookedz-muted); font-size: 14px; }
 .empty-state h2 { color: var(--bookedz-ink); font-size: 18px; }
 
-@media(max-width:767px) { .discovery-toolbar { flex-wrap: wrap; }.category-shortcuts { flex-basis: 100%; } }
+@media(max-width:767px) { .discovery-toolbar { flex-wrap: wrap; }.category-shortcuts { flex-basis: 100%; }.results-tools { width: 100%; justify-content: space-between; } }
 @media(max-width:991px) {
   .discover-page { padding: 18px 12px 32px; }
+  .discovery-workspace { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
 }
 /* Phones: one pane at a time; tablets and up keep the list and the pinned map side by side */
 @media(max-width:767px) {
@@ -282,13 +311,6 @@ function goToPage(nextPage) {
   .discovery-map-column { position: relative; top: auto; }
   .discovery-workspace[data-pane='list'] .discovery-map-column,
   .discovery-workspace[data-pane='map'] .discovery-list { display: none; }
-
-
-
-
-
-
-
 }
 @media(max-width:575px) { .event-timeline { --date-column: 52px; }.date-events { padding-left: 10px; }.date-label { font-size: 12px; }.weekday { font-size: 10px; }.results-tools { width: 100%; justify-content: space-between; }.category-shortcut { padding-inline: 12px; } }
 </style>

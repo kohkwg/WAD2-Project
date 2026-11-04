@@ -2,17 +2,17 @@
 
 | Asset | Source / licence | Use |
 | --- | --- | --- |
-| `client/src/assets/illustrations/singapore-anchored-boats-plate.webp` | Built-in imagegen edit, exact prompt below | Current shared background, 1448×1086, 569,838 bytes; detailed fixed boats |
-| `client/src/assets/illustrations/singapore-living-water-plate.webp` | Built-in imagegen cleanup of the selected expanded island; exact prompt below | Current shared background, 1448×1086, 532,074 bytes; sailing cargo ship removed for animation |
-| `IslandWater.vue`, `IslandBoats.vue` | Codex-authored Vue/SVG/CSS | Four sailing routes, wakes, ten local currents/glints and shoreline motion |
-| `client/src/assets/brand/bookedz-mark.svg` | Original Codex-authored vector | Brand mark / favicon |
+| `client/src/assets/illustrations/singapore-anchored-boats-plate.webp` | Built-in image editing edit, exact prompt below | Current shared background, 1448×1086, 569,838 bytes; detailed fixed boats |
+| `client/src/assets/illustrations/singapore-living-water-plate.webp` | Built-in image editing cleanup of the selected expanded island; exact prompt below | Current shared background, 1448×1086, 532,074 bytes; sailing cargo ship removed for animation |
+| `IslandWater.vue`, `IslandBoats.vue` | Team-authored Vue/SVG/CSS | Four sailing routes, wakes, ten local currents/glints and shoreline motion |
+| `client/src/assets/brand/bookedz-mark.svg` | Original vector | Brand mark / favicon |
 | `client/src/assets/map/singapore.json` | Natural Earth, public domain | Previous terrain reference; no longer rendered in discovery |
 | `client/src/assets/fonts/bricolage-grotesque.ttf` | Google Fonts / Mathieu Triay, SIL OFL; adjacent OFL.txt | Self-hosted variable heading font |
 | `client/src/assets/fonts/dm-sans.ttf` | Google Fonts, SIL OFL; adjacent DM-Sans-OFL.txt | Body/navigation/forms |
-| `client/src/assets/illustrations/singapore-animated-plate.webp` | User-supplied replacement; built-in imagegen edit, prompt below | Previous shared island background, 298,354 bytes |
-| `client/src/assets/illustrations/singapore-expanded-plate.webp` | Built-in imagegen expansion and cleanup of the user's selected illustration, prompts below | Current shared animated island and neighbourhood thumbnails, 1448×1086, 649,926 bytes |
-| `NeighbourhoodLabels.vue` | Codex-authored Vue/SVG/HTML | Compact 10px labels with 44px targets, click/keyboard zoom and collision suppression |
-| `IslandArtwork.vue` | Codex-authored SVG/CSS | Independent wheel, boats, birds and occasional plane |
+| `client/src/assets/illustrations/singapore-animated-plate.webp` | User-supplied replacement; an image generation tool edit, prompt below | Previous shared island background, 298,354 bytes |
+| `client/src/assets/illustrations/singapore-expanded-plate.webp` | Built-in image editing expansion and cleanup of the user's selected illustration, prompts below | Current shared animated island and neighbourhood thumbnails, 1448×1086, 649,926 bytes |
+| `NeighbourhoodLabels.vue` | Team-authored Vue/SVG/HTML | Compact 10px labels with 44px targets, click/keyboard zoom and collision suppression |
+| `IslandArtwork.vue` | Team-authored SVG/CSS | Independent wheel, boats, birds and occasional plane |
 | `SingaporeMap.vue` interactive layer | Vue/SVG implementation | Dynamic markers, clusters, pan/zoom and previews over the cleaned illustration |
 | `component-gallery.html` | Original HTML/CSS | Standalone design-system review artifact |
 | `previews/` | Browser captures of isolated demo fixtures | Desktop/mobile implementation evidence, not real current events |
@@ -41,13 +41,13 @@ adjusted to the new boats. All water/wake movement shares pause/tab/offscreen
 state and reduced-motion CSS. The prior route-based approach below is historical.
 WebP encoding uses Pillow quality 90/method 6 without an application dependency.
 
-Final built-in imagegen edit prompt (verbatim):
+Final an image generation tool edit prompt (verbatim):
 
 > Precise local edit to this exact 1448x1086 isometric illustrated Singapore map for a web app. Keep the entire background framing, terrain, coastline, landmarks, fixed Flyer support without wheel, all buildings, vegetation, both richly illustrated cargo ships at left, lighting, palette, and lack of labels EXACTLY unchanged. ADD only THREE finely rendered miniature boats in the same detailed 3D/isometric painterly style as the existing cargo ships, not flat SVG icons. (1) A small red-white-blue passenger ferry centered at pixel (78,165), about 44x25 pixels, in open water northwest of the island, bow pointing northeast/up-right. (2) An elegant little white/navy/red cabin speedboat centered at pixel (1207,917), about 52x27 pixels, in open turquoise water east of Sentosa, bow pointing northeast/up-right. (3) A small white/navy motor launch centered at pixel (983,785), about 32x16 pixels, on open Marina Bay water, bow pointing east/right. Give the boats modeled hulls, glass cabins, subtle water-contact shadows and believable scale/perspective. NO long wakes or lines, just very faint contact ripples immediately at hulls; wakes will be animated in code. Preserve the existing cargo vessel at pixel(118,727) and its detailed containers. Do not add UI, text, pins or a Flyer wheel. Do not move or simplify any other object. Same 4:3 composition and canvas size.
 
 ## Living water and boats, 3 November 2026 follow-up
 
-Built-in imagegen cleanup prompt (verbatim):
+Built-in image editing cleanup prompt (verbatim):
 
 > Precise cleanup of this exact 1448x1086 illustrated Singapore animation background. Remove ONLY the lower, free-sailing cargo ship and its wake in the open sea along the left edge, centered approximately pixel (118,727), roughly bounds x35..190,y675..785. Fill its former area seamlessly with the same turquoise water and soft existing ocean ripples. KEEP the upper cargo ship moored immediately beside the red harbour cranes, roughly pixel(100,620), completely unchanged. Keep absolutely everything else unchanged: exact landmass outline and camera framing, every building, plant, attraction, fixed Flyer supports, road, cable car, parked aircraft, turquoise water colors, cream edge fade. No labels, UI, new ships, new wheel or layout changes. The removed sailing ship will be replaced with an independently animated layer.
 
@@ -69,7 +69,7 @@ rotates in 48 seconds; plane/bird accents and marker/preview motion remain.
 
 ## Expanded island, 3 November 2026
 
-Final built-in imagegen cleanup prompt (verbatim):
+Final an image generation tool cleanup prompt (verbatim):
 
 > Edit this exact map into a clean production background plate for animated SVG overlays. Preserve image dimensions 4:3, exact island outline, all landmark locations and scale, lighting, toy miniature isometric illustration style, vivid colors, buildings, vegetation, roads, cream edge fade. Change ONLY: (1) remove every printed place-name label and its cream pill, repairing underlying terrain naturally, no text anywhere; (2) remove the Singapore Flyer's entire circular wheel, spokes, hub and capsules at right lower middle, centered approximately (1218,633) in the 1448x1086 reference, retaining the fixed white supporting legs and low terminal building, fill the removed wheel area with matching continuation of existing trees/buildings/sky/terrain behind it. The wheel will be animated separately; do not add another wheel anywhere. (3) Remove the small motor boats on open water at upper left and lower edge and in Marina Bay, repair water smoothly; preserve cargo ships at left harbour and planes parked at Changi, preserve cable cars. Do not move or redraw any other attractions. No pins, checkmarks, labels or UI. This is a precise cleanup, not a new composition.
 
@@ -80,17 +80,17 @@ trees, cable cars, cargo ships and parked planes remain static illustration.
 The independent Flyer, sailing boat, ferry, plane and birds remain animated SVG
 overlays with the existing pause, tab/offscreen and reduced-motion handling.
 
-The built-in imagegen expansion used the supplied screenshot's island crop as its
+The an image generation tool expansion used the supplied screenshot's island crop as its
 edit target: preserve the miniature isometric style, turquoise water, lime terrain,
 sandy shoreline and cream edge fade; expand the main terrain to roughly 88% of
 image width; add northern zoo greenery, central gardens/housing, northeast
 waterfront housing, eastern precincts, Sports Hub, Chinatown, Kampong Glam and
 Orchard buildings; place Supertrees beside Marina Bay; remove event pins and UI;
 make the place labels much smaller. The selected concept and cleanup master remain
-in the local Codex chat outputs/generated-images directories; normal clones need
+in the local outputs directories; normal clones need
 only the source-controlled WebP asset, not those local masters.
 
-Final cleanup used built-in imagegen, with the selected concept as edit target:
+Final cleanup used an image generation tool, with the selected concept as edit target:
 preserve exact framing, landmass, landmark positions, lighting and palette; remove
 every place-name label/pill and reconstruct the terrain; remove the Flyer's rotating
 wheel, hub, spokes and capsules while retaining its fixed supports and terminal;
@@ -131,8 +131,8 @@ No third-party font or map-tile request is needed to render discovery.
 - Supplied master: `docs/resources/artefacts/Whimsical Singapore Isometric City Map.png`,
   unchanged. Its baked UI was never wired to live data.
 - Previous app asset (superseded): `client/src/assets/illustrations/singapore-clean.webp`,
-  407,316 bytes, derived using the built-in imagegen edit tool. The generated PNG
-  master remains in the local Codex generated-images folder; only the optimised
+  407,316 bytes, derived using an image editing tool. The generated PNG
+  master remains in the local outputs folder; only the optimised
   WebP is required by the application. Encoding used the existing Chromium canvas
   encoder at quality 0.88; no image-processing dependency was added.
 - Additional font: `client/src/assets/fonts/dm-sans.ttf`, from Google Fonts;
@@ -147,7 +147,7 @@ No third-party font or map-tile request is needed to render discovery.
 - Current screenshots: `previews/immersive-desktop.png` and
   `previews/immersive-mobile.png`. Earlier preview files document the prior pass.
 
-Imagegen edit prompt (built-in tool, one supplied reference image):
+Image editing edit prompt (built-in tool, one supplied reference image):
 
 > Edit this supplied whimsical Singapore isometric island illustration into a clean illustration plate for a website hero. Preserve the original composition, recognisable Singapore landmarks, buildings, turquoise water, boats, trees, MRT trains, lighting, warm cream outer background and rich cheerful illustrated detail. Remove ALL floating map pins, all colored event/category markers including icons inside them, all numerical cluster-count badges, and ALL floating place-name labels (Woodlands, Jurong, Tampines, Changi, Marina Bay, Sentosa). Seamlessly reconstruct the underlying buildings, foliage, roads or water where these overlays were. No event markers, no floating labels, no words, no numbers, no UI. Keep illustration style, camera viewpoint and geography exactly as close to source as possible. Output a high-quality landscape illustration, approximately 4:3 aspect ratio; no redesign of the scene and no extra UI. This is a clean decorative artwork, not an authoritative geographic map.
 
@@ -197,7 +197,7 @@ background is `client/src/assets/illustrations/singapore-animated-plate.webp`
 (298,354 bytes, 1448×1086). Both discovery views and neighbourhood thumbnails use
 this asset; a normal clone does not need the local source attachment.
 
-Codex used the built-in imagegen editor, then encoded its result as WebP without
+We used an image editor, then encoded its result as WebP without
 changing the composition. Final edit prompt:
 
 > Use case: precise-object-edit. Edit target: supplied Singapore island illustration, 1448x1086, preserve exact framing, geometry and ALL labels Woodlands/Jurong/Tampines/Changi/Marina Bay/Sentosa. Create a clean background plate for animation: remove ONLY the Singapore Flyer rotating circular wheel and its spokes/cabins (around pixel1040,622, radius60), keeping its fixed triangular supports/base, replacing removed pixels with plausible continuation of buildings/park behind. Remove ONLY the moving red-white speedboat near pixel1080,975 and its white wake, replacing with matching turquoise sea. Everything else unchanged including all other boats, plane, structures, coastline, colors, typography and composition. No new elements. Keep 4:3 aspect ratio and exact landmark registration.

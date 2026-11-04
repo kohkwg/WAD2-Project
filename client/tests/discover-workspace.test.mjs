@@ -48,10 +48,13 @@ test('general discovery keeps its actual source label without pretending to be a
 })
 
 test('timeline row preserves actual registration status and routes full events to the waitlist', async () => {
-  const confirmed = await render(Row, { event: event('going', { registration_status: 'confirmed' }) })
-  checkTrue(confirmed.includes('Confirmed') && confirmed.includes('You’re going'))
+  // Unselected rows state your status in words; the status action appears once the row is selected.
+  const going = await render(Row, { event: event('going', { registration_status: 'confirmed' }) })
+  checkTrue(going.includes('You’re going'))
+  const confirmed = await render(Row, { event: event('going', { registration_status: 'confirmed' }), selected: true })
+  checkTrue(confirmed.includes('Confirmed'))
   checkTrue(!confirmed.includes('href="/events/going/rsvp#rsvp"'))
-  const full = await render(Row, { event: event('full', { spots_left: 0 }) })
+  const full = await render(Row, { event: event('full', { spots_left: 0 }), selected: true })
   checkTrue(full.includes('href="/events/full/rsvp#waitlist"') && full.includes('Join waitlist'))
   const unknown = await render(Row, { event: event('unknown', { spots_left: null }), recommendation: { source: 'general_discovery', compatibilityScore: 0 } })
   checkTrue(!unknown.includes('spots left') && !unknown.includes('% match'))
