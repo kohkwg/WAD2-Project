@@ -37,11 +37,11 @@ function secretFromScan(text) {
   try {
     url = new URL(text)
   } catch {
-    throw new Error("That isn't a Bookedz venue QR code.")
+    throw new Error("That isn't a Dino venue QR code.")
   }
   const match = url.pathname.match(/^\/events\/([^/]+)\/check-in$/)
   const secret = url.searchParams.get('s')
-  if (!match || !secret) throw new Error("That isn't a Bookedz venue QR code.")
+  if (!match || !secret) throw new Error("That isn't a Dino venue QR code.")
   if (match[1] !== eventId) throw new Error('That QR code is for a different event.')
   return secret
 }

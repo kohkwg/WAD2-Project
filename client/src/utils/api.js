@@ -71,7 +71,7 @@ export async function getFoodNearby({ lat, lng, at, radius = 800 }) {
   try {
     response = await fetch(`${SERVER}/api/food/nearby?${params}`)
   } catch {
-    throw new Error('Food suggestions need the Bookedz server. Start it with pnpm --dir server dev.')
+    throw new Error('Food suggestions need the Dino server. Start it with pnpm --dir server dev.')
   }
   const body = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(body.message || 'Food suggestions are unavailable right now.')

@@ -7,8 +7,8 @@
 :root {
   --bookedz-canvas: #fff8f1; --bookedz-cream: #fff8f1; --bookedz-surface: #ffffff;
   --bookedz-ink: #1f2937; --bookedz-muted: #636975; --bookedz-border: #e9ded3;
-  --bookedz-coral: #ff6b35; --bookedz-coral-dark: #9a3412; --bookedz-mint: #14b8a6; --bookedz-yellow: #fde7b0;
-  --bookedz-peach: #ffe4d6; --bookedz-mango: #fde7b0; --bookedz-teal: #14b8a6; --bookedz-pink: #ec4899;
+  --bookedz-coral: #ff6b35; --bookedz-coral-dark: #9a3412; --bookedz-mint: #92cfad; --bookedz-yellow: #fde7b0;
+  --bookedz-peach: #ffe4d6; --bookedz-mango: #fde7b0; --bookedz-teal: #92cfad; --bookedz-pink: #ec4899;
   --bookedz-primary: #ff6b35; --bookedz-primary-dark: #9a3412; --bookedz-ink-soft: #636975;
   --bookedz-body: 'DM Sans', system-ui, sans-serif;
   --bookedz-space-1: 4px; --bookedz-space-2: 8px; --bookedz-space-3: 16px; --bookedz-space-4: 24px; --bookedz-space-5: 40px; --bookedz-space-6: 64px;
@@ -38,7 +38,7 @@
   --bs-primary: #ff6b35; --bs-primary-rgb: 255,107,53; --bs-border-color: var(--bookedz-border);
   --bs-link-color: #9a3412; --bs-link-color-rgb: 154,52,18; --bs-link-hover-color: #9a3412;
   --bs-border-radius: .75rem; --bs-border-radius-lg: 1.25rem;
-  --bookedz-primary-hover: #ff6b35; --bookedz-forest: #14b8a6; --bookedz-success: #14b8a6; --bookedz-hover: #ffe4d6;
+  --bookedz-primary-hover: #ff6b35; --bookedz-forest: #2f8a63; --bookedz-success: #2f8a63; --bookedz-hover: #ffe4d6;
   --bookedz-icon: #636975; --bookedz-muted-border: #e9ded3;
   --bookedz-map-overlay: rgb(255 248 241 / 94%);
   --bookedz-disabled-bg: #e9ded3; --bookedz-disabled-ink: #636975;
@@ -55,12 +55,12 @@
   --bookedz-fill-active: #f75f27;
   --bookedz-on-fill: #1f2937;
   --bookedz-orange-soft: #ffe4d6;
-  --bookedz-teal-ink: #115e59;
-  --bookedz-teal-soft: #d5f5f0;
+  --bookedz-teal-ink: #25684a;
+  --bookedz-teal-soft: #e4f4e0;
   --bookedz-mango-soft: #fde7b0;
   --bookedz-pink-soft: #fce1ef;
   --bookedz-pink-ink: #9d174d;
-  --bookedz-focus: #0f766e;
+  --bookedz-focus: #2f7d5c;
   --bookedz-button-shadow-hover: 0 8px 22px rgb(255 107 53 / 42%);
   --bookedz-neutral-shadow: 0 3px 10px rgb(31 41 55 / 8%);
   --bookedz-neutral-shadow-hover: 0 7px 18px rgb(31 41 55 / 16%);
@@ -143,7 +143,7 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 .app-navbar { position: relative; z-index: 100; background: var(--bookedz-surface); border-bottom: 1px solid var(--bookedz-border); min-height: 80px; }
 .app-navbar > .container { max-width: 1440px; gap: 1rem; }
 .app-navbar .navbar-brand { display: inline-flex; align-items: center; gap: .5rem; font-size: 1.8rem; color: var(--bookedz-ink) !important; letter-spacing: -.07em; margin-right: 2rem; }
-.brand-symbol { width: 32px; height: 36px; color: var(--bookedz-primary); }
+.brand-symbol { width: 40px; height: 40px; object-fit: contain; }
 .app-navbar .nav-link { color: var(--bookedz-muted); border-radius: .65rem; padding: .5rem .7rem; font-size: .875rem; font-weight: 500; }
 .app-navbar .nav-link.active { color: var(--bookedz-primary-dark); background: var(--bookedz-glass-active); font-weight: 650; }
 .nav-section-label { display: block; padding: .5rem .65rem; font-size: .75rem; color: var(--bookedz-muted); }
@@ -171,11 +171,11 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
   --bookedz-ink: #fafaf9; --bookedz-muted: #a8a29e; --bookedz-ink-soft: #a8a29e;
   --bookedz-border: #57534e; --bookedz-control-border: #57534e; --bookedz-muted-border: #57534e;
   --bookedz-primary-dark: #ffb79a; --bookedz-primary-hover: #ff8a5b; --bookedz-coral-dark: #ffb79a;
-  --bookedz-peach: #4a2b1f; --bookedz-mango: #5b4210; --bookedz-teal: #2dd4bf; --bookedz-pink: #f472b6;
-  --bookedz-coral: #ff8a5b; --bookedz-primary: #ff8a5b; --bookedz-mint: #2dd4bf; --bookedz-yellow: #5b4210;
+  --bookedz-peach: #4a2b1f; --bookedz-mango: #5b4210; --bookedz-teal: #7fc4a0; --bookedz-pink: #f472b6;
+  --bookedz-coral: #ff8a5b; --bookedz-primary: #ff8a5b; --bookedz-mint: #7fc4a0; --bookedz-yellow: #5b4210;
   --bookedz-glass: rgb(41 37 36 / 88%); --bookedz-glass-solid: #292524;
   --bookedz-glass-border: rgb(255 255 255 / 14%); --bookedz-glass-hover: #4a2b1f; --bookedz-glass-active: #4a2b1f;
-  --bookedz-hover: #4a2b1f; --bookedz-forest: #2dd4bf; --bookedz-success: #2dd4bf;
+  --bookedz-hover: #4a2b1f; --bookedz-forest: #86d1a8; --bookedz-success: #86d1a8;
   --bookedz-icon: #a8a29e; --bookedz-map-overlay: rgb(41 37 36 / 94%);
   --bookedz-disabled-bg: #57534e; --bookedz-disabled-ink: #a8a29e;
   --bookedz-danger: #ff9eaa; --bookedz-on-action: #1c1917;
@@ -192,8 +192,8 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
   --bookedz-fill-active: #ff7a45;
   --bookedz-on-fill: #1c1917;
   --bookedz-orange-soft: #4a2b1f;
-  --bookedz-teal-ink: #99f6e4;
-  --bookedz-teal-soft: #134e4a;
+  --bookedz-teal-ink: #b9e8cd;
+  --bookedz-teal-soft: #1e3a2b;
   --bookedz-mango-soft: #5b4210;
   --bookedz-pink-soft: #50213a;
   --bookedz-pink-ink: #fbcfe8;
@@ -256,7 +256,7 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 /* Category colours: one hue per category, shared by the Discover chips and event tags. */
 .cat-tech { --cat-hue: #3b82f6; }
 .cat-music { --cat-hue: #ec4899; }
-.cat-sports { --cat-hue: #14b8a6; }
+.cat-sports { --cat-hue: #5fb48a; }
 .cat-arts { --cat-hue: #f59e0b; }
 .cat-food { --cat-hue: #ff6b35; }
 .cat-volunteering { --cat-hue: #22c55e; }

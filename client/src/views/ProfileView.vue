@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase'
 import { USING_SUPABASE } from '@/utils/api'
 import { geocodePostalCode } from '@/lib/onemap'
 import { INTEREST_OPTIONS } from '@/lib/constants'
+import { dinoById } from '@/lib/dinos'
+import DinoPicker from '@/components/profile/DinoPicker.vue'
 
 defineProps({ embedded: { type: Boolean, default: false } })
 
@@ -13,6 +15,9 @@ const username = ref('')
 const usernameError = ref('')
 const usernameAvailable = ref(true)
 const postalCode = ref('')
+const dino = ref('')
+const dinoSaving = ref(false)
+const dinoError = ref('')
 const selected = ref([])          // interest names the user ticks
 
 const loading = ref(true)
@@ -50,6 +55,7 @@ async function loadProfile() {
     if (!active) return
     if (!data) throw new Error('Your profile could not be found. Please contact the organiser.')
     userId.value = auth.user.id
+    dino.value = dinoById(auth.user.user_metadata?.dino)?.id || ''
     displayName.value = data.display_name || ''
     username.value = data.username || ''
     postalCode.value = data.postal_code || ''
@@ -64,6 +70,24 @@ async function loadProfile() {
   }
 }
 onMounted(loadProfile)
+
+// The mascot is saved the moment it is picked; it lives in the user's own auth metadata.
+async function chooseDino(id) {
+  if (dinoSaving.value || !dinoById(id)) return
+  const previous = dino.value
+  dino.value = id
+  dinoSaving.value = true
+  dinoError.value = ''
+  try {
+    const { error: err } = await supabase.auth.updateUser({ data: { dino: id } })
+    if (err) throw err
+  } catch (failure) {
+    dino.value = previous
+    dinoError.value = failure.message || 'Could not save your dino. Please try again.'
+  } finally {
+    dinoSaving.value = false
+  }
+}
 
 async function save() {
   if (saving.value || !userId.value) return
@@ -114,7 +138,7 @@ async function save() {
 <template>
   <div class="profile-page" :class="{ 'container py-4 py-md-5': !embedded, 'profile-page--embedded': embedded }">
     <header v-if="!embedded" class="profile-heading">
-      <p class="profile-kicker">Your Bookedz account</p>
+      <p class="profile-kicker">Your Dino account</p>
       <h1 class="profile-title page-title">Your profile</h1>
       <p class="profile-lede">Keep your details current and shape the events you discover.</p>
     </header>
@@ -126,6 +150,13 @@ async function save() {
     <form v-else-if="userId" class="profile-form" :aria-busy="saving" @submit.prevent="save">
       <div v-if="success" class="alert alert-success" role="status">{{ success }}</div>
       <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
+
+      <section class="profile-section" aria-labelledby="dino-heading">
+        <h2 id="dino-heading" class="profile-section-title">Pick your dino</h2>
+        <p class="profile-help">Your mascot shows next to your name. Change it any time.</p>
+        <DinoPicker :model-value="dino" :disabled="dinoSaving" @update:model-value="chooseDino" />
+        <p v-if="dinoError" class="text-danger mt-2 mb-0" role="alert">{{ dinoError }}</p>
+      </section>
 
       <fieldset class="profile-section" :disabled="saving" aria-describedby="profile-details-help">
         <legend>Make yourself at home</legend>
@@ -199,7 +230,7 @@ async function save() {
 .profile-lede { max-width: 48ch; margin: .85rem 0 0; color: var(--bookedz-ink-soft, #636975); line-height: 1.6; }
 .profile-form { padding: clamp(1.1rem, 4vw, 2rem); border: 1px solid var(--bookedz-border); border-radius: var(--bookedz-radius-card); background: var(--bookedz-surface); box-shadow: var(--bookedz-shadow); }
 .profile-section { min-width: 0; margin: 0 0 1.75rem; padding: 0 0 1.5rem; border: 0; border-bottom: 1px solid var(--bookedz-border); }
-.profile-section legend { float: none; width: auto; margin-bottom: .5rem; font-family: var(--bookedz-heading); font-size: 1.35rem; font-weight: 650; }
+.profile-section legend, .profile-section-title { float: none; width: auto; margin-bottom: .5rem; font-family: var(--bookedz-heading); font-size: 1.35rem; font-weight: 650; }
 .profile-section legend, .profile-section .form-label { color: var(--bookedz-ink, #1f2937); }
 .profile-help { max-width: 55ch; margin-bottom: 1.25rem; color: var(--bookedz-muted); }
 .profile-interests { padding-bottom: 0; border: 0; }
