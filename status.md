@@ -1,5 +1,12 @@
 # Project status and timeline
 
+4 November, local stash conflict repair — combined the background page selectors
+and retained the added local styles in `design-baseline.css`; Community keeps dev's
+Groups/Friends imports rather than imports for removed Jio components. Both files
+are free of conflict markers. Community's script, template, scoped styles and local
+import paths, plus the shared baseline CSS, pass focused compilation checks.
+No browser journey, full build/suite, commit, push or hosted changes in this repair.
+
 3 November, local merge resolution — resolved the overlapping `aish-algorithm`
 and `origin/dev` files. Retained Aishani's recommendation, saved-event, My RSVPs,
 My events, palette, typography, illustrated landing and committed street-map
