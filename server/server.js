@@ -14,6 +14,8 @@ app.get("/health", (req, res) => {
 // Feature 1: recommendations + cover image uploads
 app.use("/api/recommendations", require("./routes/recommendations"));
 app.use("/api/uploads", require("./routes/uploads"));
+// Delete the signed-in user's own account (service-role, server only)
+app.use("/api/account", require("./routes/account"));
 // Automatic event planner: programme + task suggestions from past events
 app.use("/api/plan-suggestions", require("./routes/planSuggestions"));
 // Hangout late-join travel: OneMap routes when ONEMAP_EMAIL/ONEMAP_PASSWORD are set

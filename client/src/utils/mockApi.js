@@ -195,6 +195,20 @@ export async function signUp() {
   throw new Error('Sign-up needs Supabase. Add your keys to client/.env (see .env.example).')
 }
 
+export async function requestPasswordReset() {
+  throw new Error('Password reset needs Supabase. Add your keys to client/.env (see .env.example).')
+}
+
+export async function updatePassword() {
+  throw new Error('Password reset needs Supabase. Add your keys to client/.env (see .env.example).')
+}
+
+const needsSupabase = () => { throw new Error('Account settings need Supabase. Add your keys to client/.env (see .env.example).') }
+export async function changeUsername() { needsSupabase() }
+export async function changeEmail() { needsSupabase() }
+export async function changePassword() { needsSupabase() }
+export async function deleteAccount() { needsSupabase() }
+
 export async function signOut() {}
 
 // Nothing ever changes who is logged in, so there is nothing to listen for
