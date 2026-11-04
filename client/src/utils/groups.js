@@ -7,7 +7,8 @@ export const CAPACITY_RANGE = { min: 2, max: 8 } // spots in a group, including 
 export const NOTE_LIMIT = 200
 export const SUGGESTION_NAME_LIMIT = 80
 export const VISIBILITIES = ['public', 'private']
-export const isGroup = (event) => event?.kind === 'group' && Boolean(event.group?.eventId)
+// Live events carry only the kind; demo records also have the group field
+export const isGroup = (event) => event?.kind === 'group'
 // A real event people can RSVP to, as opposed to a group (or an older live-mode hangout row).
 export const isOfficialEvent = (event) => !event?.kind || event.kind === 'official'
 export const isPrivateGroup = (event) => isGroup(event) && event.group.visibility !== 'public'
@@ -180,4 +181,47 @@ export function suggestionErrors(plan, slot, suggestion) {
   const same = (s) => (suggestion.refId && s.refId === suggestion.refId) || s.name.toLowerCase() === suggestion.name.toLowerCase()
   if (list.some(same)) return 'That place is already suggested.'
   return ''
+}
+
+// Live mode: group_plan() in the database sends ideas, availability and members; this
+// fits the slots with the same fitSlots() the demo uses, so both modes pick the same times.
+export function livePlanView(raw, me) {
+  const iso = (value) => new Date(value).toISOString()
+  const names = new Map((raw.members || []).map((m) => [m.id, m.name]))
+  const memberIds = [...names.keys()]
+  const availability = {}
+  for (const [userId, slots] of Object.entries(raw.availability || {})) {
+    availability[userId] = Object.fromEntries(Object.entries(slots).map(([slot, cells]) => [slot, (cells || []).map(iso)]))
+  }
+  const fitted = fitSlots({ startTime: raw.startTime, endTime: raw.endTime }, availability, memberIds)
+  const person = (id) => ({ id, name: names.get(id) || 'Member', me: id === me })
+  const out = {}
+  for (const slot of SLOTS) {
+    const f = fitted[slot]
+    const chosenId = raw.choices?.[slot] || null
+    const mine = availability[me]?.[slot]
+    out[slot] = {
+      start: f.start,
+      end: f.end,
+      fitted: f.fitted,
+      label: mealLabel(f.start),
+      cells: f.cells.map((c) => ({ start: c.start, free: c.free.map(person) })),
+      memberCount: memberIds.length,
+      coming: f.coming.map(person),
+      cant: f.cant.map(person),
+      noReply: f.noReply.map(person),
+      myCells: Array.isArray(mine) ? mine : null,
+      chosenId,
+      suggestions: (raw.ideas || [])
+        .filter((i) => i.slot === slot)
+        .map((i) => ({
+          id: i.id, kind: i.kind, refId: i.refId, name: i.name, detail: i.detail, priceText: i.priceText,
+          address: i.address, lat: i.lat, lng: i.lng, sourceUrl: i.sourceUrl, suggestedBy: i.suggestedBy,
+          suggestedByName: i.suggestedByName, createdAt: i.createdAt, mine: i.suggestedBy === me,
+          votes: i.votes, myVote: i.myVote,
+        }))
+        .sort((a, b) => (b.id === chosenId) - (a.id === chosenId) || b.votes - a.votes),
+    }
+  }
+  return out
 }

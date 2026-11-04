@@ -697,6 +697,17 @@ cd client && node --test src/utils/__tests__/groups.test.js
 VITE_USE_MOCK=true pnpm --dir client exec playwright test e2e/go-together.spec.js e2e/immersive-discovery.spec.js e2e/landing-page.spec.js
 ```
 
+Live groups database check (isolated PGlite, no credentials or hosted access; loads every migration):
+
+```sh
+mkdir -p /tmp/wad2-pglite && npm --prefix /tmp/wad2-pglite install @electric-sql/pglite@0.3.15
+node server/checks/groups-db.check.mjs /tmp/wad2-pglite/node_modules/@electric-sql/pglite/dist/index.js
+```
+
+It covers starting a group, listing, the host's spot, private groups and invite tokens, approval,
+chat, ideas and votes, the host's pick, availability windows and leavers, and deleting the official
+event. `livePlanView.test.js` checks that the live plan is shaped like the demo's.
+
 `groups.test.js` also checks `isOfficialEvent` (groups and older hangout rows stay out of event
 lists) and that demo data saved with hangout-shaped groups is upgraded to `kind: 'group'`.
 

@@ -12,6 +12,7 @@
 import * as mockApi from './mockApi.js'
 import * as supabaseApi from './supabaseApi.js'
 import * as supabaseFeature4Api from './supabaseFeature4Api.js'
+import * as supabaseGroupsApi from './supabaseGroupsApi.js'
 import * as supabaseFeature4Weather from './supabaseFeature4Weather.js'
 import { isSupabaseConfigured } from './supabase.js'
 
@@ -44,21 +45,22 @@ export const setEventPublished = (eventId, published) => backend.setEventPublish
 export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
 
 // ---------- Go together groups (Community) ----------
-// Demo mode only for now: the hosted database has no group comments or plan tables yet (see decisions.md).
-export const GROUPS_AVAILABLE = !USING_SUPABASE
-const groupsOnly = (name) => (...args) => (GROUPS_AVAILABLE ? mockApi[name](...args) : Promise.reject(new Error('Go together is coming soon to the live app. Try it in demo mode.')))
-export const getGroups = groupsOnly('getGroups') // public upcoming groups, plus private ones you're in
-export const getGroup = groupsOnly('getGroup') // { id } or { token } from an invite link; includes the plan for members
-export const createGroup = groupsOnly('createGroup') // { eventId, note, capacity, joinMode, visibility }
-export const joinGroup = groupsOnly('joinGroup') // { id, token? }; private groups need the token
-export const getGroupComments = groupsOnly('getGroupComments')
-export const addGroupComment = groupsOnly('addGroupComment')
-export const deleteGroupComment = groupsOnly('deleteGroupComment')
-export const suggestGroupStop = groupsOnly('suggestGroupStop') // (groupId, 'before' | 'after', place, deal or { name })
-export const setGroupAvailability = groupsOnly('setGroupAvailability') // (groupId, slot, [cell start ISO]); when2meet-style
-export const voteGroupStop = groupsOnly('voteGroupStop') // (groupId, slot, suggestionId, keen)
-export const chooseGroupStop = groupsOnly('chooseGroupStop') // host; suggestionId or null
-export const removeGroupStop = groupsOnly('removeGroupStop')
+// Live mode needs migrations 20261104120000 and 20261104120100 (see decisions.md); until
+// they're pushed, the live calls say Go together isn't set up yet.
+const groupsBackend = USING_SUPABASE ? supabaseGroupsApi : mockApi
+export const GROUPS_AVAILABLE = true
+export const getGroups = () => groupsBackend.getGroups() // public upcoming groups, plus private ones you're in
+export const getGroup = (target) => groupsBackend.getGroup(target) // { id } or { token } from an invite link; includes the plan for members
+export const createGroup = (form) => groupsBackend.createGroup(form) // { eventId, note, capacity, joinMode, visibility }
+export const joinGroup = (target) => groupsBackend.joinGroup(target) // { id, token? }; private groups need the token
+export const getGroupComments = (groupId) => groupsBackend.getGroupComments(groupId)
+export const addGroupComment = (groupId, text) => groupsBackend.addGroupComment(groupId, text)
+export const deleteGroupComment = (commentId) => groupsBackend.deleteGroupComment(commentId)
+export const suggestGroupStop = (groupId, slot, item) => groupsBackend.suggestGroupStop(groupId, slot, item) // slot is 'before' or 'after'; a place, deal or { name }
+export const setGroupAvailability = (groupId, slot, cells) => groupsBackend.setGroupAvailability(groupId, slot, cells) // [cell start ISO]; when2meet-style
+export const voteGroupStop = (groupId, slot, suggestionId, keen) => groupsBackend.voteGroupStop(groupId, slot, suggestionId, keen)
+export const chooseGroupStop = (groupId, slot, suggestionId) => groupsBackend.chooseGroupStop(groupId, slot, suggestionId) // host; suggestionId or null
+export const removeGroupStop = (groupId, slot, suggestionId) => groupsBackend.removeGroupStop(groupId, slot, suggestionId)
 
 // Food places and deals near a point, from the Express server (/api/food/nearby).
 // Works in both modes; needs the server running.

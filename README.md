@@ -59,6 +59,13 @@ status. Use the timeline for the latest verified checkpoint and remaining limits
 
 ## Change history
 
+On 4 November 2026, Go together got live mode. We wrote the migrations
+`supabase/migrations/20261104120000_group_event_kind.sql` and
+`20261104120100_go_together_groups.sql`, the live adapter `client/src/utils/supabaseGroupsApi.js`,
+`livePlanView` in `utils/groups.js`, `getEventsByIds` in `supabaseApi.js`, and the isolated
+database check `server/checks/groups-db.check.mjs`. Recommendations now skip groups. The migrations
+were tested in local PGlite only and have not been applied to the hosted project.
+
 On 4 November 2026, groups stopped being called hangouts in the code. A group is now stored as
 `kind: 'group'` with a `group` field, and older demo data is upgraded automatically. We changed
 `utils/groups.js`, `mockApi.js`, `mockData.js`, the event-list filters and the Community
