@@ -112,6 +112,9 @@ const formErrors = computed(() => {
   return errors
 })
 
+// The button names the action the press will take, matching the Discover list.
+const submitLabel = computed(() => !event.value.requiresApproval && event.value.spotsLeft <= 0 ? 'Join waitlist' : 'RSVP')
+
 // Tell them what will happen BEFORE they press the button
 const whatHappensNext = computed(() => {
   if (event.value.requiresApproval)
@@ -325,7 +328,7 @@ async function submitRsvp() {
 
         <button type="submit" class="btn event-cta rsvp-submit" :disabled="submitting">
           <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          {{ submitting ? 'Sending…' : 'RSVP' }}
+          {{ submitting ? 'Sending…' : submitLabel }}
         </button>
       </form>
       </template>

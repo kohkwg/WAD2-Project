@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getCurrentUser } from '../utils/api.js'
+import { getCurrentUser, getEvents } from '../utils/api.js'
 import islandImage from '../assets/illustrations/singapore-clean.webp'
 
 // Posts are kept in this browser only (no shared backend table yet).
@@ -76,9 +76,9 @@ function samplePosts() {
   const now = Date.now()
   const minutes = (n) => now - n * 60 * 1000
   return [
-    { id: 'sample-1', authorId: 'sample', handle: 'ethan', text: 'coders assembly is so fun!', createdAt: minutes(25), likedBy: [], baseLikes: 12 },
+    { id: 'sample-1', authorId: 'sample', handle: 'ethan', text: 'the vue workshop sounds so fun, who else is going?', eventId: 'e2', createdAt: minutes(25), likedBy: [], baseLikes: 12 },
     { id: 'sample-2', authorId: 'sample', handle: 'mei', text: 'what event should i go to...', createdAt: minutes(95), likedBy: [], baseLikes: 3 },
-    { id: 'sample-3', authorId: 'sample', handle: 'priya', text: 'this event is so fun!', image: 'island', createdAt: minutes(240), likedBy: [], baseLikes: 27 },
+    { id: 'sample-3', authorId: 'sample', handle: 'priya', text: 'this event is going to be so fun!', eventId: 'e1', image: 'island', createdAt: minutes(240), likedBy: [], baseLikes: 27 },
   ]
 }
 
@@ -90,6 +90,9 @@ function load() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY))
     if (Array.isArray(parsed)) saved = parsed
   } catch { /* unreadable storage: start from the samples */ }
+  // Saved copies of samples take the sample's current text and event link; only likes and replies are kept.
+  const samples = new Map(samplePosts().map(p => [p.id, p]))
+  saved = saved.map(p => samples.has(p.id) ? { ...samples.get(p.id), likedBy: p.likedBy || [], replies: p.replies } : p)
   const have = new Set(saved.map(p => p.id))
   return [...saved, ...samplePosts().filter(p => !have.has(p.id))]
 }
@@ -125,9 +128,18 @@ async function goToComposer() {
   draftEl.value?.focus({ preventScroll: true })
 }
 
+// Posts can name the event they are about, so "this event" always has a link.
+const events = ref([])
+const eventsById = computed(() => new Map(events.value.map(event => [event.id, event])))
+const draftEventId = ref('')
+const eventFilter = ref('')
+const eventDate = (event) => new Date(event.startTime || event.start_time).toLocaleDateString('en-SG', { timeZone: 'Asia/Singapore', weekday: 'short', day: 'numeric', month: 'short' })
+const taggedEvents = computed(() => events.value.filter(event => posts.value.some(post => post.eventId === event.id)))
+
 onMounted(async () => {
   restoreMedia()
   try { user.value = await getCurrentUser() } catch { user.value = null }
+  try { events.value = await getEvents() } catch { events.value = [] }
 })
 
 const handle = computed(() => user.value?.email?.split('@')[0] || '')
@@ -137,7 +149,7 @@ const posting = ref(false)
 
 const visiblePosts = computed(() => {
   const q = query.value.trim().toLowerCase()
-  const list = [...posts.value].sort((a, b) => b.createdAt - a.createdAt)
+  const list = [...posts.value].sort((a, b) => b.createdAt - a.createdAt).filter(p => !eventFilter.value || p.eventId === eventFilter.value)
   if (!q) return list
   return list.filter(p => p.text.toLowerCase().includes(q) || p.handle.toLowerCase().includes(q) || (p.replies || []).some(r => r.text.toLowerCase().includes(q)))
 })
@@ -160,6 +172,7 @@ async function submit() {
     authorId: user.value.id,
     handle: handle.value,
     text: draft.value.trim(),
+    eventId: draftEventId.value || undefined,
     media: attached ? { kind: attached.kind, id } : undefined,
     createdAt: Date.now(),
     likedBy: [],
@@ -170,6 +183,7 @@ async function submit() {
     if (fileInput.value) fileInput.value.value = ''
   }
   draft.value = ''
+  draftEventId.value = ''
   persist()
   posting.value = false
 }
@@ -235,6 +249,11 @@ function ago(ts) {
       <form class="community-search" role="search" @submit.prevent>
         <label class="visually-hidden" for="community-search">Search posts</label>
         <input id="community-search" v-model="query" type="search" class="form-control" placeholder="Search posts" autocomplete="off">
+        <label v-if="taggedEvents.length" class="visually-hidden" for="community-event-filter">Show posts about</label>
+        <select v-if="taggedEvents.length" id="community-event-filter" v-model="eventFilter" class="form-select mt-2">
+          <option value="">Posts about any event</option>
+          <option v-for="event in taggedEvents" :key="event.id" :value="event.id">{{ event.title }}</option>
+        </select>
       </form>
 
       <form v-if="user" ref="composerEl" class="community-composer" @submit.prevent="submit">
@@ -248,6 +267,11 @@ function ago(ts) {
             <button class="community-attachment-remove" type="button" aria-label="Remove attachment" @click="clearAttachment">&times;</button>
           </div>
           <p v-if="attachError" class="small text-danger mt-2 mb-0" role="alert">{{ attachError }}</p>
+          <label v-if="events.length" class="visually-hidden" for="community-draft-event">Event this post is about</label>
+          <select v-if="events.length" id="community-draft-event" v-model="draftEventId" class="form-select form-select-sm mt-2">
+            <option value="">No event tagged</option>
+            <option v-for="event in events" :key="event.id" :value="event.id">{{ event.title }} ({{ eventDate(event) }})</option>
+          </select>
           <div class="d-flex align-items-center gap-3 mt-2">
             <input ref="fileInput" class="visually-hidden" type="file" accept="image/*,video/*" tabindex="-1" @change="onFilePicked">
             <button class="community-attach" type="button" aria-label="Add photo or video" title="Add photo or video" @click="fileInput.click()">
@@ -276,6 +300,11 @@ function ago(ts) {
               <button v-if="user && user.id === post.authorId" class="btn btn-link btn-sm ms-auto p-0 text-secondary" type="button" @click="remove(post)">Delete</button>
             </div>
             <p class="community-text mb-2">{{ post.text }}</p>
+            <RouterLink v-if="eventsById.get(post.eventId)" :to="`/events/${post.eventId}/rsvp`" class="community-event mb-2">
+              <span class="community-event-label">About</span>
+              <strong>{{ eventsById.get(post.eventId).title }}</strong>
+              <span class="text-secondary small">{{ eventDate(eventsById.get(post.eventId)) }}</span>
+            </RouterLink>
             <img v-if="IMAGES[post.image]" class="community-image mb-2" :src="IMAGES[post.image].src" :alt="IMAGES[post.image].alt" loading="lazy">
             <template v-if="post.media && mediaUrls[post.id]">
               <img v-if="post.media.kind === 'image'" class="community-image mb-2" :src="mediaUrls[post.id]" alt="Photo attached to this post" loading="lazy">
@@ -321,7 +350,7 @@ function ago(ts) {
       </ul>
 
       <p v-if="!visiblePosts.length" class="text-secondary text-center py-5" role="status">
-        {{ query.trim() ? 'No posts match your search.' : 'No posts yet. Be the first to say something.' }}
+        {{ query.trim() || eventFilter ? 'No posts match your search.' : 'No posts yet. Be the first to say something.' }}
       </p>
       </div>
     </div>
@@ -334,6 +363,9 @@ function ago(ts) {
 
 <style scoped>
 .community-page { padding-block: 1.5rem 3rem; }
+.community-event { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 8px 12px; border: 1px solid var(--bookedz-border); border-radius: 10px; background: var(--bookedz-hover); color: var(--bookedz-ink); text-decoration: none; font-size: .9rem; }
+.community-event:hover { border-color: var(--bookedz-control-border); }
+.community-event-label { font-size: .75rem; font-weight: 700; color: var(--bookedz-primary-dark); }
 .community-feed {
   max-width: 600px;
   margin-inline: auto;

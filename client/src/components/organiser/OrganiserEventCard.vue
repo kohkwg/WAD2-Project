@@ -31,7 +31,7 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
       <template v-else>
         <p class="capacity-copy"><strong>{{ event.confirmedCount || 0 }}</strong> {{ event.capacity == null ? 'confirmed · no capacity limit' : `of ${event.capacity} confirmed` }}</p>
         <div v-if="event.capacity > 0" class="capacity-track" role="progressbar" :aria-label="`Confirmed RSVPs for ${event.title}`" :aria-valuenow="Math.min(event.confirmedCount || 0, event.capacity)" aria-valuemin="0" :aria-valuemax="event.capacity"><span :style="{ width: capacityPercent + '%' }"></span></div>
-        <div class="event-statuses"><span v-if="state === 'upcoming' && event.pendingCount > 0" class="status-pill pending-pill">{{ event.pendingCount }} awaiting approval</span><span v-if="event.waitlistCount > 0" class="status-pill">{{ event.waitlistCount }} on waitlist</span><span v-if="event.offeredCount > 0" class="status-pill">{{ event.offeredCount }} offers out</span></div>
+        <div class="event-statuses"><span v-if="state === 'upcoming' && event.pendingCount > 0" class="status-pill pending-pill">{{ event.pendingCount }} awaiting approval</span><span v-if="event.waitlistCount > 0" class="status-pill">{{ event.waitlistCount }} on waitlist</span><span v-if="event.offeredCount > 0" class="status-pill">{{ event.offeredCount }} {{ event.offeredCount === 1 ? 'offer' : 'offers' }} out</span></div>
       </template>
     </div>
     <footer class="event-card-actions">

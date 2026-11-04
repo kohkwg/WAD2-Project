@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, useId, watch } from 'vue'
-import { formatEventTime } from '../../utils/helpers.js'
+import { formatEventTime, formatAddress } from '../../utils/helpers.js'
 import EventArtwork from '../EventArtwork.vue'
 
 // Read-only card with an event's key details.
@@ -12,6 +12,9 @@ const props = defineProps({
 })
 
 const failedCover = ref('')
+const coverCategory = computed(() => props.event?.category || props.event?.tags?.[0] || '')
+// The cover already shows the category, so the tag row lists only the others.
+const otherTags = computed(() => (props.event?.tags || []).filter(tag => tag.toLowerCase() !== coverCategory.value.toLowerCase()))
 const coverSource = computed(() => props.event?.image_url || props.event?.coverImageUrl || '')
 const showFullDescription = ref(false)
 const descriptionId = useId()
@@ -37,7 +40,7 @@ const descriptionToShow = computed(() => {
       <div class="event-venue">
         <span class="venue-label">Where</span>
         <p class="venue-name"><span aria-hidden="true">⌖</span> {{ event.venue ? event.venue.name : 'not set yet' }}</p>
-        <p v-if="event.venue" class="venue-address">{{ event.venue.address }}</p>
+        <p v-if="event.venue" class="venue-address">{{ formatAddress(event.venue.address) }}</p>
       </div>
 
       <p v-if="event.usingBackup" class="small mb-2 text-success">Backup venue is active.</p>
@@ -48,7 +51,7 @@ const descriptionToShow = computed(() => {
       </p>
 
       <div class="event-facts" aria-label="Event details">
-        <div class="event-fact"><span class="fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg></span><span><strong>{{ event.capacity }}</strong><small>places</small></span></div>
+        <div class="event-fact"><span class="fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg></span><span><strong>{{ event.capacity }}</strong><small>spots in total</small></span></div>
         <div v-if="event.spotsLeft != null" class="event-fact"><span class="fact-icon fact-icon--coral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z"/><path d="M15 6v12" stroke-dasharray="2 2"/></svg></span><span><strong>{{ event.spotsLeft }}</strong><small>spots left</small></span></div>
       </div>
 
@@ -57,8 +60,8 @@ const descriptionToShow = computed(() => {
       <EventArtwork v-else :category="event.category || event.tags?.[0] || ''" />
       <span v-if="event.category || event.tags?.[0]" class="cover-category">{{ event.category || event.tags?.[0] }}</span>
     </div>
-      <div class="mb-2">
-        <span v-for="tag in event.tags" :key="tag" class="badge text-bg-light border me-1">
+      <div v-if="otherTags.length" class="mb-2 event-tags">
+        <span v-for="tag in otherTags" :key="tag" class="badge text-bg-light border me-1">
           {{ tag }}
         </span>
       </div>
@@ -88,6 +91,8 @@ const descriptionToShow = computed(() => {
 .event-cover { position: relative; display: block; width: 100%; height: clamp(160px, 24vw, 260px); margin: 1.1rem 0; border-radius: 16px; overflow: hidden; background: var(--bookedz-mint); }
 .event-cover img { display: block; width: 100%; height: 100%; object-fit: cover; animation: image-settle 650ms ease both; }
 .event-cover > :deep(.event-artwork) { position: absolute; inset: 0; }
+.event-tags .badge { text-transform: capitalize; }
+.cover-category { text-transform: capitalize; }
 .cover-category { position: absolute; left: 1rem; bottom: 1rem; max-width: calc(100% - 2rem); padding: .35rem .75rem; border: 1px solid var(--bookedz-glass-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-glass); font-size: .8rem; font-weight: 700; }
 .event-summary .card-body { padding: clamp(1.15rem, 3vw, 1.7rem); }
 .event-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: .8rem; }
