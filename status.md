@@ -1,5 +1,138 @@
 # Project status and timeline
 
+3 November, local merge resolution — resolved the overlapping `aish-algorithm`
+and `origin/dev` files. Retained Aishani's recommendation, saved-event, My RSVPs,
+My events, palette, typography, illustrated landing and committed street-map
+workspace; retained incoming Hangout/template, route helpers, backend and migration
+source. The unused old SingaporeMap component follows dev's deletion; IslandArtwork
+is retained for the landing. Geographic exports and Supabase adapter imports are
+combined. All 77 Vue sources/templates and the shared stylesheet compile; 82
+focused calculation/adapter/recommendation tests, seven local backend route tests
+and twelve selected demo/mocked browser cases pass. Browser checks include
+organiser-to-participant state updates and both creation template choices.
+No live database writes, migration execution, full build/suite, commit, push or PR
+merge performed. This checkpoint supersedes conflicting design descriptions in
+the incoming history below; historical authorship entries are preserved.
+
+3 November, Discover street-map follow-up — replaced the illustrated Discover map with a new Leaflet/OneMap GreyLite panel beside the existing timeline. Current-page filters feed both views; thumbnails select real venue coordinates, while titles still open event details. Map previews reuse existing RSVP/waitlist actions and supplied recommendation metadata. Co-located events remain selectable groups, with fit-all/zoom controls, tile retry and a missing-coordinate count. Existing palette and recommendation backend/composable preserved. No new dependencies, schema changes, commits or hosted writes. Verification: 11 focused discovery Node tests and 22 recommendation Node tests passed; three changed Vue SFCs compile. Manual in-app browser checks covered real tile loading, keyboard row/pin selection, cluster choice, preview dismiss/focus, light/dark reflow at 375/575/768/1280px with no horizontal overflow, and no console errors. Automated browser suite, forced tile-failure and live authenticated scoring were not run.
+
+3 November, Discover workspace — integrated Aishani's reference with search,
+compact Picked for you strip, pastel category shortcuts, dated event rows and a
+sticky desktop map. Timeline and map share the current filtered/paginated event
+array and selection; selected off-centre events pan into the embedded map frame.
+Phones use List/Map tabs, a single initial pick and retained See all. Existing
+recommendation backend/composable/filter helpers are unchanged; supplied scores,
+reasons, source labels, save/dismiss/undo/retry and canonical event actions remain.
+New rows show only real status/availability; full events link to the waitlist.
+The existing selected island and water/Flyer/plane/bird motion are retained.
+Six changed SFCs compile. Focused checks: 22 backend recommendation, 10 existing
+discovery/projection and four new strip/row rendering cases pass. In-app demo
+browser checks cover both themes at 375/575/768/1280px without overflow, desktop
+and mobile selection/focus return, category/list/map consistency and empty search.
+No full suite/build, live signed-in recommendation persistence, Safari/device,
+dependency, database, commit, push or deployment verification in this pass.
+
+3 November, stable-boat refinement — replaced translating/bobbing SVG hulls with
+detailed fixed boats in `singapore-anchored-boats-plate.webp`, matching Aishani's
+reference. `IslandBoats.vue` now animates only four wake streams and twelve stern
+ripples; open-water currents/glints remain. The port/cargo/ferry/launch hulls are
+painted and never change position. Moved the desktop pause control to the top
+right so it does not cover the northwest ferry. Four component compilations pass;
+in-app temporal checks confirm fixed anchors, changing water/wakes and all 37
+water/wake effects freezing when paused. No console warnings/errors and no page
+overflow at 375/575/768/1280px. A revised recording is in this chat's outputs.
+The earlier sailing-route notes below are historical. No full build/suite,
+hosted writes, dependencies, commit or push; reduced-motion CSS retained/compiled.
+
+3 November, motion follow-up — added `IslandBoats.vue` with four visible sailing
+routes (cargo, ferry, coastal speedboat and bay speedboat), bobbing vessels and
+flowing wakes. Added `IslandWater.vue` with ten open-water ripple/glint patches
+and shoreline flow. Negative route delays show boats immediately; Flyer rotation
+is now 48 seconds. New sibling `singapore-living-water-plate.webp` removes the
+painted sailing cargo ship while retaining the moored harbour vessel. It is shared
+by map, landing artwork and neighbourhood thumbnails. An inherited play-state
+connects new motion to existing pause/offscreen/tab handling; reduced-motion CSS
+is retained in every component. Four SFCs compile; in-app measurements confirm
+all four routes, ten currents and four wakes change over time, and all 33 new
+animated elements actually freeze while paused. Responsive checks at
+375/575/768/1280px show no page overflow or console warnings/errors. A short GIF
+of the actual running map is in the requesting chat's outputs. No full suite,
+build, hosted writes, dependencies, commit or push; reduced motion was compiled
+but not re-emulated on this host.
+
+3 November — expanded illustrated Singapore island integrated locally. The shared
+1448×1086 WebP adds terrain, neighbourhoods and attractions; printed labels and
+the static Flyer wheel were cleaned for independent overlays. Wheel, boats, plane
+and birds retain the existing pause/visibility/reduced-motion implementation at
+new positions. Event projection anchors and list neighbourhood thumbnails match
+the new composition. A separate label component provides 10px labels, 44px native
+button targets, keyboard/click zoom, closer-view attractions and viewport/collision
+suppression. Mobile caption sits above the artwork to avoid covering Woodlands.
+Four focused projection/clustering tests and four edited SFC compilations pass.
+In-app browser checks passed light/dark at 375/575/768/1280px (no horizontal or
+label overlap, one main), label zoom/focus, keyboard event preview/focus return,
+pause/resume and mobile detail zoom. No console warnings/errors observed. The
+standalone Playwright launch was blocked by the host sandbox; in-app browser
+checks supplied the UI evidence. Reduced-motion CSS is preserved/compiled but
+was not re-emulated in this browser. Checks used Node 24 and isolated demo server
+5189; Node 22, full suites/build, Safari/device and live accounts were not tested.
+No dependencies, database, hosted writes, commit, push or deployment changes.
+
+2 November — shared typography tokens/classes now align Discover, My RSVPs and
+My events, including their recommendation, ordinary, saved, next-event and
+organiser cards. Profile and Community page titles also adopt the shared role.
+Conflicting scoped font declarations and mobile overrides removed; original fonts
+retained. At 100% zoom, a temporary Chromium probe measured matching page titles
+at 375/575/768/1280px in both themes (32/35.5/39.36/48px, weight 700), 20px/650
+ordinary card titles, 16px DM Sans body and 14px/600 buttons. No page overflow or
+runtime errors. Four existing focused layout/action checks also pass; affected
+Vue templates and styles compile. No full suite/build or behaviour/hosted changes.
+
+2 November — organiser My events now has Upcoming/Drafts/Past/All tabs, search,
+date sorting and session-retained view state. Mint header, date-led cards,
+pending-request summary/filter and direct pending-approval links use existing
+counts and routes. Past results link to attendance; existing drafts remain hidden
+and can be rescheduled even when their old planned date elapsed. No new draft
+creation/publishing workflow. Deletion confirmation and keyboard focus retained;
+event counts refresh every 30 seconds and on focus. Five focused Node and seven
+unique browser cases pass across targeted runs, including approval/rejection/
+removal propagating to the participant My RSVPs on focus. Mobile/light/dark layout
+checked at 375/575/768/1280px. All browser data is synthetic demo state; hosted
+identity/RLS/persistence remains unverified. No SQL or scoring changes.
+
+2 November — My RSVPs redesigned with a peach header, counts, accessible tabs,
+next confirmed event, compact registration rows and independent saved-event cards.
+Four focused components keep data/actions in the page. Existing offer accept/
+decline, expiry, cancellation confirmation/focus and 30-second/focus refresh remain.
+Directions use actual venue data; calendar downloads actual event times; live
+ticket links retain `/events/:id/ticket`. Saved-event reads are caller-scoped,
+paginated and use existing event mapping; unsave uses the preference endpoint.
+Read failures remain separate from registration failures. Past attendance labels
+require an explicitly unflagged check-in. Ten focused Node and ten unique mocked/
+demo browser cases pass across targeted runs. Light/dark layouts checked at
+375/575/768/1280px. No hosted persistence, SQL, scoring or dependency changes.
+
+2 November — recommendation browser evidence: three updated mocked Chromium
+journeys pass, including saved-event exclusion, different related-event reasons,
+refresh, dismissal/undo, failure/retry and empty states. Light/dark and
+375/575/768/1280px checks pass; bookmark target increased to 44px. Twelve synthetic
+event drafts are prepared, not created. Local Express health responds successfully.
+Live verification remains pending: Computer Use permissions are not granted and
+there are no saved test sessions. No hosted mutations or participant resets.
+See [separate mocked/live log](docs/testing/recommendation-journey.yaml).
+
+2 November — active saves are excluded from both personalised and discovery
+picks, while their evidence still supports other events. Applied the supplied
+interaction test unchanged; all 22 focused interaction/quality/route tests pass.
+Evidence snapshots and route fixture are unchanged. Hosted behaviour is unverified.
+
+2 November — applied the supplied recommendation-quality update locally.
+Historical/current organiser and team activity no longer supplies learned taste;
+reasons identify supporting saves, registrations or attendance. Temporary event
+debug logging was removed. Existing scoring changes and route fixture are retained.
+All 22 focused quality/route/interaction tests pass with mocked data. No hosted
+verification, database change, commit or deployment was performed.
+
 27 October — separate public landing page: the illustrated hero is now at `/`,
 and sidebar/mobile/footer Bookedz links return there. Discover retains its search,
 recommendations, categories, Closing soon, timeline and Map/List browsing without
@@ -72,7 +205,7 @@ Consolidated 23 October; updated 31 October 2026. Dates use Singapore time; same
 by milestone because exact times are not consistently recorded. This replaces
 separate handoffs/merge/fix reports. [Decisions](decisions.md) records authority and
 superseded choices; [testing](docs/testing.md) explains reproducible checks;
-[README](README.md#ai-assistance-disclosure) retains detailed AI/library provenance.
+[README](README.md#change-history) retains detailed change history and library credits.
 
 ## Current checkpoint
 
@@ -83,7 +216,7 @@ predate them. Denzel has now authorised committing/publishing this working state
 as the shared design baseline. Use the published `origin/dev` SHA and Denzel’s
 kickoff message for exact baseline identity; this is not a production deployment. Teammates' branches and PRs
 are not changed by the publication. See [branch workflow](design-branches.md) and
-[design system](docs/design/design-system.md).
+[design](docs/design/DESIGN.md).
 
 | Feature / owner | Working functionality | Remaining limits / acceptance |
 | --- | --- | --- |
@@ -250,7 +383,7 @@ not persist. These are dated observations, not permanent database invariants.
 - Read supplied assessment/proposal resources, record team ownership and distinguish
   official requirements from plans. The old assistant orientation is not current
   implementation or independent faculty approval.
-- Denzel reports updated AI permission and authorises Feature 4. Timothy's selected
+- Denzel authorises Feature 4. Timothy's selected
   SDK/schema/config/env files are imported from `575e20d`; no merge/deployment implied.
 - Deliver the async demo workspace, tasks, public announcements, SGD budget and
   weather/backup switch, then correct order, feed/venue refresh, money editing,
@@ -259,7 +392,7 @@ not persist. These are dated observations, not permanent database invariants.
 ### 17 October — review and authorised frontend corrections
 
 - Review Feature 4/shared boundaries, then fix all authorised P2/P3 issues with
-  scoped agents and independent integration review: destructive retry/cancel,
+  independent integration review: destructive retry/cancel,
   focus, public feed/RSVP semantics, stale OneMap/search results, offer refresh,
   publication validation, route reuse and consolidated weather reads.
 - Final checkpoint: **27 Node / 50 demo Chromium**, production build and 40 responsive
@@ -324,7 +457,7 @@ not persist. These are dated observations, not permanent database invariants.
   three additional F6 findings.
 - The human signs into both test accounts remotely. Correct the temporary session
   helper's forwarding-origin and sign-out issues, verify both refresh tokens, and
-  replace the helper with the ordinary dev app afterward. No agent types passwords.
+  replace the helper with the ordinary dev app afterward. Humans type all passwords.
 - The user configures both R2 public URL variables and CORS. Real presign/PUT/public
   GET return 200 with matching bytes; browser preflight returns 204 and test objects
   are deleted. The Cloudflare connection itself is personal-account scoped.
@@ -357,8 +490,8 @@ not persist. These are dated observations, not permanent database invariants.
 
 - Replace repeated handoffs, merge/fix reports, per-package READMEs and historical
   local plans with this timeline, the decision register and one test guide.
-- Preserve supplied resources byte-for-byte and retain detailed public AI/library
-  disclosure. A tiny `docs/README.md` keeps the resource index's existing link valid.
+- Preserve supplied resources byte-for-byte and retain the change history and library
+  credits. A tiny `docs/README.md` keeps the resource index's existing link valid.
 - Older tracked documents remain available in Git history. Pre-consolidation copies,
   including formerly untracked notes, are temporarily backed up outside the repo at
   `/tmp/bookedz-docs-before-consolidation-20261023`. No new archive folder is required
@@ -369,8 +502,7 @@ not persist. These are dated observations, not permanent database invariants.
 ### 23 October — map-first frontend redesign
 
 - Denzel authorises replacing the existing UI/UX across the project using the
-  supplied ideation spec, with GPT-6 Luna at medium effort where efficient. Root
-  handles shared system/discovery; three agents handle participant/account,
+  supplied ideation spec. Work split into shared system/discovery, participant/account,
   organiser/operations and attendance/venue screens. Backend contracts remain.
 - Deliver self-hosted Bricolage Grotesque typography, cream/coral/mint tokens,
   brand vector/favicon, shared navigation/footer, responsive layouts across all
@@ -410,7 +542,7 @@ not persist. These are dated observations, not permanent database invariants.
 - Implement the supplied new frontend brief with a large expressive headline,
   DM Sans body typography, integrated search/category controls, refined pastel
   tokens and a dominant illustrated Singapore scene.
-- Preserve the supplied PNG. Built-in imagegen removes baked pins/counts/labels;
+- Preserve the supplied PNG. Built-in image editing removes baked pins/counts/labels;
   the clean plate is encoded to a 398 KiB WebP. Island view is decorative; live
   Map view retains geographic coordinates and real clusters. No arbitrary event
   placement on the PNG, fake counts or new event data.
@@ -421,7 +553,7 @@ not persist. These are dated observations, not permanent database invariants.
   invitation and fallback to actual upcoming events when personalisation fails.
   Cards use uploaded images first and category-specific SVG art when unavailable.
   Concise venue display retains the complete accessible label.
-- GPT-6 Luna medium agents refine cards/details and hosting navigation/organiser
+- Refine cards/details and hosting navigation/organiser
   cards/create-step/cover presentation. Existing backend and registration rules
   remain. Source compiles for all 12 changed Vue components.
 - Targeted verification only: **2/2 focused Chromium journeys passed** (desktop
@@ -457,7 +589,7 @@ not persist. These are dated observations, not permanent database invariants.
 
 - Adopt the user's newer **Singapore Island Illustrated Map.png** in the hero,
   interactive map and neighbourhood thumbnails. Preserve the supplied original;
-  built-in imagegen prepares a background without the baked Flyer wheel and one
+  an image generation tool prepares a background without the baked Flyer wheel and one
   speedboat. The app uses a 298KB WebP with no new dependencies.
 - Share separately animated SVG wheel/counterrotating cabins, sailing boat/wake
   and seabirds. Fixed support stays still. Pause controls, offscreen/tab visibility
@@ -488,7 +620,7 @@ not persist. These are dated observations, not permanent database invariants.
   375/575/768/1280px; existing checks also cover 1440px. Compile/whitespace checks
   pass. Hallmark scoped source audit: 0 FAIL, 49 spacing REFLEX, 4 WARN; its browser
   tier could not run because Puppeteer is absent. Playwright captures supplied
-  visual evidence; see `docs/design/design-review.md` for limitations.
+  visual evidence; see `docs/design/DESIGN.md` for limitations.
 - Resolved the preceding sync diagnosis: the container saw the new map files but
   Syncthing's index did not. A project-scoped rescan returned HTTP 200; both the
   animated plate and IslandArtwork component now appear in the server index.
@@ -510,8 +642,7 @@ not persist. These are dated observations, not permanent database invariants.
 - Reorganise Manage Event header, Manage RSVP/public-event links and live tools;
   standardise Tasks/Announcements/Budget/Weather panels. Manage RSVP capacity
   graphics use real counts, with responsive labelled table rows and retained
-  approval/offer/rank semantics. GPT-6 Luna medium agents assisted scoped screens;
-  Codex integrated, reviewed and corrected shared behaviour/style issues.
+  approval/offer/rank semantics. We integrated, reviewed and corrected shared behaviour/style issues.
 - Theme/motion flows passed after correcting two selectors; seven additional
   focused checks passed for task keyboard focus, exact budget cents, weather
   failure, RSVP submission/refresh and desktop/mobile layouts/capacity counts.
@@ -616,7 +747,7 @@ not persist. These are dated observations, not permanent database invariants.
   pending-search/view-switch case. Both themes and 375/575/768/1280px covered;
   profile keyboard selection/failure/retry, learned weights, no overflow, one main,
   selected-chip contrast and console assertions pass. See the
-  [F1 review](docs/design/design-review.md#f1-owner-refinement-25-october) for captures.
+  [design verification](docs/design/DESIGN.md#10-verification-history-and-limits) for captures.
 - No full suite/production build, hosted writes, deployments or PR creation/merge.
   Safari, physical devices and signed-in hosted profile writes remain unverified.
   Denzel owns subsequent PR review/integration into dev.
@@ -987,3 +1118,46 @@ not persist. These are dated observations, not permanent database invariants.
   development accounts and deletes its [TEST] hangout. The migration now also registers the
   start-area venue in `event_created_venues`, so deleting a hangout removes it; the PGlite
   check covers this (7/7).
+
+### 3 November — step-by-step UX pass 
+
+- RBased on request where steps were instucted in prompt, previewed overlooked and accepted each step before it was applied. Builds on `c34dcf9`; 
+
+- **Delete pop-up:** My events asks in a centred pop-up (event name, confirmed count, "can't
+  be undone"; a failure stays in it for retry). The shared `ConfirmationDialog` gained
+  `pendingLabel` and `position: fixed`: Bootstrap's `.card` had made it `relative`, so it
+  opened at the top of a scrolled page. Feature 4's pop-ups get the same fix.
+- **Hangout editing:** `/organiser/events/:id/edit` hands hangouts to `HangoutWizard`
+  (`hangoutFormFromEvent`/`hangoutChanges`). Title, description, 1–5 interests, group size and
+  start area are editable; type, time and join mode are read-only, because only the shared
+  event columns can be updated. No rain backup venue or RSVP questions appear.
+- **Discover filters** (Aishani's `EventFilters`): no second "Filters" title, an active count
+  on the button, "Show N events" in the primary fill (it was white on light orange, 1.7:1 in
+  dark), 44px targets, When options wrapping 3 + 2 on phones, and a 36rem drop-down with three
+  category columns from 768px.
+- **My events:** Manage event (Open hangout for hangouts) · RSVPs · ⋯ (Edit details, View
+  public page or Event tools, Delete event), in 1, 2 (≥576px) or 3 (≥1200px) columns.
+- **Create pages:** full width at ≥1200px, a shorter Official heading, a Hangout live preview,
+  and plan suggestions moved from the sticky footer to a Review-step card ("Suggest programme
+  & tasks"; demo mode shows a visible note instead of a disabled button).
+- **Navigation:** the ☰ had no icon in light mode (Bootstrap's toggler image needs `.navbar`).
+  Categories and Map left the sidebar (Discover links to both). Phones below 768px get a tab
+  bar for signed-in and demo users, laptops at 992–1199px an 84px labelled rail with pages
+  filling the freed width, and non-Discover pages are capped at 1440px instead of 1220px.
+  Settings stays (Aishani's 27 October layout); Create event stays on My events.
+- **Form checks:** `utils/eventForm.js` holds the Create Event checks (moved unchanged).
+  `eventForm.test.js` 14/14 and `hangoutForm.test.js` 6/6 use `expect.js` over `node:assert`;
+  `hangouts.test.js` 7/7.
+- Chromium on an owned demo server (5187; 5173 was in use): deletion and Feature 4 pop-up
+  cases 8/8; `legacy-review-fixes` 7/7 after updating three selectors to the renamed "Search
+  for the venue" label; the create-wizard, `navbar-account` and three `shared-ui` cases pass
+  (one `shared-ui` link lookup is now scoped to Main navigation). Scratch checks covered
+  375–1920px in both themes: focus return, Escape, failure/retry, 44px targets, contrast, one
+  `main`, no overflow and no console errors.
+- Already failing, and identical on an untouched `c34dcf9` worktree (since removed):
+  `discover-browse` 3, `filter-panel` 3, `recommendation-mvp` 2, the `landing-page` filter
+  hand-off, `motion-theme` category disclosure, `design-polish` live navigation,
+  `discovery-rsvp-regressions` legacy links, `shared-ui` demo reset and public summary, and
+  4 of 7 `event-filters.test.mjs` cases.
+- Not done: full suites, a production build, live or real-device checks, and committed specs
+  for the new menu and navigation (scratch scripts only).

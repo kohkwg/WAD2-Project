@@ -207,17 +207,17 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
 </template>
 
 <style scoped>
-.attendance-page,.staff-page,.ticket-page,.self-checkin-page,.venue-qr-page{--checkin-ink:var(--bookedz-ink,#292d32);--checkin-paper:var(--bookedz-cream,#fff9ef);--checkin-coral:var(--bookedz-coral-dark,#aa3e2c);--checkin-mint:var(--bookedz-mint,#dceee3);--checkin-line:var(--bookedz-border,#e5ded2);max-width:820px;color:var(--checkin-ink)}
+.attendance-page,.staff-page,.ticket-page,.self-checkin-page,.venue-qr-page{--checkin-ink:var(--bookedz-ink,#1f2937);--checkin-paper:var(--bookedz-cream,#fff8f1);--checkin-coral:var(--bookedz-coral-dark,#9a3412);--checkin-mint:var(--bookedz-mint,#ffe4d6);--checkin-line:var(--bookedz-border,#e9ded3);max-width:820px;color:var(--checkin-ink)}
 .attendance-header,.staff-heading{padding:1.25rem 0 1.15rem;border-bottom:1px solid var(--checkin-line)}
 .attendance-header h1,.staff-heading h1,.ticket-heading h1,.checkin-heading h1,.venue-qr-page h1{font-family:var(--bookedz-heading);font-size:clamp(1.8rem,4vw,2.5rem);letter-spacing:-.035em}
 .attendance-header p,.staff-heading p{font-size:.95rem}
 .attendance-page a:not(.btn),.staff-page a:not(.btn),.ticket-page a:not(.btn),.self-checkin-page a:not(.btn),.venue-qr-page a:not(.btn){color:var(--checkin-coral);font-weight:600}
 .attendance-stat{padding:1.4rem 1.5rem;border:1px solid var(--checkin-line);border-radius:22px;background:var(--checkin-mint)}
 .attendance-stat .display-6{font-family:var(--bookedz-heading);font-size:3.6rem;color:var(--checkin-ink);line-height:1}
-.attendance-stat .progress{height:.7rem;border-radius:2rem;background:#c8d9cd}.attendance-stat .progress-bar{background:#397456!important;border-radius:2rem}
-
+.attendance-stat .progress{height:.7rem;border-radius:2rem;background:#ffe4d6}.attendance-stat .progress-bar{background:#14b8a6!important;border-radius:2rem}
+.attendance-page .btn-primary,.staff-page .btn-primary,.ticket-page .btn-primary,.self-checkin-page .btn-primary,.venue-qr-page .btn-primary{--bs-btn-bg:var(--checkin-coral);--bs-btn-border-color:var(--checkin-coral);--bs-btn-hover-bg:#9a3412;--bs-btn-hover-border-color:#9a3412;--bs-btn-color:#fff;--bs-btn-hover-color:#fff}
 .attendance-page .btn-outline-primary,.staff-page .btn-outline-primary,.ticket-page .btn-outline-primary,.self-checkin-page .btn-outline-primary,.venue-qr-page .btn-outline-primary{--bs-btn-color:var(--checkin-coral);--bs-btn-border-color:var(--checkin-coral);--bs-btn-hover-bg:var(--checkin-coral);--bs-btn-hover-border-color:var(--checkin-coral)}
 .attendance-section-title{font-family:var(--bookedz-heading);font-weight:700;letter-spacing:-.02em}
-.attendance-list{border:1px solid var(--checkin-line);border-radius:16px;overflow:hidden}.attendance-list .list-group-item{padding:.9rem 1rem;border-color:var(--checkin-line);background:#fffdfa;gap:.75rem}.attendance-list .list-group-item>span:last-child{text-align:right;white-space:normal!important}
+.attendance-list{border:1px solid var(--checkin-line);border-radius:16px;overflow:hidden}.attendance-list .list-group-item{padding:.9rem 1rem;border-color:var(--checkin-line);background:#ffffff;gap:.75rem}.attendance-list .list-group-item>span:last-child{text-align:right;white-space:normal!important}
 @media(max-width:575.98px){.attendance-page,.staff-page,.ticket-page,.self-checkin-page,.venue-qr-page{padding-inline:1rem}.attendance-stat{padding:1rem;border-radius:18px}.attendance-stat .display-6{font-size:2.8rem}.attendance-list .list-group-item{align-items:flex-start!important;flex-direction:column}.attendance-list .list-group-item>span:last-child{text-align:left}}
 </style>

@@ -4,7 +4,6 @@ import MyRsvpsView from '../views/MyRsvpsView.vue'
 import OrganiserEventsView from '../views/OrganiserEventsView.vue'
 import ManageRsvpsView from '../views/ManageRsvpsView.vue'
 import ManageEventView from '../views/ManageEventView.vue'
-import LoginView from '../views/LoginView.vue'
 import { USING_SUPABASE, getCurrentUser } from '../utils/api.js'
 import { feature1Routes } from './feature1Routes'
 
@@ -46,10 +45,12 @@ const router = createRouter({
   },
   routes: [
     { path: '/', name: 'home', component: () => import('../views/LandingView.vue'), meta: { title: 'Welcome' } },
-    { path: '/login', component: LoginView, meta: { title: 'Sign in' } },
+    // Signing in happens on the landing page; /login links keep working
+    { path: '/login', redirect: to => ({ path: '/', query: to.query }) },
     { path: '/events', redirect: to => ({ path: '/discover', query: to.query, hash: to.hash }) },
     { path: '/events/:id/rsvp', component: RsvpView, meta: { title: 'Event RSVP' } },
-    { path: '/community', component: () => import('../views/CommunityView.vue'), meta: { title: 'Community' } },
+    { path: '/community', component: () => import('../views/CommunityView.vue'), meta: { title: 'Open jios' } },
+    { path: '/community/plan', component: () => import('../views/HangoutPlanView.vue'), meta: { title: 'Plan a hangout' } },
     { path: '/my-rsvps', component: MyRsvpsView, meta: { title: 'My RSVPs' } },
     { path: '/organiser/events', component: OrganiserEventsView, meta: { title: 'My events' } },
     { path: '/organiser/events/new', component: () => import('../views/NewEventView.vue'), meta: { title: 'Create event' } },
@@ -102,12 +103,11 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   if (to.path === '/') return true
-  if (!USING_SUPABASE) return to.path === '/login' ? '/events' : true
+  if (!USING_SUPABASE) return true
   const user = await getCurrentUser()
-  if (to.path === '/login') return user ? '/events' : true
   // Discovery and event pages stay public, except check-in pages that are marked requiresAuth
   if (!to.meta.requiresAuth && (to.path === '/discover' || to.path === '/events' || to.path.startsWith('/events/'))) return true
-  if (!user) return { path: '/login', query: { redirect: to.fullPath } }
+  if (!user) return { path: '/', query: { redirect: to.fullPath } }
   return true
 })
 

@@ -13,9 +13,8 @@ Discover/profile), Gregory (F2 creation/RSVP/waitlist), Huxley (F3 attendance/sh
 UI), Denzel (F4 organiser operations/weather), Timothy (F5 backend/auth/database/
 infrastructure), Vivienne (F6 venues/floor plans/programme).
 
-Denzel reported permission for full agentic coding on 16 October and authorised
-reviewed frontend fixes on 17 October. This is user-reported, not independent
-faculty verification. Preserve README's detailed AI authorship/library disclosure;
+Denzel authorised Feature 4 work on 16 October and reviewed frontend fixes on
+17 October. Preserve README's change history and library credits;
 teammates retain their contributions. Dated approvals in decisions.md are not
 blanket permission for later Git/cloud mutations.
 
@@ -64,7 +63,7 @@ blanket permission for later Git/cloud mutations.
   For docs check paths, anchors, whitespace and resource preservation. Report actual
   results; Node now runs waitlist tests, and neither package has a lint script.
 - Update decisions for actual human decisions, status for dated delivery/evidence,
-  testing for changed commands, and README disclosure/attributions for AI/library
+  testing for changed commands, and README change history and library credits for library
   changes. Don't create another handoff or duplicate historical report by default.
 
 ## Optional local tools

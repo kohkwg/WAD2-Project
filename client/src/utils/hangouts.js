@@ -112,6 +112,45 @@ export function hangoutEventData(form) {
   }
 }
 
+// The wizard's fields for an existing hangout (editing). Fixed slots read back in
+// Singapore time; group hangouts keep their candidate day range.
+export function hangoutFormFromEvent(event) {
+  const hangout = event.hangout || {}
+  const mode = hangout.mode || 'group'
+  const fixed = mode !== 'group'
+  const sg = iso => new Date(new Date(iso).getTime() + 8 * 60 * 60 * 1000).toISOString()
+  return {
+    mode, title: event.title || '', description: event.description || '', interests: [...(event.tags || [])],
+    startDate: hangout.dateRange?.start || '', endDate: hangout.dateRange?.end || '',
+    date: fixed ? sg(event.startTime).slice(0, 10) : '',
+    startTime: fixed ? sg(event.startTime).slice(11, 16) : '',
+    endTime: fixed ? sg(event.endTime).slice(11, 16) : '',
+    startArea: event.venue ? { ...event.venue } : null,
+    capacity: event.capacity ?? CAPACITY_RANGE.min,
+    joinMode: event.joinMode || (event.requiresApproval ? 'approval' : 'auto'),
+  }
+}
+
+// What saving an edited hangout sends to updateEvent. Only its words, interests, group size
+// and start area change. Type, time, join mode and approval stay as they are: the hangout
+// page owns the time, and the others have no update path yet.
+export function hangoutChanges(event, form) {
+  return {
+    title: form.title.trim(),
+    description: form.description.trim(),
+    tags: [...form.interests],
+    startTime: event.startTime,
+    endTime: event.endTime,
+    capacity: form.mode === 'solo' ? event.capacity : Number(form.capacity),
+    venue: { ...form.startArea },
+    isOutdoor: false,
+    backupVenue: null,
+    requiresApproval: Boolean(event.requiresApproval),
+    questions: [],
+    coverImageUrl: event.coverImageUrl || '',
+  }
+}
+
 // What a join request becomes. Open joins never queue: a full open event refuses.
 export function joinOutcome(event, held) {
   const mode = event.joinMode || (event.requiresApproval ? 'approval' : 'auto')

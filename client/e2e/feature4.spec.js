@@ -102,10 +102,11 @@ test('organiser event deletion cascades across RSVPs and Feature 4 records', asy
   await page.goto('/organiser/events/e1/manage?tab=tasks')
   await addTask(page, 'Remove with event')
   await page.goto('/organiser/events')
-  const eventCard = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'Acoustic Night @ Campus Green' }) })
+  const eventCard = page.locator('.organiser-event-card').filter({ has: page.getByRole('heading', { name: 'Acoustic Night @ Campus Green' }) })
+  await eventCard.locator('summary').click() // the card's ••• menu
   await eventCard.getByRole('button', { name: 'Delete event' }).click()
   await eventCard.getByRole('button', { name: 'Yes, delete event' }).click()
-  await expect(page.getByRole('status')).toContainText('Event deleted')
+  await expect(page.getByRole('status').filter({ hasText: 'Event deleted' })).toBeVisible()
   const saved = await db(page)
   expect(saved.events.some(event => event.id === 'e1')).toBe(false)
   expect(saved.rsvps.some(rsvp => rsvp.eventId === 'e1')).toBe(false)
@@ -391,7 +392,8 @@ for (const [name, lat, lng] of [['out-of-range numeric', 1000, 103.85], ['string
 test('existing RSVP submission still works with the public feed mounted', async ({ page }) => {
   await page.goto('/events/e2/rsvp')
   await page.getByLabel(/Which year are you in/).fill('Year 2')
-  await page.getByRole('button', { name: 'RSVP', exact: true }).click()
+  // Intro to Vue needs organiser approval, so the button reads "Request a spot"
+  await page.locator('.rsvp-form').getByRole('button', { name: 'Request a spot', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'RSVP sent', exact: true })).toBeVisible()
   await expect(page.getByText('The organiser will review your RSVP soon.', { exact: true })).toBeVisible()
   expect((await db(page)).rsvps.find(rsvp => rsvp.eventId === 'e2' && rsvp.userId === 'u1').status).toBe('pending')

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useDiscoveryMotion } from '../composables/useDiscoveryMotion'
 import EventSummary from '../components/rsvp/EventSummary.vue'
@@ -8,6 +8,7 @@ import ClashWarning from '../components/rsvp/ClashWarning.vue'
 import VenueMap from '../components/VenueMap.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import HangoutPage from '../components/hangout/HangoutPage.vue'
+import EventJios from '../components/community/EventJios.vue'
 import {
   getEvent,
   getUser,
@@ -21,6 +22,7 @@ import {
 } from '../utils/api.js'
 const FloorPlan = defineAsyncComponent(() => import('../editor.vue'))
 import { eventsOverlap } from '../utils/helpers.js'
+import { toast } from '@/composables/useToast'
 
 const pageMotion = ref(null)
 useDiscoveryMotion(pageMotion)
@@ -112,6 +114,9 @@ const formErrors = computed(() => {
   return errors
 })
 
+// The button names the action the press will take, matching the Discover list.
+const submitLabel = computed(() => event.value.requiresApproval ? 'Request a spot' : event.value.spotsLeft <= 0 ? 'Join waitlist' : 'RSVP')
+
 // Tell them what will happen BEFORE they press the button
 const whatHappensNext = computed(() => {
   if (event.value.requiresApproval)
@@ -127,6 +132,23 @@ const jumpLabel = computed(() => {
   if (!signedIn.value) return 'Sign in to RSVP'
   if (result.value || existingRsvp.value) return 'See your RSVP'
   return 'Go to RSVP'
+})
+
+// Phones: a bar pinned above the bottom tabs keeps the main action in reach while reading
+// the details. It hides once the RSVP panel itself is on screen.
+const panelVisible = ref(false)
+let panelObserver = null
+onMounted(() => {
+  if (typeof IntersectionObserver === 'undefined') return
+  panelObserver = new IntersectionObserver(([entry]) => { panelVisible.value = entry.isIntersecting }, { threshold: 0.15 })
+  const watchPanel = () => { const el = document.getElementById('rsvp'); if (el) panelObserver.observe(el); else setTimeout(watchPanel, 300) }
+  watchPanel()
+})
+onBeforeUnmount(() => panelObserver?.disconnect())
+const stickyLabel = computed(() => (signedIn.value && !result.value && !existingRsvp.value ? submitLabel.value : jumpLabel.value))
+const stickyNote = computed(() => {
+  if (!event.value || event.value.spotsLeft == null) return ''
+  return event.value.spotsLeft > 0 ? `${event.value.spotsLeft} ${event.value.spotsLeft === 1 ? 'spot' : 'spots'} left` : 'Full · waitlist open'
 })
 
 function jumpToRsvp() {
@@ -157,7 +179,10 @@ async function submitRsvp() {
       email: email.value.trim(),
       answers: answers.value,
     })
-    if (ticket === loadRequest) result.value = savedRsvp
+    if (ticket === loadRequest) {
+      result.value = savedRsvp
+      toast(savedRsvp?.status === 'confirmed' ? "You're in!" : savedRsvp?.status === 'pending' ? 'Request sent to the organiser' : 'Added to the waitlist')
+    }
     // Refresh "spots left" / waitlist count; a failed refresh must not hide the saved RSVP
     try {
       const refreshed = await getEvent(eventId.value)
@@ -177,10 +202,15 @@ async function submitRsvp() {
   <div v-else ref="pageMotion" class="public-event-page">
   <div class="rsvp-intro">
     <RouterLink to="/events" class="rsvp-back">&larr; All events</RouterLink>
-    <!-- Phones only: the RSVP panel sits below the details, map and announcements -->
-    <a v-if="!loading && event && !event.isOnTeam" href="#rsvp" class="rsvp-jump d-lg-none" @click.prevent="jumpToRsvp">
+    <!-- Tablets only: the RSVP panel sits below the details; phones get the pinned bar instead -->
+    <a v-if="!loading && event && !event.isOnTeam" href="#rsvp" class="rsvp-jump d-none d-md-inline-flex d-lg-none" @click.prevent="jumpToRsvp">
       {{ jumpLabel }}<span aria-hidden="true">&nbsp;↓</span>
     </a>
+  </div>
+
+  <div v-if="!loading && event && !event.isOnTeam && !panelVisible" class="rsvp-sticky slide-up-in d-md-none">
+    <span class="rsvp-sticky-note">{{ stickyNote }}</span>
+    <button type="button" class="btn event-cta" @click="jumpToRsvp">{{ stickyLabel }}</button>
   </div>
 
   <div class="row g-4 mt-1 participant-rsvp">
@@ -194,6 +224,7 @@ async function submitRsvp() {
         </p>
       </EventSummary>
       <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
+      <EventJios v-if="event && !event.isOnTeam" :event-id="eventId" />
       <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
       <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>
@@ -250,7 +281,7 @@ async function submitRsvp() {
       <form v-else class="card card-body shadow-sm rsvp-form" @submit.prevent="submitRsvp" novalidate>
         <div class="form-heading">
           <div>
-            <h2 class="h4 mb-1">Count me in</h2>
+            <h2 class="h4 mb-1">Your RSVP</h2>
             <p class="form-text mt-0 mb-0">Your profile details are ready. Edit anything that’s changed.</p>
           </div>
           <span class="form-spark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z"/><path d="m9 12 2 2 4-4"/></svg></span>
@@ -325,7 +356,7 @@ async function submitRsvp() {
 
         <button type="submit" class="btn event-cta rsvp-submit" :disabled="submitting">
           <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          {{ submitting ? 'Sending…' : 'RSVP' }}
+          {{ submitting ? 'Sending…' : submitLabel }}
         </button>
       </form>
       </template>
@@ -335,11 +366,15 @@ async function submitRsvp() {
 </template>
 
 <style scoped>
-.form-spark svg { width: 24px; height: 24px; }
+.form-spark svg { width: 28px; height: 28px; }
 .rsvp-action-panel { scroll-margin-top: 110px; }
 @media(min-width:992px) { .rsvp-action-panel :deep(.col-md-6) { width: 100%; }.rsvp-action-panel .event-cta { width: 100%; }.rsvp-action-panel .d-flex { flex-wrap: wrap; }.rsvp-action-panel { position: sticky; top: 110px; } }
 .rsvp-intro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: .8rem; }
 .rsvp-jump { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border: 1px solid var(--bookedz-control-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-surface); font-weight: 650; text-decoration: none; transition: background-color var(--bookedz-motion-fast) ease; }
+.rsvp-sticky { position: fixed; z-index: 1010; left: 0; right: 0; bottom: var(--bottom-nav-h, 0px); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px max(10px, env(safe-area-inset-bottom)); border-top: 1px solid var(--bookedz-border); background: color-mix(in srgb, var(--bookedz-surface) 96%, transparent); box-shadow: 0 -6px 18px rgba(0,0,0,.08); }
+@media (max-width: 767.98px) { .public-event-page { padding-bottom: 76px; } }
+.rsvp-sticky-note { color: var(--bookedz-muted); font-size: var(--text-caption); }
+.rsvp-sticky .btn { min-height: 44px; }
 .rsvp-jump:hover { color: var(--bookedz-ink); background: var(--bookedz-glass-hover); }
 /* The panel is only focused as the shortcut's target; its own controls keep their focus rings */
 .participant-rsvp > .rsvp-action-panel:focus, .participant-rsvp > .rsvp-action-panel:focus-visible { outline: none; }
@@ -366,7 +401,8 @@ async function submitRsvp() {
 .participant-rsvp :deep(.card-body) { padding: clamp(1.1rem, 3vw, 1.8rem); }
 .rsvp-form { position: relative; }
 .form-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-bottom: 1.15rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--bookedz-border); }
-.form-spark { display: grid; place-items: center; flex: 0 0 42px; width: 42px; height: 42px; border-radius: 14px; color: var(--bookedz-ink); background: var(--bookedz-yellow); font-size: 1.4rem; }
+/* Decorative only: a plain icon, not a filled tile that looks pressable */
+.form-spark { flex: 0 0 auto; color: var(--bookedz-primary-dark); }
 .rsvp-state { position: relative; padding-top: 2rem !important; }
 .rsvp-state--signin { background: linear-gradient(145deg, var(--bookedz-surface), var(--bookedz-mint)); }
 .rsvp-state--success { border-color: var(--bookedz-success) !important; background: linear-gradient(145deg, var(--bookedz-surface), var(--bookedz-mint)); animation: confirmation-arrive 520ms cubic-bezier(.2,.8,.2,1) both; }

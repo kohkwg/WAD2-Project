@@ -67,14 +67,14 @@ async function upload(event) {
 </template>
 
 <style scoped>
-.floor-images{padding:1.1rem 1.25rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:18px;background:var(--bookedz-surface,#fffdfa);box-shadow:var(--bookedz-card-shadow,none)}
+.floor-images{padding:1.1rem 1.25rem;border:1px solid var(--bookedz-border,#e9ded3);border-radius:18px;background:var(--bookedz-surface,#ffffff);box-shadow:var(--bookedz-card-shadow,none)}
 .floor-images-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:.7rem}
-.floor-images-kicker{display:block;color:var(--bookedz-muted,#63665e);font-size:.72rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+.floor-images-kicker{display:block;color:var(--bookedz-muted,#636975);font-size:.72rem;font-weight:750;}
 .floor-images h2{font-family:var(--bookedz-heading,'Bricolage Grotesque',sans-serif);letter-spacing:-.02em}
-.image-status{display:inline-flex;align-items:center;min-height:30px;padding:.25rem .55rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:999px;background:var(--bookedz-cream,#fff8ec);color:var(--bookedz-muted,#63665e);font-size:.78rem;font-weight:700}
-.floor-images .form-control{min-height:42px;border-color:var(--bookedz-border,#e5ded2);border-radius:10px}
-.floor-image-preview{margin:1rem 0 0;padding:.65rem;border:1px solid var(--bookedz-border,#e5ded2);border-radius:14px;background:var(--bookedz-cream,#fff8ec)}
-.floor-images img{max-width:100%;border-color:var(--bookedz-border,#e5ded2)!important;border-radius:12px}
+.image-status{display:inline-flex;align-items:center;min-height:30px;padding:.25rem .55rem;border:1px solid var(--bookedz-border,#e9ded3);border-radius:999px;background:var(--bookedz-cream,#fff8f1);color:var(--bookedz-muted,#636975);font-size:.78rem;font-weight:700}
+.floor-images .form-control{min-height:42px;border-color:var(--bookedz-border,#e9ded3);border-radius:10px}
+.floor-image-preview{margin:1rem 0 0;padding:.65rem;border:1px solid var(--bookedz-border,#e9ded3);border-radius:14px;background:var(--bookedz-cream,#fff8f1)}
+.floor-images img{max-width:100%;border-color:var(--bookedz-border,#e9ded3)!important;border-radius:12px}
 .floor-images .btn{min-height:38px;border-radius:10px}
 @media(max-width:575.98px){.floor-images{padding:1rem;border-radius:16px}}
 </style>

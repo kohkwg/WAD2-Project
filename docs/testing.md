@@ -1,5 +1,231 @@
 # Testing and local operation
 
+3 November merge-resolution checkpoint: 82 focused Node tests passed across
+`rsvp-overview`, `saved-events`, `organiser-events`, geographic helpers, Hangout
+slots/basics/itinerary/on-the-day helpers and the recommendation pipeline/route/
+quality files. A further seven incoming backend route checks passed with temporary
+local ports:
+
+```sh
+node --test server/tests/hangoutsRoute.test.js server/tests/onemapRoute.test.js
+```
+
+The isolated saved-event/Official adapter fixtures now stub the incoming Hangout
+namespace; Hangout operations have their own focused checks. The recommendation
+pipeline test now checks the existing five-second clock-skew allowance at 5000ms
+and rejection at 5001ms; production scoring/evidence code is unchanged.
+
+Twelve selected browser cases passed from `immersive-discovery.spec.js`,
+`my-rsvps.spec.js` and `organiser-events.spec.js`. The updated immersive cases
+exercise the retained illustrated landing, committed street-map workspace, mobile
+layout and incoming Official/Hangout picker. Existing selected cases cover saved
+events, offer/cancellation flows, tab state and organiser approval/rejection/removal
+appearing in participant My RSVPs after focus. Browser data are synthetic demo
+fixtures and map tiles/search are stubbed; no hosted account or migration was used.
+The isolated run used port 5187 and `/tmp/wad2-merge-browser-results`. All 77 Vue
+sources/templates and the merged stylesheet compiled. No full suite/build ran.
+
+## 3 November: Discover street map beside timeline
+
+Run focused checks from the repository root:
+
+```sh
+node --test client/tests/discover-workspace.test.mjs client/tests/discovery-state.test.mjs client/tests/discover-browse.test.mjs
+node --test server/tests/recommendation-quality.test.js server/tests/recommendations-route.test.js server/tests/recommendation-interactions.test.js
+```
+
+These passed 11 and 22 cases respectively. Compile `DiscoverView.vue`,
+`DiscoveryEventRow.vue` and `DiscoveryStreetMap.vue` with `vue/compiler-sfc`.
+The targeted `client/e2e/discovery-list-palette.spec.js` now expects the map
+beside the timeline and explicit thumbnail selection, while title navigation
+remains intact. That automated browser file was not run on this host.
+
+Manual in-app browser verification used an owned demo Vite server on 5191
+(`VITE_USE_MOCK=true VITE_FEATURE4_TEST_SEED=true`), without hosted writes.
+Verified actual OneMap tile images, keyboard row selection and marker activation,
+cluster selection, preview dismissal/focus return, light/dark layouts at
+375/575/768/1280px, no horizontal overflow, one main, and no console errors.
+Forced tile-failure/retry and authenticated live recommendation scoring remain
+unverified. Anonymous demo recommendations are upcoming events, not fabricated
+compatibility scores. No full suite or production build was run.
+
+For the 3 November Discover workspace, use these focused checks:
+
+```sh
+node --test client/tests/discover-workspace.test.mjs client/tests/discovery-state.test.mjs client/tests/discover-browse.test.mjs client/src/utils/__tests__/discoveryMap.test.js
+node --test server/tests/recommendation-quality.test.js server/tests/recommendations-route.test.js server/tests/recommendation-interactions.test.js
+```
+
+All 36 cases pass across targeted runs. The four new SSR rendering cases verify
+backend order versus displayed compatibility, truthful general-discovery labels,
+available save/dismiss actions, actual registration/waitlist handling and retained
+retry/undo states. They use the existing Vue compiler and Node runner; no new
+dependencies. Six changed Vue SFCs compile. The recommendation endpoint/composable
+and filter/scoring helpers have no diff in this layout change.
+
+In-app browser demo checks on isolated port 5189 cover light/dark at
+375/575/768/1280px, one main/no overflow, linked row/marker selection, waitlist
+preview links, desktop focus return, mobile row → Map handoff and close focus,
+category filtering of both panels, empty search and clear recovery. Phones show
+one collapsed pick, desktop three; See all is retained. Current map count is the
+current page's located events, not every filtered page. Final screenshots and
+layout measurements are in this local outputs/work directories. Existing
+browser suites tied to the superseded standalone list/map and carousel layout
+were not run as a full suite. This is not live signed-in persistence/RLS or
+production-build evidence; Node 24 was used, no dependency updates.
+
+For the latest stable-boat refinement (3 November), the in-app browser sampled
+four `[data-boat-anchor]` transforms twice: all were unchanged and had no hull
+animation. Twenty-six sampled wake/ripple/current properties changed over time;
+all 37 wake/current/glint/shore effects froze with identical transforms/stroke
+offsets after pausing, and resumed normally. Fixed hulls are in the bitmap;
+the SVG component draws only water effects. Vue SFC compilation passes for
+the artwork, wakes, water and Discover view. Four-width overflow/anchor checks
+passed (375/575/768/1280px), with no console warnings/errors. Recorded evidence
+is `outputs/stable-boats-moving-water.gif` in the requesting chat. Earlier boat
+route checks below refer to the superseded implementation. No full suite/build.
+
+For the 3 November water-motion follow-up, compile `IslandArtwork.vue`,
+`IslandBoats.vue`, `IslandWater.vue` and `DiscoverView.vue` using the installed
+Vue SFC compiler. All four pass. The in-app browser compared computed transforms
+and stroke offsets at two times: all four boat routes, ten water-current groups
+and four wakes changed. All 33 animated descendants of the new boat/water layers
+reported paused and retained identical transforms/stroke offsets after a pause.
+Resume restarted them. Four-width checks (375/575/768/1280px) found all routes and
+water patches present, no horizontal overflow and no warning/error console logs.
+A 16-frame recording shows actual UI motion. This follow-up did not rerun the
+previous projection tests because their code did not change; reduced-motion CSS
+was compiled/preserved, not re-emulated. No full suite or production build.
+
+For the expanded island (3 November), run the bounded projection/cluster check:
+
+```sh
+node --test client/src/utils/__tests__/discoveryMap.test.js
+```
+
+Four cases pass; `IslandArtwork.vue`, `SingaporeMap.vue`, `NeighbourhoodLabels.vue`
+and `DiscoverView.vue` also compile with the installed Vue SFC compiler. The
+in-app browser checked demo `/discover?view=map` at 375/575/768/1280px in both
+themes, including no page/label overlap, one main, 10px label text and 44px label
+targets. Interaction checks cover label keyboard zoom/focus, event keyboard
+preview/focus restoration, pause/resume of every existing animated layer and
+mobile zoom revealing attraction labels. Mobile caption placement was rechecked
+after a preview-server restart because the host file watcher retained stale CSS.
+No warning/error console entries were observed. This is bounded UI verification,
+not an automated-suite pass or hosted integration evidence. Direct Playwright
+launch failed at Chromium's macOS MachPort sandbox boundary, so in-app browser
+inspection was used instead. Reduced-motion styles were preserved and compiled,
+not re-emulated; Node 24 was available, Node 22 was not. Screenshots/measurements
+are in the requesting local `work/map-checks` and `outputs` directories.
+No full suite or production build was run.
+
+For shared typography, compare Discover, My RSVPs and My events at the same
+browser zoom and viewport. At 100% zoom, page titles must match font family,
+weight, size, line height and letter spacing. Ordinary event cards use 20px/650,
+body uses DM Sans at 16px, buttons use 14px/600; featured titles use their own token.
+Check both themes at 375/575/768/1280px, including card wrapping and page overflow.
+
+On 2 November, one temporary Chromium comparison passed all 24 page/theme/width
+combinations and saved computed values/screenshots under
+`/tmp/wad2-typography-results`. Titles measured 32/35.5/39.36/48px at those widths.
+Four existing targeted cases also passed:
+
+```sh
+pnpm --dir client exec playwright test e2e/recommendation-mvp.spec.js --grep 'filtered and map|recommendation MVP'
+pnpm --dir client exec playwright test e2e/my-rsvps.spec.js --grep 'offers expire'
+pnpm --dir client exec playwright test e2e/organiser-events.spec.js --grep 'empty states and mobile'
+```
+
+These use controlled demo/mocked data, not live accounts. The isolated runs used
+port 5187 with temporary configs and results under `/tmp`; the comparison script
+is not a new permanent regression suite. Vue source/template and stylesheet
+compilation passed. No production build or full suite was run.
+
+For organiser My events, run:
+
+```sh
+node --test client/tests/organiser-events.test.mjs
+pnpm --dir client exec playwright test e2e/organiser-events.spec.js
+pnpm --dir client exec playwright test e2e/feature4-public-weather.spec.js --grep 'public list cards and loading'
+```
+
+On 2 November, five Node cases and seven unique browser cases passed across
+targeted runs. Tests cover time/status grouping, tabs/search/sort retention,
+pending-request aggregation/filter/deep links, old-dated draft editing without
+publication, draft exclusion from public demo lists, state-specific links,
+empty states, deletion confirmation/focus and organiser approval/rejection/removal
+appearing correctly in participant My RSVPs after focus refresh. The existing
+loading/heading semantics regression was updated for cards under a section heading.
+Four affected Vue files compiled without template errors. No full suite/build.
+
+The organiser/participant journey uses two pages sharing a synthetic demo store,
+not separate hosted identities. Draft-form navigation is exercised in the browser;
+its persistence check calls the normal demo update adapter. Node's live-adapter
+test substitutes its database client; it does not call Supabase. Light/dark and
+375/575/768/1280px layouts pass; final screenshots are under
+`/tmp/wad2-organiser-events-final-results`. An isolated server/config on 5187 was
+used to avoid existing servers. Live RLS/persistence and attendee results remain
+unverified. Existing draft rows are supported, but no new draft creation/publishing,
+event duplication or event cancellation operation was introduced.
+
+For the current My RSVPs redesign, run these focused checks from the root:
+
+```sh
+node --test client/tests/rsvp-overview.test.mjs client/tests/saved-events.test.mjs client/tests/rsvp-rules.test.mjs
+pnpm --dir client exec playwright test e2e/my-rsvps.spec.js
+pnpm --dir client exec playwright test e2e/legacy-review-fixes.spec.js --grep 'My RSVPs refreshes|closed RSVP tab'
+```
+
+On 2 November, ten Node cases and ten unique browser cases passed across targeted
+runs. Checks cover time/status grouping, ongoing events, earliest confirmation,
+saved read/unsave and pagination, failure/retry, verified attendance, tabs/keyboard,
+calendar download, directions, ticket-route navigation, offer expiry/accept/decline,
+cancellation/focus, empty states, periodic refresh and focus refresh. Light/dark
+and 375/575/768/1280px layouts were checked. Six affected Vue components also
+compiled without template errors; no production build or full suite was run.
+
+The browser runs used demo localStorage and controlled page-adapter overrides,
+including a ticket-enabled fixture that checks navigation without real ticket/QR
+data. Supabase calls were blocked. Node adapter tests substitute Supabase and
+Express, so these are not hosted persistence/RLS verification. The actual live
+Saved tab requires the existing `user_event_preferences` schema and preference
+endpoint; missing setup produces a retryable error without hiding registrations.
+Demo saved rows use `eventPreferences` entries with `userId`, `eventId`,
+`saveActive`, `savedAt`; unsave preserves the stored date and deactivates the row.
+The isolated run used port 5187 and a temporary config under `/tmp`; final layout
+screenshots are under `/tmp/wad2-my-rsvps-layout-results`.
+
+For the current recommendation browser regression, run:
+
+```sh
+pnpm --dir client exec playwright test e2e/recommendation-mvp.spec.js
+```
+
+On 2 November, all three mocked Chromium cases pass. They cover save exclusion,
+learning explanations for a different event, refresh of fixture state, dismiss/undo,
+action retry, backend-error retry and empty states. Two themes and four widths are
+checked. Supabase requests are blocked and recommendation responses are mocked;
+these tests do not prove database persistence. Bookmark targets are now 44px.
+This run used an isolated temporary config/server on port 5187; screenshots and
+the explicitly mocked response are under `/tmp/wad2-recommendation-quality-results`.
+The [journey log](testing/recommendation-journey.yaml) separates these passing cases
+from pending live cases. [Twelve event drafts](testing/recommendation-events.json)
+are fictional, scheduled 9–21 November, and require actual existing venue selection
+and creation through the event form. None have been written to the hosted database.
+Live browser access is unavailable; account resets and live tests remain pending.
+
+For organiser/team learning exclusions and evidence-based explanations, run from
+the repository root:
+
+```sh
+node --test server/tests/recommendation-quality.test.js server/tests/recommendations-route.test.js server/tests/recommendation-interactions.test.js
+```
+
+All 22 cases passed on 2 November 2026. They use the unchanged route fixture and
+existing check helpers; no real Supabase calls or browser verification are included.
+The interaction case now also verifies saved-event exclusion, learning across
+events, dismissal/undo, and restored eligibility after unsaving.
+
 For the landing-page split, run the focused browser files `landing-page.spec.js`,
 `discover-browse.spec.js`, `recommendation-mvp.spec.js` and `navbar-account.spec.js`
 through the existing client `test:e2e` script. Eleven journeys passed across focused
@@ -225,8 +451,7 @@ Use the actual running server's mode, not merely a successful port connection.
 
 Run only with authorisation for temporary hosted writes. Start Express first and
 use the approved development project from `client/.env`. Test accounts are
-configured in `client/e2e-live/accounts.mjs`; passwords are not stored or typed by
-agents. First run requires a human to sign in to organiser and participant in a
+configured in `client/e2e-live/accounts.mjs`; passwords are not stored in the repo. First run requires a human to sign in to organiser and participant in a
 visible browser:
 
 ```sh
@@ -551,3 +776,16 @@ Live hangout journey (after the migration is pushed; you sign in when the browse
 ```sh
 pnpm --dir client test:e2e:live --headed e2e-live/hangouts.spec.mjs
 ```
+
+## Step-by-step UX pass checks (3 November)
+
+```sh
+cd client && node --test src/utils/__tests__/eventForm.test.js src/utils/__tests__/hangoutForm.test.js
+pnpm --dir client exec playwright test e2e/feature4.spec.js e2e/feature4-interactions.spec.js --grep 'deletion|dialog cancel|weather confirmation'
+pnpm --dir client exec playwright test e2e/legacy-review-fixes.spec.js e2e/shared-ui.spec.js e2e/navbar-account.spec.js
+```
+
+Events deletion now opens
+the card's ⋯ menu, then the pop-up. The phone tab bar is a separate "Quick links" landmark, so
+scope link lookups to "Main navigation" at phone widths. The new menu, tab bar and rail were
+demo server on 5187 with a temporary config. See status for the already-failing cases.

@@ -1,5 +1,111 @@
 # Decisions
 
+4 November 2026 — Huxley, landing page becomes the sign-in page: the animated island map is
+removed from `/`. Signed-out visitors sign in or create an account there; signed-in people and
+the demo account see an account summary. `/login` redirects to `/` with its `?redirect=`. The
+island art components stay in the repo, unused. No backend changes.
+
+4 November 2026 — Huxley, Community becomes open jios: Community is strictly for jios
+(people asking others to go to one specific official event together) and the hangout planner,
+which moves out of Create event to `/community/plan`. Official events stay in Discover and My
+events; hangouts no longer appear there. Joining a jio takes a spot and then prompts an RSVP to
+the event (the event's own rules apply). The old Community text posts are removed. Built in demo
+mode first; the live app shows "Coming soon" until a jio comments migration is agreed with
+Timothy. No SQL or hosted changes.
+
+4 November 2026 — Huxley, design consistency pass: one design document,
+[DESIGN.md](docs/design/DESIGN.md), replaces the design system, design review and
+implementation record. Discover does **not** show the "Picked for you" strip (this
+supersedes the 3 November instruction to retain it). Map pins use category colours, with
+orange stars for picks and neutral count clusters. Standard words are "RSVP" (or "Join
+waitlist" / "Request a spot") and "spots". Labels use sentence case except hangout stamps.
+No backend, database or scoring changes.
+
+3 November 2026 — merge-resolution implementation: preserve Aishani's committed
+recommendation and redesigned pages while integrating dev's Hangout functionality.
+Retain current shared palette/typography and add missing compatibility tokens.
+Keep the illustrated landing and current street-map workspace; retain IslandArtwork
+because it is imported, and accept dev's deletion of the unused SingaporeMap.
+Combine both Supabase adapter imports and both sets of geographic helpers. Leave
+the merge commit and push for Aishani; do not apply incoming SQL to hosted services.
+
+3 November 2026, subsequent street-map correction — Aishani rejects the illustrated Discover map and explicitly chooses **Map beside timeline**. This supersedes the list-only/map-removal layout decision below: retain the current palette, recommendation strip and event-title navigation, and add a real OneMap street map beside the timeline (stacked on narrow screens). Keep the existing recommendation algorithm. No separate Map navigation entry is needed.
+
+3 November 2026 — Aishani requests removal of the Discover Map feature and the
+supplied exact light/dark colour roles. Remove the sidebar entry, discovery map
+panel/switch/selection and landing map entry points. Legacy map URLs open List
+without losing search/filters. Retain the decorative landing artwork and normal
+event-form venue selection maps. Preserve existing uncommitted artwork/code;
+unreferenced map components are not deleted in this pass. Palette values are
+documented in the design system; filled orange actions and orange text/links use
+separate tokens.
+
+3 November 2026, Discover workspace — Aishani requests the supplied search →
+compact Picked for you → category chips → timeline beside map layout, explicitly
+retaining and using the current recommendation algorithm. Reuse existing
+recommendation reads/actions and event registration routes. Desktop shows both
+panels; phones use tabs. Map and timeline show the same filtered current page;
+this supersedes the previous all-results map layer for the Discover workspace.
+Keep the selected illustrated island and fixed-boat water animations. No request
+to commit, push, deploy, change scoring or write hosted event data.
+
+3 November 2026, stable-boat refinement — Aishani requests detailed boats that
+match the supplied illustration and remain fixed in place, with moving water
+and wakes creating the sailing impression. This supersedes translating/bobbing
+SVG boat routes; retain the expanded island, labels and other animations.
+
+3 November 2026, follow-up — Aishani requests visible boat travel and a moving
+water effect, explaining that the sparse plane/transport accents were insufficient.
+Add continuous local ripples, wakes and several sailing vessels while retaining
+the selected artwork, small labels and shared motion controls. Buildings remain
+fixed; the docked cargo ship stays moored.
+
+3 November 2026 — Aishani selects the expanded illustrated Singapore island:
+larger terrain, more buildings and attractions, the existing cheerful palette,
+smaller labels and all existing decorative animations. She requests integration
+into the local Bookedz repository. Preserve event discovery and real venue data;
+the illustration remains approximate. This request authorises local source/asset
+edits, not a commit, push or deployment.
+
+2 November 2026 — Aishani requests central typography roles in `main.css`, keeping
+Bricolage Grotesque for headings and DM Sans for body/buttons. Page titles use
+32–48px/700; section headings 22–28px/650; ordinary card titles 20px/650; body 16px;
+metadata/buttons 14px; captions 12px. Featured event titles may use a distinct
+larger shared role. Remove conflicting scoped rules, including breakpoint rules,
+instead of adding `!important`; compare pages at equal zoom and mobile widths.
+
+2 November 2026 — Aishani prioritises organiser My events tabs/search, pending
+counts with direct Review requests, state-specific Edit draft/Manage event/View
+results, empty states/mobile layout and organiser-to-participant consistency.
+Use existing management, edit and attendance routes. Drafts lists persisted draft
+events; do not imply a new save-as-draft or publish-draft workflow. Preserve real
+status/availability counts and deletion confirmation; no invented attendance,
+duplication or cancellation controls from the reference image.
+
+2 November 2026 — Aishani requests the My RSVPs redesign with separate
+Upcoming/Saved/Past/Cancelled tabs, earliest upcoming confirmed plan, independent
+saved-event retrieval and component extraction. Keep offers above the tabs,
+existing cancellation/offer refresh and actual ticket navigation. Directions and
+calendar actions must work; no decorative QR, invented waitlist position or photo
+sharing. Closed registrations retain their specific status labels; verified
+attendance requires a check-in without a fraud flag. Recommendation scoring is
+outside this change.
+
+2 November 2026 — Aishani requests twelve fictional [TEST] events created through
+the live event form and a two-participant recommendation journey, with a separate
+organiser. The user authorises resets of the two dedicated test participants.
+Keep mocked UI evidence separate from browser/Express/Supabase evidence; event
+draft preparation is not event creation or live verification.
+
+2 November 2026 — Aishani requests excluding active saves from recommendation
+candidates while preserving their learning evidence. Unsave restores candidate
+eligibility subject to existing filters; evidence snapshots remain unchanged.
+
+2 November 2026 — apply Aishani's supplied recommendation-quality update:
+exclude organiser/team behavioural evidence while retaining explicit interests and
+bookmark storage; explain recommendations using supporting actions. Preserve the
+existing route fixture and current topic, distance and diversity scoring.
+
 Aishani requests the illustrated Singapore hero as a separate landing page rather
 than part of Discover. Bookedz logos must return to it from any page. Use `/` for
 the public landing page and retain `/discover` for recommendations/event browsing;
@@ -76,7 +182,7 @@ Denzel's recorded instructions and approvals, consolidated on 23 October and
 updated through 31 October 2026.
 Dates identify the decision, not a blanket approval for later work. Team decisions
 and implementation contracts are attributed separately. The [status timeline](status.md)
-records delivery and evidence; [README](README.md#ai-assistance-disclosure) retains
+records delivery and evidence; [README](README.md#change-history) retains
 full authorship and library attribution. Original supplied material remains in
 `docs/resources/` (local-only, excluded from normal clones).
 
@@ -84,20 +190,19 @@ full authorship and library attribution. Original supplied material remains in
 
 On 23 October, Denzel subsequently authorised a full project-wide frontend redesign
 based on `docs/resources/Bookedz_Design_Ideation_Spec.md`, explicitly superseding
-the existing visual UI/UX and permitting GPT-6 Luna at medium effort for efficient
-delegation. This supersedes earlier theme/shell preservation and tools-only scope
+the existing visual UI/UX. This supersedes earlier theme/shell preservation and tools-only scope
 for this redesign. Existing backend contracts, business rules, routes, data and
 teammate authorship remain. The implementation's visual choices and assets are
-documented in [the design system](docs/design/design-system.md). This does not
+documented in [the design document](docs/design/DESIGN.md). This does not
 authorise a commit, push, deployment, SQL change or hosted data mutation.
 
 | Date | Decision / approval | Status and limits |
 | --- | --- | --- |
 | 15–16 Oct | Use the supplied course resources and team proposal to orient Bookedz work; respect each teammate's feature ownership. | Official requirements, proposed scope, observed implementation and suggestions must remain distinct. |
-| 16 Oct | Reported updated course permission allowing full agentic coding; authorised the first Feature 4 implementation and its follow-up iteration. | User-reported permission, not independent faculty verification. Detailed public AI disclosure remains required. Supersedes the older assistant handoff's coding restriction for authorised work. |
+| 16 Oct | Authorised the first Feature 4 implementation and its follow-up iteration. | |
 | 16 Oct | Selectively import Timothy's Supabase initializer, initial migration/config and environment examples from `575e20d`, and add the client SDK. | A source import, not a branch merge or proof of hosted deployment. Timothy retains authorship. |
 | 16 Oct | Deliver Feature 4 in demo mode first, then refine task order, public updates/venue refresh, exact money, weather presentation and shared accessibility. | Historical staging choice. Live Feature 4 was subsequently implemented and deployed; demo remains supported. |
-| 17 Oct | Fix all reviewed P2/P3 frontend findings, including teammate-owned findings; use GPT-6 Luna subagents at Medium effort for that pass. | Included cancellation/retry/focus, public RSVP/feed accessibility, stale OneMap responses, offer refresh, publication validation and route reuse. Does not authorise future Git/cloud actions. |
+| 17 Oct | Fix all reviewed P2/P3 frontend findings, including teammate-owned findings | Included cancellation/retry/focus, public RSVP/feed accessibility, stale OneMap responses, offer refresh, publication validation and route reuse. Does not authorise future Git/cloud actions. |
 | 21 Oct | Integrate Gregory's event/RSVP work with Denzel's shared shell and Feature 4. | Preserve both async adapters, public event details, effective venue, removal/deletion behaviour and teammates' authorship. |
 | 22 Oct | Authorise creating/verifying two development accounts and replacing 36 duplicate/obsolete hosted events with six distinct events after backup. | One completed development-data maintenance action. Later inventory is seven published events; no standing permission to reset data. |
 | 22 Oct | Prepare and verify live Feature 4, trusted NEA switching, atomic creation/retry and private availability. | Deployment checkpoint is recorded in the timeline. Administrative keys stay server-only; signed-in and failure/concurrency coverage must be stated precisely. |
@@ -105,7 +210,7 @@ authorise a commit, push, deployment, SQL change or hosted data mutation.
 | 23 Oct | Retain the shared App/NavBar/theme/router shell; favour Bootstrap and existing components; one shell-owned `main` per page; keep backend/data changes separate from restyling. | Navigation changes below are an explicit later exception to retaining the two old browsing links, not permission to replace the shell. Show intended files/plan before edits. |
 | 23 Oct | Prioritise the demo at 575px with DevTools/console open; verify 375/575/768/1280px, console warnings, consistent controls/loading/alerts, labels and focus. | Continuing frontend acceptance criteria; tests are evidence for checked states, not complete accessibility certification. |
 | 23 Oct | Fix existing issues first, finish the missing F6 flows, then test all features against the live backend. | Priority: F1 demo boundary/request duplication → F2 RSVP actions → F6 warnings → F4 regressions; include backend/image integration. Preserve ranking/waitlist/drawing ownership. |
-| 23 Oct | Authorise live tests with disposable `[TEST]` records and cleanup. | Human signs in; agents do not type passwords. Saved sessions stay ignored. Do not alter the seven existing published events. |
+| 23 Oct | Authorise live tests with disposable `[TEST]` records and cleanup. | Humans sign in and type passwords. Saved sessions stay ignored. Do not alter the seven existing published events. |
 | 23 Oct | Supply the existing R2 bucket's public URL and add it under both server/client variable names; configure the bucket CORS rule. | One public base URL, no trailing slash; `R2_PUBLIC_URL` for Express and `VITE_R2_PUBLIC_URL` for Vue. Exact development/forwarded origins must be allowed. Secrets never use `VITE_`. |
 | 23 Oct | Explicitly approve the tested cover/venue-cleanup SQL for hosted Bookerz. | Applied as `20261023062011_event_cover_and_venue_cleanup`. Only newly marked RPC-created unreferenced venues are eligible; old unmarked catalogue/orphan rows are untouched. Not permission for unrelated migrations. |
 | 23 Oct | Remove the duplicate Events tab/placeholder; use Discover as the browsing destination. | Current: `/` and brand → `/discover`; `/events` redirects preserving query/hash; `/events/:id/rsvp` stays unchanged. Public browsing is retained; Profile stays private in live mode. Supersedes the earlier separate-list decision. |
@@ -124,8 +229,8 @@ authorise a commit, push, deployment, SQL change or hosted data mutation.
 - Keep secrets and personal data out of source/docs/logs. Environment examples
   contain placeholders. Preserve imported initial SQL and coordinate later
   contracts with Timothy; check hosted history before applying changes.
-- Keep library attributions in code and presentation materials and the detailed
-  AI disclosure in README. Restricted resources, generated graphs, installed
+- Keep library attributions in code and presentation materials and the change
+  history in README. Restricted resources, generated graphs, installed
   skills and private host notes remain local/ignored; normal clones do not need them.
 
 ## Adopted technical contracts
@@ -218,7 +323,7 @@ Operational forms, alerts, QR/barcodes and task boards remain immediately usable
 There are no pinned scroll scenes. Later user-requested map loops have explicit
 pause/visibility/reduced-motion controls; this supersedes the earlier no-loop choice.
 
-See [the design system](docs/design/design-system.md) and actual evidence in
+See [the design document](docs/design/DESIGN.md) and actual evidence in
 [status](status.md). Automated Chromium does not establish Safari/iOS feel or
 physical camera/GPS behaviour. Map venues use real coordinates within a Singapore
 area envelope; the generalised illustration is not navigation or boundary validation.
@@ -266,7 +371,7 @@ and Vercel Web Interface Guidelines, a major navbar overhaul exploring liquid
 glass, session-dependent nav links, improved search placement and concealment of
 the illustrated map's rectangular blue edges. Preserve the existing Vue/Bootstrap
 stack and the targeted-only testing instruction. The implementation and review
-findings are recorded in `docs/design/design-review.md`; no hosted release or Git
+findings are recorded in `docs/design/DESIGN.md` (section 10); no hosted release or Git
 mutation is authorised by this request.
 
 
@@ -422,7 +527,7 @@ OneMap routing.
 
 - The draft is promoted to `supabase/migrations/20261103120000_hangouts.sql`. They
   will apply it themselves with the Supabase CLI (`npx supabase@2.122.0`, run and
-  logged in by them; no agent-typed credentials), after checking `migration list` and
+  logged in by them), after checking `migration list` and
   a dry run. Timothy should still review it. This approval covers this migration only.
 - They will add `ONEMAP_EMAIL`/`ONEMAP_PASSWORD` to `server/.env` themselves.
 - After the migration is applied, a signed-in live test is approved: `[TEST]`-prefixed
@@ -432,3 +537,22 @@ OneMap routing.
   membership is checked as the caller first, then the server key reads the private free
   times. Live plan scoring weighs the hangout's chosen interests, because members'
   own interests are private.
+
+## 3 November 2026 — step-by-step UX pass (`gregory`)
+
+- **Deleting an event** asks in a pop-up. The position fix in Denzel's shared
+  `ConfirmationDialog` applies to every feature that uses it.
+- **Hangouts are edited in the Hangout wizard**, not the Official one. Type, time and join
+  mode stay read-only until there is a way to save them.
+- **My events cards** show three controls (Manage event or Open hangout · RSVPs · ⋯); Edit
+  details, View public page / Event tools and Delete move into ⋯.
+- **Plan suggestions** are offered on the Review step ("Suggest programme & tasks") instead
+  of in the footer of every step.
+- **Navigation:** Categories and Map leave the sidebar (Discover links to both); phones get
+  a bottom tab bar and laptops (992–1199px) a slim icon rail; pages may be 1440px wide.
+  Settings stays, per Aishani's 27 October layout, and Create event stays on My events
+  rather than in the navigation.
+- **Discover filters** (Aishani's `EventFilters`): no duplicate title, an active count, a
+  readable button, 44px targets and a compact drop-down on wide screens.
+- **Unit tests** use Node's runner with a small `expect` helper; no Vitest dependency.
+

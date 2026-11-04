@@ -13,16 +13,16 @@ const hasSession = computed(() => Boolean(user.value))
 const accountName = computed(() => user.value?.email?.split('@')[0] || 'Your account')
 const signingOut = ref(false)
 const authError = ref('')
-const discoverView = computed(() => route.path === '/discover' ? route.query.view : undefined)
-const isOnDiscover = computed(() => route.path === '/discover' && !['categories', 'map'].includes(discoverView.value))
+// Categories and Map are views inside Discover (its own links and Map/List switch), so all count as Discover
+const isOnDiscover = computed(() => route.path === '/discover')
 const isMyEvents = computed(() => route.path.startsWith('/organiser/events') && route.path !== '/organiser/events/new')
+// Phones get a bottom tab bar for signed-in (and demo) users, except on bare invite pages
+const showBottomTabs = computed(() => hasSession.value && !route.path.startsWith('/j/'))
 const ICONS = {
   discover: 'M3 11.5 12 4l9 7.5M5.5 10v10h13V10M10 20v-5h4v5',
   community: 'M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM22 20v-2a4 4 0 0 0-3-3.9M15.5 3.7a3.5 3.5 0 0 1 0 6.6',
   rsvps: 'M4 6.5h16V20H4zM4 11h16M8 3.5v5M16 3.5v5',
   events: 'M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4zM14 6v12',
-  categories: 'M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM13.5 13.5H20V20h-6.5z',
-  map: 'M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5zM9 4v13.5M15 6.5V20',
   settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z',
 }
 let stopListening = () => {}
@@ -49,7 +49,7 @@ function closeMenu() {
 async function logOut() {
   signingOut.value = true
   authError.value = ''
-  try { await signOut(); user.value = null; await router.push('/login') }
+  try { await signOut(); user.value = null; await router.push('/') }
   catch { authError.value = 'Sign out failed. Please try again.' }
   finally { signingOut.value = false }
 }
@@ -75,8 +75,6 @@ function resetDemo() {
           <li><RouterLink class="side-link" active-class="active" to="/my-rsvps"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg>My RSVPs</RouterLink></li>
           <li><RouterLink class="side-link" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>My events</RouterLink></li>
         </template>
-        <li><RouterLink class="side-link" :class="{ active: discoverView === 'categories' }" active-class="" exact-active-class="" :to="{ path: '/discover', query: { view: 'categories' } }"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.categories" /></svg>Categories</RouterLink></li>
-        <li><RouterLink class="side-link" :class="{ active: discoverView === 'map' }" active-class="" exact-active-class="" :to="{ path: '/discover', query: { view: 'map' } }"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.map" /></svg>Map</RouterLink></li>
       </ul>
       <ul class="sidebar-links sidebar-links--secondary">
         <li v-if="hasSession && USING_SUPABASE"><RouterLink class="side-link" active-class="active" to="/profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.settings" /></svg>Settings</RouterLink></li>
@@ -87,15 +85,28 @@ function resetDemo() {
         <button class="nav-quiet sidebar-sign-out" type="button" :disabled="signingOut" @click="logOut">{{ signingOut ? 'Signing out…' : 'Sign out' }}</button>
         <p v-if="authError" class="nav-auth-error" role="alert">{{ authError }}</p>
       </div>
+      <!-- Demo mode has no profile page, but still says whose data is on screen. -->
+      <div v-else-if="!USING_SUPABASE && user" class="sidebar-account">
+        <p class="nav-profile nav-profile--demo m-0"><span class="nav-avatar" aria-hidden="true">{{ accountName.charAt(0).toUpperCase() }}</span><span class="sidebar-profile-copy"><strong>{{ accountName }}</strong><span class="nav-account-name">Demo account</span></span></p>
+      </div>
     </div>
     <header class="app-topbar" :class="{ 'app-topbar--minimal': USING_SUPABASE && hasSession }">
-      <button ref="menuToggle" class="navbar-toggler" type="button" aria-controls="mainNav" :aria-expanded="menuOpen" aria-label="Toggle navigation" @click="menuOpen = !menuOpen"><span class="navbar-toggler-icon"></span></button>
+      <!-- Own icon: Bootstrap's .navbar-toggler-icon only has an image inside a .navbar (none in light mode here) -->
+      <button ref="menuToggle" class="navbar-toggler" type="button" aria-controls="mainNav" :aria-expanded="menuOpen" aria-label="Toggle navigation" @click="menuOpen = !menuOpen"><svg class="toggler-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
       <RouterLink class="topbar-brand" to="/" aria-label="Bookedz home" translate="no"><svg class="brand-symbol" viewBox="0 0 32 36" fill="none" aria-hidden="true"><path d="M4 4h15a9 9 0 0 1 0 18H4V4Z" fill="currentColor"/><path d="M4 14h15a9 9 0 0 1 0 18H4V14Z" fill="currentColor"/><path d="m11 17 4 4 8-9" stroke="var(--bookedz-surface)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> Bookedz</RouterLink>
       <div class="nav-account">
-        <RouterLink v-if="USING_SUPABASE && !hasSession" to="/login" class="nav-sign-in">Sign in <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 10h12m-4-4 4 4-4 4"/></svg></RouterLink>
+        <RouterLink v-if="USING_SUPABASE && !hasSession" to="/" class="nav-sign-in">Sign in <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 10h12m-4-4 4 4-4 4"/></svg></RouterLink>
         <button v-else-if="!USING_SUPABASE" type="button" class="nav-quiet" @click="resetDemo">Reset demo data</button>
       </div>
     </header>
+  </nav>
+  <!-- Phones: the four main destinations at thumb reach; ☰ keeps everything else. A separate
+       landmark, so "Main navigation" still holds one link per destination -->
+  <nav v-if="showBottomTabs" class="bottom-tabs" aria-label="Quick links">
+    <RouterLink class="bottom-tab" :class="{ active: isOnDiscover }" active-class="" exact-active-class="" to="/discover"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.discover" /></svg>Discover</RouterLink>
+    <RouterLink class="bottom-tab" active-class="active" to="/community"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.community" /></svg>Community</RouterLink>
+    <RouterLink class="bottom-tab" active-class="active" to="/my-rsvps"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg>My RSVPs</RouterLink>
+    <RouterLink class="bottom-tab" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>My events</RouterLink>
   </nav>
 </template>
 
@@ -131,15 +142,18 @@ function resetDemo() {
 @media(min-width:992px) { .app-topbar--minimal { display: none; } }
 .nav-sign-in, .nav-quiet, .nav-profile { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 9px 15px; border: 0; border-radius: 14px; text-decoration: none; font-size: .875rem; font-weight: 600; white-space: nowrap; }
 .nav-sign-in { background: var(--bookedz-ink); color: var(--bookedz-surface); }
-.nav-sign-in:hover { background: var(--bookedz-primary-dark); color: var(--bookedz-surface); }
+.nav-sign-in:hover { background: var(--bookedz-primary); color: var(--bookedz-on-action); }
 .nav-sign-in svg { width: 20px; height: 20px; }
 .nav-quiet, .nav-profile { background: transparent; color: var(--bookedz-muted); }
 .nav-quiet:hover, .nav-profile:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }
 .nav-profile { padding: 4px 8px; }
+.nav-profile--demo { cursor: default; }
+.nav-profile--demo:hover { background: transparent; color: var(--bookedz-muted); }
 .nav-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--bookedz-glass-active); color: var(--bookedz-primary-dark); }
 .nav-account-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
 .nav-auth-error { flex-basis: 100%; margin: 0; color: var(--bookedz-danger); font-size: .875rem; text-align: right; }
-.navbar-toggler { width: 44px; height: 44px; padding: 7px; border-color: var(--bookedz-border); border-radius: 12px; }
+.navbar-toggler { width: 44px; height: 44px; padding: 9px; border-color: var(--bookedz-control-border); border-radius: 12px; color: var(--bookedz-ink); }
+.toggler-icon { display: block; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .sidebar-scrim { display: none; }
 @media(max-width:991.98px) {
   .navbar-toggler { display: block; }
@@ -152,4 +166,28 @@ function resetDemo() {
 }
 @media(max-width:575.98px) { .nav-quiet { padding-inline: 8px; } .theme-control select { max-width: 70px; } }
 @media(prefers-reduced-motion:reduce) { .app-sidebar, .app-sidebar.show { transition: none; } }
+/* Laptops: a slim rail with each icon's short label underneath (no hover needed) gives the page
+   ~156px more room; from 1200px the full sidebar returns. The width is --sidebar-w in main.css. */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .app-sidebar { padding: 18px 8px 12px; }
+  .sidebar-brand { justify-content: center; margin: 0 0 18px; gap: 0; font-size: 0; }
+  .side-link { flex-direction: column; justify-content: center; gap: 4px; min-height: 60px; padding: 8px 2px; font-size: .7rem; line-height: 1.15; text-align: center; }
+  .side-link svg { flex-basis: auto; }
+  .sidebar-theme { flex-direction: column; justify-content: center; gap: 2px; padding: 8px 2px; font-size: .7rem; }
+  .sidebar-theme select { margin: 0; max-width: 100%; font-size: .7rem; }
+  .sidebar-account .nav-profile { flex-direction: column; justify-content: center; gap: 4px; padding: 6px 2px; }
+  .sidebar-profile-copy { text-align: center; font-size: .7rem; }
+  .sidebar-account .nav-account-name { display: none; }
+  .sidebar-account .sidebar-sign-out { justify-content: center; padding-inline: 2px; font-size: .7rem; white-space: normal; }
+}
+/* Phones: fixed tab bar; main.css pads the page by --bottom-nav-h so nothing hides behind it */
+.bottom-tabs { display: none; }
+@media (max-width: 767.98px) {
+  .bottom-tabs { position: fixed; inset: auto 0 0; z-index: 1020; display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 4px; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--bookedz-border); background: color-mix(in srgb, var(--bookedz-surface) 94%, transparent); }
+  @supports (backdrop-filter: blur(12px)) { .bottom-tabs { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); } }
+  .bottom-tab { display: grid; align-content: center; justify-items: center; gap: 2px; min-height: 52px; padding: 4px 2px; border-radius: 12px; color: var(--bookedz-muted); font-size: .72rem; font-weight: 600; line-height: 1.15; text-align: center; text-decoration: none; }
+  .bottom-tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .bottom-tab.active { color: var(--bookedz-primary-dark); background: var(--bookedz-glass-active); font-weight: 700; }
+  .bottom-tab:focus-visible { outline: 3px solid var(--bookedz-focus); outline-offset: -3px; }
+}
 </style>

@@ -62,12 +62,24 @@ export const finalizeHangoutPlan = (eventId, options) => backend.finalizeHangout
 export const reopenHangoutPlan = (eventId) => backend.reopenHangoutPlan(eventId) // host
 export const setHangoutMeetingPoint = (eventId, text) => backend.setHangoutMeetingPoint(eventId, text) // host; up to 120 characters
 
+// ---------- Open jios (Community) ----------
+// Demo mode only for now: the hosted database has no jio comments table yet (see decisions.md).
+export const JIOS_AVAILABLE = !USING_SUPABASE
+const jiosOnly = (name) => (...args) => (JIOS_AVAILABLE ? mockApi[name](...args) : Promise.reject(new Error('Open jios are coming soon to the live app. Try them in demo mode.')))
+export const getJios = jiosOnly('getJios') // upcoming public jios with members, spots and the event
+export const createJio = jiosOnly('createJio') // { eventId, note, capacity, joinMode }
+export const getJioComments = jiosOnly('getJioComments')
+export const addJioComment = jiosOnly('addJioComment')
+export const deleteJioComment = jiosOnly('deleteJioComment')
+
 
 // ---------- Users ----------
 export const getUser = () => backend.getUser() // the signed-in user's profile
 
 // ---------- RSVPs: participant ----------
 export const getMyRsvps = () => backend.getMyRsvps()
+export const getSavedEvents = () => backend.getSavedEvents()
+export const unsaveEvent = (eventId) => backend.unsaveEvent(eventId)
 export const createRsvp = (rsvpData) => backend.createRsvp(rsvpData) // { eventId, name, email, answers }
 export const cancelRsvp = (rsvpId) => backend.cancelRsvp(rsvpId)
 export const respondToOffer = (rsvpId, accept) => backend.respondToOffer(rsvpId, accept)

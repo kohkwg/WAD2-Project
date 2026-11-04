@@ -52,7 +52,8 @@ export function demoDiscoveryEvents(events, filters = {}, now = new Date()) {
     spots_left: event.spotsLeft, venue_name: event.venue?.name,
     venue_address: event.venue?.address, attendees: [],
   })).filter(event => new Date(event.start_time) > now)
-    .filter(event => !isPrivateHangout(event))
+    // Discover lists official events only; hangouts and open jios live in Community
+    .filter(event => event.kind !== 'hangout' && !isPrivateHangout(event))
     .filter(event => matchesDiscoveryFilters(event, filters))
     .sort((a,b) => (filters.sort === 'popular' ? (b.confirmed_count || 0) - (a.confirmed_count || 0) : 0)
       || new Date(a.start_time) - new Date(b.start_time) || a.id.localeCompare(b.id))
@@ -84,7 +85,7 @@ export function closingSoonEvents(events, now = Date.now()) {
     if (deadlineSoon) facts.push(`Registration closes ${new Date(deadline).toLocaleString('en-SG', {
       timeZone: 'Asia/Singapore', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
     })} (SGT)`)
-    if (limitedPlaces) facts.push(`Only ${remaining} ${remaining === 1 ? 'place' : 'places'} left`)
+    if (limitedPlaces) facts.push(`Only ${remaining} ${remaining === 1 ? 'spot' : 'spots'} left`)
     picks.push({ event: { ...event, reason: facts.join(' · ') }, deadline: deadlineSoon ? deadline : Infinity, starts })
   }
   return picks.sort((a, b) => a.deadline - b.deadline || a.starts - b.starts || a.event.id.localeCompare(b.event.id))

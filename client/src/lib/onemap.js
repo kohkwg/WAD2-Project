@@ -20,3 +20,15 @@ export async function geocodePostalCode(postal) {
     address: hit.ADDRESS,
   }
 }
+
+// Free-text place search (building, street or area name) for centring the map.
+export async function searchPlace(text, signal) {
+  const url =
+    'https://www.onemap.gov.sg/api/common/elastic/search' +
+    `?searchVal=${encodeURIComponent(text)}&returnGeom=Y&getAddrDetails=Y&pageNum=1`
+  const res = await fetch(url, { signal })
+  if (!res.ok) throw new Error('OneMap lookup failed.')
+  const hit = (await res.json()).results?.[0]
+  if (!hit) return null
+  return { lat: parseFloat(hit.LATITUDE), lng: parseFloat(hit.LONGITUDE), name: hit.BUILDING && hit.BUILDING !== 'NIL' ? hit.BUILDING : hit.ADDRESS }
+}

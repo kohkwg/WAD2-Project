@@ -5,6 +5,8 @@ import { RouterLink, useRoute } from 'vue-router'
 import RsvpTable from '../components/rsvp/RsvpTable.vue'
 import WaitlistTable from '../components/rsvp/WaitlistTable.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
+import { toast } from '../composables/useToast'
+import CountUp from '../components/ui/CountUp.vue'
 import {
   getEvent,
   getRsvpsForEvent,
@@ -57,7 +59,8 @@ async function loadData(id = eventId.value) {
     if (mounted && request === loadRequest && version === routeVersion && id === eventId.value) {
       event.value = nextEvent
       rsvps.value = nextRsvps
-      if (nextEvent.requiresApproval) activeTab.value = 'pending'
+      if (['pending', 'confirmed', 'waitlist', 'closed'].includes(route.query.status)) activeTab.value = route.query.status
+      else if (nextEvent.requiresApproval) activeTab.value = 'pending'
       loading.value = false
       return true
     }
@@ -86,6 +89,10 @@ watch(eventId, (id) => {
   loadData(id)
 })
 
+watch(() => route.query.status, status => {
+  if (['pending', 'confirmed', 'waitlist', 'closed'].includes(status)) activeTab.value = status
+})
+
 onMounted(() => {
   mounted = true
   loadData()
@@ -95,6 +102,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // Leaving the page ends any undo window: those rejections are saved now.
+  for (const [rsvpId, handle] of rejectTimers) { clearTimeout(handle); rejectRsvp(rsvpId).catch(() => {}) }
+  rejectTimers.clear()
   mounted = false
   loadRequest++
   clearInterval(timer) // stop the timer when we leave the page
@@ -105,7 +115,11 @@ const isMyEvent = computed(() => event.value && (event.value.isMine || event.val
 
 // ---------- Split RSVPs into the tabs ----------
 
-const pending = computed(() => rsvps.value.filter((r) => r.status === 'pending'))
+// Rejections wait out a short undo window; those rows are hidden meanwhile.
+const hiddenIds = ref(new Set())
+const pending = computed(() => rsvps.value.filter((r) => r.status === 'pending' && !hiddenIds.value.has(r.id)))
+const selectedPending = ref([])
+watch(pending, rows => { selectedPending.value = selectedPending.value.filter(id => rows.some(r => r.id === id)) })
 const confirmed = computed(() => rsvps.value.filter((r) => r.status === 'confirmed'))
 const offers = computed(() => rsvps.value.filter((r) => r.status === 'offered'))
 const waitlist = computed(() =>
@@ -125,7 +139,6 @@ const tabs = computed(() => [
 ])
 
 const spotsTaken = computed(() => event.value ? event.value.confirmedCount + event.value.offeredCount : 0)
-const fillPercent = computed(() => event.value?.capacity ? Math.min(100, Math.round((spotsTaken.value / event.value.capacity) * 100)) : 0)
 const capacityParts = computed(() => {
   const capacity = Math.max(0, Number(event.value?.capacity) || 0)
   const confirmed = Math.min(capacity, Math.max(0, Number(event.value?.confirmedCount) || 0))
@@ -177,8 +190,29 @@ async function approve(rsvpId) {
   }
 }
 
-async function reject(rsvpId) {
-  if (busyId.value) return
+// Reject hides the row at once and offers Undo for 5 seconds before saving.
+const UNDO_MS = 5000
+const rejectTimers = new Map()
+function reject(rsvpId) {
+  if (busyId.value || rejectTimers.has(rsvpId)) return
+  const person = rsvps.value.find(r => r.id === rsvpId)?.user?.name || 'RSVP'
+  hiddenIds.value = new Set([...hiddenIds.value, rsvpId])
+  rejectTimers.set(rsvpId, setTimeout(() => {
+    rejectTimers.delete(rsvpId)
+    commitReject(rsvpId)
+  }, UNDO_MS))
+  toast(`Rejected ${person}`, { duration: UNDO_MS, action: { label: 'Undo', onClick: () => undoReject(rsvpId) } })
+}
+function undoReject(rsvpId) {
+  clearTimeout(rejectTimers.get(rsvpId))
+  rejectTimers.delete(rsvpId)
+  const next = new Set(hiddenIds.value)
+  next.delete(rsvpId)
+  hiddenIds.value = next
+}
+
+async function commitReject(rsvpId) {
+  if (busyId.value) { rejectTimers.set(rsvpId, setTimeout(() => { rejectTimers.delete(rsvpId); commitReject(rsvpId) }, 400)); return }
   const id = eventId.value
   const version = routeVersion
   const action = ++actionRequest
@@ -191,8 +225,8 @@ async function reject(rsvpId) {
     if (!isCurrentEvent(id, version)) return
     if (!(await loadData(id)) || !isCurrentEvent(id, version)) return
     statusMessage.value = 'RSVP rejected.'
-    focusMessage(statusAlert)
   } catch (error) {
+    undoReject(rsvpId)
     if (isCurrentEvent(id, version)) {
       errorMessage.value = error.message
       focusMessage(errorAlert)
@@ -202,6 +236,38 @@ async function reject(rsvpId) {
       busyId.value = null
       actionEventId = null
     }
+  }
+}
+
+// Approve every chosen pending RSVP, then reload once.
+async function approveSelected() {
+  if (busyId.value || !selectedPending.value.length) return
+  const id = eventId.value
+  const version = routeVersion
+  const ids = [...selectedPending.value]
+  busyId.value = 'bulk'
+  errorMessage.value = ''
+  statusMessage.value = ''
+  let confirmed = 0, waitlisted = 0
+  try {
+    for (const rsvpId of ids) {
+      const updated = await approveRsvp(rsvpId)
+      updated.status === 'confirmed' ? confirmed++ : waitlisted++
+      if (!isCurrentEvent(id, version)) return
+    }
+    selectedPending.value = []
+    if (!(await loadData(id)) || !isCurrentEvent(id, version)) return
+    statusMessage.value = `Approved ${ids.length}: ${confirmed} confirmed` + (waitlisted ? `, ${waitlisted} joined the waitlist because the event is full.` : '.')
+    toast(`Approved ${ids.length}`)
+    focusMessage(statusAlert)
+  } catch (error) {
+    if (isCurrentEvent(id, version)) {
+      errorMessage.value = error.message
+      await loadData(id)
+      focusMessage(errorAlert)
+    }
+  } finally {
+    if (isCurrentEvent(id, version)) busyId.value = null
   }
 }
 
@@ -307,8 +373,8 @@ async function demoExpireOffers() {
 
     <section class="guest-summary mb-4" aria-label="RSVP status summary">
       <div class="capacity-overview">
-        <div class="capacity-title"><div><h2>Places</h2><p>{{ spotsTaken }} of {{ event.capacity }} taken or offered</p></div><strong>{{ fillPercent }}<span>%</span></strong></div>
-        <div class="capacity-track" role="img" :aria-label="`Capacity: ${event.confirmedCount} confirmed, ${event.offeredCount} offers out, ${capacityParts.availableCount} available of ${event.capacity}`">
+        <div class="capacity-title"><div><h2>Spots</h2><p>{{ spotsTaken }} of {{ event.capacity }} taken or offered</p></div><strong><CountUp :value="capacityParts.availableCount" /><span> left</span></strong></div>
+        <div class="capacity-track" role="img" :aria-label="`Capacity: ${event.confirmedCount} confirmed, ${event.offeredCount} ${event.offeredCount === 1 ? 'offer' : 'offers'} out, ${capacityParts.availableCount} available of ${event.capacity}`">
           <span class="capacity-segment capacity-segment--confirmed" :style="{ transform: `scaleX(${capacityParts.confirmed / 100})` }"></span>
           <span class="capacity-segment capacity-segment--offered" :style="{ transform: `scaleX(${(capacityParts.confirmed + capacityParts.offered) / 100})` }"></span>
           <span class="capacity-segment capacity-segment--available" :style="{ transform: `scaleX(${(capacityParts.confirmed + capacityParts.offered + capacityParts.available) / 100})` }"></span>
@@ -318,11 +384,6 @@ async function demoExpireOffers() {
           <li><i class="legend-dot legend-dot--offered" aria-hidden="true"></i><span>Offers out</span><strong>{{ event.offeredCount }}</strong></li>
           <li><i class="legend-dot legend-dot--available" aria-hidden="true"></i><span>Available</span><strong>{{ capacityParts.availableCount }}</strong></li>
         </ul>
-      </div>
-      <div class="status-chips" aria-label="Other RSVP statuses">
-        <div class="status-chip status-chip--pending"><span>Awaiting approval</span><strong>{{ event.pendingCount }}</strong></div>
-        <div class="status-chip status-chip--waitlist"><span>On waitlist</span><strong>{{ event.waitlistCount }}</strong></div>
-        <div class="status-chip status-chip--closed"><span>Rejected or cancelled</span><strong>{{ closed.length }}</strong></div>
       </div>
     </section>
 
@@ -360,12 +421,20 @@ async function demoExpireOffers() {
         </button>
     </div>
 
-    <div class="rsvp-list-panel">
+    <div :key="activeTab" class="rsvp-list-panel reveal-down">
       <template v-if="activeTab === 'pending'">
         <p v-if="!event.requiresApproval" class="small text-secondary">
           This event confirms RSVPs automatically, so nothing waits here.
         </p>
+        <div v-if="pending.length > 1" class="bulk-bar reveal-down">
+          <span class="small text-secondary">{{ selectedPending.length ? `${selectedPending.length} selected` : 'Select people to approve several at once' }}</span>
+          <button type="button" class="btn event-cta btn-sm" :disabled="!selectedPending.length || busyId !== null" @click="approveSelected">
+            {{ busyId === 'bulk' ? 'Approving…' : `Approve selected${selectedPending.length ? ` (${selectedPending.length})` : ''}` }}
+          </button>
+        </div>
         <RsvpTable
+          v-model:selected-ids="selectedPending"
+          :selectable="pending.length > 1"
           :rsvps="pending"
           :questions="event.questions"
           :show-actions="true"
@@ -440,36 +509,31 @@ async function demoExpireOffers() {
 .rsvp-kicker { color: var(--bookedz-primary-dark); font-weight: 700; font-size: .85rem; }
 .rsvp-event-meta { display: flex; flex-wrap: wrap; gap: .3rem .75rem; color: var(--bookedz-muted); font-size: .9rem; }
 .rsvp-event-meta span + span::before { content: '·'; margin-right: .75rem; }
-.guestlist-stamp { display: grid; flex: 0 0 48px; place-items: center; width: 48px; height: 48px; border-radius: 16px; color: var(--bookedz-ink); background: var(--bookedz-yellow); font-size: 1.5rem; }
-.guest-summary { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(230px, .8fr); gap: 1rem; }
-.capacity-overview,.status-chips { min-width: 0; padding: 1.1rem 1.25rem; border: 1px solid var(--bookedz-border); border-radius: 18px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
-.capacity-title { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+/* Decorative only: no fill or box, so it never reads as a button */
+.guestlist-stamp { flex: 0 0 auto; color: var(--bookedz-primary); font-size: 2.25rem; line-height: 1; transform: rotate(15deg); }
+.guest-summary { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.capacity-overview,.capacity-title { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .capacity-title h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
 .capacity-title p { margin: .1rem 0 0; color: var(--bookedz-muted); font-size: .84rem; }
 .capacity-title > strong { flex: 0 0 auto; color: var(--bookedz-primary-dark); font: 700 2rem/1 var(--bookedz-heading); letter-spacing: -.05em; }
 .capacity-title > strong span { font-size: 1rem; }
 .capacity-track { position: relative; display: block; width: 100%; height: 13px; overflow: hidden; margin: 1rem 0 .9rem; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-hover); }
 .capacity-segment { position: absolute; inset: 0; display: block; width: 100%; height: 100%; transform-origin: left; transition: transform 320ms cubic-bezier(.2,.8,.2,1); }
-.capacity-segment--confirmed { z-index: 3; background: var(--bookedz-primary-dark); }
+.capacity-segment--confirmed { z-index: 3; background: var(--bookedz-primary); }
 .capacity-segment--offered { z-index: 2; background: var(--bookedz-yellow); }
 .capacity-segment--available { background: var(--bookedz-mint); }
 .capacity-legend { display: flex; flex-wrap: wrap; gap: .45rem 1rem; padding: 0; margin: 0; list-style: none; }
 .capacity-legend li { display: inline-flex; align-items: center; gap: .4rem; color: var(--bookedz-muted); font-size: .78rem; }
 .capacity-legend strong { color: var(--bookedz-ink); font-variant-numeric: tabular-nums; }
 .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
-.legend-dot--confirmed { background: var(--bookedz-primary-dark); }
+.legend-dot--confirmed { background: var(--bookedz-primary); }
 .legend-dot--offered { background: var(--bookedz-yellow); }
 .legend-dot--available { background: var(--bookedz-mint); border: 1px solid var(--bookedz-muted-border); }
-.status-chips { display: grid; grid-template-columns: 1fr; align-content: center; gap: .6rem; }
-.status-chip { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .65rem .8rem; border: 1px solid var(--bookedz-border); border-radius: 12px; color: var(--bookedz-muted); font-size: .84rem; }
-.status-chip strong { color: var(--bookedz-ink); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
-.status-chip--pending { background: color-mix(in srgb, var(--bookedz-yellow) 20%, var(--bookedz-surface)); }
-.status-chip--waitlist { background: color-mix(in srgb, var(--bookedz-mint) 24%, var(--bookedz-surface)); }
-.status-chip--closed { background: var(--bookedz-glass-solid); }
 .status-tabs { display: flex; flex-wrap: wrap; gap: .35rem; padding: .45rem; border: 1px solid var(--bookedz-border); border-radius: 16px 16px 0 0; background: var(--bookedz-glass-solid); }
 /* Plain scoped selectors: the tab buttons belong to this template. (The earlier :deep() form
    needed an ancestor from this component and never matched, so inactive tabs showed as coral links.) */
 .status-tabs .nav-link { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-height: 44px; border: 1px solid transparent; border-radius: 11px; color: var(--bookedz-muted); font-weight: 650; white-space: nowrap; }
+.status-tabs .nav-link { transition: color var(--bookedz-motion-fast) var(--bookedz-ease), background-color var(--bookedz-motion-fast) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .status-tabs .nav-link:hover { color: var(--bookedz-ink); background: var(--bookedz-glass-hover); }
 .status-tabs .nav-link.active { color: var(--bookedz-primary-dark); border-color: var(--bookedz-border); background: var(--bookedz-surface); box-shadow: var(--bookedz-tab-shadow); }
 .tab-count { color: var(--bookedz-ink); background: var(--bookedz-hover); }
@@ -479,7 +543,8 @@ async function demoExpireOffers() {
 :deep(.table td) { vertical-align: middle; }
 :deep(.table-responsive) { border-radius: 12px; }
 :deep(.alert) { border-color: var(--bookedz-border); }
-@media (max-width: 767.98px) { .guest-summary { grid-template-columns: minmax(0, 1fr); } .status-chips { grid-template-columns: repeat(2,minmax(0,1fr)); } .status-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); } .status-tabs .nav-link { min-width: 0; white-space: normal; } }
-@media (max-width: 575.98px) { .rsvp-heading { align-items: flex-start; padding: 1.1rem 1rem; } .guestlist-stamp { flex-basis: 40px; width: 40px; height: 40px; border-radius: 13px; } .status-chips { grid-template-columns: 1fr; } .capacity-overview { padding: 1rem; } .capacity-legend { gap: .4rem .7rem; } .rsvp-event-meta { display: grid; gap: .15rem; } .rsvp-event-meta span + span::before { content: none; } }
+@media (max-width: 767.98px) { .guest-summary { grid-template-columns: minmax(0, 1fr); }  .status-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); } .status-tabs .nav-link { min-width: 0; white-space: normal; } }
+@media (max-width: 575.98px) { .rsvp-heading { align-items: flex-start; padding: 1.1rem 1rem; } .guestlist-stamp { font-size: 1.75rem; }  .capacity-overview { padding: 1rem; } .capacity-legend { gap: .4rem .7rem; } .rsvp-event-meta { display: grid; gap: .15rem; } .rsvp-event-meta span + span::before { content: none; } }
 @media (prefers-reduced-motion: reduce) { .capacity-segment { transition: none; } }
+.bulk-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; padding: 10px 12px; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); }
 </style>
