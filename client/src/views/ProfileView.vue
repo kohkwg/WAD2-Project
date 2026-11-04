@@ -5,8 +5,13 @@ import { USING_SUPABASE } from '@/utils/api'
 import { geocodePostalCode } from '@/lib/onemap'
 import { INTEREST_OPTIONS } from '@/lib/constants'
 
+defineProps({ embedded: { type: Boolean, default: false } })
+
 const userId = ref(null)
 const displayName = ref('')
+const username = ref('')
+const usernameError = ref('')
+const usernameAvailable = ref(true)
 const postalCode = ref('')
 const selected = ref([])          // interest names the user ticks
 
@@ -30,18 +35,30 @@ async function loadProfile() {
     if (authError) throw authError
     if (!active) return
     if (!auth.user) throw new Error('Please log in to edit your profile.')
-    const { data, error: profileError } = await supabase.from('profiles')
-      .select('id, display_name, postal_code, profile_interests(interests(slug))').eq('id', auth.user.id).maybeSingle()
+    const columns = 'id, display_name, postal_code, profile_interests(interests(slug))'
+    let { data, error: profileError } = await supabase.from('profiles')
+      .select(`username, ${columns}`).eq('id', auth.user.id).maybeSingle()
+    if (!active) return
+    // Older live schemas can still load existing details without the new column.
+    usernameAvailable.value = true
+    if (profileError && ['42703', 'PGRST204'].includes(profileError.code) && /username/i.test(profileError.message || '')) {
+      usernameAvailable.value = false
+      ;({ data, error: profileError } = await supabase.from('profiles')
+        .select(columns).eq('id', auth.user.id).maybeSingle())
+    }
     if (profileError) throw profileError
     if (!active) return
     if (!data) throw new Error('Your profile could not be found. Please contact the organiser.')
     userId.value = auth.user.id
     displayName.value = data.display_name || ''
+    username.value = data.username || ''
     postalCode.value = data.postal_code || ''
     selected.value = (data.profile_interests || []).map(link => link.interests.slug)
       .filter(interest => INTEREST_OPTIONS.includes(interest))
   } catch (failure) {
-    if (active) error.value = failure.message || 'Could not load your profile.'
+    if (active) error.value = ['PGRST204', '42703'].includes(failure.code)
+      ? 'Username setup is not available yet. Please ask the team to finish the database setup.'
+      : failure.message || 'Could not load your profile.'
   } finally {
     if (active) loading.value = false
   }
@@ -52,6 +69,12 @@ async function save() {
   if (saving.value || !userId.value) return
   success.value = ''
   error.value = ''
+  usernameError.value = ''
+  const handle = username.value.trim().toLowerCase()
+  if (usernameAvailable.value && handle && !/^[a-z0-9_]{3,20}$/.test(handle)) {
+    usernameError.value = 'Use 3–20 letters, numbers or underscores.'
+    return
+  }
   saving.value = true
   try {
     let lat = null, lng = null
@@ -59,18 +82,29 @@ async function save() {
       ;({ lat, lng } = await geocodePostalCode(postalCode.value.trim()))
     }
 
+    if (!active) return
+
     // One transaction saves details and replaces only explicit interest links.
-    const { error: err } = await supabase.rpc('update_recommendation_profile', {
+    const payload = {
       p_display_name: displayName.value.trim(),
       p_postal_code: postalCode.value.trim() || null,
       p_lat: lat, p_lng: lng, p_interests: [...selected.value],
-    })
+    }
+    const { error: err } = usernameAvailable.value
+      ? await supabase.rpc('update_profile_with_username', { ...payload, p_username: handle || null })
+      : await supabase.rpc('update_recommendation_profile', payload)
     if (!active) return
     if (err) throw err
+    username.value = handle
 
     success.value = 'Profile saved.'
   } catch (e) {
-    error.value = e.message || 'Could not save your profile.'
+    if (!active) return
+    if (e.code === '23505') usernameError.value = 'That username is already taken. Choose another.'
+    else if (['PGRST202', 'PGRST204', '42703', '42883'].includes(e.code)) error.value = usernameAvailable.value
+      ? 'Username saving is not available yet. Your changes are kept; please try again after account updates are available.'
+      : 'Profile saving is temporarily unavailable. Your changes are kept; please try again later.'
+    else error.value = e.message || 'Could not save your profile.'
   } finally {
     saving.value = false
   }
@@ -78,8 +112,8 @@ async function save() {
 </script>
 
 <template>
-  <div class="container profile-page py-4 py-md-5">
-    <header class="profile-heading">
+  <div class="profile-page" :class="{ 'container py-4 py-md-5': !embedded, 'profile-page--embedded': embedded }">
+    <header v-if="!embedded" class="profile-heading">
       <p class="profile-kicker">Your Bookedz account</p>
       <h1 class="profile-title page-title">Your profile</h1>
       <p class="profile-lede">Keep your details current and shape the events you discover.</p>
@@ -96,16 +130,32 @@ async function save() {
       <fieldset class="profile-section" :disabled="saving" aria-describedby="profile-details-help">
         <legend>Make yourself at home</legend>
         <p id="profile-details-help" class="profile-help">A name to go by, and a starting point for nearby plans.</p>
-        <div class="mb-4">
+        <div class="row g-4 profile-details-grid">
+        <div class="col-12 col-md-6 col-xl-4">
           <label for="name" class="form-label">Name</label>
           <input id="name" v-model="displayName" class="form-control" autocomplete="name" />
         </div>
 
-        <div class="mb-3">
+        <div class="col-12 col-md-6 col-xl-4">
+          <label for="username" class="form-label">Username</label>
+          <div class="input-group">
+            <span class="input-group-text" aria-hidden="true">@</span>
+            <input id="username" v-model="username" class="form-control" autocomplete="username" :disabled="!usernameAvailable"
+                   autocapitalize="none" :spellcheck="false" maxlength="20"
+                   aria-describedby="username-help username-error" :aria-invalid="Boolean(usernameError)"
+                   @input="usernameError = ''; success = ''" />
+          </div>
+          <div v-if="usernameAvailable" id="username-help" class="form-text">Choose a unique username for people to find you by. Use 3–20 letters, numbers or underscores</div>
+          <div v-else id="username-help" class="form-text">Username setup is coming soon. You can still edit your other profile details.</div>
+          <p v-if="usernameError" id="username-error" class="text-danger mb-0" role="alert">{{ usernameError }}</p>
+        </div>
+
+        <div class="col-12 col-xl-4">
           <label for="postal" class="form-label">Postal code</label>
           <input id="postal" v-model="postalCode" class="form-control" inputmode="numeric"
                  maxlength="6" pattern="\d{6}" placeholder="e.g. 188065" autocomplete="postal-code" aria-describedby="postal-help" />
           <div id="postal-help" class="form-text">Optional. Used to find events near you.</div>
+        </div>
         </div>
 
       </fieldset>
@@ -142,6 +192,7 @@ async function save() {
 
 <style scoped>
 .profile-page { max-width: 760px; }
+.profile-page--embedded { width: 100%; max-width: none; }
 .profile-heading { max-width: 600px; margin-bottom: 2rem; }
 .profile-kicker { margin: 0 0 .55rem; color: var(--bookedz-ink-soft, #636975); font-size: .9rem; }
 .profile-title { margin: 0; color: var(--bookedz-ink, #1f2937); }

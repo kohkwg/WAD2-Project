@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import RsvpView from '../views/RsvpView.vue'
 import MyRsvpsView from '../views/MyRsvpsView.vue'
 import OrganiserEventsView from '../views/OrganiserEventsView.vue'
-import CreateEventView from '../views/CreateEventView.vue'
 import ManageRsvpsView from '../views/ManageRsvpsView.vue'
 import ManageEventView from '../views/ManageEventView.vue'
 import { USING_SUPABASE, getCurrentUser } from '../utils/api.js'
@@ -59,8 +58,6 @@ const router = createRouter({
     { path: '/organiser/events', component: OrganiserEventsView, meta: { title: 'My events' } },
     { path: '/organiser/events/new', component: () => import('../views/NewEventView.vue'), meta: { title: 'Create event' } },
     { path: '/j/:token', redirect: to => `/g/${to.params.token}` },
-    // Same wizard, pre-filled, for changing a published event (Feature 2)
-    { path: '/organiser/events/:id/edit', component: CreateEventView, meta: { title: 'Edit event' } },
     { path: '/organiser/events/:id/rsvps', component: ManageRsvpsView, meta: { title: 'Manage RSVPs' } },
     { path: '/organiser/events/:id/manage', component: ManageEventView, meta: { title: 'Manage event' } },
 
