@@ -20,7 +20,7 @@ watch(() => route.path, async () => {
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <div class="app-shell">
   <NavBar />
-  <main id="main-content" ref="main" class="container app-main" :class="{ 'app-main--discover': route.path === '/discover' || route.path === '/' }" tabindex="-1">
+  <main id="main-content" ref="main" class="container app-main" :class="{ 'app-main--discover': route.path === '/discover' || route.path === '/', 'app-main--profile': route.path === '/profile' }" tabindex="-1">
     <RouterView />
   </main>
   <footer class="app-footer">
@@ -30,6 +30,7 @@ watch(() => route.path, async () => {
 </template>
 
 <style scoped>
+.app-main.app-main--profile { max-width: 100%; }
 .footer-home-link { color: inherit; font-weight: 700; text-decoration: none; }
 .footer-home-link:hover { text-decoration: underline; }
 .footer-home-link:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 4px; }

@@ -4,7 +4,7 @@
 .design-baseline.design-baseline { position: relative; isolation: isolate; --db-r: 24px; --db-tilt: 1.2deg; }
 
 /* Soft colour blobs live on the body so they have no visible box edges. */
-body:has(.design-baseline) {
+body:has(:is(.design-baseline, .account-page)) {
   background:
     radial-gradient(34rem 24rem at 12% 0%, color-mix(in srgb, var(--bookedz-fill) 22%, transparent), transparent 70%),
     radial-gradient(32rem 22rem at 95% 0%, color-mix(in srgb, var(--bookedz-teal) 20%, transparent), transparent 70%),
@@ -85,3 +85,57 @@ body:has(.design-baseline) {
   .design-baseline.design-baseline .event-preview, .design-baseline.design-baseline .mode-card { transition: none; }
   .design-baseline.design-baseline .btn:not(:disabled):hover { transform: none; }
 }
+
+/* ---- Profile (edit / groups / friends) ----------------------------------------------
+   Pure CSS, scoped to .account-page from ProfileTabsView, so no profile component or logic
+   file needs to change. Same look as Manage Event. */
+.account-page.account-page { position: relative; isolation: isolate; --db-r: 24px; }
+.account-page.account-page .account-heading {
+  position: relative; max-width: none; margin: .5rem 0 1.75rem; padding: clamp(1.4rem, 4vw, 2.4rem); overflow: hidden;
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r);
+  background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 70%);
+  box-shadow: 6px 6px 0 var(--bookedz-ink); --bs-secondary-color: var(--bookedz-ink);
+}
+.account-page.account-page .account-heading::after {
+  content: '★'; position: absolute; right: clamp(.8rem, 4vw, 2.2rem); top: 50%; translate: 0 -50%; rotate: 12deg;
+  font-size: clamp(4rem, 12vw, 7rem); line-height: 1; color: var(--bookedz-fill); opacity: .35; pointer-events: none;
+}
+.account-page.account-page .account-heading h1 {
+  font-size: clamp(2.1rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -.03em;
+  background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.account-page.account-page .account-heading p { font-weight: 500; max-width: 46ch; margin-bottom: 0; }
+:root[data-theme="dark"] .account-page.account-page .account-heading { border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill); }
+
+/* Tab bar */
+.account-page.account-page .account-nav { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: var(--bookedz-surface); }
+:root[data-theme="dark"] .account-page.account-page .account-nav { border-color: var(--bookedz-border); }
+.account-page.account-page .account-nav a { border-radius: 99px; }
+.account-page.account-page .account-nav a.active { border-color: var(--bookedz-ink); background: var(--bookedz-orange-soft); transform: translateY(-1px); }
+:root[data-theme="dark"] .account-page.account-page .account-nav a.active { border-color: var(--bookedz-fill); }
+
+/* Panels as ticket cards */
+.account-page.account-page :is(.profile-form, .friends-panel, .groups-panel) {
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: var(--bookedz-surface); box-shadow: 6px 6px 0 var(--bookedz-teal);
+}
+.account-page.account-page :is(.friends-panel, .groups-panel) { padding: clamp(1.1rem, 4vw, 2rem); }
+:root[data-theme="dark"] .account-page.account-page :is(.profile-form, .friends-panel, .groups-panel) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+.account-page.account-page :is(.profile-section legend, .friends-heading h2, .groups-heading h2) { font-family: var(--bookedz-heading); font-weight: 900; }
+.account-page.account-page :is(.profile-section, .profile-actions) { border-color: var(--bookedz-control-border); border-style: dashed; }
+.account-page.account-page .profile-interests { border: 0; }
+
+/* Inputs and buttons */
+.account-page.account-page :is(.form-control, .form-select, .input-group-text) { border-width: 2px; border-radius: 14px; }
+.account-page.account-page .input-group > .input-group-text { border-radius: 14px 0 0 14px; }
+.account-page.account-page .input-group > .form-control { border-radius: 0 14px 14px 0; }
+.account-page.account-page :is(.form-control, .form-select):focus { border-color: var(--bookedz-fill); box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--bookedz-fill) 28%, transparent); }
+.account-page.account-page .form-label { font-weight: 800; }
+.account-page.account-page .btn { border-radius: 99px; border-width: 2px; }
+.account-page.account-page .btn-primary { border-color: var(--bookedz-ink); }
+:root[data-theme="dark"] .account-page.account-page .btn-primary { border-color: var(--bookedz-fill); }
+.account-page.account-page .btn-check:checked + .btn-outline-primary { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); }
+:root[data-theme="dark"] .account-page.account-page .btn-check:checked + .btn-outline-primary { border-color: var(--bookedz-fill); }
+.account-page.account-page .alert { border-width: 2px; border-radius: 16px; }
+@media (hover: hover) { .account-page.account-page .btn:not(:disabled):hover { transform: translateY(-2px) rotate(-.6deg); } }
+@media (max-width: 767.98px) { .account-page.account-page .account-heading { box-shadow: 4px 4px 0 var(--bookedz-ink); } }
+@media (prefers-reduced-motion: reduce) { .account-page.account-page .btn:not(:disabled):hover { transform: none; } }
