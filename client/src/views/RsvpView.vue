@@ -200,9 +200,9 @@ async function submitRsvp() {
 </script>
 
 <template>
-  <!-- Old hangout-planner records: the planner was retired, so point people to Community -->
+  <!-- Plans from the retired planner (live rows still stored as kind 'hangout'): point people to Community -->
   <div v-if="!loading && event?.kind === 'hangout'" class="container py-5 text-center">
-    <h1 class="page-title">This hangout has moved</h1>
+    <h1 class="page-title">This plan has moved</h1>
     <p class="text-meta">Plans with friends now happen in Go together groups.</p>
     <RouterLink to="/community" class="btn btn-primary">Go to Community</RouterLink>
   </div>

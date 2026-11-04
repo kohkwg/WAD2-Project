@@ -8,8 +8,7 @@
 import { createSeedData, addSampleGroups, GROUP_SEED_VERSION } from './mockData.js'
 import { calculateWaitlistScore } from './waitlistScore.js'
 import { OFFER_HOURS, ACTIVE_STATUSES } from './helpers.js'
-import { joinOutcome } from './hangouts.js'
-import { isGroup, groupErrors, groupEventData, emptyPlan, fitSlots, mealLabel, SLOTS, suggestionFrom, suggestionErrors, availabilityError } from './groups.js'
+import { isGroup, isOfficialEvent, joinOutcome, groupErrors, groupEventData, emptyPlan, fitSlots, mealLabel, SLOTS, suggestionFrom, suggestionErrors, availabilityError } from './groups.js'
 import { TASK_STATUSES, FALLBACK_BUDGET_CATEGORY, budgetCategoryOptions, validateCategoryName, validateCents, validateExpenseAmounts, summariseBudget } from './feature4.js'
 import { fetchForecastData, forecastAreas, eventForecast } from './feature4Weather.js'
 
@@ -92,8 +91,8 @@ function spotsTaken(db, eventId) {
   const held = db.rsvps.filter(
     (r) => r.eventId === eventId && (r.status === 'confirmed' || r.status === 'offered'),
   ).length
-  // A hangout's capacity includes its host, who holds a place without an RSVP
-  return held + (db.events.find((e) => e.id === eventId)?.kind === 'hangout' ? 1 : 0)
+  // A group's capacity includes its host, who holds a place without an RSVP
+  return held + (isGroup(db.events.find((e) => e.id === eventId)) ? 1 : 0)
 }
 
 // Adds live numbers to an event: how many confirmed, waiting, spots left, etc.
@@ -262,7 +261,7 @@ const isGroupMember = (db, group) => isGroupHost(group) || myGroupRsvp(db, group
 
 function groupView(db, group) {
   const counted = withCounts(db, group)
-  const target = db.events.find((e) => e.id === group.hangout.eventId)
+  const target = db.events.find((e) => e.id === group.group.eventId)
   const rsvps = db.rsvps.filter((r) => r.eventId === group.id)
   const mine = myGroupRsvp(db, group)
   const myEventRsvp = target && db.rsvps.find((r) => r.eventId === target.id && r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status))
@@ -273,9 +272,9 @@ function groupView(db, group) {
     capacity: group.capacity,
     spotsLeft: counted.spotsLeft,
     joinMode: group.joinMode || 'open',
-    visibility: group.hangout.visibility === 'private' ? 'private' : 'public',
+    visibility: group.group.visibility === 'private' ? 'private' : 'public',
     // Only people already in the group see the invite link
-    inviteToken: host || mine?.status === 'confirmed' ? group.hangout.inviteToken : null,
+    inviteToken: host || mine?.status === 'confirmed' ? group.group.inviteToken : null,
     createdAt: group.createdAt,
     startTime: group.startTime,
     endTime: group.endTime,
@@ -341,7 +340,7 @@ export async function getGroups() {
   const db = loadFreshDb()
   return db.events
     .filter((e) => isGroup(e) && e.status === 'published' && new Date(e.endTime) > new Date())
-    .filter((e) => e.hangout.visibility !== 'private' || isGroupMember(db, e) || myGroupRsvp(db, e))
+    .filter((e) => e.group.visibility !== 'private' || isGroupMember(db, e) || myGroupRsvp(db, e))
     .map((e) => groupView(db, e))
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
 }
@@ -351,10 +350,10 @@ export async function getGroup({ id, token } = {}) {
   await fakeDelay()
   const db = loadFreshDb()
   const group = token
-    ? db.events.find((e) => isGroup(e) && e.hangout.inviteToken === token && e.status === 'published')
+    ? db.events.find((e) => isGroup(e) && e.group.inviteToken === token && e.status === 'published')
     : db.events.find((e) => isGroup(e) && e.id === id && e.status === 'published')
   if (!group) throw new Error(token ? 'This invite link isn’t valid any more. Ask the host for a new one.' : 'This group isn’t available any more.')
-  if (!token && group.hangout.visibility === 'private' && !isGroupMember(db, group) && !myGroupRsvp(db, group)) {
+  if (!token && group.group.visibility === 'private' && !isGroupMember(db, group) && !myGroupRsvp(db, group)) {
     throw new Error('This group is private. Ask the host for the invite link.')
   }
   const view = groupView(db, group)
@@ -364,7 +363,7 @@ export async function getGroup({ id, token } = {}) {
 export async function createGroup({ eventId, note = '', capacity = 4, joinMode = 'open', visibility = 'public' }) {
   await fakeDelay()
   const db = loadFreshDb()
-  const official = db.events.filter((e) => e.kind !== 'hangout')
+  const official = db.events.filter(isOfficialEvent)
   const errors = groupErrors({ eventId, note, capacity, visibility }, official)
   if (errors.length) throw new Error(errors[0].message)
   const target = official.find((e) => e.id === eventId)
@@ -378,7 +377,7 @@ export async function createGroup({ eventId, note = '', capacity = 4, joinMode =
 export async function joinGroup({ id, token }) {
   const db = loadFreshDb()
   const group = findGroup(db, id)
-  if (group.hangout.visibility === 'private' && token !== group.hangout.inviteToken) throw new Error('This group is private. Ask the host for the invite link.')
+  if (group.group.visibility === 'private' && token !== group.group.inviteToken) throw new Error('This group is private. Ask the host for the invite link.')
   const user = await getUser()
   return createRsvp({ eventId: id, name: user.name, email: user.email, answers: {} })
 }

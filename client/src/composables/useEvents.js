@@ -149,7 +149,7 @@ export function useEvents() {
       const detailedRows = await withEventDetails(rows, !mapMode)
       if (currentRequest !== requestId) return
       // Discover lists official events only; Go together groups live in Community
-      events.value = detailedRows.filter((row) => row.kind !== 'hangout')
+      events.value = detailedRows.filter((row) => !row.kind || row.kind === 'official') // same rule as isOfficialEvent in utils/groups.js
       total.value = count || 0
     } catch (e) {
       if (currentRequest !== requestId) return

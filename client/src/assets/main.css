@@ -50,7 +50,7 @@
   --bookedz-map-shadow: 0 4px 20px rgb(52 79 67 / 5%);
   --bookedz-preview-shadow: 0 18px 45px rgb(52 79 67 / 13%);
 
-  /* Compatibility tokens for incoming Hangout and motion components. */
+  /* Fill tokens shared by the Go together and motion components. */
   --bookedz-fill: #ff6b35;
   --bookedz-fill-active: #f75f27;
   --bookedz-on-fill: #1f2937;
@@ -187,7 +187,7 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
   --bs-secondary-color: var(--bookedz-muted); --bs-secondary-rgb: 168,162,158;
   --bs-border-color: var(--bookedz-border); --bs-link-color: #ffb79a; --bs-link-hover-color: #ffb79a;
   --bs-link-color-rgb: 255,183,154; --bs-primary: #ff8a5b; --bs-primary-rgb: 255,138,91;
-  /* Compatibility tokens for incoming Hangout and motion components. */
+  /* Fill tokens shared by the Go together and motion components. */
   --bookedz-fill: #ff8a5b;
   --bookedz-fill-active: #ff7a45;
   --bookedz-on-fill: #1c1917;

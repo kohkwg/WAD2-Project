@@ -1,13 +1,25 @@
 // Go together: a host starts a group to go to one event with others. Groups are public
 // (listed in Community and on the event page) or private (only reachable by invite link);
-// both have a link to share. A group is stored as a hangout record (kind 'hangout') whose
-// hangout.eventId names the event, so it reuses joining and spots. Pure functions, no Vue.
-import { CAPACITY_RANGE } from './hangouts.js'
+// both have a link to share. A group is stored alongside events (kind 'group') so it reuses
+// joining, spots and RSVPs; group.eventId names the event it is for. Pure functions, no Vue.
 
+export const CAPACITY_RANGE = { min: 2, max: 8 } // spots in a group, including the host
 export const NOTE_LIMIT = 200
 export const SUGGESTION_NAME_LIMIT = 80
 export const VISIBILITIES = ['public', 'private']
-export const isGroup = (event) => event?.kind === 'hangout' && Boolean(event.hangout?.eventId)
+export const isGroup = (event) => event?.kind === 'group' && Boolean(event.group?.eventId)
+// A real event people can RSVP to, as opposed to a group (or an older live-mode hangout row).
+export const isOfficialEvent = (event) => !event?.kind || event.kind === 'official'
+export const isPrivateGroup = (event) => isGroup(event) && event.group.visibility !== 'public'
+
+// What a join request becomes. Open joins never queue: a full open event refuses.
+export function joinOutcome(event, held) {
+  const mode = event.joinMode || (event.requiresApproval ? 'approval' : 'auto')
+  if (mode === 'approval') return 'pending'
+  const full = event.capacity != null && held >= event.capacity
+  if (mode === 'open') return full ? 'full' : 'confirmed'
+  return full ? 'waitlisted' : 'confirmed'
+}
 
 // The errors for the Start a group form; [] means it can be posted.
 export function groupErrors({ eventId, note = '', capacity, visibility = 'public' }, events = [], now = new Date()) {
@@ -31,10 +43,10 @@ export function inviteToken() {
   return Array.from(bytes, (b) => b.toString(36).padStart(2, '0')).join('').slice(0, 16)
 }
 
-// The hangout record for a new group: time, place and tags come from the event itself.
+// The stored record for a new group: time, place and tags come from the event itself.
 export function groupEventData(target, { note = '', capacity = 4, joinMode = 'open', visibility = 'public', token = inviteToken() }) {
   return {
-    kind: 'hangout',
+    kind: 'group',
     title: `Going to ${target.title}`,
     description: note.trim(),
     tags: [...(target.tags || [])],
@@ -47,12 +59,8 @@ export function groupEventData(target, { note = '', capacity = 4, joinMode = 'op
     joinMode,
     requiresApproval: joinMode === 'approval',
     questions: [],
-    hangout: {
-      mode: 'group',
+    group: {
       visibility,
-      stage: 'planning',
-      dateRange: null,
-      lockedSlot: { startTime: target.startTime, endTime: target.endTime },
       inviteToken: token,
       eventId: target.id,
     },

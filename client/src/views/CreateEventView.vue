@@ -14,6 +14,7 @@ import { PLANNER_AVAILABLE, searchEventTitles, fetchPlanSuggestion, addPlanToEve
 import { normalizeTitle } from '../utils/planSuggestModel.js'
 import { describeEventChanges, formatAnnouncement } from '../utils/eventChanges.js'
 import { blankEventForm, errorsForStep } from '../utils/eventForm.js'
+import { isOfficialEvent } from '../utils/groups.js'
 
 // Multi-step form (progressive disclosure): one small chunk at a time instead of one long page.
 // The same wizard edits event details inside Manage event (edit mode).
@@ -141,7 +142,7 @@ watch(editId, async (id) => {
     if (request !== editRequest) return
     if (!event.isMine) editBlocked.value = 'You can only edit events you organise.'
     else if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
-    else if (event.kind === 'hangout') editBlocked.value = 'Groups are managed from their page in Community.'
+    else if (!isOfficialEvent(event)) editBlocked.value = 'Groups are managed from their page in Community.'
     else {
       const rsvps = await getRsvpsForEvent(id)
       if (request !== editRequest) return

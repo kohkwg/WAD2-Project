@@ -3,7 +3,7 @@
 // members (who is in which organiser's club) and attendanceHistory.
 //
 // Dates are worked out from "now", so the demo never goes out of date.
-import { isGroup, groupEventData, emptyPlan, slotCells } from './groups.js'
+import { isGroup, isOfficialEvent, groupEventData, emptyPlan, slotCells } from './groups.js'
 
 // An exact time N days from today, e.g. daysFromNow(5, 19) → 5 days later at 7:00 pm
 function daysFromNow(days, hour, minute = 0) {
@@ -400,7 +400,7 @@ export function createSeedData() {
 
 // Sample Go together groups from other students (Community), tied to upcoming official
 // events. Also brings demo data saved by older versions up to date (open jios became groups).
-export const GROUP_SEED_VERSION = 4
+export const GROUP_SEED_VERSION = 5
 export function addSampleGroups(db) {
   db.groupComments = db.groupComments || []
   // Older demo data: jio comments become group comments; groups get an invite link and a plan
@@ -417,15 +417,23 @@ export function addSampleGroups(db) {
     for (const r of db.rsvps) if (r.eventId === `jio${n}`) r.eventId = `grp${n}`
     for (const c of db.groupComments) if (c.groupId === `jio${n}`) { c.groupId = `grp${n}`; if (c.id === `c-jio${n}`) c.id = `c-grp${n}` }
   }
+  // Version 5: groups were stored as kind 'hangout' with a hangout field; they are now kind 'group'
+  for (const e of db.events) {
+    if (e.kind !== 'hangout' || !e.hangout?.eventId) continue
+    const { visibility, inviteToken, eventId } = e.hangout
+    e.kind = 'group'
+    e.group = { visibility, inviteToken, eventId }
+    delete e.hangout
+  }
   for (const e of db.events) {
     if (!isGroup(e)) continue
-    e.hangout.inviteToken = e.hangout.inviteToken || `inv-${e.id}`
-    e.hangout.visibility = e.hangout.visibility === 'private' ? 'private' : 'public'
+    e.group.inviteToken = e.group.inviteToken || `inv-${e.id}`
+    e.group.visibility = e.group.visibility === 'private' ? 'private' : 'public'
     e.plan = e.plan || emptyPlan()
     e.plan.availability = e.plan.availability || {}
   }
   const now = Date.now()
-  const upcoming = (id) => db.events.find((e) => e.id === id && e.kind !== 'hangout' && e.status === 'published' && new Date(e.startTime) > now)
+  const upcoming = (id) => db.events.find((e) => e.id === id && isOfficialEvent(e) && e.status === 'published' && new Date(e.startTime) > now)
   const samples = [
     { id: 'grp1', eventId: 'e1', host: 'u2', capacity: 4, note: 'First time going, would love a group to sit with. Meeting at the SMU Green entrance 15 min before.', members: ['u3'] },
     { id: 'grp2', eventId: 'e2', host: 'u5', capacity: 3, note: 'Anyone keen to pair up? I can share my laptop setup notes.', members: [] },

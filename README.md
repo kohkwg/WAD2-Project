@@ -59,6 +59,13 @@ status. Use the timeline for the latest verified checkpoint and remaining limits
 
 ## Change history
 
+On 4 November 2026, groups stopped being called hangouts in the code. A group is now stored as
+`kind: 'group'` with a `group` field, and older demo data is upgraded automatically. We changed
+`utils/groups.js`, `mockApi.js`, `mockData.js`, the event-list filters and the Community
+components, and removed the unused `utils/calendar.js` and the retired wizard's styles. The live
+hangout planner files keep their names until the group migration is agreed. No SQL or hosted
+changes were made.
+
 On 4 November 2026, Community became Go together. People start a **group** for an event,
 public or private, each with an invite link, and every group has its own page. Members plan
 food before and after the event there, choosing from nearby deals and places. We wrote

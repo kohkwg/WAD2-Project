@@ -1,5 +1,14 @@
 # Decisions
 
+4 November 2026 — Huxley, groups are no longer called hangouts in code: a Go together group is
+stored as `kind: 'group'` with a `group` field (`visibility`, `inviteToken`, `eventId`) instead of
+`kind: 'hangout'` with a `hangout` field, and the planner-only fields (`mode`, `stage`,
+`dateRange`, `lockedSlot`) are dropped. Demo data saved in a browser is upgraded on load (group
+seed version 5). Event lists use one rule, `isOfficialEvent`, which also keeps older live hangout
+rows out. The live hangout planner (`supabaseHangoutsApi.js`, `/api/hangouts`, the `hangouts`
+table) keeps its name until the group migration is agreed with Timothy. The unused
+`utils/calendar.js` and the wizard's styles in `design-baseline.css` were removed.
+
 4 November 2026 — Huxley, collapsible sidebar: from 992px the sidebar can collapse to an icon
 rail with tooltips, remembered per browser (`bookedz-sidebar`). The old 992–1199px rail with
 small labels is replaced by this; it still starts collapsed there. Go together pages refresh on

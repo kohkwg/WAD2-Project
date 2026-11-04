@@ -697,6 +697,9 @@ cd client && node --test src/utils/__tests__/groups.test.js
 VITE_USE_MOCK=true pnpm --dir client exec playwright test e2e/go-together.spec.js e2e/immersive-discovery.spec.js e2e/landing-page.spec.js
 ```
 
+`groups.test.js` also checks `isOfficialEvent` (groups and older hangout rows stay out of event
+lists) and that demo data saved with hangout-shaped groups is upgraded to `kind: 'group'`.
+
 Server: deal validity by Singapore day, date and time window; distance; nearby deals from a
 temporary drafts file with stubbed OneMap search, and places reported as unconfigured without a
 Geoapify key (caches go to a temporary folder). Client: group form errors, private groups' invite
