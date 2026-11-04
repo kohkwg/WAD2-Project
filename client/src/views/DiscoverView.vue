@@ -1,4 +1,5 @@
 <script setup>
+import '../assets/design-baseline.css'
 import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { USING_SUPABASE } from '@/utils/api'
@@ -13,6 +14,7 @@ import BumpValue from '@/components/ui/BumpValue.vue'
 import { toast } from '@/composables/useToast'
 import { useDiscoveryMotion } from '@/composables/useDiscoveryMotion'
 import { CATEGORIES } from '@/lib/constants'
+import { EVENT_GROUPS, sameCategories } from '@/lib/eventGroups'
 import { normalizeDiscoveryFilters, discoveryEventQuery, discoveryUrlQuery, discoveryFiltersFromQuery } from '@/lib/discoveryFilters'
 
 const defaults = () => normalizeDiscoveryFilters()
@@ -46,12 +48,16 @@ function chooseCategory(category = '') {
   searchControl.value?.flushSearch()
   filters.value = { ...filters.value, categories: category ? [category] : [] }
 }
+function chooseGroup(group) {
+  searchControl.value?.flushSearch()
+  filters.value = { ...filters.value, categories: [...group.categories] }
+}
 // Set before the first render so phones never flash both panes
-const smallScreen = ref(window.matchMedia('(max-width: 767px)').matches)
+const smallScreen = ref(window.matchMedia('(max-width: 991px)').matches)
 let smallMedia
 const updateSmallScreen = () => { smallScreen.value = smallMedia?.matches ?? false }
 onMounted(() => {
-  smallMedia = window.matchMedia('(max-width: 767px)')
+  smallMedia = window.matchMedia('(max-width: 991px)')
   updateSmallScreen()
   smallMedia.addEventListener('change', updateSmallScreen)
 })
@@ -71,7 +77,7 @@ onMounted(() => {
   updateRowFade()
 })
 onBeforeUnmount(() => rowObserver?.disconnect())
-// Phones show the list or the map (List | Map toggle); from 768px both sit side by side.
+// Phones and tablets (up to 991px) show the list or the map (List | Map toggle); from 992px both sit side by side.
 // The pane is the remembered view mode, so it survives returning to Discover.
 // Coming back to the list returns to the same scroll spot instead of jumping around.
 const mobilePane = viewMode
@@ -101,12 +107,17 @@ const resultList = ref(null)
 const router = useRouter()
 const commonCategories = CATEGORIES
 // When nothing matches, offer a few other categories to jump to instead of a dead end.
-const emptySuggestions = computed(() => CATEGORIES.filter(category => !filters.value.categories.includes(category)).slice(0, 4))
+const emptySuggestions = computed(() => EVENT_GROUPS.filter(group => !sameCategories(filters.value.categories, group.categories)).slice(0, 4))
 const activeCategory = computed(() => filters.value.categories.length === 1 ? filters.value.categories[0] : '')
 const categoryTitle = computed(() => activeCategory.value
   ? `${activeCategory.value.charAt(0).toUpperCase() + activeCategory.value.slice(1)} events` : 'Discover events')
 const clock = ref(Date.now())
-const eventQuery = computed(() => discoveryEventQuery(filters.value, { search: search.value, sort: sort.value, page: page.value, now: clock.value }))
+const STEP = 10
+const visibleCount = ref(STEP)
+const baseQuery = () => discoveryEventQuery(filters.value, { search: search.value, sort: sort.value, page: 1, now: clock.value })
+const eventQuery = computed(() => ({ ...baseQuery(), limit: visibleCount.value }))
+// The map always gets every matching event, whatever the list has revealed so far.
+const mapQuery = computed(() => ({ ...baseQuery(), forMap: true }))
 let clockTimer
 onMounted(() => { clockTimer = setInterval(() => { clock.value = Date.now() }, 60000) })
 onBeforeUnmount(() => clearInterval(clockTimer))
@@ -115,9 +126,11 @@ onBeforeUnmount(() => clearInterval(clockTimer))
 function openEventAction(event, action) {
   router.push({ path: `/events/${event.id}/rsvp`, hash: `#${action}` })
 }
-const { events, total, loading, error, fetchEvents, PAGE_SIZE } = useEvents()
+const { events, total, loading, error, fetchEvents } = useEvents()
+const { events: mapEvents, loading: mapLoading, fetchEvents: fetchMapEvents } = useEvents()
 function refreshDiscovery() {
   fetchEvents(eventQuery.value)
+  fetchMapEvents(mapQuery.value)
 }
 async function showList() {
   searchControl.value?.flushSearch()
@@ -136,18 +149,18 @@ async function changeListingPreference(payload) {
   }
 }
 const loggedIn = ref(false)
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)))
+const remaining = computed(() => Math.max(0, total.value - events.value.length))
 const filtersActive = computed(() => Boolean(search.value || filters.value.when || filters.value.extras.length || filters.value.categories.length))
 // Only real recommendations earn a "Picked for you" badge; signed-out visitors have none.
 const discoveryPicks = computed(() => loggedIn.value ? recommended.value : [])
-watch([filters, search, sort], () => { page.value = 1 }, { deep: true })
+watch([filters, search, sort], () => { visibleCount.value = STEP }, { deep: true })
 // Display supplied recommendation metadata only; ranking/scoring stays upstream.
 const recommendationById = computed(() => new Map(discoveryPicks.value.map(event => [event.id, event])))
-const mappedPageEvents = computed(() => events.value.map(event => {
+const mappedPageEvents = computed(() => (mapEvents.value.length || mapLoading.value ? mapEvents.value : events.value).map(event => {
   const pick = recommendationById.value.get(event.id)
   return pick ? { ...event, pickedForYou: pick.source !== 'general_discovery', compatibilityScore: pick.compatibilityScore, source: pick.source, reason: pick.reason } : event
 }))
-watch(events, rows => { if (!rows.some(event => event.id === selectedEventId.value)) selectedEventId.value = null })
+watch(mapEvents, rows => { if (!rows.some(event => event.id === selectedEventId.value)) selectedEventId.value = null })
 const dateGroups = computed(() => {
   const groups = new Map()
   for (const event of events.value) {
@@ -200,12 +213,11 @@ onBeforeUnmount(() => { stopAuth?.(); clearRecommendations() })
 watch(eventQuery, (value, previous) => {
   if (JSON.stringify(value) !== JSON.stringify(previous)) fetchEvents(value)
 })
-function clearFilters() { filters.value = defaults(); search.value = ''; sort.value = 'soonest'; page.value = 1 }
-function goToPage(nextPage) {
-  if (nextPage < 1 || nextPage > totalPages.value || loading.value) return
-  page.value = nextPage
-  resultList.value?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })
-}
+watch(mapQuery, (value, previous) => {
+  if (JSON.stringify(value) !== JSON.stringify(previous)) fetchMapEvents(value)
+})
+function clearFilters() { filters.value = defaults(); search.value = ''; sort.value = 'soonest'; visibleCount.value = STEP }
+function showMore() { if (!loading.value) visibleCount.value += STEP }
 </script>
 
 <template>
@@ -215,7 +227,7 @@ function goToPage(nextPage) {
       <div ref="toolbar" class="discovery-toolbar">
         <nav ref="categoryRow" class="category-shortcuts" :class="{ 'fade-start': rowFade.start, 'fade-end': rowFade.end }" aria-label="Event categories" @scroll.passive="updateRowFade">
           <button type="button" class="category-shortcut" :aria-pressed="!filters.categories.length" @click="chooseCategory()">All</button>
-          <button v-for="category in commonCategories" :key="category" type="button" class="category-shortcut cat-tint" :class="`cat-${category}`" :aria-pressed="filters.categories.includes(category)" @click="chooseCategory(category)">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</button>
+          <button v-for="group in EVENT_GROUPS" :key="group.id" type="button" class="category-shortcut cat-tint" :class="`cat-${group.categories[0]}`" :aria-pressed="sameCategories(filters.categories, group.categories)" @click="chooseGroup(group)">{{ group.label }}</button>
         </nav>
         <div class="results-tools">
           <span aria-live="polite"><BumpValue :value="total" /> {{ total === 1 ? 'event' : 'events' }}</span>
@@ -236,9 +248,9 @@ function goToPage(nextPage) {
           <div v-else-if="error" class="empty-state" role="alert"><h2>We couldn’t load events</h2><p>{{ error }}</p><button type="button" class="btn btn-outline-danger" @click="refreshDiscovery">Try again</button></div>
           <div v-else-if="!events.length && !loading" class="empty-state" role="status">
             <h2>No events found</h2>
-            <p>{{ filters.categories.length ? 'Nothing in this category right now. Try another one:' : 'Try another search, or browse a category:' }}</p>
+            <p>{{ filters.categories.length ? 'Nothing in this group right now. Try another one:' : 'Try another search, or browse a category:' }}</p>
             <div class="empty-suggestions">
-              <button v-for="category in emptySuggestions" :key="category" type="button" class="category-shortcut cat-tint" :class="`cat-${category}`" @click="search = ''; chooseCategory(category)">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</button>
+              <button v-for="group in emptySuggestions" :key="group.id" type="button" class="category-shortcut cat-tint" :class="`cat-${group.categories[0]}`" @click="search = ''; chooseGroup(group)">{{ group.label }}</button>
             </div>
             <button type="button" class="btn btn-outline-secondary" @click="clearFilters">Clear search and filters</button>
           </div>
@@ -250,9 +262,7 @@ function goToPage(nextPage) {
               </TransitionGroup>
             </section>
           </div>
-          <nav v-if="totalPages > 1 && !error" class="event-pagination" aria-label="Event pages">
-            <button type="button" class="btn btn-outline-secondary" :disabled="page === 1 || loading" @click="goToPage(page - 1)">Previous</button><span>{{ page }} / {{ totalPages }}</span><button type="button" class="btn btn-outline-secondary" :disabled="page === totalPages || loading" @click="goToPage(page + 1)">Next</button>
-          </nav>
+          <div v-if="remaining > 0 && !error" class="event-more"><button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="showMore">{{ loading ? 'Loading…' : `Show ${Math.min(STEP, remaining)} more` }}</button><span>Showing {{ events.length }} of {{ total }}</span></div>
         </section>
         <div class="discovery-map-column">
           <DiscoveryStreetMap :events="mappedPageEvents" :search-text="search" :focused-event-id="selectedEventId" :prominent-ids="discoveryPicks.map(event => event.id)" :loading="loading" :error="error" @select="selectedEventId = $event" @retry="refreshDiscovery" />
@@ -271,6 +281,7 @@ function goToPage(nextPage) {
 .discovery-toolbar { display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 10px 20px; margin: 14px 0; }
 .category-shortcuts { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; flex: 1 1 0; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .category-shortcuts::-webkit-scrollbar { display: none; }
+.category-shortcuts { padding: 6px 8px 8px 4px; margin: -6px -8px -8px -4px; }
 .category-shortcuts.fade-end { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent); }
 .category-shortcuts.fade-start { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px); mask-image: linear-gradient(to right, transparent, #000 48px); }
 .category-shortcuts.fade-start.fade-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent); }
@@ -310,18 +321,23 @@ function goToPage(nextPage) {
 .event-timeline { transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease); }
 .event-timeline.is-refreshing { opacity: .55; }
 .date-group { animation: route-in var(--bookedz-motion-normal) var(--bookedz-ease) both; }
-.event-pagination { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 18px; font-size: 12px; }
+.event-more { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; margin: 18px 0 8px; font-size: 12px; color: var(--bookedz-muted); }
 .empty-state,.loading-state { padding: 28px 16px; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); color: var(--bookedz-muted); font-size: 14px; }
 .empty-state h2 { color: var(--bookedz-ink); font-size: 18px; }
 .empty-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 14px; }
 
-@media(max-width:767px) { .discovery-toolbar { flex-wrap: wrap; }.category-shortcuts { flex-basis: 100%; }.results-tools { width: 100%; justify-content: space-between; } }
+@media(max-width:991px) { .discovery-toolbar { flex-wrap: wrap; }.category-shortcuts { flex-basis: 100%; }.results-tools { width: 100%; justify-content: space-between; } }
+@media(min-width:992px) {
+  .discover-page { display: flex; flex-direction: column; box-sizing: border-box; height: calc(100svh - var(--topbar-h, 0px)); padding-bottom: 16px; overflow: hidden; }
+  .discovery-workspace { flex: 1; min-height: 0; }
+  .discovery-list { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 4px 8px 8px 0; }
+  .discovery-map-column { position: static; }
+}
 @media(max-width:991px) {
   .discover-page { padding: 18px 12px 32px; }
-  .discovery-workspace { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
 }
-/* Phones: one pane at a time; tablets and up keep the list and the pinned map side by side */
-@media(max-width:767px) {
+/* Phones and tablets: one pane at a time; laptops and up keep the list and the pinned map side by side */
+@media(max-width:991px) {
   .discovery-workspace { display: block; min-width: 0; }
   .discovery-map-column { position: relative; top: auto; }
   .discovery-workspace[data-pane='list'] .discovery-map-column,
