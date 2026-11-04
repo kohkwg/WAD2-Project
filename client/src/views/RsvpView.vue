@@ -8,6 +8,7 @@ import ClashWarning from '../components/rsvp/ClashWarning.vue'
 import VenueMap from '../components/VenueMap.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import HangoutPage from '../components/hangout/HangoutPage.vue'
+import EventJios from '../components/community/EventJios.vue'
 import {
   getEvent,
   getUser,
@@ -223,6 +224,7 @@ async function submitRsvp() {
         </p>
       </EventSummary>
       <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
+      <EventJios v-if="event && !event.isOnTeam" :event-id="eventId" />
       <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
       <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>
