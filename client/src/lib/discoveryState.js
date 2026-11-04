@@ -52,7 +52,7 @@ export function demoDiscoveryEvents(events, filters = {}, now = new Date()) {
     spots_left: event.spotsLeft, venue_name: event.venue?.name,
     venue_address: event.venue?.address, attendees: [],
   })).filter(event => new Date(event.start_time) > now)
-    // Discover lists official events only; hangouts and open jios live in Community
+    // Discover lists official events only; Go together groups live in Community
     .filter(event => event.kind !== 'hangout' && !isPrivateHangout(event))
     .filter(event => matchesDiscoveryFilters(event, filters))
     .sort((a,b) => (filters.sort === 'popular' ? (b.confirmed_count || 0) - (a.confirmed_count || 0) : 0)

@@ -236,3 +236,5 @@ __pycache__/
 *.p12
 *.pfx
 *.tsbuildinfo
+pipeline/.venv/
+server/.cache/

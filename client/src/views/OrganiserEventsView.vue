@@ -48,7 +48,7 @@ async function loadEvents() {
   now.value = Date.now()
   errorMessage.value = ''
   try {
-    // My events lists official events; hangouts and jios are managed from Community
+    // My events lists official events; Go together groups are managed from Community
     const rows = (await getOrganiserEvents()).filter((event) => event.kind !== 'hangout')
     if (mounted && request === requestId) events.value = rows
   } catch (error) {

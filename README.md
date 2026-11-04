@@ -37,9 +37,14 @@ Use Node 22 and pnpm from the repository root; there is no root runner.
 pnpm --dir client install --frozen-lockfile --ignore-scripts
 pnpm --dir server install --frozen-lockfile --ignore-scripts
 pnpm --dir client dev
-# In another terminal for recommendations and image uploads:
+# In another terminal for recommendations, image uploads and food near events:
 pnpm --dir server dev
 ```
+
+Go together's before and after planner asks the server for food near the event
+(`/api/food/nearby`). Deals come from the ported OpenJio pipeline in `pipeline/` (see its
+README; it needs `GEMINI_API_KEY`), nearby places from Geoapify (`GEOAPIFY_API_KEY`). Both keys
+go in `server/.env`; without them the planner still takes typed places.
 
 Open [Discover](http://127.0.0.1:5173/discover). Use team-provided `.env.example`
 settings for live Supabase/R2. Without client keys, core demo flows use localStorage;
@@ -53,6 +58,16 @@ The history below is dated change history, not the current test or deployment
 status. Use the timeline for the latest verified checkpoint and remaining limits.
 
 ## Change history
+
+On 4 November 2026, Community became Go together. People start a **group** for an event,
+public or private, each with an invite link, and every group has its own page. Members plan
+food before and after the event there, choosing from nearby deals and places. We wrote
+`utils/groups.js`, the group functions in `mockApi.js`, `GroupView.vue`,
+`components/groups/*`, and the renamed Community components. Server side we wrote
+`server/services/foodDeals.js` and `server/routes/food.js`, with tests. The pipeline in
+`pipeline/` was copied from the OpenJio branch with small path and naming changes. The old
+hangout planner UI was removed, but its live files and the migration were kept. No SQL or
+hosted changes were made.
 
 On 3 November 2026, make a step-by-step UX pass. There were reports of the bugs
 and prof feedback, and previewed and approved each change before it was applied.

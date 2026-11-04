@@ -18,6 +18,8 @@ app.use("/api/uploads", require("./routes/uploads"));
 app.use("/api/plan-suggestions", require("./routes/planSuggestions"));
 // Hangout late-join travel: OneMap routes when ONEMAP_EMAIL/ONEMAP_PASSWORD are set
 app.use("/api/route", require("./routes/route"));
+// Food deals and places near an event (Go together before/after planner)
+app.use("/api/food", require("./routes/food")());
 // Live hangouts: group-time ranking over private free times (members only)
 app.use("/api/hangouts", require("./routes/hangouts"));
 

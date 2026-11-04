@@ -1,5 +1,19 @@
 # Decisions
 
+4 November 2026 — Huxley, Community becomes Go together: the focus is finding people to go to an
+event with. Posts are called **groups** (not jios) and are public (listed in Community and on the
+event page) or private (only reachable by invite link); both have an invite link for members.
+Each group has its own page (`/groups/<id>`; invite links `/g/<token>`) with the event, members,
+Join then RSVP prompt, chat and a **before and after** plan: members suggest food spots or deals
+for an hour before or after the event, mark ideas they're keen on and the host picks. The
+hangout planner (availability grid, itinerary, On the day) is removed from the client; its live
+files (`supabaseHangoutsApi.js`, `hangoutPlan.js`, `itinerary.js`), the migration and the Express
+`/api/hangouts` routes stay so nothing hosted changes. OpenJio's Python deals pipeline is copied
+into `pipeline/` and served by a new Express route, `/api/food` (deal drafts located with OneMap
+search, nearby places from Geoapify with a cache and daily cap, optional scheduled runs). Groups
+are demo-only until a migration for group comments and plans is agreed with Timothy. No SQL or
+hosted changes.
+
 4 November 2026 — Huxley, landing page becomes the sign-in page: the animated island map is
 removed from `/`. Signed-out visitors sign in or create an account there; signed-in people and
 the demo account see an account summary. `/login` redirects to `/` with its `?redirect=`. The
