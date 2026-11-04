@@ -29,56 +29,86 @@ const match = computed(() => {
 const picked = computed(() => Boolean(props.recommendation) && props.recommendation.source !== 'general_discovery')
 const reason = computed(() => props.recommendation?.reason === 'Upcoming event' ? '' : props.recommendation?.reason || '')
 const status = computed(() => props.event.my_rsvp_status || props.event.registration_status)
+const categoryLabel = computed(() => {
+  const label = category.value.replace(/[_-]/g, ' ')
+  return label.charAt(0).toUpperCase() + label.slice(1)
+})
+// Full facts line for the hover tooltip (the row shows it on one line, ending in "…" if long)
+const factsText = computed(() => [time.value, places.value, venue.value].filter(Boolean).join(' · '))
+// The clicked row's extra line: match, why it was picked and the category (general picks have
+// no "why"). Nothing repeats the lines above it.
+const selectedNote = computed(() => [match.value, picked.value ? reason.value : '', categoryLabel.value,
+  props.event.friends_going ? `${props.event.friends_going} friends going` : ''].filter(Boolean).join(' · '))
+// Your RSVP status as a short line, so rows need no status button until one is selected
+const statusNote = computed(() => ({
+  confirmed: 'You’re going',
+  pending: 'Waiting for approval',
+  waitlisted: 'You’re on the waitlist',
+  offered: 'A spot opened up for you',
+})[status.value] || '')
+// Clicking anywhere else on the row selects it (its links and buttons keep their own action).
+// Row clicks don't jump to the map on phones; the thumbnail's "Show on map" still does.
+function selectFromRow(clickEvent) {
+  if (clickEvent.target.closest('a, button, input, select, textarea, summary, label')) return
+  emit('select', props.event, { scroll: false })
+}
 </script>
 
 <template>
-  <article class="discovery-event-row" :class="{ 'is-selected': selected }" :data-event-id="event.id">
+  <article class="discovery-event-row" :class="{ 'is-selected': selected }" :data-event-id="event.id" @click="selectFromRow">
     <button type="button" class="row-cover" :aria-label="`Show ${event.title} on map`" :aria-pressed="selected" @click="emit('select', event)">
       <img v-if="cover && failedCover !== cover" :src="cover" alt="" loading="lazy" @error="failedCover = cover" />
       <EventArtwork v-else :category="category" />
     </button>
     <div class="row-details">
       <div class="row-title-line">
-        <h3><RouterLink class="row-title" :to="`/events/${event.id}/rsvp`">{{ event.title }}</RouterLink></h3>
+        <h3><RouterLink class="row-title" :to="`/events/${event.id}/rsvp`" :title="event.title">{{ event.title }}</RouterLink></h3>
         <span v-if="picked" class="row-picked">Picked for you</span>
-        <span class="row-category">{{ category.replace(/[_-]/g, ' ') }}</span>
       </div>
-      <p class="row-facts"><time :datetime="event.start_time">{{ time }}</time> · {{ venue }}<template v-if="places"> · {{ places }}</template></p>
-      <p v-if="selected" class="row-selected-info"><template v-if="match">{{ match }} · </template><span class="row-cat-text">{{ category.replace(/[_-]/g, ' ') }}</span><template v-if="places"> · {{ places }}</template><template v-if="event.friends_going"> · {{ event.friends_going }} friends going</template><RouterLink :to="`/events/${event.id}/rsvp`" class="row-view">View event ›</RouterLink></p>
-      <p v-else-if="status === 'confirmed'" class="row-going">You’re going</p>
-      <p v-else-if="match || reason" class="row-reason"><template v-if="match">{{ match }}</template><template v-if="match && reason"> · </template>{{ reason }}</p>
+      <!-- Spots come before the venue, so a long venue name is what gets cut off -->
+      <p class="row-facts" :title="factsText"><time :datetime="event.start_time">{{ time }}</time><template v-if="places"> · {{ places }}</template> · {{ venue }}</p>
+      <p v-if="selected" class="row-selected-info"><span v-if="selectedNote">{{ selectedNote }}</span><RouterLink :to="`/events/${event.id}/rsvp`" class="row-view">View event ›</RouterLink></p>
+      <p v-else-if="statusNote" class="row-going" :class="`row-going--${status}`">{{ statusNote }}</p>
+      <p v-else-if="match" class="row-reason">{{ match }}</p>
     </div>
     <div class="row-actions">
       <EventBookmark v-if="bookmarkEnabled" :saved="Boolean(event.saved)" :pending="preferencePending" :event-title="event.title" @toggle="emit('preference', {event, action: event.saved ? 'unsave' : 'save'})" />
-      <EventCardActions :event="event" />
+      <!-- RSVP / Join waitlist / your status only on the selected row; others show just the bookmark -->
+      <EventCardActions v-if="selected" :event="event" />
     </div>
   </article>
 </template>
 
 <style scoped>
-.discovery-event-row { display: grid; grid-template-columns: 66px minmax(0,1fr) auto; align-items: center; gap: 12px; min-width: 0; padding: 10px; border: 1px solid var(--bookedz-border); border-radius: 13px; background: var(--bookedz-surface); }
+.discovery-event-row { display: grid; grid-template-columns: 66px minmax(0,1fr) auto; align-items: center; gap: 12px; min-width: 0; padding: 10px; border: 1px solid var(--bookedz-border); border-radius: 13px; background: var(--bookedz-surface); cursor: pointer; }
 .discovery-event-row.is-selected { border-color: var(--bookedz-primary-dark); box-shadow: 0 0 0 1px var(--bookedz-primary-dark); }
 .row-cover { padding: 0; border: 0; cursor: pointer; position: relative; width: 66px; height: 66px; overflow: hidden; border-radius: 9px; background: var(--bookedz-mint); }
 .row-cover img,.row-cover :deep(svg) { width: 100%; height: 100%; object-fit: cover; }
 .row-details,.row-title-line,h3 { min-width: 0; }
-.row-title-line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 7px; }
+/* Every unclicked row is the same height: the text always has room for three one-line rows */
+.row-details { display: flex; flex-direction: column; justify-content: center; min-height: 66px; }
+.row-title-line { display: flex; flex-wrap: nowrap; align-items: center; gap: 2px 7px; }
 h3 { margin: 0; font-family: var(--bookedz-body); font-size: 15px; font-weight: 700; }
-.row-title { display: block; text-decoration: none; padding: 3px 0; border: 0; background: transparent; color: var(--bookedz-ink); font: inherit; text-align: left; overflow-wrap: anywhere; }
+.row-title { display: block; text-decoration: none; padding: 3px 0; border: 0; background: transparent; color: var(--bookedz-ink); font: inherit; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row-title:hover { text-decoration: underline; text-underline-offset: 3px; }
-.row-picked { padding: 1px 7px; border-radius: 5px; background: var(--bookedz-primary); color: var(--bookedz-on-action); font-size: 10px; font-weight: 700; }
-.row-category { padding: 1px 6px; border-radius: 5px; background: var(--bookedz-hover); color: var(--bookedz-muted); font-size: 10px; text-transform: capitalize; }
+.row-picked { flex: none; padding: 1px 7px; border-radius: 5px; background: var(--bookedz-primary); color: var(--bookedz-on-action); font-size: 10px; font-weight: 700; }
 .row-facts,.row-reason,.row-going { margin: 3px 0 0; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+.row-facts { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The clicked row shows its full title and venue */
+.is-selected .row-title-line { flex-wrap: wrap; }
+.is-selected .row-title,.is-selected .row-facts { white-space: normal; overflow-wrap: anywhere; }
 .row-selected-info { display: flex; flex-wrap: wrap; gap: 0 4px; margin: 6px 0 0; font-size: 12px; color: var(--bookedz-primary-dark); }
-.row-cat-text { text-transform: capitalize; color: var(--bookedz-muted); }
 .row-view { margin-left: auto; font-weight: 700; color: var(--bookedz-primary-dark); text-decoration: none; }
 .row-facts { color: var(--bookedz-muted); }
 .row-reason { color: var(--bookedz-primary-dark); }
 .row-going { color: var(--bookedz-success); font-weight: 600; }
+.row-going--pending,.row-going--waitlisted { color: var(--bookedz-muted); }
+.row-going--offered { color: var(--bookedz-primary-dark); }
 .row-actions { display: flex; align-items: center; gap: 4px; }
 .row-actions :deep(.card-action--view) { display: none; }
 .row-actions :deep(.card-action--rsvp),.row-actions :deep(.registration-status) { max-width: 108px; padding: 8px 10px; min-height: 44px; font-size: 12px; }
 .row-actions :deep(.event-bookmark) { position: static; flex-shrink: 0; }
 @media(max-width:1199px) and (min-width:992px) { .discovery-event-row { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }.row-cover { width: 48px; height: 56px; }.row-actions { grid-column: 2; justify-content: flex-end; } }
 @media(max-width:575px) { .discovery-event-row { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }.row-cover { width: 48px; height: 56px; }.row-actions { grid-column: 2; justify-content: flex-end; } }
-@media(pointer:coarse) { .row-title { min-height: 44px; } }
+@media(pointer:coarse) { .row-title { min-height: 44px; } .row-details { min-height: 84px; } }
 </style>
