@@ -52,7 +52,7 @@ test('a stale OneMap response cannot replace results for the current query', asy
   await page.getByLabel('Event title').fill('Address test')
   await page.getByLabel('Starts').fill('2026-10-20T19:00')
   await page.getByLabel('Ends').fill('2026-10-20T21:00')
-  await page.getByText('music', { exact: true }).click()
+  await page.getByText('Music', { exact: true }).click()
   await page.getByRole('button', { name: 'Next' }).click()
   const search = page.getByLabel('Search for the venue')
   const oldRequest = page.waitForRequest(request => new URL(request.url()).searchParams.get('searchVal') === 'Old query')
@@ -79,7 +79,7 @@ test('Escape dismisses pending OneMap suggestions and ignores the late result', 
   await page.getByLabel('Event title').fill('Escape test')
   await page.getByLabel('Starts').fill('2026-10-20T19:00')
   await page.getByLabel('Ends').fill('2026-10-20T21:00')
-  await page.getByText('music', { exact: true }).click()
+  await page.getByText('Music', { exact: true }).click()
   await page.getByRole('button', { name: 'Next' }).click()
 
   const search = page.getByLabel('Search for the venue')
@@ -103,7 +103,7 @@ test('Publish revalidates elapsed start time and preserves the draft at Basics',
   await page.getByLabel('Event title').fill('Future event')
   await page.getByLabel('Starts').fill('2026-10-16T12:01')
   await page.getByLabel('Ends').fill('2026-10-16T13:00')
-  await page.getByText('music', { exact: true }).click()
+  await page.getByText('Music', { exact: true }).click()
   await page.getByRole('button', { name: 'Next' }).click()
   await page.getByLabel('Search for the venue').fill('SMU venue')
   await page.getByRole('button', { name: /SMU Campus Green/ }).click()
@@ -121,16 +121,19 @@ test('Publish revalidates elapsed start time and preserves the draft at Basics',
 test('Basics validation focuses the missing date field and keeps the draft', async ({ page }) => {
   await page.goto('/organiser/events/new?template=official')
   await page.getByLabel('Event title').fill('Date focus test')
-  await page.getByText('music', { exact: true }).click()
+  await page.getByText('Music', { exact: true }).click()
 
+  // New events start with default times (DESIGN.md, Create event); clear them to test validation.
+  await page.getByLabel('Starts').fill('')
   await page.getByRole('button', { name: 'Next' }).click()
   await expect(page.getByLabel('Starts')).toBeFocused()
   await expect(page.getByLabel('Event title')).toHaveValue('Date focus test')
 
-  await page.getByLabel('Starts').fill('2026-10-20T19:00')
+  await page.getByLabel('Starts').fill('2030-10-20T19:00')
+  await page.getByLabel('Ends').fill('')
   await page.getByRole('button', { name: 'Next' }).click()
   await expect(page.getByLabel('Ends')).toBeFocused()
-  await expect(page.getByLabel('Starts')).toHaveValue('2026-10-20T19:00')
+  await expect(page.getByLabel('Starts')).toHaveValue('2030-10-20T19:00')
 })
 
 test('Manage RSVPs reloads the event when the mounted route changes IDs', async ({ page }) => {

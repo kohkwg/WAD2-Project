@@ -55,7 +55,29 @@ async function chooseCover(event) {
 }
 
 // Everything the organiser fills in, across all steps (its fields and checks: utils/eventForm.js)
-const form = ref(blankEventForm())
+// A new event starts at the next whole hour (at least 30 minutes away) and lasts two hours,
+// so the dates are never blank and the end can't start out before the start.
+function withDefaultTimes(f) {
+  const start = new Date(Date.now() + 30 * 60000)
+  start.setMinutes(0, 0, 0)
+  start.setHours(start.getHours() + 1)
+  const end = new Date(start.getTime() + 2 * 60 * 60000)
+  return { ...f, startTime: toDateTimeInputValue(start), endTime: toDateTimeInputValue(end) }
+}
+const form = ref(withDefaultTimes(blankEventForm()))
+// Moving the start keeps the event's length; an end that falls before the start is moved after it.
+// Only for edits to the same form, not when a saved event is loaded into it.
+watch(() => [form.value, form.value.startTime], ([currentForm, start], [previousForm, previous]) => {
+  if (currentForm !== previousForm) return
+  const s = Date.parse(start), p = Date.parse(previous), e = Date.parse(form.value.endTime)
+  if (!Number.isFinite(s)) return
+  const length = Number.isFinite(p) && Number.isFinite(e) && e > p ? e - p : 2 * 60 * 60000
+  if (!Number.isFinite(e) || e <= s || Number.isFinite(p)) form.value.endTime = toDateTimeInputValue(new Date(s + length))
+})
+const endBeforeStart = computed(() => {
+  const s = Date.parse(form.value.startTime), e = Date.parse(form.value.endTime)
+  return Number.isFinite(s) && Number.isFinite(e) && e <= s
+})
 
 // ---------- Edit mode: change a published event ----------
 
@@ -98,7 +120,7 @@ watch(editId, async (id) => {
   original.value = null
   hangoutEvent.value = null
   if (!id) {
-    form.value = blankEventForm()
+    form.value = withDefaultTimes(blankEventForm())
     return
   }
   editLoading.value = true
@@ -662,10 +684,12 @@ async function publish() {
                 id="end"
                 type="datetime-local"
                 class="form-control"
-                :aria-describedby="showErrors && stepErrors.length ? 'validation-error-list' : undefined"
                 v-model="form.endTime"
                 :min="form.startTime || nowForInput"
+                :aria-invalid="endBeforeStart || undefined"
+                :aria-describedby="endBeforeStart ? 'end-error' : (showErrors && stepErrors.length ? 'validation-error-list' : undefined)"
               />
+              <p v-if="endBeforeStart" id="end-error" class="small text-danger mt-1 mb-0" role="alert">The event has to end after it starts.</p>
             </div>
           </div>
 
@@ -697,7 +721,7 @@ async function publish() {
                   v-model="form.tags"
                   autocomplete="off"
                 />
-                <label class="btn btn-sm btn-outline-primary" :for="'tag-' + tag">{{ tag }}</label>
+                <label class="tag-chip cat-tint" :class="`cat-${tag}`" :for="'tag-' + tag">{{ tag.charAt(0).toUpperCase() + tag.slice(1) }}</label>
               </template>
             </div>
             <div v-if="suggestedTags.length > 0" class="small mt-2">
@@ -982,14 +1006,16 @@ async function publish() {
 
       <!-- Back / Next / Publish -->
       <div class="card-footer d-flex justify-content-between creation-actions">
+        <!-- Hidden on the first step rather than greyed out; the spacer keeps Next on the right -->
         <button
+          v-if="step > 1"
           type="button"
           class="btn btn-outline-secondary"
-          :disabled="step === 1"
           @click="previousStep"
         >
           Back
         </button>
+        <span v-else aria-hidden="true"></span>
         <div class="d-flex gap-2 creation-actions-end">
           <button v-if="step < steps.length" type="button" class="btn btn-primary" @click="nextStep">
             Next
@@ -1129,4 +1155,9 @@ async function publish() {
    colours instead of Bootstrap's default grey/blue, matching disabled .event-cta buttons */
 .create-event-page :deep(.btn-outline-primary), .create-event-page :deep(.btn-outline-secondary) { --bs-btn-disabled-color: var(--bookedz-disabled-ink); --bs-btn-disabled-bg: var(--bookedz-disabled-bg); --bs-btn-disabled-border-color: var(--bookedz-border); --bs-btn-disabled-opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .step-forward-enter-active, .step-forward-leave-active, .step-back-enter-active, .step-back-leave-active, .create-event-page :deep(.form-control), .create-event-page :deep(.form-select) { transition: none; } }
+/* Tags look exactly like Discover's category chips, so the preview matches what visitors see */
+.tag-chip { display: inline-flex; align-items: center; min-height: 44px; padding: 9px 15px; border: 1px solid transparent; border-radius: 99px; color: var(--bookedz-ink); font-size: 13px; cursor: pointer; transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease); }
+.tag-chip:hover { border-color: var(--bookedz-control-border); }
+.btn-check:checked + .tag-chip { background: var(--bookedz-ink); color: var(--bookedz-surface); }
+.btn-check:focus-visible + .tag-chip { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
 </style>

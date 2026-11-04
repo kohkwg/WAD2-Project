@@ -211,7 +211,7 @@ async function findStop() {
 .origin-chip { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 12px; margin-bottom: 12px; border-radius: var(--bookedz-radius-control); background: var(--bookedz-glass-solid); }
 .join-result { margin-top: 14px; padding: 14px; border-radius: var(--bookedz-radius-control); background: var(--bookedz-teal-soft); }
 .join-result ul { padding-left: 1.1rem; margin-bottom: 8px; }
-.result-kicker { margin: 0; font-size: .72rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--bookedz-teal-ink); }
+.result-kicker { margin: 0; font-size: .72rem; font-weight: 800; color: var(--bookedz-teal-ink); }
 .result-title { margin: 2px 0 6px; font: 900 1.15rem var(--bookedz-heading); }
 .forecast-text { margin: 0 0 4px; font: 900 1.3rem var(--bookedz-heading); }
 @media (max-width: 991.98px) { .go-grid { grid-template-columns: 1fr; } }

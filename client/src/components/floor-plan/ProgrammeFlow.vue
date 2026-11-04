@@ -87,7 +87,7 @@ const time = (value) => new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', 
 <style scoped>
 .programme-flow{padding:1.1rem 1.25rem;border:1px solid var(--bookedz-border,#e9ded3);border-radius:18px;background:var(--bookedz-surface,#ffffff);box-shadow:var(--bookedz-card-shadow,none)}
 .programme-heading{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
-.programme-kicker{display:block;color:var(--bookedz-muted,#636975);font-size:.72rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+.programme-kicker{display:block;color:var(--bookedz-muted,#636975);font-size:.72rem;font-weight:750;}
 .programme-flow h2,.programme-flow h3{font-family:var(--bookedz-heading,'Bricolage Grotesque',sans-serif);letter-spacing:-.02em}
 .programme-form{background:var(--bookedz-cream,#fff8f1)}
 .programme-flow .border.rounded{border-color:var(--bookedz-border,#e9ded3)!important;border-radius:14px!important}

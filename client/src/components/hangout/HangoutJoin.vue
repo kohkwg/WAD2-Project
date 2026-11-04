@@ -14,8 +14,8 @@ const status = ref('')
 const joinMode = computed(() => props.event.joinMode || (props.event.requiresApproval ? 'approval' : 'auto'))
 const current = computed(() => status.value || (props.myRsvp && ACTIVE_STATUSES.includes(props.myRsvp.status) ? props.myRsvp.status : ''))
 const full = computed(() => joinMode.value === 'open' && props.event.spotsLeft <= 0)
-const STATUS_TEXT = { confirmed: 'You’re in.', pending: 'Request sent. The host approves each RSVP.', waitlisted: 'You’re on the waitlist. You’ll get an offer if a place opens.', offered: 'A place opened up for you. Confirm it in My RSVPs.' }
-const actionLabel = computed(() => joinMode.value === 'open' ? 'Join hangout' : joinMode.value === 'approval' ? 'Request to join' : 'RSVP')
+const STATUS_TEXT = { confirmed: 'You’re in.', pending: 'Request sent. The host approves each RSVP.', waitlisted: 'You’re on the waitlist. You’ll get an offer if a spot opens.', offered: 'A spot opened up for you. Confirm it in My RSVPs.' }
+const actionLabel = computed(() => joinMode.value === 'open' ? 'Join hangout' : joinMode.value === 'approval' ? 'Request a spot' : 'RSVP')
 
 async function join() {
   if (joining.value) return

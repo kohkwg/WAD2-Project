@@ -13,7 +13,8 @@ test('public layout prioritises event facts and My RSVPs stays responsive', asyn
     await page.setViewportSize({ width, height: 900 })
     await page.goto('/events/e2/rsvp')
     await expect(page.getByRole('heading', { name: 'Intro to Vue Workshop', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'RSVP', exact: true })).toBeVisible()
+    // Intro to Vue needs organiser approval, so its RSVP button reads "Request a spot" (DESIGN.md, Words)
+    await expect(page.locator('.rsvp-action-panel').getByRole('button', { name: 'Request a spot', exact: true })).toBeVisible()
     const details = page.locator('.event-public-details')
     const actions = page.locator('.rsvp-action-panel')
     if (width === 1280) {

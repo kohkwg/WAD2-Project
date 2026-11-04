@@ -67,14 +67,14 @@ function selectFromRow(clickEvent) {
       </div>
       <!-- Spots come before the venue, so a long venue name is what gets cut off -->
       <p class="row-facts" :title="factsText"><time :datetime="event.start_time">{{ time }}</time><template v-if="places"> · {{ places }}</template> · {{ venue }}</p>
-      <p v-if="selected" class="row-selected-info"><span v-if="selectedNote">{{ selectedNote }}</span><RouterLink :to="`/events/${event.id}/rsvp`" class="row-view">View event ›</RouterLink></p>
+      <p v-if="selected" class="row-selected-info reveal-down"><span v-if="selectedNote">{{ selectedNote }}</span><RouterLink :to="`/events/${event.id}/rsvp`" class="row-view">View event ›</RouterLink></p>
       <p v-else-if="statusNote" class="row-going" :class="`row-going--${status}`">{{ statusNote }}</p>
       <p v-else-if="match" class="row-reason">{{ match }}</p>
     </div>
     <div class="row-actions">
       <EventBookmark v-if="bookmarkEnabled" :saved="Boolean(event.saved)" :pending="preferencePending" :event-title="event.title" @toggle="emit('preference', {event, action: event.saved ? 'unsave' : 'save'})" />
       <!-- RSVP / Join waitlist / your status only on the selected row; others show just the bookmark -->
-      <EventCardActions v-if="selected" :event="event" />
+      <EventCardActions v-if="selected" class="reveal-down" :event="event" />
     </div>
   </article>
 </template>

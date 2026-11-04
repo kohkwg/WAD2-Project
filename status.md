@@ -216,7 +216,7 @@ predate them. Denzel has now authorised committing/publishing this working state
 as the shared design baseline. Use the published `origin/dev` SHA and Denzel’s
 kickoff message for exact baseline identity; this is not a production deployment. Teammates' branches and PRs
 are not changed by the publication. See [branch workflow](design-branches.md) and
-[design system](docs/design/design-system.md).
+[design](docs/design/DESIGN.md).
 
 | Feature / owner | Working functionality | Remaining limits / acceptance |
 | --- | --- | --- |
@@ -620,7 +620,7 @@ not persist. These are dated observations, not permanent database invariants.
   375/575/768/1280px; existing checks also cover 1440px. Compile/whitespace checks
   pass. Hallmark scoped source audit: 0 FAIL, 49 spacing REFLEX, 4 WARN; its browser
   tier could not run because Puppeteer is absent. Playwright captures supplied
-  visual evidence; see `docs/design/design-review.md` for limitations.
+  visual evidence; see `docs/design/DESIGN.md` for limitations.
 - Resolved the preceding sync diagnosis: the container saw the new map files but
   Syncthing's index did not. A project-scoped rescan returned HTTP 200; both the
   animated plate and IslandArtwork component now appear in the server index.
@@ -747,7 +747,7 @@ not persist. These are dated observations, not permanent database invariants.
   pending-search/view-switch case. Both themes and 375/575/768/1280px covered;
   profile keyboard selection/failure/retry, learned weights, no overflow, one main,
   selected-chip contrast and console assertions pass. See the
-  [F1 review](docs/design/design-review.md#f1-owner-refinement-25-october) for captures.
+  [design verification](docs/design/DESIGN.md#10-verification-history-and-limits) for captures.
 - No full suite/production build, hosted writes, deployments or PR creation/merge.
   Safari, physical devices and signed-in hosted profile writes remain unverified.
   Denzel owns subsequent PR review/integration into dev.
