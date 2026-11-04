@@ -68,7 +68,7 @@ watch(template, async (value) => {
 .template-switch a:hover { text-decoration: underline; }
 .template-picker h1 { margin-bottom: .5rem; }
 .template-picker h1:focus { outline: none; }
-.picker-washi { display: inline-block; margin: 0 0 14px; padding: 4px 12px; background: var(--bookedz-mango-soft); color: var(--bookedz-ink); font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; transform: rotate(-1.5deg); }
+.picker-washi { display: inline-block; margin: 0 0 14px; padding: 4px 12px; background: var(--bookedz-mango-soft); color: var(--bookedz-ink); font-size: .75rem; font-weight: 700; transform: rotate(-1.5deg); }
 .picker-lede { color: var(--bookedz-muted); margin-bottom: 1.75rem; }
 .template-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .template-card { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 28px; border: 1px solid var(--bookedz-border); border-radius: var(--bookedz-radius-card); background: var(--bookedz-surface); color: var(--bookedz-ink); text-align: left; box-shadow: var(--bookedz-card-shadow); transition: transform var(--bookedz-motion-normal) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease); }
@@ -78,7 +78,7 @@ watch(template, async (value) => {
 .template-icon svg { width: 40px; height: 40px; }
 .template-card--official .template-icon { background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); }
 .template-card--hangout .template-icon { background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
-.template-kicker { font-size: .78rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--bookedz-primary-dark); }
+.template-kicker { font-size: .78rem; font-weight: 800; color: var(--bookedz-primary-dark); }
 .template-card--hangout .template-kicker { color: var(--bookedz-teal-ink); }
 .template-title { font-family: var(--bookedz-heading); font-size: 1.45rem; font-weight: 900; line-height: 1.15; }
 .template-copy { color: var(--bookedz-muted); line-height: 1.55; }

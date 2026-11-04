@@ -392,7 +392,8 @@ for (const [name, lat, lng] of [['out-of-range numeric', 1000, 103.85], ['string
 test('existing RSVP submission still works with the public feed mounted', async ({ page }) => {
   await page.goto('/events/e2/rsvp')
   await page.getByLabel(/Which year are you in/).fill('Year 2')
-  await page.getByRole('button', { name: 'RSVP', exact: true }).click()
+  // Intro to Vue needs organiser approval, so the button reads "Request a spot"
+  await page.locator('.rsvp-form').getByRole('button', { name: 'Request a spot', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'RSVP sent', exact: true })).toBeVisible()
   await expect(page.getByText('The organiser will review your RSVP soon.', { exact: true })).toBeVisible()
   expect((await db(page)).rsvps.find(rsvp => rsvp.eventId === 'e2' && rsvp.userId === 'u1').status).toBe('pending')

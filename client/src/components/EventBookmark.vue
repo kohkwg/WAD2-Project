@@ -1,12 +1,16 @@
 <script setup>
-defineProps({ saved: Boolean, pending: Boolean, eventTitle: { type: String, default: 'event' } })
+import { ref, watch } from 'vue'
+const props = defineProps({ saved: Boolean, pending: Boolean, eventTitle: { type: String, default: 'event' } })
 const emit = defineEmits(['toggle'])
+// Pops once when an event becomes saved (not on first render)
+const popKey = ref(0)
+watch(() => props.saved, (now, before) => { if (now && !before) popKey.value++ })
 </script>
 <template>
   <button type="button" class="event-bookmark" :disabled="pending"
     :aria-pressed="saved" :aria-label="(saved ? 'Unsave ' : 'Save ') + eventTitle"
     @click="emit('toggle')">
-    <svg viewBox="0 0 24 24" :fill="saved ? 'currentColor' : 'none'"
+    <svg :key="popKey" :class="{ 'pop-once': popKey > 0 && saved }" viewBox="0 0 24 24" :fill="saved ? 'currentColor' : 'none'"
       stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
       <path d="M6 3h12v18l-6-4-6 4V3Z" />
     </svg>
@@ -14,6 +18,7 @@ const emit = defineEmits(['toggle'])
   </button>
 </template>
 <style scoped>
+.event-bookmark { transition:color var(--bookedz-motion-fast) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .event-bookmark { position:absolute; top:12px; right:12px; z-index:3; width:44px; height:44px; padding:9px; display:grid; place-items:center; border:1px solid var(--bookedz-control-border); border-radius:50%; background:var(--bookedz-surface); color:var(--bookedz-ink); cursor:pointer; }
 .event-bookmark[aria-pressed="true"] { color:var(--bookedz-primary-dark); }
 .event-bookmark svg { position:static; width:19px; height:19px; }

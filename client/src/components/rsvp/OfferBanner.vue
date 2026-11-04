@@ -17,11 +17,11 @@ const isExpired = computed(() => !(Date.parse(props.rsvp.offerExpiresAt) > props
 
 <template>
   <div
-    class="offer-banner d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3"
+    class="offer-banner d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 attention-once"
     :class="isExpired ? 'offer-expired' : 'offer-active'"
   >
     <div>
-      <p class="offer-eyebrow">A LITTLE GOOD NEWS</p>
+      <p class="offer-eyebrow">Waitlist offer</p>
       <h2 class="event-title mb-0">A spot opened up for {{ rsvp.event.title }}</h2>
       <div class="small">{{ formatEventTime(rsvp.event) }}</div>
       <div v-if="!isExpired" class="small mt-1">
@@ -57,7 +57,7 @@ const isExpired = computed(() => !(Date.parse(props.rsvp.offerExpiresAt) > props
 
 <style scoped>
 .offer-banner { margin-bottom: 1rem; padding: 1.3rem 1.5rem; border: 1px solid color-mix(in srgb,var(--bookedz-primary-dark) 30%,var(--bookedz-border)); border-radius: 18px; color: var(--bookedz-ink); background: var(--bookedz-mango); }
-.offer-eyebrow { font-size:var(--text-caption); letter-spacing: .1em; font-weight: 700; margin: 0 0 8px; color: var(--bookedz-primary-dark); }
+.offer-eyebrow { font-size:var(--text-caption); font-weight: 700; margin: 0 0 8px; color: var(--bookedz-primary-dark); }
 
 .offer-expired { border-color: var(--bookedz-border, #e9ded3); color: var(--bookedz-muted); background: var(--bookedz-glass-solid); }
 .offer-banner button { min-height: 44px; }

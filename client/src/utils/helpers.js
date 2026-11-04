@@ -76,15 +76,18 @@ export function fillColour(percent) {
 
 // ---------- Tags ----------
 
+// Same categories, in the same order, as Discover's category chips.
 export const TAG_OPTIONS = [
+  'tech',
   'music',
   'sports',
-  'tech',
-  'career',
   'arts',
   'food',
   'volunteering',
+  'career',
+  'outdoors',
   'gaming',
+  'wellness',
 ]
 
 // Words that hint at each tag. A word in the title/description that STARTS WITH one of
@@ -97,7 +100,9 @@ const TAG_KEYWORDS = {
   arts: ['art', 'paint', 'pottery', 'craft', 'drawing', 'photo'],
   food: ['food', 'cook', 'bak', 'dinner', 'lunch', 'potluck', 'brunch'],
   volunteering: ['volunteer', 'charity', 'community', 'donat', 'cleanup'],
+  outdoors: ['outdoor', 'hike', 'hiking', 'park', 'trail', 'beach', 'cycling', 'nature'],
   gaming: ['game', 'gaming', 'esport'],
+  wellness: ['wellness', 'yoga', 'meditat', 'mindful', 'pilates', 'mental'],
 }
 
 export function suggestTags(text) {

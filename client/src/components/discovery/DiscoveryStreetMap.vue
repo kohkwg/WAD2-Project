@@ -93,10 +93,15 @@ function renderMarkers() {
   for (const group of located) {
     const active = group.events.some(event => event.id === selectedId.value)
     const count = group.events.length
-    const label = count > 1 ? `${count} events near ${group.events[0].venue_name || 'this venue'}` : `Preview ${group.events[0].title}`
+    // Single pins use their category colour (same as the chips); picks are orange stars;
+    // clusters are neutral with a count, and a small star when they contain a pick.
+    const category = String(group.events[0].category || group.events[0].tags?.[0] || '').toLowerCase()
+    const names = group.events.slice(0, 3).map(event => event.title).join(', ') + (count > 3 ? ` and ${count - 3} more` : '')
+    const label = count > 1 ? `${count} events near ${group.events[0].venue_name || 'this venue'}: ${names}` : `Preview ${group.events[0].title}${category ? `, ${category}` : ''}`
+    const glyph = count > 1 ? `${count}${group.featured ? '<i class="street-pin-star" aria-hidden="true">★</i>' : ''}` : group.featured ? '★' : ''
     const icon = L.divIcon({
-      className: `street-marker${count > 1 ? ' street-marker--cluster' : ''}${group.featured ? ' street-marker--featured' : ''}${active ? ' street-marker--selected' : ''}`,
-      html: `<span class="street-pin"><span>${count > 1 ? count : '●'}</span></span>`,
+      className: `street-marker${count > 1 ? ' street-marker--cluster' : ` cat-${category}`}${group.featured ? ' street-marker--featured' : ''}${active ? ' street-marker--selected' : ''}`,
+      html: `<span class="street-pin"><span>${glyph}</span></span>`,
       iconSize: [44, 44], iconAnchor: [22, 22],
     })
     const marker = L.marker([group.lat, group.lng], { icon, keyboard: true, title: label, alt: label, zIndexOffset: active ? 1000 : 0 }).addTo(markers)
@@ -264,10 +269,16 @@ onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abo
 :deep(.street-tip) { padding: 6px 10px; border: 0; border-radius: 8px; background: var(--bookedz-ink); color: var(--bookedz-surface); font-size: 12px; line-height: 1.35; }
 :deep(.street-tip::before) { border-top-color: var(--bookedz-ink); }
 :deep(.street-marker) { background: transparent; border: 0; display: grid; place-items: center; }
-:deep(.street-pin) { display: grid; place-items: center; width: 32px; height: 32px; border: 2px solid var(--bookedz-surface); border-radius: 50%; background: #ec4899; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 2px 8px #1f293740; }
-:deep(.street-marker--featured .street-pin) { background: #ec4899; }
+:deep(.street-pin) { position: relative; display: grid; place-items: center; width: 28px; height: 28px; border: 2.5px solid var(--bookedz-surface); border-radius: 50%; background: var(--cat-hue, var(--bookedz-pink)); color: var(--bookedz-on-fill); font-size: 13px; font-weight: 700; box-shadow: 0 2px 8px #1f293740; transition: transform var(--bookedz-motion-fast) var(--bookedz-ease); }
+:deep(.street-marker--cluster .street-pin) { width: 34px; height: 34px; background: var(--bookedz-ink); color: var(--bookedz-surface); }
+:deep(.street-marker--featured:not(.street-marker--cluster) .street-pin) { width: 32px; height: 32px; background: var(--bookedz-primary); font-size: 15px; }
+:deep(.street-pin-star) { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--bookedz-primary); color: var(--bookedz-on-fill); font-size: 9px; font-style: normal; }
 :deep(.street-pin--place) { background: var(--bookedz-forest); }
-:deep(.street-marker--selected .street-pin) { width: 38px; height: 38px; background: var(--bookedz-forest); outline: none; }
+:deep(.street-marker--selected .street-pin) { transform: scale(1.25); box-shadow: 0 0 0 3px var(--bookedz-ink), 0 2px 8px #1f293740; animation: pin-bounce 420ms var(--bookedz-ease-stamp); }
+@keyframes pin-bounce { 0% { transform: scale(1) translateY(0); } 40% { transform: scale(1.3) translateY(-6px); } 100% { transform: scale(1.25) translateY(0); } }
+:deep(.street-pin) { cursor: pointer; }
+@media (hover: hover) { :deep(.street-marker:hover .street-pin) { transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { :deep(.street-marker--selected .street-pin) { animation: none; } }
 :deep(.leaflet-control-attribution) { background: var(--bookedz-surface); color: var(--bookedz-muted); font-size: 10px; }:deep(.leaflet-control-attribution a) { color: var(--bookedz-primary-dark); }
 /* Phones (Map pane): fit between the toolbar and the bottom tab bar */
 @media(max-width:767px) { .street-map-canvas { height: max(320px,calc(100svh - 330px - var(--bottom-nav-h, 0px))); } }
