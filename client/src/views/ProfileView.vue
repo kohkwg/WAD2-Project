@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, onBeforeRouteLeave } from 'vue-router';
 import { supabase } from '@/lib/supabase';
 import { USING_SUPABASE, changePassword } from '@/utils/api';
@@ -11,7 +11,7 @@ import { passwordErrors } from '@/lib/passwordRules';
 import { usernameAvailable as checkUsernameFree } from '@/lib/usernameAvailability';
 import PasswordInput from '@/components/ui/PasswordInput.vue';
 import DeleteAccount from '@/components/profile/DeleteAccount.vue';
-import DinoPicker from '@/components/profile/DinoPicker.vue';
+import DinoPickerDialog from '@/components/profile/DinoPickerDialog.vue';
 import { dinoById } from '@/lib/dinos';
 defineProps({
   embedded: {
@@ -54,6 +54,8 @@ const chosenDino = computed(() => dinoById(dino.value));
 const dinoSaving = ref(false);
 
 const dinoError = ref('');
+
+const dinoDialog = ref(null);
 // username checking
 
 const usernameError = ref('');
@@ -183,9 +185,15 @@ async function chooseDino(id) {
   } catch (failure) {
     dino.value = previous;
     dinoError.value = failure.message || 'Could not save your dino.';
+    return false;
   } finally {
     dinoSaving.value = false;
   }
+  return true;
+}
+
+async function saveDino(id) {
+  if (await chooseDino(id)) dinoDialog.value?.close();
 }
 
 // ---- load the profile
@@ -460,9 +468,12 @@ function resetPasswordForm() {
 
 // open or close the password section
 
-function togglePassword() {
+async function togglePassword() {
   passwordOpen.value = !passwordOpen.value;
   resetPasswordForm();
+  // the button that was clicked disappears, so hand focus to the next sensible control
+  await nextTick();
+  document.getElementById(passwordOpen.value ? 'current-password' : 'change-password-toggle')?.focus();
 }
 
 // saves the new password
@@ -627,13 +638,17 @@ onBeforeUnmount(() => {
       </div>
       <div v-if="error" v-dismissible class="alert alert-danger" role="alert">{{ error }}</div>
 
-      <div class="profile-summary" :class="{ 'is-viewing': !editing }">
+      <div class="profile-summary" :class="{ 'is-viewing': !editing, 'has-dino': chosenDino }">
         <div class="profile-top">
-          <span
+          <button
+          type="button"
           class="profile-avatar"
           :class="{ 'has-dino': chosenDino }"
-          aria-hidden="true">
-          <img v-if="chosenDino" class="profile-avatar-dino" :src="chosenDino.src" alt="">{{ chosenDino ? '' : initial }}</span>
+          aria-label="Change profile picture"
+          aria-haspopup="dialog"
+          @click="dinoDialog?.open(dino)">
+          <img v-if="chosenDino" class="profile-avatar-dino" :src="chosenDino.src" alt=""><template v-else>{{ initial }}</template>
+          <span class="profile-avatar-edit" aria-hidden="true">✎</span></button>
 
           <div class="profile-id">
             <h2 class="profile-name">{{ displayName || 'No name yet' }}</h2>
@@ -648,7 +663,7 @@ onBeforeUnmount(() => {
           <button
             v-if="!editing"
             type="button"
-            class="btn btn-outline-secondary btn-sm profile-edit"
+            class="btn btn-green btn-sm profile-edit"
             @click="startEdit"
           >
             Edit profile
@@ -793,17 +808,29 @@ onBeforeUnmount(() => {
         </template>
       </div>
 
+      <div v-if="editing" class="profile-actions">
+        <button type="submit" class="btn btn-green" :disabled="saving">
+          <span v-if="saving" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+          {{ saving ? 'Saving…' : 'Save' }}
+        </button>
+        <button type="button" class="btn btn-outline-secondary" :disabled="saving" @click="cancelEdit">
+          Cancel
+        </button>
+      </div>
+
       <div class="profile-block">
         <div class="profile-password">
           <h3 class="profile-block-title">Password</h3>
           <button
+            v-if="!passwordOpen"
+            id="change-password-toggle"
             type="button"
-            class="btn btn-outline-secondary btn-sm"
-            :aria-expanded="passwordOpen"
+            class="btn btn-green btn-sm"
+            aria-expanded="false"
             aria-controls="password-fields"
             @click="togglePassword"
           >
-            {{ passwordOpen ? 'Cancel' : 'Change password' }}
+            Change password
           </button>
         </div>
 
@@ -874,36 +901,28 @@ onBeforeUnmount(() => {
             {{ passwordBanner }}
           </div>
 
-          <button
-            type="button"
-            class="btn btn-primary mt-3"
-            :disabled="passwordBusy"
-            @click="savePassword"
-          >
-            <span v-if="passwordBusy" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-            Save password
-          </button>
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button
+              type="button"
+              class="btn btn-green"
+              :disabled="passwordBusy"
+              @click="savePassword"
+            >
+              <span v-if="passwordBusy" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+              Save password
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              :disabled="passwordBusy"
+              @click="togglePassword"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
 
-      <section class="profile-section" aria-labelledby="dino-heading">
-        <h2 id="dino-heading" class="profile-section-title">Profile Picture</h2>
-        <p class="profile-help">Your mascot shows next to your name. Change it any time.</p>
-        <DinoPicker :model-value="dino" :disabled="dinoSaving" @update:model-value="chooseDino" />
-        <p v-if="dinoError" v-dismissible class="text-danger mt-2 mb-0" role="alert">
-          {{ dinoError }}
-        </p>
-      </section>
-
-      <div v-if="editing" class="profile-actions">
-        <button type="submit" class="btn btn-primary" :disabled="saving">
-          <span v-if="saving" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-          {{ saving ? 'Saving…' : 'Save' }}
-        </button>
-        <button type="button" class="btn btn-outline-secondary" :disabled="saving" @click="cancelEdit">
-          Cancel
-        </button>
-      </div>
     </form>
 
     <div
@@ -925,6 +944,13 @@ onBeforeUnmount(() => {
         Explore demo events
       </RouterLink>
     </div>
+
+    <DinoPickerDialog
+      ref="dinoDialog"
+      :current="dino"
+      :saving="dinoSaving"
+      :error="dinoError"
+      @save="saveDino" />
 
     <DeleteAccount v-if="userId" />
   </div>
@@ -1007,6 +1033,17 @@ onBeforeUnmount(() => {
   }
 }
 
+/* editing on wider screens: the field titles and boxes line up with the name beside the avatar */
+
+@media (min-width: 768px) {
+  .profile-summary:not(.is-viewing) > .profile-section {
+    margin-left: calc(56px + 1rem);
+  }
+  .profile-summary.has-dino:not(.is-viewing) > .profile-section {
+    margin-left: calc(72px + 1rem);
+  }
+}
+
 /* avatar, name and contact details */
 
 .profile-top {
@@ -1017,6 +1054,10 @@ onBeforeUnmount(() => {
 }
 
 .profile-avatar {
+  position: relative;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
   display: grid;
   place-items: center;
   flex: none;
@@ -1034,6 +1075,26 @@ onBeforeUnmount(() => {
   width: 72px;
   height: 72px;
   background: none;
+}
+
+.profile-avatar-edit {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+  border: 2px solid var(--bookedz-surface);
+  border-radius: 50%;
+  background: #267a56;
+  color: #fff;
+  font-size: .75rem;
+}
+
+.profile-avatar:focus-visible {
+  outline: 3px solid var(--bookedz-focus);
+  outline-offset: 3px;
 }
 
 .profile-avatar-dino {
@@ -1073,6 +1134,12 @@ onBeforeUnmount(() => {
 .profile-block {
   padding: 1.1rem 0;
   border-top: 1px solid var(--bookedz-border);
+}
+
+/* the last block sits on the card's own padding, so the bottom gap matches the top */
+
+.profile-form > .profile-block:last-child {
+  padding-bottom: 0;
 }
 
 .profile-block-title {
@@ -1243,6 +1310,7 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   gap: 0.75rem;
   padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
   border-top: 1px solid var(--bookedz-border);
 }
 

@@ -1287,3 +1287,20 @@ main.app-main .container {
   max-width: none;
   padding-inline: 0;
 }
+
+/* green action buttons (edit profile, change password, save) */
+
+.btn-green {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: #267a56;
+  --bs-btn-border-color: #267a56;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #1e6346;
+  --bs-btn-hover-border-color: #1e6346;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #1a5740;
+  --bs-btn-active-border-color: #1a5740;
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: #267a56;
+  --bs-btn-disabled-border-color: #267a56;
+}

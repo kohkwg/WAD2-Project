@@ -25,10 +25,20 @@ async function openAccount(mode) {
   await nextTick();
   accountForm.value?.setMode(mode);
   await nextTick();
-  join.value?.scrollIntoView({
-    behavior: 'instant',
-    block: 'start'
-  });
+  const card = join.value?.querySelector('.auth-card') || join.value;
+  if (card) {
+    const nav = document.querySelector('.welcome-nav');
+    const topInset = (nav ? nav.getBoundingClientRect().bottom : 0) + 16;
+    const room = window.innerHeight - topInset - 16;
+    const rect = card.getBoundingClientRect();
+    // Centre the whole card in the visible area below the sticky nav;
+    // if it is taller than that, align its top just under the nav.
+    const offset = rect.height < room ? (room - rect.height) / 2 : 0;
+    window.scrollTo({
+      top: window.scrollY + rect.top - topInset - offset,
+      behavior: 'instant'
+    });
+  }
   join.value?.querySelector(mode === 'signup' ? '#name' : '#email')?.focus({
     preventScroll: true
   });
