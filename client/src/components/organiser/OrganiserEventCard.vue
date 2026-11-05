@@ -40,7 +40,7 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
     <footer class="event-card-actions">
       <RouterLink v-if="state === 'drafts'" :to="`/organiser/events/${event.id}/manage?tab=edit`" class="btn btn-primary">Edit draft</RouterLink>
       <RouterLink v-else-if="state === 'past'" :to="`/organiser/events/${event.id}/attendance`" class="btn btn-primary">View results</RouterLink>
-      <RouterLink v-else-if="state === 'upcoming' && event.pendingCount > 0" :to="`/organiser/events/${event.id}/rsvps?status=pending`" class="btn btn-primary">Review requests</RouterLink>
+      <RouterLink v-else-if="state === 'upcoming' && event.pendingCount > 0" :to="`/organiser/events/${event.id}/manage?tab=rsvps&status=pending`" class="btn btn-primary">Review requests</RouterLink>
       <RouterLink v-else :to="`/organiser/events/${event.id}/manage?tab=tasks`" class="btn btn-primary">Manage event</RouterLink>
       <RouterLink v-if="editable && state !== 'drafts'" :to="`/organiser/events/${event.id}/manage?tab=edit`" class="btn btn-outline-secondary">Edit details</RouterLink>
       <details class="event-more">
@@ -48,7 +48,7 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
         <div class="event-menu">
           <RouterLink v-if="state !== 'drafts'" :to="`/events/${event.id}/rsvp`">View public page</RouterLink>
           <RouterLink v-if="state !== 'drafts'" :to="`/organiser/events/${event.id}/manage?tab=tasks`">Manage event</RouterLink>
-          <RouterLink v-if="state !== 'drafts'" :to="`/organiser/events/${event.id}/rsvps`">Manage RSVPs</RouterLink>
+          <RouterLink v-if="state !== 'drafts'" :to="`/organiser/events/${event.id}/manage?tab=rsvps`">Manage RSVPs</RouterLink>
           <template v-if="(event.isMine || event.canManage) && confirming"><p>Permanently delete this event, its RSVPs and organiser records?</p><button type="button" class="btn btn-danger" :disabled="disabled" @click="$emit('delete', event.id)">{{ busy ? 'Deleting…' : 'Yes, delete event' }}</button><button :id="`keep-event-${event.id}`" type="button" class="btn btn-outline-secondary" :disabled="disabled" @click="$emit('keep', event.id)">Keep event</button></template>
           <button v-else-if="event.isMine || event.canManage" :id="`delete-event-${event.id}`" type="button" class="delete-event" :disabled="disabled" @click="$emit('ask-delete', event.id)">Delete event</button>
         </div>
@@ -62,5 +62,7 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
 .event-creator { display:flex; align-items:center; gap:.35rem; font-size:var(--text-caption); min-width:0; overflow-wrap:anywhere; }
 .creator-avatar { display:grid; place-items:center; flex-shrink:0; width:28px; height:28px; border-radius:50%; background:var(--bookedz-surface); overflow:hidden; }
 .creator-avatar img { width:100%; height:100%; object-fit:contain; }
+.creator-avatar:has(img) { overflow:visible; background:none; }
+.creator-avatar img { transform:scale(1.25); }
 .card-date { flex-wrap:wrap; }
 </style>
