@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { parseReceiptDate, parseReceiptText } from '../receiptParse.js';
 test('reads item lines and skips totals, tax and payment lines', () => {

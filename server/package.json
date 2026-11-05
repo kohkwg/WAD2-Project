@@ -4,6 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+    "test": "vitest run",
     "check": "node checks/interest.check.js && node checks/diversity.check.js",
     "start": "node --env-file=.env server.js",
     "dev": "nodemon --env-file=.env server.js",
@@ -23,5 +24,8 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "vitest": "5.0.5"
   }
 }

@@ -1,6 +1,6 @@
 // early tests for the waitlist scoring (the profs asked for test code early).
 // run with:  pnpm test:unit
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import assert from 'node:assert/strict';
 import { interestMatch, showUpRate, calculateWaitlistScore, NEW_USER_SHOW_UP } from '../waitlistScore.js';
 

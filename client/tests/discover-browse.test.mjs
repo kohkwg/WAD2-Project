@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import { closingSoonEvents, matchesDiscoveryFilters } from '../src/lib/discoveryState.js';
 import checks from '../../server/tests/checks.js';
 

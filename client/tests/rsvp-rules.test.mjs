@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import * as api from '../src/utils/mockApi.js';
 import { createSeedData } from '../src/utils/mockData.js';

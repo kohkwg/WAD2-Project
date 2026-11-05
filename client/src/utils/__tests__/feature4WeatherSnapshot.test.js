@@ -1,4 +1,4 @@
-import { describe, test, beforeEach, afterEach } from 'node:test';
+import { describe, test, beforeEach, afterEach } from 'vitest';
 import assert from 'node:assert/strict';
 import * as api from '../api.js';
 import { createSeedData } from '../mockData.js';

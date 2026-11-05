@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import { expect } from './expect.js';
 import { watchAnnouncements } from '../announcementUpdates.js';
 

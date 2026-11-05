@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test, vi } from 'vitest';
 import assert from 'node:assert/strict';
 import * as weather from '../feature4Weather.js';
 
@@ -7,7 +7,7 @@ import * as weather from '../feature4Weather.js';
 function captureDeadline(t) {
   const scheduled = [];
   const cleared = [];
-  t.mock.method(globalThis, 'setTimeout', (callback, delay) => {
+  vi.spyOn(globalThis, 'setTimeout').mockImplementation((callback, delay) => {
     const handle = {
       callback,
       delay
@@ -15,7 +15,7 @@ function captureDeadline(t) {
     scheduled.push(handle);
     return handle;
   });
-  t.mock.method(globalThis, 'clearTimeout', handle => {
+  vi.spyOn(globalThis, 'clearTimeout').mockImplementation(handle => {
     cleared.push(handle);
   });
   return {
@@ -31,7 +31,7 @@ const data = {
 test('an upstream request that never returns times out, aborts, and permits a later retry', async t => {
   const timers = captureDeadline(t);
   let signal;
-  t.mock.method(globalThis, 'fetch', async (_url, options) => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, options) => {
     signal = options?.signal;
     return new Promise(() => {});
   });
@@ -42,7 +42,7 @@ test('an upstream request that never returns times out, aborts, and permits a la
   await assert.rejects(pending, /timed out.*retry/i);
   assert.equal(signal.aborted, true);
   assert.deepEqual(timers.cleared, timers.scheduled);
-  t.mock.method(globalThis, 'fetch', async () => ({
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
     ok: true,
     json: async () => ({
       code: 0,
@@ -55,7 +55,7 @@ test('the weather deadline includes a response body that never finishes', async 
   const timers = captureDeadline(t);
   let signal;
   let bodyStarted = false;
-  t.mock.method(globalThis, 'fetch', async (_url, options) => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, options) => {
     signal = options?.signal;
     return {
       ok: true,
@@ -78,7 +78,7 @@ test('the weather deadline includes a response body that never finishes', async 
 });
 test('weather success and service failures clear their request deadline', async t => {
   const timers = captureDeadline(t);
-  t.mock.method(globalThis, 'fetch', async () => ({
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () => ({
     ok: true,
     json: async () => ({
       code: 0,
@@ -88,7 +88,7 @@ test('weather success and service failures clear their request deadline', async 
   assert.deepEqual(await weather.fetchForecastData(), data);
   assert.equal(timers.scheduled.length, 1);
   assert.deepEqual(timers.cleared, timers.scheduled);
-  t.mock.method(globalThis, 'fetch', async () => {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
     throw new Error('Offline');
   });
   await assert.rejects(weather.fetchForecastData(), /weather.*Offline/i);

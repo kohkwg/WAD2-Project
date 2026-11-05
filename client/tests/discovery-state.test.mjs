@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { observeDiscoverySession, demoDiscoveryEvents } from '../src/lib/discoveryState.js';
 test('session lookup, initial event and repeated sign-in cause one refresh per user', async () => {

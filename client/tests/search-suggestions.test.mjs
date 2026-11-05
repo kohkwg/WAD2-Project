@@ -1,6 +1,6 @@
 import checks from '../../server/tests/checks.js'
 const { checkEqual, checkDeepEqual, checkTrue } = checks
-import test from 'node:test'
+import { test } from 'vitest';
 import { buildSuggestionIndex, suggest, SUGGESTION_LIMIT, MIN_QUERY_LENGTH } from '../src/lib/searchSuggestions.js'
 
 let nextId = 0

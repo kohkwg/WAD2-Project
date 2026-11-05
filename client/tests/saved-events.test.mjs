@@ -1,5 +1,10 @@
-import test from 'node:test';
-import { readFile } from 'node:fs/promises';
+import { test, vi } from 'vitest';
+
+// Vitest replaces the live adapter's data boundary; each test sets its own fixture first
+const fromFixture = name => new Proxy({}, { get: (_target, key) => globalThis.__savedEventsFixture?.[name]?.[key] });
+vi.mock('../src/utils/supabase.js', () => ({ supabase: fromFixture('supabase') }));
+vi.mock('../src/lib/api.js', () => ({ api: fromFixture('recommendationApi') }));
+const liveApi = await import('../src/utils/supabaseApi.js');
 import checks from '../../server/tests/checks.js';
 
 const {
@@ -81,6 +86,11 @@ async function setup({
             calls.push(['order', ...args]);
             return query;
           },
+          // the live adapter now also narrows by id lists (team memberships, events by id)
+          in(...args) {
+            calls.push(['in', ...args]);
+            return query;
+          },
           async range(offset) {
             calls.push(['range', offset]);
             return failure ? {
@@ -105,8 +115,7 @@ async function setup({
     }
   };
   globalThis.__savedEventsFixture = fixture;
-  const source = (await readFile(new URL('../src/utils/supabaseApi.js', import.meta.url), 'utf8')).replace("import * as hangouts from './supabaseHangoutsApi.js'", 'const hangouts = {}').replace("import { supabase } from './supabase.js'", 'const { supabase } = globalThis.__savedEventsFixture').replace("import { api as recommendationApi } from '../lib/api.js'", 'const { recommendationApi } = globalThis.__savedEventsFixture');
-  const api = await import('data:text/javascript;base64,' + Buffer.from(source + `\n// fixture ${++serial}`).toString('base64'));
+  const api = liveApi;
   return {
     api,
     calls,
@@ -120,7 +129,7 @@ test('saved-event adapter reads caller-scoped active saves through capped pages 
   } = await setup();
   const result = await api.getSavedEvents();
   checkDeepEqual(result.map(event => event.id), ['new', 'old']);
-  checkTrue(result.every(event => event.saved && event.venue.name === 'Venue to be confirmed'));
+  checkTrue(result.every(event => event.saved && event.venue.name === 'Venue to be announced'));
   checkTrue(calls.some(call => JSON.stringify(call) === JSON.stringify(['eq', 'user_id', 'participant'])));
   checkTrue(calls.some(call => JSON.stringify(call) === JSON.stringify(['eq', 'save_active', true])));
   checkDeepEqual(calls.filter(call => call[0] === 'range').map(call => call[1]), [0, 1, 2, 3]);

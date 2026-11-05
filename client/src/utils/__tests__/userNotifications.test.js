@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createNotificationTracker, registrationNotice, eventNotice } from '../userNotifications.js';
 test('old announcements form a quiet baseline; new and edited posts notify once', () => {
