@@ -358,10 +358,3 @@ without team review and verification.
 AI-generated supporting material, including draft documentation, generic
 boilerplate, test suggestions and sample data, was reviewed and, where
 necessary, revised by the team before inclusion.
-
-### Responsibility
-
-Each team member remains responsible for their contributions and for
-understanding and explaining the submitted work. The team takes
-responsibility for the application’s correctness, the validity of its
-tests, its source acknowledgements and the accuracy of this declaration.
