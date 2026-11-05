@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import { createVNode, render } from 'vue'
 import EventArtwork from '../EventArtwork.vue'
@@ -7,7 +7,6 @@ import { groupOfCategory } from '@/lib/eventGroups'
 import 'leaflet/dist/leaflet.css'
 import { searchPlace } from '../../lib/onemap'
 import { addOneMapTiles, SINGAPORE_MAX_BOUNDS } from '../../lib/onemapTiles'
-import EventCardActions from '../EventCardActions.vue'
 
 const props = defineProps({
   events: { type: Array, default: () => [] },
@@ -19,7 +18,6 @@ const props = defineProps({
 const emit = defineEmits(['select', 'retry'])
 const container = ref(null)
 const selectedId = ref(null)
-const groupEvents = ref([])
 const tileError = ref(false)
 const place = ref(null)
 const zoomed = ref(false)
@@ -33,7 +31,6 @@ const points = computed(() => props.events.flatMap(event => {
 const missing = computed(() => props.events.length - points.value.length)
 const selected = computed(() => props.events.find(event => event.id === selectedId.value))
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
-const timeLabel = event => new Date(event.start_time).toLocaleString('en-SG', { timeZone: 'Asia/Singapore', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
 // Pins reuse the group's artwork. Each group is rendered once and cached as markup.
 const artCache = new Map()
 function artMarkup(category) {
@@ -50,26 +47,26 @@ let fittedSignature = ''
 let map, tiles, stopTiles, markers, placeLayer, observer, opener, placeTimer, placeAbort
 let renderFrame
 
-function choose(event, focusTitle = false) {
+// The map only shows where an event is: choosing one highlights its pin and zooms to its area.
+// Its details and actions live on the event's card in the list.
+function choose(event) {
   opener = document.activeElement
   selectedId.value = event.id
-  groupEvents.value = []
   emit('select', event.id)
   showPoint(event.id)
-  if (focusTitle) nextTick(() => container.value?.parentElement.querySelector('.street-preview h2')?.focus({ preventScroll: true }))
 }
+// Centre on the event at street level (zoom 15 shows the surrounding neighbourhood); a closer
+// zoom the person already chose is kept.
+const AREA_ZOOM = 15
 function showPoint(id) {
   const point = points.value.find(point => point.event.id === id)
   if (!map || !point) return
-  if (map.getZoom() < 15) map.setView([point.lat, point.lng], 15, { animate: false })
-  map.panInside([point.lat, point.lng], {
-    paddingTopLeft: [30, 30], paddingBottomRight: [Math.min(260, map.getSize().x * .45), 80], animate: !reduced(),
-  })
+  map.setView([point.lat, point.lng], Math.max(map.getZoom(), AREA_ZOOM), { animate: !reduced() })
   scheduleMarkers()
 }
 function dismiss() {
+  if (!selectedId.value) return
   selectedId.value = null
-  groupEvents.value = []
   emit('select', null)
   scheduleMarkers()
   if (opener?.isConnected && opener.getClientRects().length) opener.focus()
@@ -129,27 +126,26 @@ function renderMarkers() {
     // clusters are neutral with a count, and a small star when they contain a pick.
     const category = String(group.events[0].category || group.events[0].tags?.[0] || '').toLowerCase()
     const names = group.events.slice(0, 3).map(event => event.title).join(', ') + (count > 3 ? ` and ${count - 3} more` : '')
-    const label = count > 1 ? `${count} events near ${group.events[0].venue_name || 'this venue'}: ${names}` : `Preview ${group.events[0].title}${category ? `, ${category}` : ''}`
+    const label = count > 1 ? `${count} events near ${group.events[0].venue_name || 'this venue'}: ${names}` : `${group.events[0].title}${category ? `, ${category}` : ''}`
     const icon = L.divIcon({
       className: `street-marker${count > 1 ? ' street-marker--cluster' : ` cat-${category}`}${group.featured ? ' street-marker--featured' : ''}${active ? ' street-marker--selected' : ''}`,
       html: `<span class="street-pin street-pin--art"><span class="street-art">${artMarkup(category)}</span>${count > 1 ? `<b class="street-pin-count">${count}</b>` : ''}${group.featured ? '<i class="street-pin-star" aria-hidden="true">★</i>' : ''}</span>`,
       iconSize: [44, 44], iconAnchor: [22, 22],
     })
     const marker = L.marker([group.lat, group.lng], { icon, keyboard: true, title: label, alt: label, zIndexOffset: active ? 1000 : 0 }).addTo(markers)
-    if (active && count === 1) marker.bindTooltip(`<strong>${group.events[0].title.replace(/[<>&]/g, '')}</strong><br>${timeLabel(group.events[0]).replace(/,/g, ' ·')}`, { permanent: true, direction: 'top', offset: [0, -20], className: 'street-tip' })
     const el = marker.getElement()
     el?.setAttribute('data-marker', '')
     el?.setAttribute('aria-label', label)
     el?.setAttribute('aria-pressed', String(active))
+    // A cluster zooms in until its pins separate; events at the very same venue never separate,
+    // so those (or a cluster already at the closest zoom) choose the first and the list shows it
+    const sameVenue = group.events.every(event => {
+      const point = points.value.find(p => p.event.id === event.id)
+      return point && Math.abs(point.lat - group.lat) < .000001 && Math.abs(point.lng - group.lng) < .000001
+    })
     const open = () => {
-      if (count === 1) choose(group.events[0])
-      else {
-        opener = document.activeElement
-        selectedId.value = null
-        groupEvents.value = group.events
-        emit('select', null)
-        map.setView([group.lat, group.lng], Math.min(19, map.getZoom() + 2), { animate: !reduced() })
-      }
+      if (count === 1 || sameVenue || map.getZoom() >= 19) choose(group.events[0])
+      else map.setView([group.lat, group.lng], Math.min(19, map.getZoom() + 2), { animate: !reduced() })
     }
     marker.on('click', open)
     el?.addEventListener('keydown', event => {
@@ -231,7 +227,7 @@ onMounted(() => {
   }
 })
 watch([() => props.events, () => props.prominentIds, () => props.loading, () => props.error], () => {
-  if (!props.events.some(event => event.id === selectedId.value)) { selectedId.value = null; groupEvents.value = [] }
+  if (!props.events.some(event => event.id === selectedId.value)) selectedId.value = null
   // Re-fit only when the set of events changed, so panning and zooming survive a refresh.
   const signature = props.events.map(event => event.id).join(',')
   if (signature !== fittedSignature) { fittedSignature = signature; fitEvents() }
@@ -240,17 +236,16 @@ watch([() => props.events, () => props.prominentIds, () => props.loading, () => 
 })
 watch([() => props.searchText, () => props.events, () => props.loading, () => props.error], lookupPlace)
 watch(() => props.focusedEventId, id => {
-  if (!id) return
+  if (!id) { if (selectedId.value) { selectedId.value = null; scheduleMarkers() } return }
   opener = document.activeElement
   selectedId.value = id
-  groupEvents.value = []
   showPoint(id)
 })
 onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abort(); observer?.disconnect(); cancelAnimationFrame(renderFrame); map?.remove(); map = null })
 </script>
 
 <template>
-  <section class="discovery-street-map" aria-label="Explore events on the Singapore map" :aria-busy="loading" @keydown.esc="dismiss">
+  <section class="discovery-street-map" :class="{ 'has-selection': selected }" aria-label="Explore events on the Singapore map" :aria-busy="loading" @keydown.esc="dismiss">
     <div ref="container" class="street-map-canvas" aria-label="Singapore street map. Use event pins or zoom controls to explore."></div>
     <!-- One chip: how many events are on the map, or the way back to all of them once zoomed in -->
     <button v-if="zoomed" type="button" class="street-chip street-chip--action" @click="zoomOutAll">{{ points.length ? `← Show all ${points.length} ${points.length === 1 ? 'event' : 'events'}` : '← Zoom out' }}</button>
@@ -263,17 +258,7 @@ onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abo
     <div v-dismissible v-else-if="error" class="street-map-message" role="alert">{{ error }} <button type="button" @click="emit('retry')">Try again</button></div>
     <div v-else-if="!points.length && !place" class="street-map-message" role="status">{{ events.length ? 'These events have no map coordinates yet. Their details are available in the list.' : 'No events match your search.' }}</div>
     <div v-dismissible v-if="tileError" class="street-tile-error" role="status">Map background couldn’t load. <button type="button" @click="retryTiles">Retry map</button></div>
-    <div v-if="selected || groupEvents.length" class="street-preview" role="region" aria-label="Selected map events">
-      <button type="button" class="preview-close" aria-label="Close event preview" @click="dismiss">×</button>
-      <template v-if="selected">
-        <p v-if="selected.pickedForYou" class="street-picked">Picked for you</p>
-        <p class="street-preview-category">{{ selected.category || selected.tags?.[0] || 'Event' }}<template v-if="selected.source !== 'general_discovery' && Number.isFinite(selected.compatibilityScore)"> · {{ Math.round(selected.compatibilityScore) }}% match</template></p>
-        <h2 tabindex="-1">{{ selected.title }}</h2>
-        <p>{{ timeLabel(selected) }}</p><p>{{ selected.venue_name || 'Venue to be announced' }}<template v-if="Number.isFinite(selected.spots_left)"> · {{ selected.spots_left > 0 ? `${selected.spots_left} spots left` : 'Full' }}</template></p>
-        <EventCardActions :event="selected" />
-      </template>
-      <template v-else><h2>{{ groupEvents.length }} events here</h2><ul class="street-cluster-list"><li v-for="event in groupEvents" :key="event.id"><button type="button" @click="choose(event, true)">{{ event.title }}</button></li></ul></template>
-    </div>
+    <p class="visually-hidden" aria-live="polite">{{ selected ? `Showing ${selected.title} on the map` : '' }}</p>
   </section>
 </template>
 
@@ -293,14 +278,6 @@ onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abo
 .street-zoom button:hover:not(:disabled) { background: var(--bookedz-hover); }
 .street-zoom button:disabled { color: var(--bookedz-disabled-ink); cursor: not-allowed; }
 .street-zoom button:focus-visible { outline-offset: -3px; }
-.street-preview { position: absolute; top: 20px; right: 20px; z-index: 500; width: min(245px,calc(100% - 40px)); max-height: calc(100% - 40px); overflow: auto; padding: 14px; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); color: var(--bookedz-ink); box-shadow: var(--bookedz-preview-shadow); }
-.street-preview h2 { font-family: var(--bookedz-body); font-size: 16px; line-height: 1.3; margin: 0 20px 6px 0; }
-.street-preview p { font-size: 12px; line-height: 1.5; margin: 4px 0; }
-.street-preview .street-picked { display: inline-block; margin: 0 0 6px; padding: 1px 8px; border-radius: 99px; background: var(--bookedz-primary); color: var(--bookedz-on-action); font-size: 11px; font-weight: 700; }
-.street-preview .street-preview-category { margin-right: 24px; color: var(--bookedz-primary-dark); font-size: 11px; font-weight: 600; text-transform: capitalize; }
-.preview-close { position: absolute; top: 0; right: 0; width: 36px; height: 36px; border: 0; background: transparent; color: var(--bookedz-muted); font-size: 22px; }
-.street-preview :deep(.card-action) { min-height: 40px; padding: 8px 10px; font-size: 12px; margin-top: 6px; }
-.street-cluster-list { list-style: none; padding: 0; margin: 0; }.street-cluster-list button { min-height: 44px; width: 100%; padding: 8px 0; text-align: left; border: 0; border-bottom: 1px solid var(--bookedz-border); background: transparent; color: var(--bookedz-ink); font: inherit; font-size: 12px; }
 .street-map-message,.street-tile-error { position: absolute; z-index: 480; left: 20px; right: 76px; bottom: 20px; padding: 10px; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: 12px; box-shadow: var(--bookedz-card-shadow); }
 .street-tile-error { bottom: 72px; }.street-map-message button,.street-tile-error button { min-height: 36px; border: 0; background: transparent; color: var(--bookedz-primary-dark); text-decoration: underline; }
 :deep(.street-tip) { padding: 6px 10px; border: 0; border-radius: 8px; background: var(--bookedz-ink); color: var(--bookedz-surface); font-size: 12px; line-height: 1.35; }
@@ -317,7 +294,10 @@ onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abo
 :deep(.street-marker--cluster .street-pin--art) { width: 40px; height: 40px; background: var(--bookedz-surface); color: inherit; }
 :deep(.street-pin-count) { position: absolute; bottom: -7px; right: -7px; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border: 2px solid var(--bookedz-surface); border-radius: 99px; background: var(--bookedz-ink); color: var(--bookedz-surface); font-size: 11px; font-weight: 700; line-height: 1; }
 :deep(.street-pin--place) { background: var(--bookedz-forest); }
-:deep(.street-marker--selected .street-pin) { transform: scale(1.25); box-shadow: 0 0 0 3px var(--bookedz-ink), 0 2px 8px #1f293740; animation: pin-bounce 420ms var(--bookedz-ease-stamp); }
+:deep(.street-marker--selected .street-pin) { transform: scale(1.25); box-shadow: 0 0 0 3px var(--bookedz-primary), 0 0 0 10px color-mix(in srgb, var(--bookedz-primary) 28%, transparent), 0 2px 8px #1f293740; animation: pin-bounce 420ms var(--bookedz-ease-stamp); }
+/* With an event chosen, the other pins step back so its pin stands out */
+.has-selection :deep(.street-marker:not(.street-marker--selected)) { opacity: .55; transition: opacity var(--bookedz-motion-normal) var(--bookedz-ease); }
+.has-selection :deep(.street-marker:not(.street-marker--selected):hover) { opacity: 1; }
 @keyframes pin-bounce { 0% { transform: scale(1) translateY(0); } 40% { transform: scale(1.3) translateY(-6px); } 100% { transform: scale(1.25) translateY(0); } }
 :deep(.street-pin) { cursor: pointer; }
 @media (hover: hover) { :deep(.street-marker:hover .street-pin) { transform: scale(1.15); } }
@@ -326,5 +306,5 @@ onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abo
 /* Phones (Map pane): fit between the toolbar and the bottom tab bar */
 @media(max-width:991px) { .street-map-canvas { max-height: 480px; } }
 @media(max-width:767px) { .street-map-canvas { aspect-ratio: 1.45 / 1; } }
-@media(pointer:coarse) { .preview-close { width: 44px; height: 44px; }.street-zoom button { width: 44px; height: 44px; } }
+@media(pointer:coarse) { .street-zoom button { width: 44px; height: 44px; } }
 </style>

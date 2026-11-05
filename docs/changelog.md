@@ -12,6 +12,12 @@ the day their status entry gives.
 
 ## 5 November 2026
 
+On 5 November 2026, at Denzel's request, Discover's map stopped showing a pop-up card: choosing an
+event highlights its pin (halo, other pins dimmed) and zooms to its area, and View event and RSVP
+moved into the chosen event card, which also appears under the map on phones. We changed
+`DiscoveryEventRow.vue`, `DiscoveryDayRow.vue`, `DiscoveryStreetMap.vue` and `DiscoverView.vue`, and
+updated the map steps in four browser specs.
+
 On 5 November 2026, at Gregory's request, we renamed "My RSVPs" to **Plans** and "My Events" to
 **Organise** across the navigation, page titles, headings, back links and sentences (URLs
 unchanged), gave Organise, Plans and Go together a slim header that holds each page's own
@@ -22,7 +28,7 @@ that slides out on hover or focus, which also re-centres the button. We changed
 pages that name or link to those pages (`CreateEventView`, `ManageEventView`, `ManageRsvpsView`,
 `RsvpView`, `LandingView`, `DiscoverView`, `MyTicketView`, `SelfCheckInView`),
 `DeleteAccount.vue`, `EventTeamPanel.vue`, `OfferBanner.vue` and ten e2e specs. Discover's cards
-stay as Aishani built them, and Denzel, Huxley, Aishani and Vivienne keep authorship of their
+are Aishani's and Denzel's, and Denzel, Huxley, Aishani and Vivienne keep authorship of their
 files.
 
 On 5 November 2026, at Denzel's request, the sidebar starts as the 76px icon rail at every
