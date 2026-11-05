@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+import { requireCommunityAccount } from '../../utils/communityAccount.js'
 import EventArtwork from '../EventArtwork.vue'
 import BumpValue from '../ui/BumpValue.vue'
 import { joinGroup } from '../../utils/api.js'
@@ -12,6 +13,7 @@ import { toast } from '../../composables/useToast'
 // its event's card (compact: no event row). Plan, chat and settings are on the group page.
 const props = defineProps({ group: { type: Object, required: true }, highlight: Boolean, compact: Boolean })
 const emit = defineEmits(['changed'])
+const router = useRouter()
 const busy = ref(false)
 const justJoined = ref(false)
 const error = ref('')
@@ -34,7 +36,11 @@ const eventRsvpLabel = computed(() => (event.value?.requiresApproval ? 'Request 
 // Offer the event RSVP to members who don't have one yet
 const needsEventRsvp = computed(() => (props.group.myStatus === 'confirmed' || isHost.value) && !props.group.myEventStatus)
 
+async function requestJoin() {
+  if (await requireCommunityAccount(router, pageLink.value)) router.push(pageLink.value)
+}
 async function join() {
+  if (!await requireCommunityAccount(router, pageLink.value)) return
   busy.value = true
   error.value = ''
   try {
@@ -92,7 +98,7 @@ async function join() {
         <RouterLink :to="pageLink" class="btn btn-outline-secondary btn-sm">
           {{ joined || isHost ? 'Open group' : 'View group' }}<span v-if="group.commentCount"> · {{ group.commentCount }} {{ group.commentCount === 1 ? 'message' : 'messages' }}</span>
         </RouterLink>
-        <RouterLink v-if="!joined && !isHost && group.joinMode === 'approval' && !group.myInvite" :to="pageLink" class="btn btn-primary btn-sm">Ask to join</RouterLink>
+        <RouterLink v-if="!joined && !isHost && group.joinMode === 'approval' && !group.myInvite" :to="pageLink" class="btn btn-primary btn-sm" @click.prevent="requestJoin">Ask to join</RouterLink>
         <button v-else-if="!joined && !isHost" type="button" class="btn btn-primary btn-sm" :disabled="busy || full" @click="join">
           {{ busy ? 'Joining…' : full ? 'Full' : group.myInvite ? 'Accept invite' : group.joinMode === 'approval' ? 'Ask to join' : 'Join group' }}
         </button>

@@ -1,5 +1,6 @@
 <script setup>
 import dinoMark from '@/assets/brand/dino-mark.png'
+import donutO from '@/assets/brand/dino-donut-o.png'
 import { dinoById } from '@/lib/dinos'
 import { themePreference, setTheme } from '../lib/theme.js'
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
@@ -91,7 +92,7 @@ function resetDemo() {
     <div id="mainNav" class="app-sidebar" :class="{ show: menuOpen, 'is-collapsed': collapsed }">
       <RouterLink class="sidebar-brand" to="/" aria-label="Dino" translate="no">
         <img class="brand-symbol" :src="dinoMark" alt="" aria-hidden="true">
-        Dino
+        <span class="brand-word" aria-hidden="true">Din<img class="brand-o" :src="donutO" alt="" aria-hidden="true"></span>
       </RouterLink>
       <ul class="sidebar-links">
         <li><RouterLink class="side-link" data-label="Discover" :class="{ active: isOnDiscover }" active-class="" exact-active-class="" to="/discover"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.discover" /></svg><span class="side-label">Discover</span></RouterLink></li>
@@ -134,7 +135,7 @@ function resetDemo() {
     <header class="app-topbar" :class="{ 'app-topbar--minimal': USING_SUPABASE && (hasSession || route.path === '/') }">
       <!-- Own icon: Bootstrap's .navbar-toggler-icon only has an image inside a .navbar (none in light mode here) -->
       <button ref="menuToggle" class="navbar-toggler" type="button" aria-controls="mainNav" :aria-expanded="menuOpen" aria-label="Toggle navigation" @click="menuOpen = !menuOpen"><svg class="toggler-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
-      <RouterLink class="topbar-brand" to="/" aria-label="Dino home" translate="no"><img class="brand-symbol" :src="dinoMark" alt="" aria-hidden="true"> Dino</RouterLink>
+      <RouterLink class="topbar-brand" to="/" aria-label="Dino home" translate="no"><img class="brand-symbol" :src="dinoMark" alt="" aria-hidden="true"> <span class="brand-word" aria-hidden="true">Din<img class="brand-o" :src="donutO" alt="" aria-hidden="true"></span></RouterLink>
       <div class="nav-account">
         <RouterLink v-if="USING_SUPABASE && !hasSession && route.path !== '/'" to="/#join-dino" class="nav-sign-in">Sign in <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 10h12m-4-4 4 4-4 4"/></svg></RouterLink>
         <button v-else-if="!USING_SUPABASE" type="button" class="nav-quiet" @click="resetDemo">Reset demo data</button>
@@ -156,6 +157,8 @@ function resetDemo() {
 .app-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 1030; width: var(--sidebar-w); display: flex; flex-direction: column; gap: 6px; padding: 24px 14px 16px; overflow-y: auto; overscroll-behavior: contain; background: var(--bookedz-surface); border-right: 1px solid var(--bookedz-border); }
 .sidebar-brand, .topbar-brand { display: inline-flex; align-items: center; gap: .5rem; color: var(--bookedz-ink); font-family: var(--bookedz-heading); font-size: 1.65rem; font-weight: 700; letter-spacing: -.06em; text-decoration: none; }
 .sidebar-brand { margin: 0 0 22px 10px; }
+.brand-word { display: inline-flex; align-items: center; font-size: 1.3em; line-height: 1; }
+.brand-o { width: auto; height: .78em; margin-left: .04em; object-fit: contain; transform: translateY(.04em); }
 .brand-symbol { width: 40px; height: 40px; object-fit: contain; }
 .sidebar-links { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
 /* Same spacing as before around the line: 6px divider margin + 6px flex gap above, 6px gap + 8px padding below */

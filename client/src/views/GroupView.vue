@@ -1,11 +1,12 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { requireCommunityAccount } from '../utils/communityAccount.js'
 import EventArtwork from '../components/EventArtwork.vue'
 import BumpValue from '../components/ui/BumpValue.vue'
 import GroupPlan from '../components/groups/GroupPlan.vue'
 import GroupChat from '../components/groups/GroupChat.vue'
-import { getGroup, joinGroup, cancelRsvp, approveRsvp, rejectRsvp, respondGroupInvite, updateGroupSettings, deleteGroup } from '../utils/api.js'
+import { getCurrentUser, getGroup, joinGroup, cancelRsvp, approveRsvp, rejectRsvp, respondGroupInvite, updateGroupSettings, deleteGroup } from '../utils/api.js'
 import { CAPACITY_RANGE, JOIN_MESSAGE_LIMIT, NOTE_LIMIT, countdownLabel, joinModeLabel, settingsErrors, visibilityLabel } from '../utils/groups.js'
 import '../assets/design-baseline.css'
 import { formatEventTime } from '../utils/helpers.js'
@@ -17,6 +18,7 @@ import { toast } from '../composables/useToast'
 // the host's settings (visibility, who can join, spots, note, delete).
 const route = useRoute()
 const router = useRouter()
+const signedIn = ref(false)
 const group = ref(null)
 const loading = ref(true)
 const error = ref('')
@@ -31,6 +33,7 @@ async function load({ quiet = false } = {}) {
   if (!quiet) loading.value = true
   error.value = ''
   try {
+    signedIn.value = Boolean(await getCurrentUser())
     group.value = await getGroup(token.value ? { token: token.value } : { id: route.params.id })
   } catch (e) {
     error.value = e.message
@@ -64,7 +67,8 @@ const eventStatusText = { confirmed: 'going to the event', waitlisted: 'on the e
 // Approval groups: "Ask to join" opens a short message box first
 const asking = ref(false)
 const joinMessage = ref('')
-function startJoin() {
+async function startJoin() {
+  if (!await requireCommunityAccount(router, route.fullPath)) return
   if (group.value.joinMode === 'approval' && !invite.value) {
     asking.value = true
     setTimeout(() => document.getElementById('join-message')?.focus(), 50)
@@ -73,6 +77,7 @@ function startJoin() {
   join()
 }
 async function join() {
+  if (!await requireCommunityAccount(router, route.fullPath)) return
   busy.value = true
   actionError.value = ''
   try {
@@ -202,6 +207,7 @@ async function removeGroup() {
       <h1 class="section-title">Can’t open this group</h1>
       <p>{{ error }}</p>
       <RouterLink to="/community" class="btn btn-outline-secondary">See other groups</RouterLink>
+      <RouterLink v-if="!signedIn" class="btn btn-primary ms-2" :to="{ path: '/', query: { redirect: route.fullPath }, hash: '#join-dino' }">Log in / Sign up</RouterLink>
     </div>
 
     <template v-else-if="group">
@@ -372,7 +378,7 @@ async function removeGroup() {
         <p class="text-meta text-secondary m-0">Members plan food before or after the event, with deals nearby. Join the group to see and add ideas.</p>
       </section>
 
-      <section class="group-card">
+      <section v-if="signedIn" class="group-card">
         <GroupChat :key="group.id" :group-id="group.id" :can-post="isMember" @changed="load({ quiet: true })" />
       </section>
 

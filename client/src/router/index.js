@@ -113,7 +113,7 @@ router.beforeEach(async (to) => {
   if (!USING_SUPABASE) return true
   const user = await getCurrentUser()
   // Discovery and event pages stay public, except check-in pages that are marked requiresAuth
-  if (!to.meta.requiresAuth && (to.path === '/discover' || to.path === '/events' || to.path.startsWith('/events/'))) return true
+  if (!to.meta.requiresAuth && (to.path === '/discover' || to.path === '/community' || /^\/groups\/[^/]+\/?$/.test(to.path) || to.path === '/events' || to.path.startsWith('/events/'))) return true
   if (!user) return { path: '/', query: { redirect: to.fullPath } }
   return true
 })

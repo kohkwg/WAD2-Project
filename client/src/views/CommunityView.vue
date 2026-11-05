@@ -1,8 +1,9 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { getMyRsvps, getGroups, getGroupInvites, respondGroupInvite, getGroupNotices, dismissGroupNotice } from '../utils/api.js'
+import { getCurrentUser, getMyRsvps, getGroups, getGroupInvites, respondGroupInvite, getGroupNotices, dismissGroupNotice } from '../utils/api.js'
 import { subscribeSocialUpdates } from '../utils/profileSocial.js'
+import { requireCommunityAccount } from '../utils/communityAccount.js'
 import FriendsPanel from '../components/community/FriendsPanel.vue'
 import '../assets/design-baseline.css'
 import EventGroupsCard from '../components/community/EventGroupsCard.vue'
@@ -19,6 +20,7 @@ import { formatEventTime } from '../utils/helpers.js'
 // panel; invites from friends and "group deleted" notices show at the top.
 const route = useRoute()
 const router = useRouter()
+const signedIn = ref(false)
 const groups = ref([])
 const events = ref([]) // your upcoming RSVP'd events
 const ACTIVE = ['confirmed', 'pending', 'waitlisted', 'offered']
@@ -41,8 +43,9 @@ const inviteBusy = ref('')
 async function load() {
   error.value = ''
   try {
+    signedIn.value = Boolean(await getCurrentUser())
     const [groupList, eventList, inviteList, noticeList] = await Promise.all([
-      getGroups(), getMyRsvps().catch(() => []), getGroupInvites().catch(() => []), getGroupNotices().catch(() => []),
+      getGroups(), signedIn.value ? getMyRsvps().catch(() => []) : [], signedIn.value ? getGroupInvites().catch(() => []) : [], signedIn.value ? getGroupNotices().catch(() => []) : [],
     ])
     groups.value = groupList
     invites.value = inviteList
@@ -63,8 +66,8 @@ let refreshTimer
 const socialUpdates = ref(0)
 let stopSocial = () => {}
 onMounted(async () => {
-  stopSocial = subscribeSocialUpdates(() => { socialUpdates.value++ }, () => true)
   await load()
+  if (signedIn.value) stopSocial = subscribeSocialUpdates(() => { socialUpdates.value++ }, () => true)
   // /community#friends (old Profile → Friends links) opens at the Friends panel
   if (route.hash === '#friends') {
     await nextTick()
@@ -73,13 +76,16 @@ onMounted(async () => {
     toFriends(); setTimeout(toFriends, 400)
   }
   // ?start=<event id> opens Start a group with that event chosen (linked from event pages)
-  if (typeof route.query.start === 'string') openComposer(route.query.start)
+  if (signedIn.value && typeof route.query.start === 'string') openComposer(route.query.start)
+  else if (signedIn.value && route.query.compose === '1') openComposer()
   refreshTimer = setInterval(load, 30000)
   window.addEventListener('focus', load)
 })
 onBeforeUnmount(() => { clearInterval(refreshTimer); window.removeEventListener('focus', load); stopSocial() })
 
-function openComposer(eventId = '') {
+async function openComposer(eventId = '') {
+  const destination = router.resolve({ path: '/community', query: { ...route.query, ...(eventId ? { start: eventId } : { compose: '1' }) } }).fullPath
+  if (!await requireCommunityAccount(router, destination)) return
   // Groups are started by people going to the event; from an event page without an RSVP, say so
   if (eventId && !events.value.some((e) => e.id === eventId)) {
     toast('RSVP to that event first, then you can start a group for it.', { tone: 'error' })
@@ -90,7 +96,7 @@ function openComposer(eventId = '') {
 }
 function closeComposer() {
   composerFor.value = null
-  if (route.query.start) router.replace({ query: { ...route.query, start: undefined } })
+  if (route.query.start || route.query.compose) router.replace({ query: { ...route.query, start: undefined, compose: undefined } })
 }
 async function onCreated(group) {
   closeComposer()
@@ -237,7 +243,7 @@ function showEventGroups(eventId) {
     <div class="community-main">
       <div class="community-tools">
         <div class="community-filters" role="group" aria-label="Show groups">
-          <button v-for="f in FILTERS" :key="f.key" type="button" class="community-filter" :aria-pressed="filter === f.key" @click="filter = f.key">
+          <button v-for="f in FILTERS.filter(item => signedIn || ['all', 'week'].includes(item.key))" :key="f.key" type="button" class="community-filter" :aria-pressed="filter === f.key" @click="filter = f.key">
             {{ f.label }} <span class="tnum"><BumpValue :value="counts[f.key]" /></span>
           </button>
         </div>
@@ -266,7 +272,8 @@ function showEventGroups(eventId) {
 
     <!-- A small side panel: find people by username and handle friend requests -->
     <aside id="friends" class="community-aside" aria-label="Friends">
-      <FriendsPanel compact :updates="socialUpdates" />
+      <FriendsPanel v-if="signedIn" compact :updates="socialUpdates" />
+      <section v-else class="community-empty"><h2 class="section-title">Find your people</h2><p>Sign in to add friends, start a group and join the conversation.</p><RouterLink class="btn btn-primary" :to="{ path: '/', query: { redirect: '/community#friends' }, hash: '#join-dino' }">Log in / Sign up</RouterLink></section>
     </aside>
     </div>
 
