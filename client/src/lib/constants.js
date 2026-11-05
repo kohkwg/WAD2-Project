@@ -1,8 +1,10 @@
-// the slugs in public.interests. event creation (feature 2) tags events with these,
+// The slugs in public.interests. Event creation (Feature 2) tags events with these,
 // the view exposes them as events_with_counts.tags, and profiles.interest_weights is
 // keyed by them, so filters, profile interests and recommendations all match.
-// lowercase because the recommendation engine matches on exact strings.
+// Lowercase because the recommendation engine matches on exact strings.
+export const INTEREST_OPTIONS = [
+  'tech', 'music', 'sports', 'arts', 'food',
+  'volunteering', 'career', 'outdoors', 'gaming', 'wellness', 'others',
+]
 
-export const INTEREST_OPTIONS = ['tech', 'music', 'sports', 'arts', 'food', 'volunteering', 'career', 'outdoors', 'gaming', 'wellness', 'others'];
-
-export const CATEGORIES = INTEREST_OPTIONS;
+export const CATEGORIES = INTEREST_OPTIONS

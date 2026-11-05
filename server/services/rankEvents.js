@@ -1,17 +1,16 @@
 /**
- * feature 1 ranking only: no database, geocoding, auth, or interaction calls.
- * kept separate from recommendation.js so existing callers retain their behavior.
+ * Feature 1 ranking only: no database, geocoding, auth, or interaction calls.
+ * Kept separate from recommendation.js so existing callers retain their behavior.
  *
- * hydrate event tags from event_interests/interests before calling (tags are slug
- * strings). a profile can supply interests as slug strings (weight 1 each), plus
- * optional interest_weights. interest blends the share of positive weight
- * matched with match strength. duplicate tags count only once.
+ * Hydrate event tags from event_interests/interests before calling (tags are slug
+ * strings). A profile can supply interests as slug strings (weight 1 each), plus
+ * optional interest_weights. Interest blends the share of positive weight
+ * matched with match strength. Duplicate tags count only once.
  *
- * distance requires pre-geocoded profile and venue coordinates: { lat, lng }
- * or { latitude, longitude }, with event.venue also accepted. a postal code by
- * itself is not a coordinate. missing location drops distance for that event.
+ * Distance requires pre-geocoded profile and venue coordinates: { lat, lng }
+ * or { latitude, longitude }, with event.venue also accepted. A postal code by
+ * itself is not a coordinate. Missing location drops distance for that event.
  */
-
 
 const RANKING_CONFIG = Object.freeze({
   weights: Object.freeze({
@@ -19,17 +18,15 @@ const RANKING_CONFIG = Object.freeze({
     recency: 0.20,
     popularity: 0.15,
     distance: 0.15,
-    spots: 0.10
+    spots: 0.10,
   }),
   recencyDays: 14,
   distanceKm: 5,
-  diversityPenalty: 0.3 // tunable heuristic for maximum tag similarity.
+  diversityPenalty: 0.3, // Tunable heuristic for maximum tag similarity.
 });
 
 const DAY_MS = 86400000;
-
 const clamp = value => Math.max(0, Math.min(1, value));
-
 const validNumber = value => typeof value === "number" && Number.isFinite(value);
 
 function tagNames(tags) {
@@ -54,9 +51,7 @@ function profileWeights(profile) {
 }
 
 function interestScore(weights, tags) {
-  const interests = profileWeights({
-    interest_weights: weights
-  });
+  const interests = profileWeights({ interest_weights: weights });
   const total = [...interests.values()].reduce((sum, weight) => sum + weight, 0);
   if (total <= 0) return 0;
   const matched = tagNames(tags).reduce((sum, tag) => sum + (interests.get(tag) || 0), 0);
@@ -69,20 +64,20 @@ function coordinates(value) {
   if (!value) return null;
   const lat = value.lat ?? value.latitude;
   const lng = value.lng ?? value.longitude;
-  return validNumber(lat) && validNumber(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? {
-    lat,
-    lng
-  } : null;
+  return validNumber(lat) && validNumber(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+    ? { lat, lng } : null;
 }
 
 function distanceKm(a, b) {
   const rad = degrees => degrees * Math.PI / 180;
-  const h = Math.sin(rad(b.lat - a.lat) / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lng - a.lng) / 2) ** 2;
+  const h = Math.sin(rad(b.lat - a.lat) / 2) ** 2
+    + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lng - a.lng) / 2) ** 2;
   return 6371 * 2 * Math.asin(Math.sqrt(clamp(h)));
 }
 
 function positiveRatio(numerator, denominator) {
-  return validNumber(numerator) && validNumber(denominator) && denominator > 0 ? clamp(numerator / denominator) : 0;
+  return validNumber(numerator) && validNumber(denominator) && denominator > 0
+    ? clamp(numerator / denominator) : 0;
 }
 
 function reasonFor(signals, weights, matched) {
@@ -96,35 +91,28 @@ function reasonFor(signals, weights, matched) {
     }
   }
   switch (strongest) {
-    case "interest":
-      return `Matches your interests: ${matched.join(", ")}`;
-    case "recency":
-      return "Starting soon";
-    case "popularity":
-      return "Popular";
-    case "distance":
-      return "Near you";
-    case "spots":
-      return "Spots available";
-    default:
-      return "Suggested for you";
+    case "interest": return `Matches your interests: ${matched.join(", ")}`;
+    case "recency": return "Starting soon";
+    case "popularity": return "Popular";
+    case "distance": return "Near you";
+    case "spots": return "Spots available";
+    default: return "Suggested for you";
   }
 }
 
 /**
- * @param {array} events upcoming candidates. invalid/past dates are excluded.
- * @param {object} userprofile { interests?, interest_weights?, lat?, lng? }
- * @param {object} options { now?: date|string|number, limit?: number,
- *                          excludeeventids?: set|array }
- * @returns {array<{event: object, score: number, reason: string}>}
- * score is the normalized signal score before diversity, for explainability.
- * returned order penalises maximum tag overlap with earlier selections by up
- * to 30%, using a tunable heuristic. missing tags receive no penalty.
- * ties retain input order. neither input events nor the profile are modified.
- * unknown/unlimited capacity contributes 0 popularity/spots rather than a
- * fabricated ratio. cold starts use only recency and popularity, renormalized.
+ * @param {Array} events Upcoming candidates. Invalid/past dates are excluded.
+ * @param {Object} userProfile { interests?, interest_weights?, lat?, lng? }
+ * @param {Object} options { now?: Date|string|number, limit?: number,
+ *                          excludeEventIds?: Set|Array }
+ * @returns {Array<{event: Object, score: number, reason: string}>}
+ * score is the normalized signal score BEFORE diversity, for explainability.
+ * Returned order penalises maximum tag overlap with earlier selections by up
+ * to 30%, using a tunable heuristic. Missing tags receive no penalty.
+ * Ties retain input order. Neither input events nor the profile are modified.
+ * Unknown/unlimited capacity contributes 0 popularity/spots rather than a
+ * fabricated ratio. Cold starts use only recency and popularity, renormalized.
  */
-
 function rankEvents(events, userProfile = {}, options = {}) {
   const profile = userProfile || {};
   const now = options.now === undefined ? Date.now() : new Date(options.now).getTime();
@@ -139,6 +127,7 @@ function rankEvents(events, userProfile = {}, options = {}) {
   const interestWeights = Object.fromEntries(interests);
   const userLocation = coordinates(profile);
   const pool = [];
+
   for (const event of events || []) {
     if (!event || excluded.has(event.id)) continue;
     const startsAt = new Date(event.start_time).getTime();
@@ -151,23 +140,17 @@ function rankEvents(events, userProfile = {}, options = {}) {
       recency: Math.exp(-((startsAt - now) / DAY_MS) / RANKING_CONFIG.recencyDays),
       popularity: positiveRatio(event.confirmed_count, event.capacity),
       distance: hasDistance ? 1 / (1 + distanceKm(userLocation, venueLocation) / RANKING_CONFIG.distanceKm) : 0,
-      spots: positiveRatio(event.spots_left, event.capacity)
+      spots: positiveRatio(event.spots_left, event.capacity),
     };
-    const weights = hasInterests ? {
-      ...RANKING_CONFIG.weights
-    } : {
-      recency: RANKING_CONFIG.weights.recency,
-      popularity: RANKING_CONFIG.weights.popularity
-    };
+    const weights = hasInterests
+      ? { ...RANKING_CONFIG.weights }
+      : { recency: RANKING_CONFIG.weights.recency, popularity: RANKING_CONFIG.weights.popularity };
     if (!hasDistance) delete weights.distance;
     const totalWeight = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
     const score = Object.entries(weights).reduce((sum, [signal, weight]) => sum + signals[signal] * weight, 0) / totalWeight;
-    pool.push({
-      event,
-      score: clamp(score),
-      reason: reasonFor(signals, weights, matched)
-    });
+    pool.push({ event, score: clamp(score), reason: reasonFor(signals, weights, matched) });
   }
+
   const ranked = [];
   while (pool.length && ranked.length < limit) {
     let bestIndex = 0;
@@ -178,19 +161,12 @@ function rankEvents(events, userProfile = {}, options = {}) {
         maxSimilarity = Math.max(maxSimilarity, tagSimilarity(candidate.event.tags, chosen.event.tags));
       }
       const adjusted = candidate.score * (1 - RANKING_CONFIG.diversityPenalty * maxSimilarity);
-      if (adjusted > bestScore) {
-        bestScore = adjusted;
-        bestIndex = index;
-      }
+      if (adjusted > bestScore) { bestScore = adjusted; bestIndex = index; }
     });
     const [chosen] = pool.splice(bestIndex, 1);
     ranked.push(chosen);
   }
   return ranked;
 }
-module.exports = {
-  rankEvents,
-  interestScore,
-  tagSimilarity,
-  RANKING_CONFIG
-};
+
+module.exports = { rankEvents, interestScore, tagSimilarity, RANKING_CONFIG };

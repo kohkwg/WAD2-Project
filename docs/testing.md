@@ -1,29 +1,5 @@
 # Testing and local operation
 
-5 November search-suggestions checkpoint: `node --test client/tests/search-suggestions.test.mjs` from
-the repo root covers the ranking and keyword rules, and `client/e2e/search-suggestions.spec.js` covers
-the list in demo mode. Run the spec against a fresh demo server, as described below. A hidden browser
-pane doesn't fire focus events, and the suggestion data loads on focus, so scripted checks there must
-dispatch `focus` on `#event-search` themselves.
-
-## Account-wide update notifications (5 November)
-
-```sh
-node --test client/src/utils/__tests__/userNotifications.test.js
-VITE_USE_MOCK=true pnpm --dir client exec playwright test e2e/user-notifications.spec.js
-```
-
-Use an owned demo server; if 5173 is occupied, use the temporary-config approach below.
-The notification specs mutate only their isolated browser's demo storage, with `[TEST]`
-announcement content. Unit checks cover baseline/deduplication, reload history, independent
-sources/accounts, event/group decisions, offers, check-in and hidden-venue privacy. Browser
-checks cover top-right responsive placement in both themes, dino assets, close/ten-second
-expiry, background registration changes and new/edited announcements. The 5 November run
-used port 5199 and `/tmp/wad2-notification-playwright.config.mjs`; the two cases passed in
-separate targeted runs. Group decisions were also checked with a scratch demo browser script.
-No hosted data is changed. Live registration Realtime, private-group RLS and team invitations
-still need a human-signed-in live check. Polling snapshots do not prove durable offline delivery.
-
 5 November saved-events checkpoint: `client/src/utils/__tests__/savedEvents.test.js` (badge, action
 and ordering rules) passes with `NODE_ENV=test node --test` from `client/`, and
 `client/e2e/saved-events.spec.js` covers the Saved chip (live Discover with an in-browser Supabase
@@ -723,7 +699,7 @@ search/view-switch regression. On 25 October, these ran against an owned demo Vi
 server on 5183 using a temporary config overriding baseURL/output paths because
 5173 was occupied; the repository's default config remains unchanged.
 
-## Go together and food deals (4 November; deals removed 5 November, see below)
+## Go together and food deals (4 November)
 
 ```sh
 cd server && node --test tests/foodDeals.test.js
@@ -993,97 +969,3 @@ Five checks: a logged-out visitor sees the organiser then co-organisers; only pu
 back; helpers are left out; a draft is hidden from others but shown to its organiser; an unknown
 event returns nothing. Before the migration is applied, the page leaves the line out instead of
 showing an error. Checked by hand in demo mode at 1280px and 375px, light and dark.
-
-## Go together food: open places, nearest first, and place search
-
-In a group's Before and after planner:
-- **Places tab** (Geoapify, needs `GEOAPIFY_API_KEY` in `server/.env`): places whose
-  OpenStreetMap opening hours say they're closed at the slot's start time are hidden; the rest are
-  listed nearest first and labelled "Open at …" or "Hours not listed" (most places have no hours on
-  OpenStreetMap). The hours reader is `server/services/openingHours.js`; unreadable hours count as
-  "Hours not listed", never as closed. The list is fetched again when the slot's time changes.
-- **Search for a place** (OneMap, no key): matches from up to three result pages, nearest the venue
-  first; picking one saves it with its address and a map pin. OneMap has no opening hours, so these
-  aren't filtered. Typing a name and pressing Add still works.
-
-```bash
-node --test server/tests/openingHours.test.js server/tests/foodPlaces.test.js
-```
-
-Checked by hand against live Geoapify data near SMU: at Saturday 12:30pm the weekday-only
-Starbucks is hidden; at 9:30pm Luckin Coffee (closes 9pm) and both Starbucks are hidden; lists are
-nearest first. Searching "maxwell" lists Maxwell Food Centre; suggesting a search result saves its
-address and shows its pin.
-
-## Go together: Before and after layout
-
-On wide screens the group page puts Going, Invite and Chat in a sidebar (280–340px) and gives
-Before and after the main column, so "before" and "after" sit side by side (each needs ~280px).
-When the planner is narrower than 600px (phones, small laptops) a Before | After switch shows one
-slot at a time (container query on `.group-plan`). Each slot now reads top to bottom:
-- one line for timing ("Best time · 2 of 3 free · Waiting on …") with "Mark when you're free";
-  the free-time grid opens under it and closes with Done (it still saves on every drag);
-- the host's pick as "The plan" (distance and walk from the venue, Directions, Change);
-- other ideas, most keen first, with "Lock it in" for the host;
-- with no ideas yet, the three nearest places open at that time, one tap to suggest (needs the
-  food server; otherwise a plain "be the first" line).
-
-`e2e/go-together.spec.js` covers it (5/6 pass; the remaining failure is the Friends sidebar
-height on Community, unrelated). Checked by hand at 1440px (both slots side by side, the section
-went from about 1,820px to 870px tall), at 375px in dark mode, and with the grid opened and closed.
-
-## Deals removed (5 November)
-
-The food deals (Telegram channels and deal sites, extracted with Gemini) were taken out: the
-`pipeline/` folder, the server's deal code and ingest route, the Deals tab and the deal env keys
-(`GEMINI_*`, `TELEGRAM_*`, `FOOD_INGEST_*`, `PIPELINE_PYTHON`). `server/services/foodDeals.js`
-became `foodPlaces.js` (places only) and `/api/food/nearby` now returns `{ places, status }`.
-The database still accepts an idea of kind `deal`, so any saved before now still shows, as a
-plain idea. `server/tests/foodPlaces.test.js` (4) and `openingHours.test.js` (5) pass;
-`e2e/go-together.spec.js` now stands in a nearby place instead of a deal (5/6 pass, the sixth is
-the unrelated Friends sidebar height). The free-time grid's group column also no longer keeps an
-outline on the last cell pointed at.
-
-## One place box, and the chat fix (5 November)
-
-"Suggest a spot" now opens a single place box: one search field over one scrolling list. With
-the field empty it lists nearby places open at the slot's time (Geoapify), nearest first; typing
-narrows those by name or kind and, from three letters, adds OneMap matches to the same list
-(nearest the venue first, no repeats), with a last row to add just the typed name. The three
-"nearby and open" quick picks under an empty slot were removed. OneMap addresses no longer repeat
-the building name, wherever it appears. Place names that Geoapify sends as numbers (a cafe called
-"1988") are treated as text on the server and the page (a new case in `foodPlaces.test.js`).
-
-Group chat: sending a message showed "nextTick(...) is not a function" because the next line
-began with "(" and was read as a call on `nextTick()`'s result; it is now its own statement.
-
-Checked in demo mode at 375px in dark mode (the nearby list, a search for "lau pa" showing Lau Pa
-Sat with its address and distance, the typed-name row) and by sending a chat message. Go together
-e2e: 5/6 pass, the sixth being the unrelated Friends sidebar height.
-
-## Discover: day carousels at every width (5 November)
-
-Below 992px Discover's list view used a separate vertical timeline. It now uses the same
-`DiscoveryDayRow` as wide screens: a swipeable row per day with page dots and See more / Close.
-The row already picks how many cards fit (one per page on phones, two on tablets). On rows
-narrower than 460px the header keeps the date on one line, drops the divider and shows the count
-in the button ("See more · 2"). The old timeline markup and its styles (in `DiscoverView.vue` and
-`design-baseline.css`) were removed; the list/map switch below 992px is unchanged.
-
-Checked by hand at 375px (swipe, dots, See more opens all of a day's events) and 768px (two per
-page). Discover e2e files (`immersive-discovery`, `discovery-rsvp-regressions`, `filter-panel`,
-`discover-browse`, `discovery-list-palette`) give the same results before and after the change
-(12 failures, all already failing on dev before it).
-
-## Discover: the next seven days on first load (5 November)
-
-With no search or filters, Discover used to start with the calendar week containing today
-(Monday to Sunday), so later in the week it showed only a few days, and below 992px it showed the
-first 10 events instead of a week. It now starts with the next seven days from today at every
-width (`weekAt` in `DiscoverView.vue`), and "Show more" adds seven days at a time. Moving the week
-calendar to another week still shows that Monday-to-Sunday week. The empty state reads "Nothing
-on in the next 7 days" and works on narrow screens too.
-
-Checked in demo mode on 5 November at 1440px and 375px: first load covers 5–11 November, Show more
-adds 12–18 November and offers 19–25. Discover e2e: the same 12 failures as before (all already
-failing on dev).

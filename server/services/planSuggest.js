@@ -1,70 +1,46 @@
 /**
- * automatic event planner: suggests a programme and a task list for a new event from
- * past events. pure functions only: no database, network or clock (pass `now`).
+ * Automatic event planner: suggests a programme and a task list for a new event from
+ * past events. Pure functions only: no database, network or clock (pass `now`).
  *
- * target:    { title, description, category, tags[], capacity, startsat, endsat }
- * candidate: { id, title, description, category, tags[], capacity, startsat, endsat,
+ * target:    { title, description, category, tags[], capacity, startsAt, endsAt }
+ * candidate: { id, title, description, category, tags[], capacity, startsAt, endsAt,
  *              own (bool), attendance (0..1 | null),
- *              programme: [{ title, description, startsat, endsat }],
+ *              programme: [{ title, description, startsAt, endsAt }],
  *              tasks: [{ title, notes, position }] }
  *
  * `own` candidates are the caller's own events; only they may carry tasks (other
- * organisers' tasks are private, so callers never supply them). programme times are
+ * organisers' tasks are private, so callers never supply them). Programme times are
  * returned as fractions of the event's length so the caller can fit them to the new
  * event's final dates.
  *
- * 1. exact title (ignoring case/spacing): copy the best past event's programme, and
+ * 1. Exact title (ignoring case/spacing): copy the best past event's programme, and
  *    its tasks when that event is the caller's own.
- * 2. otherwise score similar ended events (text, tags, category, size), weight them
+ * 2. Otherwise score similar ended events (text, tags, category, size), weight them
  *    by similarity, age and attendance, group matching items and keep the ones that
- *    enough neighbours share. community patterns need >= 3 events and 40% of the
+ *    enough neighbours share. Community patterns need >= 3 events and 40% of the
  *    (weighted) neighbours; own events need 40% too, but a single event is enough.
  */
 
-
 const CONFIG = Object.freeze({
-  weights: Object.freeze({
-    text: 0.40,
-    tags: 0.30,
-    category: 0.15,
-    scale: 0.15
-  }),
-  textFieldWeights: Object.freeze({
-    title: 3,
-    category: 2,
-    tags: 2,
-    description: 1
-  }),
+  weights: Object.freeze({ text: 0.40, tags: 0.30, category: 0.15, scale: 0.15 }),
+  textFieldWeights: Object.freeze({ title: 3, category: 2, tags: 2, description: 1 }),
   minSimilarity: 0.40,
-  minText: 0.08,
-  // a shared tag and a similar size alone never make events neighbours
-  maxNeighbours: 10,
-  // per pool (own / community)
+  minText: 0.08, // a shared tag and a similar size alone never make events neighbours
+  maxNeighbours: 10, // per pool (own / community)
   recencyHalfLifeDays: 365,
   minRecency: 0.25,
   clusterJaccard: 0.6,
-  clusterTimeGap: 0.2,
-  // programme items merge only if they sit at a similar point of the event
+  clusterTimeGap: 0.2, // programme items merge only if they sit at a similar point of the event
   dedupeTimeGap: 0.15,
-  community: Object.freeze({
-    minEvents: 3,
-    minShare: 0.4
-  }),
-  own: Object.freeze({
-    minEvents: 1,
-    minShare: 0.4
-  }),
-  roundMinutes: 5
+  community: Object.freeze({ minEvents: 3, minShare: 0.4 }),
+  own: Object.freeze({ minEvents: 1, minShare: 0.4 }),
+  roundMinutes: 5,
 });
 
 const DAY_MS = 86400000;
-
 const MINUTE_MS = 60000;
-
 const STOPWORDS = new Set(["a", "an", "and", "at", "for", "in", "of", "on", "the", "to", "with", "our", "my", "your"]);
-
 const clamp01 = value => Math.max(0, Math.min(1, value));
-
 const isNumber = value => typeof value === "number" && Number.isFinite(value);
 
 function normalizeTitle(title) {
@@ -73,7 +49,9 @@ function normalizeTitle(title) {
 
 function tokenize(text) {
   const tokens = String(text ?? "").normalize("NFKC").toLowerCase().match(/[\p{L}\p{N}]+/gu) || [];
-  return tokens.filter(token => token.length > 1 && !STOPWORDS.has(token)).map(token => token.length > 3 && token.endsWith("s") && !token.endsWith("ss") ? token.slice(0, -1) : token);
+  return tokens
+    .filter(token => token.length > 1 && !STOPWORDS.has(token))
+    .map(token => (token.length > 3 && token.endsWith("s") && !token.endsWith("ss") ? token.slice(0, -1) : token));
 }
 
 function tagList(tags) {
@@ -100,9 +78,7 @@ function inverseDocumentFrequencies(vectors) {
 }
 
 function cosine(a, b, idf) {
-  let dot = 0,
-    normA = 0,
-    normB = 0;
+  let dot = 0, normA = 0, normB = 0;
   for (const [token, tf] of a) {
     const weight = tf * (idf.get(token) || 1);
     normA += weight * weight;
@@ -112,11 +88,9 @@ function cosine(a, b, idf) {
   return normA && normB ? clamp01(dot / Math.sqrt(normA * normB)) : null;
 }
 
-// shared tokens relative to the smaller title: 1 when one title's words all appear in the other's
-
+// Shared tokens relative to the smaller title: 1 when one title's words all appear in the other's
 function containment(a, b) {
-  const left = new Set(a),
-    right = new Set(b);
+  const left = new Set(a), right = new Set(b);
   if (!left.size || !right.size) return null;
   let shared = 0;
   for (const item of left) if (right.has(item)) shared++;
@@ -124,8 +98,7 @@ function containment(a, b) {
 }
 
 function jaccard(a, b) {
-  const left = new Set(a),
-    right = new Set(b);
+  const left = new Set(a), right = new Set(b);
   if (!left.size || !right.size) return null;
   let shared = 0;
   for (const item of left) if (right.has(item)) shared++;
@@ -133,7 +106,6 @@ function jaccard(a, b) {
 }
 
 // 1 when equal, falling to 0 at a 4x difference; null when either is missing
-
 function ratioSimilarity(a, b) {
   if (!(isNumber(a) && a > 0 && isNumber(b) && b > 0)) return null;
   return 1 - Math.min(1, Math.abs(Math.log(a / b)) / Math.log(4));
@@ -146,27 +118,22 @@ function durationMinutes(event) {
 
 function similarityFrom(target, candidate, targetVector, candidateVector, idf) {
   const scaleParts = [ratioSimilarity(target.capacity, candidate.capacity), ratioSimilarity(durationMinutes(target), durationMinutes(candidate))].filter(isNumber);
-  const category = normalizeTitle(target.category) && normalizeTitle(candidate.category) ? normalizeTitle(target.category) === normalizeTitle(candidate.category) ? 1 : 0 : null;
+  const category = normalizeTitle(target.category) && normalizeTitle(candidate.category)
+    ? (normalizeTitle(target.category) === normalizeTitle(candidate.category) ? 1 : 0)
+    : null;
   const parts = {
     text: cosine(targetVector, candidateVector, idf),
     tags: jaccard(tagList(target.tags), tagList(candidate.tags)),
     category,
-    scale: scaleParts.length ? scaleParts.reduce((sum, value) => sum + value, 0) / scaleParts.length : null
+    scale: scaleParts.length ? scaleParts.reduce((sum, value) => sum + value, 0) / scaleParts.length : null,
   };
-  // components a pair cannot provide (no tags, no capacity...) are left out and the
+  // Components a pair cannot provide (no tags, no capacity...) are left out and the
   // remaining weights renormalised, so missing data never counts as a mismatch.
-  let total = 0,
-    weighted = 0;
+  let total = 0, weighted = 0;
   for (const [name, weight] of Object.entries(CONFIG.weights)) {
-    if (isNumber(parts[name])) {
-      total += weight;
-      weighted += weight * parts[name];
-    }
+    if (isNumber(parts[name])) { total += weight; weighted += weight * parts[name]; }
   }
-  return {
-    score: total ? weighted / total : 0,
-    parts
-  };
+  return { score: total ? weighted / total : 0, parts };
 }
 
 function similarity(target, candidate) {
@@ -200,8 +167,7 @@ function weightedMedian(entries) {
   return sorted.at(-1).value;
 }
 
-// a candidate's programme as fractions of its own length (null when it has no valid length)
-
+// A candidate's programme as fractions of its own length (null when it has no valid length)
 function programmeFractions(candidate) {
   const length = durationMinutes(candidate);
   if (!length) return [];
@@ -215,17 +181,16 @@ function programmeFractions(candidate) {
       title,
       description: String(item?.description ?? "").trim(),
       startFraction: clamp01((start - eventStart) / MINUTE_MS / length),
-      durationFraction: Number.isFinite(end) && end > start ? clamp01((end - start) / MINUTE_MS / length) : null
+      durationFraction: Number.isFinite(end) && end > start ? clamp01((end - start) / MINUTE_MS / length) : null,
     }];
   }).sort((a, b) => a.startFraction - b.startFraction);
 }
 
 function orderedTasks(candidate) {
-  return (candidate.tasks || []).map((task, index) => ({
-    title: String(task?.title ?? "").trim(),
-    notes: String(task?.notes ?? "").trim(),
-    position: isNumber(task?.position) ? task.position : index
-  })).filter(task => task.title).sort((a, b) => a.position - b.position);
+  return (candidate.tasks || [])
+    .map((task, index) => ({ title: String(task?.title ?? "").trim(), notes: String(task?.notes ?? "").trim(), position: isNumber(task?.position) ? task.position : index }))
+    .filter(task => task.title)
+    .sort((a, b) => a.position - b.position);
 }
 
 function itemTokens(title) {
@@ -233,27 +198,20 @@ function itemTokens(title) {
   return tokens.length ? tokens : [normalizeTitle(title)];
 }
 
-// greedy grouping of similar item titles; one item per event per group. `near` (optional)
+// Greedy grouping of similar item titles; one item per event per group. `near` (optional)
 // can veto a merge, e.g. the same title at a very different time.
-
 function clusterItems(items, near = () => true) {
   const clusters = [];
   for (const item of [...items].sort((a, b) => b.weight - a.weight)) {
-    let best = null,
-      bestScore = 0;
+    let best = null, bestScore = 0;
     for (const cluster of clusters) {
       if (cluster.members.some(member => member.eventId === item.eventId) || !near(item, cluster.members[0])) continue;
-      // similar wording: enough shared words, or one title's words all appear in the other
+      // Similar wording: enough shared words, or one title's words all appear in the other
       const score = Math.max(jaccard(cluster.tokens, item.tokens) ?? 0, (containment(cluster.tokens, item.tokens) ?? 0) >= 1 ? CONFIG.clusterJaccard : 0);
-      if (score >= CONFIG.clusterJaccard && score > bestScore) {
-        best = cluster;
-        bestScore = score;
-      }
+      if (score >= CONFIG.clusterJaccard && score > bestScore) { best = cluster; bestScore = score; }
     }
-    if (best) best.members.push(item);else clusters.push({
-      tokens: item.tokens,
-      members: [item]
-    });
+    if (best) best.members.push(item);
+    else clusters.push({ tokens: item.tokens, members: [item] });
   }
   return clusters;
 }
@@ -269,10 +227,7 @@ function dominantTitle(members) {
   const byTitle = new Map();
   for (const member of members) {
     const key = normalizeTitle(member.title);
-    const entry = byTitle.get(key) || {
-      title: member.title,
-      weight: 0
-    };
+    const entry = byTitle.get(key) || { title: member.title, weight: 0 };
     entry.weight += member.weight;
     byTitle.set(key, entry);
   }
@@ -288,67 +243,42 @@ function poolNeighbours(target, candidates, nowMs) {
   const ended = candidates.filter(candidate => candidate && hasEnded(candidate, nowMs) && candidate.id !== target.id);
   const vectors = ended.map(termFrequencies);
   const idf = inverseDocumentFrequencies([targetVector, ...vectors]);
-  return ended.map((candidate, index) => ({
-    candidate,
-    ...similarityFrom(target, candidate, targetVector, vectors[index], idf)
-  })).filter(entry => entry.score >= CONFIG.minSimilarity && (entry.parts.text === null || entry.parts.text >= CONFIG.minText)).sort((a, b) => b.score - a.score || Date.parse(b.candidate.endsAt) - Date.parse(a.candidate.endsAt)).slice(0, CONFIG.maxNeighbours).map(entry => ({
-    ...entry,
-    weight: neighbourWeight(entry.score, entry.candidate, nowMs)
-  }));
+  return ended
+    .map((candidate, index) => ({ candidate, ...similarityFrom(target, candidate, targetVector, vectors[index], idf) }))
+    .filter(entry => entry.score >= CONFIG.minSimilarity && (entry.parts.text === null || entry.parts.text >= CONFIG.minText))
+    .sort((a, b) => b.score - a.score || Date.parse(b.candidate.endsAt) - Date.parse(a.candidate.endsAt))
+    .slice(0, CONFIG.maxNeighbours)
+    .map(entry => ({ ...entry, weight: neighbourWeight(entry.score, entry.candidate, nowMs) }));
 }
 
 function programmeClusters(neighbours, rule) {
-  const withItems = neighbours.map(entry => ({
-    ...entry,
-    items: programmeFractions(entry.candidate)
-  })).filter(entry => entry.items.length);
+  const withItems = neighbours.map(entry => ({ ...entry, items: programmeFractions(entry.candidate) })).filter(entry => entry.items.length);
   const totalWeight = withItems.reduce((sum, entry) => sum + entry.weight, 0);
-  const items = withItems.flatMap(entry => entry.items.map(item => ({
-    ...item,
-    eventId: entry.candidate.id,
-    weight: entry.weight,
-    tokens: itemTokens(item.title)
-  })));
+  const items = withItems.flatMap(entry => entry.items.map(item => ({ ...item, eventId: entry.candidate.id, weight: entry.weight, tokens: itemTokens(item.title) })));
   const nearInTime = (item, seed) => Math.abs(item.startFraction - seed.startFraction) <= CONFIG.clusterTimeGap;
   return keepClusters(clusterItems(items, nearInTime), totalWeight, rule).map(cluster => ({
     tokens: cluster.tokens,
     item: {
       title: dominantTitle(cluster.members),
       description: heaviest(cluster.members, "description"),
-      startFraction: weightedMedian(cluster.members.map(member => ({
-        value: member.startFraction,
-        weight: member.weight
-      }))),
-      durationFraction: weightedMedian(cluster.members.filter(member => member.durationFraction !== null).map(member => ({
-        value: member.durationFraction,
-        weight: member.weight
-      })))
-    }
+      startFraction: weightedMedian(cluster.members.map(member => ({ value: member.startFraction, weight: member.weight }))),
+      durationFraction: weightedMedian(cluster.members.filter(member => member.durationFraction !== null).map(member => ({ value: member.durationFraction, weight: member.weight }))),
+    },
   }));
 }
 
 function taskClusters(neighbours, rule) {
-  const withTasks = neighbours.map(entry => ({
-    ...entry,
-    tasks: orderedTasks(entry.candidate)
-  })).filter(entry => entry.tasks.length);
+  const withTasks = neighbours.map(entry => ({ ...entry, tasks: orderedTasks(entry.candidate) })).filter(entry => entry.tasks.length);
   const totalWeight = withTasks.reduce((sum, entry) => sum + entry.weight, 0);
   const items = withTasks.flatMap(entry => entry.tasks.map((task, index) => ({
-    title: task.title,
-    notes: task.notes,
-    eventId: entry.candidate.id,
-    weight: entry.weight,
-    tokens: itemTokens(task.title),
-    order: entry.tasks.length > 1 ? index / (entry.tasks.length - 1) : 0.5
+    title: task.title, notes: task.notes, eventId: entry.candidate.id, weight: entry.weight, tokens: itemTokens(task.title),
+    order: entry.tasks.length > 1 ? index / (entry.tasks.length - 1) : 0.5,
   })));
   return keepClusters(clusterItems(items), totalWeight, rule).map(cluster => {
     const weight = cluster.members.reduce((sum, member) => sum + member.weight, 0);
     return {
       order: cluster.members.reduce((sum, member) => sum + member.order * member.weight, 0) / weight,
-      task: {
-        title: dominantTitle(cluster.members),
-        notes: heaviest(cluster.members, "notes")
-      }
+      task: { title: dominantTitle(cluster.members), notes: heaviest(cluster.members, "notes") },
     };
   }).sort((a, b) => a.order - b.order).map(entry => entry.task);
 }
@@ -356,10 +286,13 @@ function taskClusters(neighbours, rule) {
 function exactMatch(target, candidates, nowMs) {
   const wanted = normalizeTitle(target.title);
   const exact = candidates.filter(candidate => candidate && candidate.id !== target.id && hasEnded(candidate, nowMs) && normalizeTitle(candidate.title) === wanted);
-  const best = pool => exact.filter(candidate => Boolean(candidate.own) === pool).map(candidate => ({
-    candidate,
-    score: similarity(target, candidate).score
-  })).sort((a, b) => b.score - a.score || Date.parse(b.candidate.endsAt) - Date.parse(a.candidate.endsAt) || (isNumber(b.candidate.attendance) ? b.candidate.attendance : -1) - (isNumber(a.candidate.attendance) ? a.candidate.attendance : -1)).map(entry => entry.candidate)[0] || null;
+  const best = pool => exact
+    .filter(candidate => Boolean(candidate.own) === pool)
+    .map(candidate => ({ candidate, score: similarity(target, candidate).score }))
+    .sort((a, b) => b.score - a.score
+      || Date.parse(b.candidate.endsAt) - Date.parse(a.candidate.endsAt)
+      || (isNumber(b.candidate.attendance) ? b.candidate.attendance : -1) - (isNumber(a.candidate.attendance) ? a.candidate.attendance : -1))
+    .map(entry => entry.candidate)[0] || null;
   const own = best(true);
   const community = best(false);
   const programmeFrom = [own, community].find(candidate => candidate && programmeFractions(candidate).length) || null;
@@ -368,75 +301,45 @@ function exactMatch(target, candidates, nowMs) {
   const used = [programmeFrom, tasks.length ? own : null].filter(Boolean);
   return {
     source: "exact",
-    basedOn: [...new Map(used.map(candidate => [candidate.id, {
-      title: candidate.title,
-      kind: candidate.own ? "own" : "community"
-    }])).values()],
+    basedOn: [...new Map(used.map(candidate => [candidate.id, { title: candidate.title, kind: candidate.own ? "own" : "community" }])).values()],
     programme: programmeFrom ? programmeFractions(programmeFrom) : [],
-    tasks: tasks.map(({
-      title,
-      notes
-    }) => ({
-      title,
-      notes
-    })),
-    confidence: 1
+    tasks: tasks.map(({ title, notes }) => ({ title, notes })),
+    confidence: 1,
   };
 }
 
-const EMPTY = Object.freeze({
-  source: "none",
-  basedOn: [],
-  programme: [],
-  tasks: [],
-  confidence: 0
-});
+const EMPTY = Object.freeze({ source: "none", basedOn: [], programme: [], tasks: [], confidence: 0 });
 
-function suggestPlan(target, candidates, {
-  now = Date.now()
-} = {}) {
-  if (!target || !normalizeTitle(target.title) || !Array.isArray(candidates)) return {
-    ...EMPTY
-  };
+function suggestPlan(target, candidates, { now = Date.now() } = {}) {
+  if (!target || !normalizeTitle(target.title) || !Array.isArray(candidates)) return { ...EMPTY };
   const nowMs = now instanceof Date ? now.getTime() : now;
+
   const exact = exactMatch(target, candidates, nowMs);
   if (exact) return exact;
+
   const own = poolNeighbours(target, candidates.filter(candidate => candidate?.own), nowMs);
   const community = poolNeighbours(target, candidates.filter(candidate => candidate && !candidate.own), nowMs);
+
   const ownProgramme = programmeClusters(own, CONFIG.own);
-  // a community item is dropped when one of your own already covers it at about the same time
-  const covered = cluster => ownProgramme.some(kept => Math.abs(kept.item.startFraction - cluster.item.startFraction) <= CONFIG.dedupeTimeGap && ((jaccard(kept.tokens, cluster.tokens) ?? 0) >= CONFIG.clusterJaccard || (containment(kept.tokens, cluster.tokens) ?? 0) >= 1));
+  // A community item is dropped when one of your own already covers it at about the same time
+  const covered = cluster => ownProgramme.some(kept => Math.abs(kept.item.startFraction - cluster.item.startFraction) <= CONFIG.dedupeTimeGap
+    && ((jaccard(kept.tokens, cluster.tokens) ?? 0) >= CONFIG.clusterJaccard || (containment(kept.tokens, cluster.tokens) ?? 0) >= 1));
   const communityProgramme = programmeClusters(community, CONFIG.community).filter(cluster => !covered(cluster));
   const programme = [...ownProgramme, ...communityProgramme].map(cluster => cluster.item).sort((a, b) => a.startFraction - b.startFraction);
   const tasks = taskClusters(own, CONFIG.own);
-  if (!programme.length && !tasks.length) return {
-    ...EMPTY
-  };
+  if (!programme.length && !tasks.length) return { ...EMPTY };
+
   const usedOwn = ownProgramme.length > 0 || tasks.length > 0;
   const usedCommunity = communityProgramme.length > 0;
-  const used = [...(usedOwn ? own.map(entry => ({
-    ...entry,
-    kind: "own"
-  })) : []), ...(usedCommunity ? community.map(entry => ({
-    ...entry,
-    kind: "community"
-  })) : [])];
+  const used = [...(usedOwn ? own.map(entry => ({ ...entry, kind: "own" })) : []), ...(usedCommunity ? community.map(entry => ({ ...entry, kind: "community" })) : [])];
   const averageScore = used.reduce((sum, entry) => sum + entry.score, 0) / used.length;
   return {
     source: usedOwn && usedCommunity ? "mixed" : usedOwn ? "own" : "community",
-    basedOn: [...new Map(used.map(entry => [entry.candidate.id, {
-      title: entry.candidate.title,
-      kind: entry.kind
-    }])).values()],
+    basedOn: [...new Map(used.map(entry => [entry.candidate.id, { title: entry.candidate.title, kind: entry.kind }])).values()],
     programme,
     tasks,
-    confidence: Math.round(averageScore * Math.min(1, used.length / 3) * 100) / 100
+    confidence: Math.round(averageScore * Math.min(1, used.length / 3) * 100) / 100,
   };
 }
-module.exports = {
-  CONFIG,
-  normalizeTitle,
-  tokenize,
-  similarity,
-  suggestPlan
-};
+
+module.exports = { CONFIG, normalizeTitle, tokenize, similarity, suggestPlan };

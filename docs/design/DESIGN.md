@@ -276,8 +276,8 @@ together works" is open on a first visit and stays folded once closed.
   shortcuts). "Group" shades each cell by how many are free; pointing at one names them. The
   slot is the longest stretch (45 minutes or more) with the most people free for all of it,
   outlined on the Group column, nearest the event on a tie. The card lists who's free then, who
-  isn't and who hasn't marked anything. Until then it uses a default hour. Members suggest a spot from nearby places open at that time (Geoapify / OpenStreetMap,
-  nearest first), search OneMap for one, or type one; everyone marks the ideas they're
+  isn't and who hasn't marked anything. Until then it uses a default hour. Members suggest a spot from nearby food deals (from the Telegram and deal-site pipeline) or
+  nearby places (Geoapify / OpenStreetMap), or type one; everyone marks the ideas they're
   **Keen** on; the host **Picks** one per slot. A OneMap map shows the venue (★), ideas
   (numbered) and picks (orange ✓). Deals show distance, a walk estimate and a link to the post.
   When the server isn't running, the planner says so and still takes typed places.
@@ -443,7 +443,7 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
   when2meet-style grid; each slot is the best shared stretch. Map pins keep fixed colours so they show in the dark theme.
 - **4 Nov 2026:** Community became **Go together**: groups (no longer "jios") with public or
   private visibility and invite links, a page per group, and a before and after food planner
-  with nearby places. The old hangout planner (find a time, itinerary, On the day)
+  with nearby deals and places. The old hangout planner (find a time, itinerary, On the day)
   was removed from the app; `/community/plan` and `/j/<token>` redirect.
 - **4 Nov 2026:** The landing page replaced its animated island map with sign-in for visitors
   and an account summary for signed-in people; `/login` now redirects to it.

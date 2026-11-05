@@ -1,38 +1,23 @@
 const test = require('node:test');
+const { checkEqual, checkDeepEqual, checkThrows, checkRejects } = require('./checks');
+const { createEventEvidenceStore } = require('../services/eventEvidenceStore');
+const { calculateEventEvidence } = require('../services/eventEvidence');
 
-const {
-  checkEqual,
-  checkDeepEqual,
-  checkThrows,
-  checkRejects
-} = require('./checks');
-
-const {
-  createEventEvidenceStore
-} = require('../services/eventEvidenceStore');
-
-const {
-  calculateEventEvidence
-} = require('../services/eventEvidence');
 
 function checkClose(actual, expected) {
   if (!Number.isFinite(actual) || Math.abs(actual - expected) > 1e-10) {
     throw new Error(`Expected approximately ${expected}, received ${actual}`);
   }
 }
-
 const aged = (points, days) => points * 2 ** (-days / 45);
 
 const EVENT = '11111111-1111-4111-8111-111111111111';
-
 const NOW = Date.parse('2026-10-27T12:00:00Z');
-
 const DAY = 86_400_000;
 
-// contract fixture only. does not execute sql or establish database concurrency,
-// rls, atomicity or grants. authoritative rsvp/check-in inputs live outside the
-// preference action api, as they must in production.
-
+// Contract fixture only. Does not execute SQL or establish database concurrency,
+// RLS, atomicity or grants. Authoritative RSVP/check-in inputs live outside the
+// preference action API, as they must in production.
 function fixture() {
   let clock = NOW - 20 * DAY;
   const rows = new Map();
@@ -43,14 +28,7 @@ function fixture() {
   const iso = () => new Date(clock).toISOString();
   function rowFor(token, event) {
     const k = key(token, event);
-    if (!rows.has(k)) rows.set(k, {
-      save: {
-        active: false,
-        timestamp: null
-      },
-      dismissed: false,
-      firstConfirmedAt: null
-    });
+    if (!rows.has(k)) rows.set(k, { save: { active: false, timestamp: null }, dismissed: false, firstConfirmedAt: null });
     return rows.get(k);
   }
   function snapshot(token, event) {
@@ -59,89 +37,46 @@ function fixture() {
     const attendance = checkIns.get(key(token, event));
     return {
       eventId: event,
-      save: {
-        ...row.save
-      },
-      rsvp: {
-        active: reg?.status === 'confirmed',
-        timestamp: row.firstConfirmedAt
-      },
-      attendance: {
-        verified: !!attendance && !attendance.flagged,
-        timestamp: attendance?.timestamp ?? null
-      },
-      dismissed: row.dismissed
+      save: { ...row.save },
+      rsvp: { active: reg?.status === 'confirmed', timestamp: row.firstConfirmedAt },
+      attendance: { verified: !!attendance && !attendance.flagged, timestamp: attendance?.timestamp ?? null },
+      dismissed: row.dismissed,
     };
   }
   return {
     calls,
-    setTime(time) {
-      clock = time;
-    },
+    setTime(time) { clock = time; },
     register(token, event, status = 'confirmed') {
       const row = rowFor(token, event);
       if (status === 'confirmed') row.firstConfirmedAt ??= iso();
-      registrations.set(key(token, event), {
-        status
-      });
+      registrations.set(key(token, event), { status });
     },
-    cancel(token, event) {
-      registrations.set(key(token, event), {
-        status: 'cancelled'
-      });
-    },
-    checkIn(token, event, flagged = false) {
-      checkIns.set(key(token, event), {
-        timestamp: iso(),
-        flagged
-      });
-    },
-    removeCheckIn(token, event) {
-      checkIns.delete(key(token, event));
-    },
+    cancel(token, event) { registrations.set(key(token, event), { status: 'cancelled' }); },
+    checkIn(token, event, flagged = false) { checkIns.set(key(token, event), { timestamp: iso(), flagged }); },
+    removeCheckIn(token, event) { checkIns.delete(key(token, event)); },
     clientFactory(token) {
-      return {
-        async rpc(name, params) {
-          calls.push({
-            token,
-            name,
-            params
-          });
-          const row = rowFor(token, params.p_event_id);
-          if (name === 'set_recommendation_event_preference') {
-            switch (params.p_action) {
-              case 'save':
-                row.save.timestamp ??= iso();
-                row.save.active = true;
-                break;
-              case 'unsave':
-                row.save.active = false;
-                break;
-              case 'dismiss':
-                row.dismissed = true;
-                break;
-              case 'undo_dismiss':
-                row.dismissed = false;
-                break;
-              default:
-                throw new Error('Unexpected fixture action');
-            }
-          } else if (name !== 'get_recommendation_event_evidence') throw new Error('Unexpected RPC');
-          return {
-            data: snapshot(token, params.p_event_id),
-            error: null
-          };
-        }
-      };
-    }
+      return { async rpc(name, params) {
+        calls.push({ token, name, params });
+        const row = rowFor(token, params.p_event_id);
+        if (name === 'set_recommendation_event_preference') {
+          switch (params.p_action) {
+            case 'save': row.save.timestamp ??= iso(); row.save.active = true; break;
+            case 'unsave': row.save.active = false; break;
+            case 'dismiss': row.dismissed = true; break;
+            case 'undo_dismiss': row.dismissed = false; break;
+            default: throw new Error('Unexpected fixture action');
+          }
+        } else if (name !== 'get_recommendation_event_evidence') throw new Error('Unexpected RPC');
+        return { data: snapshot(token, params.p_event_id), error: null };
+      } };
+    },
   };
 }
+
 test('save → RSVP → attend → dismiss → undo returns one contribution and original dates', async () => {
   const db = fixture();
   const store = createEventEvidenceStore('alice', db);
-  const points = snapshot => calculateEventEvidence(snapshot, {
-    now: NOW
-  }).contribution;
+  const points = snapshot => calculateEventEvidence(snapshot, { now: NOW }).contribution;
   const saved = await store.setPreference(EVENT, 'save');
   checkClose(points(saved), aged(5, 20));
   db.setTime(NOW - 10 * DAY);
@@ -162,6 +97,7 @@ test('save → RSVP → attend → dismiss → undo returns one contribution and
   checkEqual(restored.rsvp.timestamp, registered.rsvp.timestamp);
   checkClose(points(restored), aged(15, 1));
 });
+
 test('cancellation falls back to saved date; resave and re-registration keep first dates', async () => {
   const db = fixture();
   const store = createEventEvidenceStore('alice', db);
@@ -171,9 +107,7 @@ test('cancellation falls back to saved date; resave and re-registration keep fir
   db.setTime(NOW);
   db.cancel('alice', EVENT);
   const cancelled = await store.getSnapshot(EVENT);
-  checkClose(calculateEventEvidence(cancelled, {
-    now: NOW
-  }).contribution, aged(5, 20));
+  checkClose(calculateEventEvidence(cancelled, { now: NOW }).contribution, aged(5, 20));
   checkEqual(cancelled.save.timestamp, saved.save.timestamp);
   await store.setPreference(EVENT, 'unsave');
   const resaved = await store.setPreference(EVENT, 'save');
@@ -181,6 +115,7 @@ test('cancellation falls back to saved date; resave and re-registration keep fir
   db.register('alice', EVENT);
   checkEqual((await store.getSnapshot(EVENT)).rsvp.timestamp, first.rsvp.timestamp);
 });
+
 test('adapter forwards caller token, no user ID or timestamp, and preserves errors', async () => {
   const db = fixture();
   const alice = createEventEvidenceStore('alice', db);
@@ -188,58 +123,40 @@ test('adapter forwards caller token, no user ID or timestamp, and preserves erro
   await alice.setPreference(EVENT, 'save');
   checkEqual((await bob.getSnapshot(EVENT)).save.active, false);
   checkDeepEqual(db.calls[0], {
-    token: 'alice',
-    name: 'set_recommendation_event_preference',
-    params: {
-      p_event_id: EVENT,
-      p_action: 'save'
-    }
+    token: 'alice', name: 'set_recommendation_event_preference',
+    params: { p_event_id: EVENT, p_action: 'save' },
   });
-  const failing = createEventEvidenceStore('alice', {
-    clientFactory: () => ({
-      rpc: async () => ({
-        data: null,
-        error: {
-          message: 'permission denied'
-        }
-      })
-    })
-  });
+  const failing = createEventEvidenceStore('alice', { clientFactory: () => ({
+    rpc: async () => ({ data: null, error: { message: 'permission denied' } }),
+  }) });
   await checkRejects(() => failing.getSnapshot(EVENT), 'Unable to persist or read');
-  const missing = createEventEvidenceStore('alice', {
-    clientFactory: () => ({
-      rpc: async () => ({
-        data: null,
-        error: null
-      })
-    })
-  });
+  const missing = createEventEvidenceStore('alice', { clientFactory: () => ({
+    rpc: async () => ({ data: null, error: null }),
+  }) });
   await checkRejects(() => missing.getSnapshot(EVENT), 'Invalid event evidence response');
 });
+
 test('preference API cannot accept attendance, RSVP, forged fields or invalid identifiers', async () => {
   const db = fixture();
   const store = createEventEvidenceStore('alice', db);
-  for (const action of ['attend', 'rsvp', 'cancel', {
-    action: 'save',
-    verified: true
-  }, null]) {
+  for (const action of ['attend', 'rsvp', 'cancel', { action: 'save', verified: true }, null]) {
     checkThrows(() => store.setPreference(EVENT, action), TypeError);
   }
   await checkRejects(() => store.getSnapshot('bad-id'), 'UUID');
   checkThrows(() => createEventEvidenceStore(''), TypeError);
   checkEqual(db.calls.length, 0);
 });
+
 test('flagged or removed check-in does not supply attendance evidence', async () => {
   const db = fixture();
   const store = createEventEvidenceStore('alice', db);
   db.register('alice', EVENT);
   db.checkIn('alice', EVENT, true);
-  checkEqual(calculateEventEvidence(await store.getSnapshot(EVENT), {
-    now: NOW
-  }).effectiveAction, 'rsvp');
+  checkEqual(calculateEventEvidence(await store.getSnapshot(EVENT), { now: NOW }).effectiveAction, 'rsvp');
   db.removeCheckIn('alice', EVENT);
   checkEqual((await store.getSnapshot(EVENT)).attendance.verified, false);
 });
+
 test('only confirmed registrations earn RSVP points; other statuses preserve saved evidence', async () => {
   for (const status of ['pending', 'waitlisted', 'offered', 'cancelled', 'declined', 'expired', 'rejected']) {
     const db = fixture();
@@ -248,15 +165,12 @@ test('only confirmed registrations earn RSVP points; other statuses preserve sav
     const snapshot = await store.getSnapshot(EVENT);
     checkEqual(snapshot.rsvp.active, false);
     checkEqual(snapshot.rsvp.timestamp, null);
-    checkEqual(calculateEventEvidence(snapshot, {
-      now: NOW
-    }).contribution, 0);
+    checkEqual(calculateEventEvidence(snapshot, { now: NOW }).contribution, 0);
     await store.setPreference(EVENT, 'save');
-    checkClose(calculateEventEvidence(await store.getSnapshot(EVENT), {
-      now: NOW
-    }).contribution, aged(5, 20));
+    checkClose(calculateEventEvidence(await store.getSnapshot(EVENT), { now: NOW }).contribution, aged(5, 20));
   }
 });
+
 test('direct confirmation and transitions to confirmed capture the confirmation time once', async () => {
   for (const initialStatus of ['confirmed', 'pending', 'waitlisted', 'offered']) {
     const db = fixture();
@@ -269,14 +183,13 @@ test('direct confirmation and transitions to confirmed capture the confirmation 
     const confirmed = await store.getSnapshot(EVENT);
     const expected = new Date(NOW - (initialStatus === 'confirmed' ? 20 : 1) * DAY).toISOString();
     checkEqual(confirmed.rsvp.timestamp, expected);
-    checkClose(calculateEventEvidence(confirmed, {
-      now: NOW
-    }).contribution, aged(10, initialStatus === 'confirmed' ? 20 : 1));
+    checkClose(calculateEventEvidence(confirmed, { now: NOW }).contribution, aged(10, initialStatus === 'confirmed' ? 20 : 1));
     db.setTime(NOW);
     db.register('alice', EVENT, 'confirmed');
     checkEqual((await store.getSnapshot(EVENT)).rsvp.timestamp, expected);
   }
 });
+
 test('cancel/reconfirm retains first confirmation and its 45/91-day ageing', async () => {
   for (const [age, expected] of [[45, 5], [91, aged(10, 91)]]) {
     const db = fixture();
@@ -289,19 +202,16 @@ test('cancel/reconfirm retains first confirmation and its 45/91-day ageing', asy
     const cancelled = await store.getSnapshot(EVENT);
     checkEqual(cancelled.rsvp.active, false);
     checkEqual(cancelled.rsvp.timestamp, original.rsvp.timestamp);
-    checkEqual(calculateEventEvidence(cancelled, {
-      now: NOW
-    }).contribution, 0);
+    checkEqual(calculateEventEvidence(cancelled, { now: NOW }).contribution, 0);
     db.setTime(NOW);
     db.register('alice', EVENT, 'confirmed');
     const restored = await store.getSnapshot(EVENT);
     checkEqual(restored.rsvp.active, true);
     checkEqual(restored.rsvp.timestamp, original.rsvp.timestamp);
-    checkClose(calculateEventEvidence(restored, {
-      now: NOW
-    }).contribution, expected);
+    checkClose(calculateEventEvidence(restored, { now: NOW }).contribution, expected);
   }
 });
+
 test('91-day-old save retains its original decayed weight after resave and dismissal undo', async () => {
   const db = fixture();
   const store = createEventEvidenceStore('alice', db);
@@ -312,26 +222,19 @@ test('91-day-old save retains its original decayed weight after resave and dismi
   const resaved = await store.setPreference(EVENT, 'save');
   checkEqual(resaved.save.timestamp, original.save.timestamp);
   checkEqual(resaved.save.active, true);
-  checkClose(calculateEventEvidence(resaved, {
-    now: NOW
-  }).contribution, aged(5, 91));
+  checkClose(calculateEventEvidence(resaved, { now: NOW }).contribution, aged(5, 91));
   await store.setPreference(EVENT, 'dismiss');
   const restored = await store.setPreference(EVENT, 'undo_dismiss');
   checkEqual(restored.save.timestamp, original.save.timestamp);
-  checkClose(calculateEventEvidence(restored, {
-    now: NOW
-  }).contribution, aged(5, 91));
+  checkClose(calculateEventEvidence(restored, { now: NOW }).contribution, aged(5, 91));
 });
+
 test('flagged attendance never creates attendance points or suppresses valid save evidence', async () => {
   const db = fixture();
   const store = createEventEvidenceStore('alice', db);
   db.checkIn('alice', EVENT, true);
-  checkEqual(calculateEventEvidence(await store.getSnapshot(EVENT), {
-    now: NOW
-  }).contribution, 0);
+  checkEqual(calculateEventEvidence(await store.getSnapshot(EVENT), { now: NOW }).contribution, 0);
   await store.setPreference(EVENT, 'save');
   db.register('alice', EVENT, 'pending');
-  checkClose(calculateEventEvidence(await store.getSnapshot(EVENT), {
-    now: NOW
-  }).contribution, aged(5, 20));
+  checkClose(calculateEventEvidence(await store.getSnapshot(EVENT), { now: NOW }).contribution, aged(5, 20));
 });

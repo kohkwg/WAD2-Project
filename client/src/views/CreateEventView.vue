@@ -1,207 +1,137 @@
 <script setup>
-import WheelDateTime from '../components/ui/WheelDateTime.vue';
-import { QUESTION_TYPES, needsOptions, parseOptions, optionsError, questionTypeLabel } from '../utils/questionTypes.js';
-import BackLink from '../components/ui/BackLink.vue';
-import { ref, computed, nextTick, onBeforeUnmount, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import '../assets/design-baseline.css';
-import StepIndicator from '../components/rsvp/StepIndicator.vue';
-import AddressSearch from '../components/rsvp/AddressSearch.vue';
-import VenueMap from '../components/VenueMap.vue';
-import EventSummary from '../components/rsvp/EventSummary.vue';
-import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue';
-import { uploadCover } from '../lib/uploadCover.js';
-import { createEvent, setEventPublished, getEvent, getEventOnlineAccess, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js';
-import { defaultRevealTime } from '../utils/onlineEvents.js';
-import { defaultVenueRevealTime, venueRevealToSave } from '../utils/venueReveal.js';
-import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js';
-import { PLANNER_AVAILABLE, searchEventTitles, fetchPlanSuggestion, addPlanToEvent } from '../utils/planSuggestions.js';
-import { normalizeTitle } from '../utils/planSuggestModel.js';
-import { describeEventChanges, formatAnnouncement } from '../utils/eventChanges.js';
-import { blankEventForm, errorsForStep } from '../utils/eventForm.js';
-import { isOfficialEvent } from '../utils/groups.js';
+import WheelDateTime from '../components/ui/WheelDateTime.vue'
+import { QUESTION_TYPES, needsOptions, parseOptions, optionsError, questionTypeLabel } from '../utils/questionTypes.js'
+import BackLink from '../components/ui/BackLink.vue'
+import { ref, computed, nextTick, onBeforeUnmount, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import '../assets/design-baseline.css'
+import StepIndicator from '../components/rsvp/StepIndicator.vue'
+import AddressSearch from '../components/rsvp/AddressSearch.vue'
+import VenueMap from '../components/VenueMap.vue'
+import EventSummary from '../components/rsvp/EventSummary.vue'
+import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue'
+import { uploadCover } from '../lib/uploadCover.js'
+import { createEvent, setEventPublished, getEvent, getEventOnlineAccess, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
+import { defaultRevealTime } from '../utils/onlineEvents.js'
+import { defaultVenueRevealTime, venueRevealToSave } from '../utils/venueReveal.js'
+import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
+import { PLANNER_AVAILABLE, searchEventTitles, fetchPlanSuggestion, addPlanToEvent } from '../utils/planSuggestions.js'
+import { normalizeTitle } from '../utils/planSuggestModel.js'
+import { describeEventChanges, formatAnnouncement } from '../utils/eventChanges.js'
+import { blankEventForm, errorsForStep } from '../utils/eventForm.js'
+import { isOfficialEvent } from '../utils/groups.js'
 
 // multi-step form (progressive disclosure): one small chunk at a time instead of one long page.
 // the same wizard edits event details inside manage event (edit mode).
 
+const props = defineProps({ embedded: { type: Boolean, default: false } })
+const emit = defineEmits(['saved'])
+const editSuccess = ref('')
+const router = useRouter()
+const route = useRoute()
 
-const props = defineProps({
-  embedded: {
-    type: Boolean,
-    default: false
-  }
-});
-
-const emit = defineEmits(['saved']);
-
-const editSuccess = ref('');
-
-const router = useRouter();
-
-const route = useRoute();
-
-const steps = ['Basics', 'Venue', 'RSVP questions', 'Review'];
-
-const step = ref(1);
-
-const direction = ref(1);
-
-const showErrors = ref(false); // only show errors after they press next
-
-const publishing = ref(false);
-
-const publishWhen = ref('now'); // 'now' goes live straight away; 'later' saves it as a draft to publish from manage event
-
-let visibilitySettled = false;
-
-const errorMessage = ref('');
-
-let createAttempt = null;
-
-let createdEventId = null;
-
-const uploadingCover = ref(false);
-
-const coverError = ref('');
-
-let active = true;
-
-onBeforeUnmount(() => {
-  active = false;
-  clearTimeout(suggestTimer);
-  suggestController?.abort();
-  planController?.abort();
-});
-
+const steps = ['Basics', 'Venue', 'RSVP questions', 'Review']
+const step = ref(1)
+const direction = ref(1)
+const showErrors = ref(false) // only show errors after they press next
+const publishing = ref(false)
+const publishWhen = ref('now') // 'now' goes live straight away; 'later' saves it as a draft to publish from manage event
+let visibilitySettled = false
+const errorMessage = ref('')
+let createAttempt = null
+let createdEventId = null
+const uploadingCover = ref(false)
+const coverError = ref('')
+let active = true
+onBeforeUnmount(() => { active = false; clearTimeout(suggestTimer); suggestController?.abort(); planController?.abort() })
 async function chooseCover(event) {
-  const file = event.target.files?.[0];
-  if (!file || uploadingCover.value) return;
-  coverError.value = '';
+  const file = event.target.files?.[0]
+  if (!file || uploadingCover.value) return
+  coverError.value = ''
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
-    coverError.value = 'Choose a JPEG, PNG or WebP image up to 10 MiB.';
-    event.target.value = '';
-    return;
+    coverError.value = 'Choose a JPEG, PNG or WebP image up to 10 MiB.'
+    event.target.value = ''
+    return
   }
-  uploadingCover.value = true;
+  uploadingCover.value = true
   try {
-    const url = await uploadCover(file);
-    if (active) form.value.coverImageUrl = url;
+    const url = await uploadCover(file)
+    if (active) form.value.coverImageUrl = url
   } catch (failure) {
-    if (active) coverError.value = failure.message || 'Image upload failed. Please retry.';
+    if (active) coverError.value = failure.message || 'Image upload failed. Please retry.'
   } finally {
-    if (active) uploadingCover.value = false;
-    event.target.value = '';
+    if (active) uploadingCover.value = false
+    event.target.value = ''
   }
 }
 
-// everything the organiser fills in, across all steps (its fields and checks: utils/eventform.js)
+// everything the organiser fills in, across all steps (its fields and checks: utils/eventForm.js)
 // a new event starts at the next whole hour (at least 30 minutes away) and lasts two hours,
 // so the dates are never blank and the end can't start out before the start.
-
 function withDefaultTimes(f) {
-  const start = new Date(Date.now() + 30 * 60000);
-  start.setMinutes(0, 0, 0);
-  start.setHours(start.getHours() + 1);
-  const end = new Date(start.getTime() + 2 * 60 * 60000);
-  return {
-    ...f,
-    startTime: toDateTimeInputValue(start),
-    endTime: toDateTimeInputValue(end)
-  };
+  const start = new Date(Date.now() + 30 * 60000)
+  start.setMinutes(0, 0, 0)
+  start.setHours(start.getHours() + 1)
+  const end = new Date(start.getTime() + 2 * 60 * 60000)
+  return { ...f, startTime: toDateTimeInputValue(start), endTime: toDateTimeInputValue(end) }
 }
-
-const form = ref(withDefaultTimes(blankEventForm()));
+const form = ref(withDefaultTimes(blankEventForm()))
 // moving the start keeps the event's length; an end that falls before the start is moved after it.
 // only for edits to the same form, not when a saved event is loaded into it.
-
 watch(() => [form.value, form.value.startTime], ([currentForm, start], [previousForm, previous]) => {
-  if (currentForm !== previousForm) return;
-  const s = Date.parse(start),
-    p = Date.parse(previous),
-    e = Date.parse(form.value.endTime);
-  if (!Number.isFinite(s)) return;
-  const length = Number.isFinite(p) && Number.isFinite(e) && e > p ? e - p : 2 * 60 * 60000;
-  if (!Number.isFinite(e) || e <= s || Number.isFinite(p)) form.value.endTime = toDateTimeInputValue(new Date(s + length));
+  if (currentForm !== previousForm) return
+  const s = Date.parse(start), p = Date.parse(previous), e = Date.parse(form.value.endTime)
+  if (!Number.isFinite(s)) return
+  const length = Number.isFinite(p) && Number.isFinite(e) && e > p ? e - p : 2 * 60 * 60000
+  if (!Number.isFinite(e) || e <= s || Number.isFinite(p)) form.value.endTime = toDateTimeInputValue(new Date(s + length))
   // the online link and a hidden venue keep appearing the same time before the start
-  const reveal = Date.parse(form.value.onlineLink.revealAt);
-  if (Number.isFinite(p) && Number.isFinite(reveal)) form.value.onlineLink.revealAt = toDateTimeInputValue(new Date(reveal + s - p));
-  const venueReveal = Date.parse(form.value.venueRevealAt);
-  if (Number.isFinite(p) && Number.isFinite(venueReveal)) form.value.venueRevealAt = toDateTimeInputValue(new Date(venueReveal + s - p));
-});
+  const reveal = Date.parse(form.value.onlineLink.revealAt)
+  if (Number.isFinite(p) && Number.isFinite(reveal)) form.value.onlineLink.revealAt = toDateTimeInputValue(new Date(reveal + s - p))
+  const venueReveal = Date.parse(form.value.venueRevealAt)
+  if (Number.isFinite(p) && Number.isFinite(venueReveal)) form.value.venueRevealAt = toDateTimeInputValue(new Date(venueReveal + s - p))
+})
 // "keep the venue hidden" suggests revealing it a day before the start
-
 const hideVenue = computed({
   get: () => Boolean(form.value.venueRevealAt),
-  set: value => {
-    form.value.venueRevealAt = value ? defaultVenueRevealTime(form.value.startTime) : '';
-  }
-});
-
+  set: (value) => { form.value.venueRevealAt = value ? defaultVenueRevealTime(form.value.startTime) : '' },
+})
 const venueRevealLabel = computed(() => {
-  const reveal = new Date(form.value.venueRevealAt);
-  return Number.isNaN(reveal.getTime()) ? '' : new Intl.DateTimeFormat('en-SG', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  }).format(reveal);
-});
+  const reveal = new Date(form.value.venueRevealAt)
+  return Number.isNaN(reveal.getTime()) ? '' : new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'short' }).format(reveal)
+})
 // choosing online suggests a time for the link to appear (15 minutes before the start)
-
-watch(() => form.value.isOnline, isOnline => {
-  if (isOnline && !form.value.onlineLink.revealAt) form.value.onlineLink.revealAt = defaultRevealTime(form.value.startTime);
-});
+watch(() => form.value.isOnline, (isOnline) => {
+  if (isOnline && !form.value.onlineLink.revealAt) form.value.onlineLink.revealAt = defaultRevealTime(form.value.startTime)
+})
 // the capacity switch reads "show", while the form stores whether it's hidden
-
 const showCapacity = computed({
   get: () => !form.value.hideCapacity,
-  set: value => {
-    form.value.hideCapacity = !value;
-  }
-});
-
+  set: (value) => { form.value.hideCapacity = !value },
+})
 const endBeforeStart = computed(() => {
-  const s = Date.parse(form.value.startTime),
-    e = Date.parse(form.value.endTime);
-  return Number.isFinite(s) && Number.isFinite(e) && e <= s;
-});
+  const s = Date.parse(form.value.startTime), e = Date.parse(form.value.endTime)
+  return Number.isFinite(s) && Number.isFinite(e) && e <= s
+})
 
 // ---------- edit mode: change a published event ----------
 
+const editId = computed(() => (route.params.id ? String(route.params.id) : ''))
+const isEditing = computed(() => Boolean(editId.value))
+const original = ref(null) // the event as loaded, in form shape, to compare against when saving
+const editLoading = ref(false)
+const editBlocked = ref('') // why this event can't be edited (not yours, already started, not found)
+const minCapacity = ref(1) // can't go below the people already confirmed or offered a place
+const hasRsvps = ref(false) // once anyone has RSVP'd, existing questions can't be removed
+const venueLocked = ref(false) // the rain switch already moved the event to its backup venue
 
-const editId = computed(() => route.params.id ? String(route.params.id) : '');
-
-const isEditing = computed(() => Boolean(editId.value));
-
-const original = ref(null); // the event as loaded, in form shape, to compare against when saving
-
-const editLoading = ref(false);
-
-const editBlocked = ref(''); // why this event can't be edited (not yours, already started, not found)
-
-const minCapacity = ref(1); // can't go below the people already confirmed or offered a place
-
-const hasRsvps = ref(false); // once anyone has rsvp'd, existing questions can't be removed
-
-const venueLocked = ref(false); // the rain switch already moved the event to its backup venue
-
-
-const venueCopy = venue => venue ? {
-  name: venue.name,
-  address: venue.address || '',
-  postal: venue.postal || '',
-  lat: venue.lat ?? null,
-  lng: venue.lng ?? null
-} : null;
-// access = geteventonlineaccess(id) for an online event (the organiser always gets the link)
-// a hidden venue comes from event.hiddenvenue (organisers only); "to be announced" loads as no venue
-
+const venueCopy = (venue) => (venue ? { name: venue.name, address: venue.address || '', postal: venue.postal || '', lat: venue.lat ?? null, lng: venue.lng ?? null } : null)
+// access = getEventOnlineAccess(id) for an online event (the organiser always gets the link)
+// a hidden venue comes from event.hiddenVenue (organisers only); "to be announced" loads as no venue
 function formFromEvent(event, access = null) {
-  const reveal = Date.parse(access?.revealAt);
-  const place = event.hiddenVenue || (event.isOnline || event.venuePending ? {
-    venue: null,
-    backupVenue: null,
-    isOutdoor: false
-  } : event);
-  const venueReveal = event.hiddenVenue ? Date.parse(event.venueRevealAt) : NaN;
+  const reveal = Date.parse(access?.revealAt)
+  const place = event.hiddenVenue
+    || (event.isOnline || event.venuePending ? { venue: null, backupVenue: null, isOutdoor: false } : event)
+  const venueReveal = event.hiddenVenue ? Date.parse(event.venueRevealAt) : NaN
   return {
     title: event.title || '',
     coverImageUrl: event.coverImageUrl || '',
@@ -209,231 +139,175 @@ function formFromEvent(event, access = null) {
     tags: [...(event.tags || [])],
     startTime: Number.isFinite(Date.parse(event.startTime)) ? toDateTimeInputValue(new Date(event.startTime)) : '',
     endTime: Number.isFinite(Date.parse(event.endTime)) ? toDateTimeInputValue(new Date(event.endTime)) : '',
-    capacity: event.capacity ?? 30,
-    // shown again if "no limit" is switched off
+    capacity: event.capacity ?? 30, // shown again if "no limit" is switched off
     noLimit: event.capacity == null,
     hideCapacity: Boolean(event.hideCapacity),
     isOnline: Boolean(event.isOnline),
-    onlineLink: {
-      url: access?.url || '',
-      revealAt: Number.isFinite(reveal) ? toDateTimeInputValue(new Date(reveal)) : ''
-    },
+    onlineLink: { url: access?.url || '', revealAt: Number.isFinite(reveal) ? toDateTimeInputValue(new Date(reveal)) : '' },
     // an online event's "online" label and "venue to be announced" aren't venues to edit
     venue: venueCopy(place.venue),
     venueRevealAt: Number.isFinite(venueReveal) ? toDateTimeInputValue(new Date(venueReveal)) : '',
     isOutdoor: Boolean(place.isOutdoor),
     backupVenue: venueCopy(place.backupVenue),
     requiresApproval: Boolean(event.requiresApproval),
-    questions: (event.questions || []).map(({
-      id,
-      text,
-      type,
-      required,
-      options
-    }) => ({
-      id,
-      text,
-      type,
-      required: Boolean(required),
-      ...(options?.length ? {
-        options: [...options]
-      } : {})
-    }))
-  };
+    questions: (event.questions || []).map(({ id, text, type, required, options }) => ({ id, text, type, required: Boolean(required), ...(options?.length ? { options: [...options] } : {}) })),
+  }
 }
 
-// load (or reset) when the event id changes; creation and embedded editing share this wizard.
-
-let editRequest = 0;
-
-watch(editId, async id => {
-  const request = ++editRequest;
-  step.value = 1;
-  showErrors.value = false;
-  errorMessage.value = '';
-  editBlocked.value = '';
-  original.value = null;
+// load (or reset) when the event ID changes; creation and embedded editing share this wizard.
+let editRequest = 0
+watch(editId, async (id) => {
+  const request = ++editRequest
+  step.value = 1
+  showErrors.value = false
+  errorMessage.value = ''
+  editBlocked.value = ''
+  original.value = null
   if (!id) {
-    form.value = withDefaultTimes(blankEventForm());
-    return;
+    form.value = withDefaultTimes(blankEventForm())
+    return
   }
-  editLoading.value = true;
+  editLoading.value = true
   try {
-    const event = await getEvent(id);
-    if (request !== editRequest) return;
-    if (!event.isMine && !event.canManage) editBlocked.value = 'You can only edit events you organise.';else if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.';else if (!isOfficialEvent(event)) editBlocked.value = 'Groups are managed from their page in Community.';else {
-      const [rsvps, access] = await Promise.all([getRsvpsForEvent(id), event.isOnline ? getEventOnlineAccess(id) : null]);
-      if (request !== editRequest) return;
-      form.value = formFromEvent(event, access);
-      original.value = formFromEvent(event, access);
-      minCapacity.value = Math.max(1, (event.confirmedCount || 0) + (event.offeredCount || 0));
-      hasRsvps.value = rsvps.length > 0;
-      venueLocked.value = Boolean(event.usingBackup);
+    const event = await getEvent(id)
+    if (request !== editRequest) return
+    if (!event.isMine && !event.canManage) editBlocked.value = 'You can only edit events you organise.'
+    else if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
+    else if (!isOfficialEvent(event)) editBlocked.value = 'Groups are managed from their page in Community.'
+    else {
+      const [rsvps, access] = await Promise.all([getRsvpsForEvent(id), event.isOnline ? getEventOnlineAccess(id) : null])
+      if (request !== editRequest) return
+      form.value = formFromEvent(event, access)
+      original.value = formFromEvent(event, access)
+      minCapacity.value = Math.max(1, (event.confirmedCount || 0) + (event.offeredCount || 0))
+      hasRsvps.value = rsvps.length > 0
+      venueLocked.value = Boolean(event.usingBackup)
     }
   } catch (error) {
-    if (request === editRequest) editBlocked.value = 'Could not load this event: ' + error.message;
+    if (request === editRequest) editBlocked.value = 'Could not load this event: ' + error.message
   } finally {
-    if (request === editRequest) editLoading.value = false;
+    if (request === editRequest) editLoading.value = false
   }
-}, {
-  immediate: true
-});
+}, { immediate: true })
 
-const isExistingQuestion = question => Boolean(original.value?.questions.some(old => old.id === question.id));
+const isExistingQuestion = (question) => Boolean(original.value?.questions.some((old) => old.id === question.id))
 // removing a question people already answered would delete their answers
-
-const canRemoveQuestion = question => !(isEditing.value && hasRsvps.value && isExistingQuestion(question));
+const canRemoveQuestion = (question) => !(isEditing.value && hasRsvps.value && isExistingQuestion(question))
 
 // the question currently being typed in step 3
-
-const newQuestion = ref({
-  text: '',
-  type: 'text',
-  required: false,
-  optionsText: ''
-});
+const newQuestion = ref({ text: '', type: 'text', required: false, optionsText: '' })
 // shown on review when a typed-but-not-added question was added for the organiser
-
-const questionNotice = ref('');
+const questionNotice = ref('')
 
 // stops people picking a date in the past
-
-const nowForInput = toDateTimeInputValue(new Date());
+const nowForInput = toDateTimeInputValue(new Date())
 
 // ---------- step 1: tag suggestions (automation) ----------
 
-
-const suggestedTags = computed(() => suggestTags(form.value.title + ' ' + form.value.description).filter(tag => !form.value.tags.includes(tag)));
+const suggestedTags = computed(() =>
+  suggestTags(form.value.title + ' ' + form.value.description).filter(
+    (tag) => !form.value.tags.includes(tag),
+  ),
+)
 
 const previewDate = computed(() => {
-  if (!form.value.startTime) return 'Date and time to be set';
-  const date = new Date(form.value.startTime);
-  return Number.isNaN(date.getTime()) ? 'Date and time to be set' : new Intl.DateTimeFormat('en-SG', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  }).format(date);
-});
+  if (!form.value.startTime) return 'Date and time to be set'
+  const date = new Date(form.value.startTime)
+  return Number.isNaN(date.getTime()) ? 'Date and time to be set' : new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+})
 
 function addTag(tag) {
-  form.value.tags.push(tag);
+  form.value.tags.push(tag)
 }
 
 // ---------- event title suggestions (search as you type) ----------
 
-
-const titleSuggestions = ref([]); // [{ title, kind: 'own' | 'community' }]
-
-const titleListOpen = ref(false);
-
-const activeSuggestion = ref(-1);
-
-let suggestTimer;
-
-let suggestToken = 0;
-
-let suggestController;
+const titleSuggestions = ref([]) // [{ title, kind: 'own' | 'community' }]
+const titleListOpen = ref(false)
+const activeSuggestion = ref(-1)
+let suggestTimer
+let suggestToken = 0
+let suggestController
 
 function closeSuggestions() {
-  suggestToken++;
-  titleSuggestions.value = [];
-  titleListOpen.value = false;
-  activeSuggestion.value = -1;
+  suggestToken++
+  titleSuggestions.value = []
+  titleListOpen.value = false
+  activeSuggestion.value = -1
 }
 
 function onTitleInput(event) {
-  clearTimeout(suggestTimer);
-  suggestController?.abort();
-  const query = event.target.value.trim();
-  if (!PLANNER_AVAILABLE || query.length < 2) {
-    closeSuggestions();
-    return;
-  }
-  const token = ++suggestToken;
+  clearTimeout(suggestTimer)
+  suggestController?.abort()
+  const query = event.target.value.trim()
+  if (!PLANNER_AVAILABLE || query.length < 2) { closeSuggestions(); return }
+  const token = ++suggestToken
   suggestTimer = setTimeout(async () => {
-    suggestController = new AbortController();
+    suggestController = new AbortController()
     try {
-      const rows = await searchEventTitles(query, suggestController.signal);
-      if (!active || token !== suggestToken) return; // a newer search or a closed list wins
-      titleSuggestions.value = rows;
-      activeSuggestion.value = -1;
-      titleListOpen.value = rows.length > 0;
+      const rows = await searchEventTitles(query, suggestController.signal)
+      if (!active || token !== suggestToken) return // a newer search or a closed list wins
+      titleSuggestions.value = rows
+      activeSuggestion.value = -1
+      titleListOpen.value = rows.length > 0
     } catch {
-      if (token === suggestToken) closeSuggestions(); // suggestions are optional; typing still works
+      if (token === suggestToken) closeSuggestions() // suggestions are optional; typing still works
     }
-  }, 200);
+  }, 200)
 }
 
 function chooseSuggestion(suggestion) {
-  form.value.title = suggestion.title;
-  closeSuggestions();
+  form.value.title = suggestion.title
+  closeSuggestions()
 }
 
 function onTitleKeydown(event) {
-  const count = titleSuggestions.value.length;
+  const count = titleSuggestions.value.length
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-    if (!count) return;
-    event.preventDefault();
-    titleListOpen.value = true;
-    const step = event.key === 'ArrowDown' ? 1 : -1;
-    activeSuggestion.value = (activeSuggestion.value + step + count) % count;
+    if (!count) return
+    event.preventDefault()
+    titleListOpen.value = true
+    const step = event.key === 'ArrowDown' ? 1 : -1
+    activeSuggestion.value = (activeSuggestion.value + step + count) % count
   } else if (event.key === 'Enter' && titleListOpen.value && activeSuggestion.value >= 0) {
-    event.preventDefault();
-    chooseSuggestion(titleSuggestions.value[activeSuggestion.value]);
+    event.preventDefault()
+    chooseSuggestion(titleSuggestions.value[activeSuggestion.value])
   } else if (event.key === 'Escape' && titleListOpen.value) {
-    event.preventDefault();
-    titleListOpen.value = false;
-    activeSuggestion.value = -1;
+    event.preventDefault()
+    titleListOpen.value = false
+    activeSuggestion.value = -1
   }
 }
 
 // ---------- automatic plan: programme + tasks from similar past events ----------
 
+const planBusy = ref(false)
+const planError = ref('')
+const planOffer = ref(null) // the server's suggestion, shown for review
+const planTicks = ref({ programme: [], tasks: [] }) // which suggested items stay ticked
+const acceptedPlan = ref(null) // { programme, tasks, basedOn } the organiser chose; added after publishing
+const planForTitle = ref('') // normalised title the suggestion was generated for
+const planPanel = ref(null)
+const eventCreated = ref(false)
+let planController
+let planToken = 0
+let planProgress = { programme: 0, tasks: 0 }
+let createdDates = null
 
-const planBusy = ref(false);
-
-const planError = ref('');
-
-const planOffer = ref(null); // the server's suggestion, shown for review
-
-const planTicks = ref({
-  programme: [],
-  tasks: []
-}); // which suggested items stay ticked
-
-const acceptedPlan = ref(null); // { programme, tasks, basedon } the organiser chose; added after publishing
-
-const planForTitle = ref(''); // normalised title the suggestion was generated for
-
-const planPanel = ref(null);
-
-const eventCreated = ref(false);
-
-let planController;
-
-let planToken = 0;
-
-let planProgress = {
-  programme: 0,
-  tasks: 0
-};
-
-let createdDates = null;
-
-const canGenerate = computed(() => PLANNER_AVAILABLE && form.value.title.trim().length > 0 && !planBusy.value && !publishing.value && !eventCreated.value);
-
-const planStale = computed(() => Boolean(planOffer.value || acceptedPlan.value) && normalizeTitle(form.value.title) !== planForTitle.value);
+const canGenerate = computed(() => PLANNER_AVAILABLE && form.value.title.trim().length > 0 && !planBusy.value && !publishing.value && !eventCreated.value)
+const planStale = computed(() => Boolean(planOffer.value || acceptedPlan.value) && normalizeTitle(form.value.title) !== planForTitle.value)
 
 async function generatePlan() {
-  if (!canGenerate.value) return;
-  planController?.abort();
-  planController = new AbortController();
-  const token = ++planToken;
-  planBusy.value = true;
-  planError.value = '';
-  planOffer.value = null;
-  planForTitle.value = normalizeTitle(form.value.title);
-  const f = form.value;
-  const iso = value => value && Number.isFinite(new Date(value).getTime()) ? new Date(value).toISOString() : null;
+  if (!canGenerate.value) return
+  planController?.abort()
+  planController = new AbortController()
+  const token = ++planToken
+  planBusy.value = true
+  planError.value = ''
+  planOffer.value = null
+  planForTitle.value = normalizeTitle(form.value.title)
+  const f = form.value
+  const iso = (value) => (value && Number.isFinite(new Date(value).getTime()) ? new Date(value).toISOString() : null)
   try {
     const result = await fetchPlanSuggestion({
       title: f.title.trim(),
@@ -441,249 +315,216 @@ async function generatePlan() {
       tags: f.tags,
       capacity: !f.noLimit && Number.isInteger(f.capacity) ? f.capacity : null,
       startsAt: iso(f.startTime),
-      endsAt: iso(f.endTime)
-    }, planController.signal);
-    if (!active || token !== planToken) return; // dismissed or replaced while waiting
-    planOffer.value = result;
-    planTicks.value = {
-      programme: result.programme.map(() => true),
-      tasks: result.tasks.map(() => true)
-    };
+      endsAt: iso(f.endTime),
+    }, planController.signal)
+    if (!active || token !== planToken) return // dismissed or replaced while waiting
+    planOffer.value = result
+    planTicks.value = { programme: result.programme.map(() => true), tasks: result.tasks.map(() => true) }
   } catch (error) {
-    if (active && token === planToken && error.name !== 'AbortError') planError.value = error.message;
+    if (active && token === planToken && error.name !== 'AbortError') planError.value = error.message
   } finally {
-    if (active && token === planToken) planBusy.value = false;
+    if (active && token === planToken) planBusy.value = false
   }
   if (active && token === planToken) {
-    await nextTick();
-    planPanel.value?.focus();
+    await nextTick()
+    planPanel.value?.focus()
   }
 }
 
 function usePlan() {
-  const offer = planOffer.value;
-  if (!offer || eventCreated.value) return;
-  const programme = offer.programme.filter((_, index) => planTicks.value.programme[index]);
-  const tasks = offer.tasks.filter((_, index) => planTicks.value.tasks[index]).map(task => ({
-    ...task,
-    requestId: crypto.randomUUID()
-  }));
-  acceptedPlan.value = programme.length || tasks.length ? {
-    programme,
-    tasks,
-    basedOn: offer.basedOn
-  } : null;
-  planProgress = {
-    programme: 0,
-    tasks: 0
-  };
-  planOffer.value = null;
+  const offer = planOffer.value
+  if (!offer || eventCreated.value) return
+  const programme = offer.programme.filter((_, index) => planTicks.value.programme[index])
+  const tasks = offer.tasks.filter((_, index) => planTicks.value.tasks[index]).map((task) => ({ ...task, requestId: crypto.randomUUID() }))
+  acceptedPlan.value = programme.length || tasks.length ? { programme, tasks, basedOn: offer.basedOn } : null
+  planProgress = { programme: 0, tasks: 0 }
+  planOffer.value = null
 }
 
 function dismissPlan() {
-  planController?.abort();
-  planToken++;
-  planBusy.value = false;
-  planOffer.value = null;
-  planError.value = '';
+  planController?.abort()
+  planToken++
+  planBusy.value = false
+  planOffer.value = null
+  planError.value = ''
 }
 
 function removePlan() {
-  if (eventCreated.value) return;
-  acceptedPlan.value = null;
-  planProgress = {
-    programme: 0,
-    tasks: 0
-  };
+  if (eventCreated.value) return
+  acceptedPlan.value = null
+  planProgress = { programme: 0, tasks: 0 }
 }
 
 function planSource(offer) {
-  const named = offer.basedOn.map(item => `${item.title} (${item.kind === 'own' ? 'your event' : 'community'})`);
-  if (offer.source === 'exact') return `Copied from ${named.join(' and ')}.`;
-  return `Based on ${offer.basedOn.length} similar past event${offer.basedOn.length === 1 ? '' : 's'}: ${named.slice(0, 3).join(', ')}${named.length > 3 ? '…' : ''}.`;
+  const named = offer.basedOn.map((item) => `${item.title} (${item.kind === 'own' ? 'your event' : 'community'})`)
+  if (offer.source === 'exact') return `Copied from ${named.join(' and ')}.`
+  return `Based on ${offer.basedOn.length} similar past event${offer.basedOn.length === 1 ? '' : 's'}: ${named.slice(0, 3).join(', ')}${named.length > 3 ? '…' : ''}.`
 }
 
 function offsetLabel(item) {
-  const total = (Date.parse(form.value.endTime) - Date.parse(form.value.startTime)) / 60000;
-  if (!Number.isFinite(total) || total <= 0) return `about ${Math.round(item.startFraction * 100)}% through`;
-  const minutes = Math.round(item.startFraction * total / 5) * 5;
-  if (minutes === 0) return 'at the start';
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return `${hours ? `${hours}h` : ''}${hours && rest ? ' ' : ''}${rest ? `${rest}m` : ''} in`;
+  const total = (Date.parse(form.value.endTime) - Date.parse(form.value.startTime)) / 60000
+  if (!Number.isFinite(total) || total <= 0) return `about ${Math.round(item.startFraction * 100)}% through`
+  const minutes = Math.round((item.startFraction * total) / 5) * 5
+  if (minutes === 0) return 'at the start'
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return `${hours ? `${hours}h` : ''}${hours && rest ? ' ' : ''}${rest ? `${rest}m` : ''} in`
 }
 
 // adds the accepted plan to the event just created. false = stop and let the organiser retry.
-
 async function finishPlan(eventId) {
-  const plan = acceptedPlan.value;
-  if (!plan) return true;
+  const plan = acceptedPlan.value
+  if (!plan) return true
   try {
-    await addPlanToEvent(eventId, plan, createdDates, planProgress);
-    acceptedPlan.value = null;
-    return true;
+    await addPlanToEvent(eventId, plan, createdDates, planProgress)
+    acceptedPlan.value = null
+    return true
   } catch (error) {
-    const total = plan.programme.length + plan.tasks.length;
-    errorMessage.value = `The event was created, but only ${planProgress.programme + planProgress.tasks} of ${total} plan items were added (${error.message}). Press Publish to retry.`;
-    return false;
+    const total = plan.programme.length + plan.tasks.length
+    errorMessage.value = `The event was created, but only ${planProgress.programme + planProgress.tasks} of ${total} plan items were added (${error.message}). Press Publish to retry.`
+    return false
   }
 }
 
 // ---------- checking each step before moving on ----------
 
-
-const stepErrors = computed(() => errorsForStep(form.value, step.value, ruleContext()));
+const stepErrors = computed(() => errorsForStep(form.value, step.value, ruleContext()))
 
 // what the shared form checks need from this page: edit-mode capacity limits and live mode
-
 function ruleContext() {
-  return {
-    editing: isEditing.value,
-    originalCapacity: original.value?.capacity,
-    minCapacity: minCapacity.value,
-    live: USING_SUPABASE
-  };
+  return { editing: isEditing.value, originalCapacity: original.value?.capacity, minCapacity: minCapacity.value, live: USING_SUPABASE }
 }
 
 async function focusStep() {
-  await nextTick();
-  let targetId = 'step-content-heading';
+  await nextTick()
+  let targetId = 'step-content-heading'
   if (step.value === 1) {
-    const f = form.value;
-    if (!f.title.trim()) targetId = 'title';else if (!f.startTime) targetId = 'start';else if (!f.endTime || new Date(f.endTime) <= new Date(f.startTime)) targetId = 'end';else if (new Date(f.startTime) < new Date()) targetId = 'start';else if (!f.noLimit && (!Number.isInteger(f.capacity) || f.capacity < 1)) targetId = 'capacity';else if (f.tags.length === 0) targetId = 'tag-music';
+    const f = form.value
+    if (!f.title.trim()) targetId = 'title'
+    else if (!f.startTime) targetId = 'start'
+    else if (!f.endTime || new Date(f.endTime) <= new Date(f.startTime)) targetId = 'end'
+    else if (new Date(f.startTime) < new Date()) targetId = 'start'
+    else if (!f.noLimit && (!Number.isInteger(f.capacity) || f.capacity < 1)) targetId = 'capacity'
+    else if (f.tags.length === 0) targetId = 'tag-music'
   } else if (step.value === 2 && form.value.isOnline) {
-    const link = form.value.onlineLink;
-    if (link.url.trim() && stepErrors.value.some(error => error.includes('https://'))) targetId = 'online-link';else if (link.url.trim() && stepErrors.value.length) targetId = 'online-reveal';
+    const link = form.value.onlineLink
+    if (link.url.trim() && stepErrors.value.some((error) => error.includes('https://'))) targetId = 'online-link'
+    else if (link.url.trim() && stepErrors.value.length) targetId = 'online-reveal'
   } else if (step.value === 2) {
-    targetId = form.value.venue ? 'step-content-heading' : 'venue-search';
-    if (stepErrors.value.some(error => error.includes('revealed'))) targetId = 'venue-reveal';else if (form.value.venue && form.value.isOutdoor && !form.value.backupVenue) targetId = 'backup-search';
+    targetId = form.value.venue ? 'step-content-heading' : 'venue-search'
+    if (stepErrors.value.some((error) => error.includes('revealed'))) targetId = 'venue-reveal'
+    else if (form.value.venue && form.value.isOutdoor && !form.value.backupVenue) targetId = 'backup-search'
   }
-  document.getElementById(targetId)?.focus();
+  document.getElementById(targetId)?.focus()
 }
 
 function nextStep() {
   // a question typed but never added would otherwise be left out of the event without warning
   if (step.value === 3 && newQuestion.value.text.trim() !== '') {
     if (!canAddQuestion.value) {
-      questionNotice.value = `${newQuestionError.value} Add the options, or clear the question, to continue.`;
-      focusById('q-options');
-      return;
+      questionNotice.value = `${newQuestionError.value} Add the options, or clear the question, to continue.`
+      focusById('q-options')
+      return
     }
-    addQuestion();
-    questionNotice.value = 'The question you typed was added to your RSVP questions.';
+    addQuestion()
+    questionNotice.value = 'The question you typed was added to your RSVP questions.'
   }
   if (stepErrors.value.length > 0) {
-    showErrors.value = true;
-    focusStep();
-    return;
+    showErrors.value = true
+    focusStep()
+    return
   }
-  showErrors.value = false;
-  direction.value = 1;
-  step.value++;
-  focusStep();
+  showErrors.value = false
+  direction.value = 1
+  step.value++
+  focusStep()
 }
 
 // finished steps in the progress bar jump straight back (moving forward still goes through next's validation)
-
 function jumpToStep(target) {
-  if (target >= step.value) return;
-  showErrors.value = false;
-  questionNotice.value = '';
-  direction.value = -1;
-  step.value = target;
-  focusStep();
+  if (target >= step.value) return
+  showErrors.value = false
+  questionNotice.value = ''
+  direction.value = -1
+  step.value = target
+  focusStep()
 }
 
 function previousStep() {
-  showErrors.value = false;
-  questionNotice.value = '';
-  direction.value = -1;
-  step.value--;
-  focusStep();
+  showErrors.value = false
+  questionNotice.value = ''
+  direction.value = -1
+  step.value--
+  focusStep()
 }
 
 // ---------- step 2: venue ----------
 
 // the search box disappears once a place is chosen (and returns on "change"), so move
 // keyboard focus to whatever replaced it instead of losing it to the page.
-
 async function focusById(id) {
-  await nextTick();
-  document.getElementById(id)?.focus();
+  await nextTick()
+  document.getElementById(id)?.focus()
 }
 
 function setVenue(place) {
-  form.value.venue = place;
-  focusById('venue-chosen');
+  form.value.venue = place
+  focusById('venue-chosen')
 }
 
 function changeVenue() {
-  form.value.venue = null;
-  focusById('venue-search');
+  form.value.venue = null
+  focusById('venue-search')
 }
 
 function moveVenuePin(position) {
-  form.value.venue.lat = position.lat;
-  form.value.venue.lng = position.lng;
+  form.value.venue.lat = position.lat
+  form.value.venue.lng = position.lng
 }
 
 function setBackupVenue(place) {
-  form.value.backupVenue = place;
-  focusById('backup-chosen');
+  form.value.backupVenue = place
+  focusById('backup-chosen')
 }
 
 function changeBackupVenue() {
-  form.value.backupVenue = null;
-  focusById('backup-search');
+  form.value.backupVenue = null
+  focusById('backup-search')
 }
 
-// ---------- step 3: custom rsvp questions ----------
+// ---------- step 3: custom RSVP questions ----------
 
-
-const newOptions = computed(() => parseOptions(newQuestion.value.optionsText));
-
-const newQuestionError = computed(() => needsOptions(newQuestion.value.type) ? optionsError(newOptions.value) : '');
-
-const canAddQuestion = computed(() => newQuestion.value.text.trim() !== '' && !newQuestionError.value);
-
+const newOptions = computed(() => parseOptions(newQuestion.value.optionsText))
+const newQuestionError = computed(() => (needsOptions(newQuestion.value.type) ? optionsError(newOptions.value) : ''))
+const canAddQuestion = computed(() => newQuestion.value.text.trim() !== '' && !newQuestionError.value)
 function addQuestion() {
-  if (!canAddQuestion.value) return;
+  if (!canAddQuestion.value) return
   form.value.questions.push({
-    id: crypto.randomUUID(),
-    // a real id up front, so a retried live save can't add it twice
+    id: crypto.randomUUID(), // a real id up front, so a retried live save can't add it twice
     text: newQuestion.value.text.trim(),
     type: newQuestion.value.type,
     required: newQuestion.value.required,
-    ...(needsOptions(newQuestion.value.type) ? {
-      options: newOptions.value
-    } : {})
-  });
-  newQuestion.value = {
-    text: '',
-    type: 'text',
-    required: false,
-    optionsText: ''
-  }; // clear the inputs
-  focusById('q-text');
+    ...(needsOptions(newQuestion.value.type) ? { options: newOptions.value } : {}),
+  })
+  newQuestion.value = { text: '', type: 'text', required: false, optionsText: '' } // clear the inputs
+  focusById('q-text')
 }
 
 function removeQuestion(index) {
-  form.value.questions.splice(index, 1);
-  focusById('q-text'); // its remove button is gone; continue where the next question is typed
+  form.value.questions.splice(index, 1)
+  focusById('q-text') // its remove button is gone; continue where the next question is typed
 }
 
 // ---------- step 4: publish (or save changes in edit mode) ----------
 
 // the form, cleaned up for saving (shared by publish and save changes)
-
 function eventDataFromForm() {
-  const f = form.value;
+  const f = form.value
   return {
     ...f,
     title: f.title.trim(),
     description: f.description.trim(),
-    startTime: new Date(f.startTime).toISOString(),
-    // store one standard date format
+    startTime: new Date(f.startTime).toISOString(), // store one standard date format
     endTime: new Date(f.endTime).toISOString(),
     capacity: f.noLimit || f.capacity === '' ? null : f.capacity,
     hideCapacity: Boolean(f.hideCapacity),
@@ -694,189 +535,154 @@ function eventDataFromForm() {
     venue: f.isOnline ? null : f.venue,
     backupVenue: !f.isOnline && f.venue && f.isOutdoor ? f.backupVenue : null,
     venueRevealAt: venueRevealToSave(f),
-    onlineLink: f.isOnline && f.onlineLink.url.trim() ? {
-      url: f.onlineLink.url.trim(),
-      revealAt: new Date(f.onlineLink.revealAt).toISOString()
-    } : null,
-    questions: f.questions.map(question => ({
-      ...question,
-      text: question.text.trim()
-    }))
-  };
+    onlineLink: f.isOnline && f.onlineLink.url.trim()
+      ? { url: f.onlineLink.url.trim(), revealAt: new Date(f.onlineLink.revealAt).toISOString() }
+      : null,
+    questions: f.questions.map((question) => ({ ...question, text: question.text.trim() })),
+  }
 }
 
 const revealLabel = computed(() => {
-  const reveal = new Date(form.value.onlineLink.revealAt);
-  return Number.isNaN(reveal.getTime()) ? '' : new Intl.DateTimeFormat('en-SG', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  }).format(reveal);
-});
+  const reveal = new Date(form.value.onlineLink.revealAt)
+  return Number.isNaN(reveal.getTime()) ? '' : new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'short' }).format(reveal)
+})
 
-const pendingChanges = ref([]); // what changed, shown in the pop-up and used for the announcement
-
-const showAnnounceDialog = ref(false);
-
-const savingChanges = ref(false);
-
-const saveError = ref('');
-
-const changesSaved = ref(false); // already saved; only the announcement is left (retry)
-
-let announceAttempt = null;
+const pendingChanges = ref([]) // what changed, shown in the pop-up and used for the announcement
+const showAnnounceDialog = ref(false)
+const savingChanges = ref(false)
+const saveError = ref('')
+const changesSaved = ref(false) // already saved; only the announcement is left (retry)
+let announceAttempt = null
 
 async function reviewChanges() {
-  if (savingChanges.value || uploadingCover.value) return;
-  const invalidStep = [1, 2, 3].find(stepNumber => errorsForStep(form.value, stepNumber, ruleContext()).length > 0);
+  if (savingChanges.value || uploadingCover.value) return
+  const invalidStep = [1, 2, 3].find((stepNumber) => errorsForStep(form.value, stepNumber, ruleContext()).length > 0)
   if (invalidStep) {
-    direction.value = invalidStep < step.value ? -1 : 1;
-    step.value = invalidStep;
-    showErrors.value = true;
-    await focusStep();
-    return;
+    direction.value = invalidStep < step.value ? -1 : 1
+    step.value = invalidStep
+    showErrors.value = true
+    await focusStep()
+    return
   }
-  editSuccess.value = '';
+  editSuccess.value = ''
   // settings left from a cleared venue aren't saved, so they aren't announced either
-  const f = form.value;
-  pendingChanges.value = describeEventChanges(original.value, {
-    ...f,
-    isOutdoor: Boolean(f.venue) && f.isOutdoor,
-    venueRevealAt: f.venue ? f.venueRevealAt : ''
-  });
+  const f = form.value
+  pendingChanges.value = describeEventChanges(original.value, { ...f, isOutdoor: Boolean(f.venue) && f.isOutdoor, venueRevealAt: f.venue ? f.venueRevealAt : '' })
   if (pendingChanges.value.length === 0) {
-    errorMessage.value = 'Nothing has changed yet, so there is nothing to save.';
-    return;
+    errorMessage.value = 'Nothing has changed yet, so there is nothing to save.'
+    return
   }
-  errorMessage.value = '';
-  saveError.value = '';
-  changesSaved.value = false;
-  showAnnounceDialog.value = true;
+  errorMessage.value = ''
+  saveError.value = ''
+  changesSaved.value = false
+  showAnnounceDialog.value = true
 }
 
-async function saveChanges({
-  announce,
-  title,
-  message
-}) {
-  if (savingChanges.value) return;
-  savingChanges.value = true;
-  saveError.value = '';
+async function saveChanges({ announce, title, message }) {
+  if (savingChanges.value) return
+  savingChanges.value = true
+  saveError.value = ''
   try {
     if (!changesSaved.value) {
-      await updateEvent(editId.value, eventDataFromForm());
-      changesSaved.value = true;
+      await updateEvent(editId.value, eventDataFromForm())
+      changesSaved.value = true
     }
     if (announce) {
-      const body = formatAnnouncement(title, message);
+      const body = formatAnnouncement(title, message)
       // a retried post reuses its id, so the same announcement can't appear twice
-      if (!announceAttempt || announceAttempt.body !== body) announceAttempt = {
-        body,
-        requestId: crypto.randomUUID()
-      };
-      await createAnnouncement(editId.value, body, announceAttempt.requestId);
+      if (!announceAttempt || announceAttempt.body !== body) announceAttempt = { body, requestId: crypto.randomUUID() }
+      await createAnnouncement(editId.value, body, announceAttempt.requestId)
     }
-    showAnnounceDialog.value = false;
-    await finishEditing(announce);
+    showAnnounceDialog.value = false
+    await finishEditing(announce)
   } catch (error) {
-    saveError.value = changesSaved.value ? `Your changes are saved, but the announcement couldn't be posted: ${error.message}` : `Your changes couldn't be saved: ${error.message}`;
+    saveError.value = changesSaved.value
+      ? `Your changes are saved, but the announcement couldn't be posted: ${error.message}`
+      : `Your changes couldn't be saved: ${error.message}`
   } finally {
-    savingChanges.value = false;
+    savingChanges.value = false
   }
 }
 
 async function finishEditing(announced = false) {
   if (props.embedded) {
-    original.value = JSON.parse(JSON.stringify(form.value));
-    changesSaved.value = false;
-    editSuccess.value = announced ? 'Event updated and announcement posted.' : 'Event updated.';
-    emit('saved');
+    original.value = JSON.parse(JSON.stringify(form.value))
+    changesSaved.value = false
+    editSuccess.value = announced ? 'Event updated and announcement posted.' : 'Event updated.'
+    emit('saved')
   } else {
-    await router.push({
-      path: '/organiser/events',
-      query: {
-        updated: editId.value,
-        ...(announced ? {
-          announced: '1'
-        } : {})
-      }
-    });
+    await router.push({ path: '/organiser/events', query: { updated: editId.value, ...(announced ? { announced: '1' } : {}) } })
   }
 }
 
 function closeAnnounceDialog() {
-  showAnnounceDialog.value = false;
+  showAnnounceDialog.value = false
   // keep saved changes when the organiser skips a failed announcement.
-  if (changesSaved.value) finishEditing();
+  if (changesSaved.value) finishEditing()
 }
 
 // new events are created live; "publish later" hides the new event again before anyone is sent there
-
 async function settleVisibility(eventId) {
-  if (publishWhen.value !== 'later' || visibilitySettled) return true;
+  if (publishWhen.value !== 'later' || visibilitySettled) return true
   try {
-    await setEventPublished(eventId, false);
-    visibilitySettled = true;
-    return true;
+    await setEventPublished(eventId, false)
+    visibilitySettled = true
+    return true
   } catch (error) {
-    errorMessage.value = 'The event was created, but could not be saved as a draft: ' + error.message + ' Press the button again to retry.';
-    return false;
+    errorMessage.value = 'The event was created, but could not be saved as a draft: ' + error.message + ' Press the button again to retry.'
+    return false
   }
 }
-
-const afterCreateUrl = eventId => '/organiser/events?created=' + eventId + (publishWhen.value === 'later' ? '&draft=1' : '');
+const afterCreateUrl = (eventId) => '/organiser/events?created=' + eventId + (publishWhen.value === 'later' ? '&draft=1' : '')
 
 async function publish() {
-  if (publishing.value || uploadingCover.value) return;
-  const invalidStep = [1, 2].find(stepNumber => errorsForStep(form.value, stepNumber, ruleContext()).length > 0);
+  if (publishing.value || uploadingCover.value) return
+  const invalidStep = [1, 2].find((stepNumber) => errorsForStep(form.value, stepNumber, ruleContext()).length > 0)
   if (invalidStep) {
-    direction.value = invalidStep < step.value ? -1 : 1;
-    step.value = invalidStep;
-    showErrors.value = true;
-    await focusStep();
-    return;
+    direction.value = invalidStep < step.value ? -1 : 1
+    step.value = invalidStep
+    showErrors.value = true
+    await focusStep()
+    return
   }
   if (createdEventId) {
-    publishing.value = true;
-    errorMessage.value = '';
+    publishing.value = true
+    errorMessage.value = ''
     try {
-      if (!(await settleVisibility(createdEventId))) return;
-      if (!(await finishPlan(createdEventId))) return;
+      if (!(await settleVisibility(createdEventId))) return
+      if (!(await finishPlan(createdEventId))) return
     } finally {
-      publishing.value = false;
+      publishing.value = false
     }
-    await router.push(afterCreateUrl(createdEventId));
-    return;
+    await router.push(afterCreateUrl(createdEventId))
+    return
   }
-  publishing.value = true;
-  errorMessage.value = '';
+  publishing.value = true
+  errorMessage.value = ''
   try {
-    const eventData = eventDataFromForm();
+    const eventData = eventDataFromForm()
     if (USING_SUPABASE) {
-      const fingerprint = JSON.stringify(eventData);
+      const fingerprint = JSON.stringify(eventData)
       if (!createAttempt || createAttempt.fingerprint !== fingerprint) {
-        createAttempt = {
-          fingerprint,
-          requestId: crypto.randomUUID()
-        };
+        createAttempt = { fingerprint, requestId: crypto.randomUUID() }
       }
-      eventData.requestId = createAttempt.requestId;
+      eventData.requestId = createAttempt.requestId
     }
-    const created = await createEvent(eventData);
-    createdEventId = created.id;
-    createdDates = {
-      startsAt: eventData.startTime,
-      endsAt: eventData.endTime
-    };
-    eventCreated.value = true;
-    createAttempt = null;
-    if (!(await settleVisibility(created.id))) return;
-    if (!(await finishPlan(created.id))) return;
-    const navigationFailure = await router.push(afterCreateUrl(created.id));
-    if (navigationFailure) errorMessage.value = 'Event was created, but could not open its organiser page. Press Publish to continue.';
+    const created = await createEvent(eventData)
+    createdEventId = created.id
+    createdDates = { startsAt: eventData.startTime, endsAt: eventData.endTime }
+    eventCreated.value = true
+    createAttempt = null
+    if (!(await settleVisibility(created.id))) return
+    if (!(await finishPlan(created.id))) return
+    const navigationFailure = await router.push(afterCreateUrl(created.id))
+    if (navigationFailure) errorMessage.value = 'Event was created, but could not open its organiser page. Press Publish to continue.'
   } catch (error) {
-    errorMessage.value = createdEventId ? 'Event was created, but could not open its organiser page: ' + error.message : 'Could not publish the event: ' + error.message;
+    errorMessage.value = createdEventId
+      ? 'Event was created, but could not open its organiser page: ' + error.message
+      : 'Could not publish the event: ' + error.message
   } finally {
-    publishing.value = false;
+    publishing.value = false
   }
 }
 </script>
@@ -950,8 +756,7 @@ async function publish() {
                       <input id="event-cover" type="file" class="form-control" accept="image/jpeg,image/png,image/webp"
                         :disabled="uploadingCover || publishing" aria-describedby="cover-help" @change="chooseCover" />
                       <p id="cover-help" class="form-text">JPEG, PNG or WebP, up to 10 MiB.</p>
-                      <p v-if="uploadingCover" role="status">
-                      <span class="spinner-border spinner-border-sm"
+                      <p v-if="uploadingCover" role="status"><span class="spinner-border spinner-border-sm"
                           aria-hidden="true"></span> Uploading image…</p>
                       <p v-dismissible v-if="coverError" class="text-danger" role="alert">{{ coverError }}</p>
                       <figure v-if="form.coverImageUrl" class="cover-preview">
@@ -1141,7 +946,7 @@ async function publish() {
                   </template>
                 </div>
 
-                <!-- ================= step 3: rsvp questions ================= -->
+                <!-- ================= step 3: RSVP questions ================= -->
                 <div v-else-if="step === 3" aria-labelledby="step-content-heading">
                   <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">RSVP questions</h2>
                   <div class="questions-head">
@@ -1331,8 +1136,7 @@ async function publish() {
                     <legend class="h6">Programme</legend>
                     <label v-for="(item, index) in planOffer.programme" :key="`programme-${index}`" class="plan-item">
                       <input v-model="planTicks.programme[index]" type="checkbox" class="form-check-input" />
-                      <span>
-                      <strong>{{ item.title }}</strong> <span class="text-secondary">· {{ offsetLabel(item)
+                      <span><strong>{{ item.title }}</strong> <span class="text-secondary">· {{ offsetLabel(item)
                           }}</span></span>
                     </label>
                   </fieldset>
@@ -1340,9 +1144,7 @@ async function publish() {
                     <legend class="h6">Tasks</legend>
                     <label v-for="(task, index) in planOffer.tasks" :key="`task-${index}`" class="plan-item">
                       <input v-model="planTicks.tasks[index]" type="checkbox" class="form-check-input" />
-                      <span>
-                      <strong>{{ task.title }}</strong>
-                      <span v-if="task.notes"
+                      <span><strong>{{ task.title }}</strong><span v-if="task.notes"
                           class="d-block small text-secondary">{{ task.notes }}</span></span>
                     </label>
                   </fieldset>
@@ -1401,15 +1203,12 @@ async function publish() {
           </div>
         </div>
         <aside class="event-preview" aria-label="Live event preview">
-          <div class="preview-heading">
-          <span>Live preview</span>
-          <span class="preview-pulse" aria-hidden="true"></span>
+          <div class="preview-heading"><span>Live preview</span><span class="preview-pulse" aria-hidden="true"></span>
           </div>
           <article class="preview-card">
             <div class="preview-art" :class="{ 'has-cover': form.coverImageUrl }"
               :style="form.coverImageUrl ? { backgroundImage: `linear-gradient(180deg, transparent 35%, color-mix(in srgb, var(--bookedz-ink) 78%, transparent)), url('${form.coverImageUrl}')` } : undefined">
-              <span v-if="!form.coverImageUrl" class="preview-art-mark" aria-hidden="true">
-              <svg viewBox="0 0 80 60"
+              <span v-if="!form.coverImageUrl" class="preview-art-mark" aria-hidden="true"><svg viewBox="0 0 80 60"
                   fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 12h56v12a6 6 0 0 0 0 12v12H12V36a6 6 0 0 0 0-12Z" />
                   <path d="M50 12v36" stroke-dasharray="3 4" />
@@ -1421,16 +1220,12 @@ async function publish() {
               <p class="preview-date">{{ previewDate }}</p>
               <h2>{{ form.title.trim() || 'Your event title' }}</h2>
               <p class="preview-description">{{ form.description.trim() || 'Your description will appear here as you write it.'}}</p>
-              <div class="preview-meta">
-              <span aria-hidden="true">⌖</span>
-              <span>{{ form.isOnline ? 'Online' : !form.venue
+              <div class="preview-meta"><span aria-hidden="true">⌖</span><span>{{ form.isOnline ? 'Online' : !form.venue
                 ?
                 'Venue to be announced' : venueRevealToSave(form) ? `Venue revealed on ${venueRevealLabel}` :
                   form.venue.name
                   }}</span></div>
-              <div class="preview-meta">
-              <span aria-hidden="true">◎</span>
-              <span>{{ form.hideCapacity ? 'Capacity hidden from participants' : form.noLimit ? 'Unlimited spots' : Number.isInteger(form.capacity) && form.capacity > 0 ? `${form.capacity} spots` : 'Capacity to be set' }}</span></div>
+              <div class="preview-meta"><span aria-hidden="true">◎</span><span>{{ form.hideCapacity ? 'Capacity hidden from participants' : form.noLimit ? 'Unlimited spots' : Number.isInteger(form.capacity) && form.capacity > 0 ? `${form.capacity} spots` : 'Capacity to be set' }}</span></div>
             </div>
           </article>
           <p class="preview-note">This is a guide to how your event details come together.</p>
@@ -1607,7 +1402,6 @@ async function publish() {
 }
 
 /* sits above the phone tab bar when there is one (--bottom-nav-h, main.css) */
-
 .create-event-page :deep(.card-footer) {
   padding: .85rem clamp(1rem, 3vw, 2rem);
   border-color: var(--bookedz-border);
@@ -1681,7 +1475,6 @@ async function publish() {
 }
 
 /* same 16:9 crop as the event cards, so the preview shows what participants will see */
-
 .preview-art {
   position: relative;
   display: grid;
@@ -1807,11 +1600,11 @@ async function publish() {
 }
 
 /* phones: the form comes first so the current step's fields are visible without scrolling; the preview follows it */
-
 @media (max-width: 767.98px) {
   .creation-layout {
     grid-template-columns: minmax(0, 1fr);
   }
+
   .event-preview {
     position: static;
   }
@@ -1845,7 +1638,6 @@ async function publish() {
 }
 
 /* venue and question boxes use theme tokens (bootstrap's bg-light stays white in dark mode) */
-
 .step-subheading {
   margin: 0 0 .75rem;
   color: var(--bookedz-ink);
@@ -1915,6 +1707,7 @@ async function publish() {
   .question-add {
     transition: none;
   }
+
   .question-add:not(:disabled):hover {
     transform: none;
   }
@@ -1978,7 +1771,6 @@ async function publish() {
 
 /* disabled outline buttons (back on step 1, an empty "add question") use the theme's disabled
    colours instead of bootstrap's default grey/blue, matching disabled .event-cta buttons */
-
 .create-event-page :deep(.btn-outline-primary),
 .create-event-page :deep(.btn-outline-secondary) {
   --bs-btn-disabled-color: var(--bookedz-disabled-ink);
@@ -1988,6 +1780,7 @@ async function publish() {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .step-forward-enter-active,
   .step-forward-leave-active,
   .step-back-enter-active,
@@ -1999,7 +1792,6 @@ async function publish() {
 }
 
 /* tags look exactly like discover's category chips, so the preview matches what visitors see */
-
 .tag-chip {
   display: inline-flex;
   align-items: center;
@@ -2028,7 +1820,6 @@ async function publish() {
 }
 
 /* physical / online: two large radio cards that reflow to one column on narrow phones */
-
 .event-mode {
   min-width: 0;
   margin: 0;
@@ -2095,7 +1886,6 @@ async function publish() {
 }
 
 /* the link takes about 70% of the row, the reveal time the rest; stacked on small screens */
-
 .online-grid {
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
@@ -2116,6 +1906,7 @@ async function publish() {
   .online-grid {
     grid-template-columns: 1fr;
   }
+
   .online-grid :deep(.wheel-panel) {
     left: 0;
     right: auto;

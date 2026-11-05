@@ -1,45 +1,7 @@
-/* small icon, full keyboard/touch target; applies only to explicit notifications. */
-
-.dismissible-notice {
-  position: relative;
-  padding-inline-end: 3.5rem !important;
-  min-height: 44px;
-}
-
-.dismissible-notice[hidden] {
-  display: none !important;
-}
-
-span.dismissible-notice {
-  display: inline-block;
-}
-
-.notice-close {
-  position: absolute;
-  inset: 0 0 auto auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  border-radius: .65rem;
-  background: transparent;
-  color: inherit;
-  box-shadow: none;
-  opacity: .75;
-}
-
-.notice-close:hover {
-  opacity: 1;
-  background: color-mix(in srgb, currentColor 8%, transparent);
-  box-shadow: none;
-  transform: none;
-}
-
-.notice-close:focus-visible {
-  opacity: 1;
-  outline: 3px solid var(--bookedz-focus, var(--bookedz-primary-dark));
-  outline-offset: -4px;
-}
+/* Small icon, full keyboard/touch target; applies only to explicit notifications. */
+.dismissible-notice { position: relative; padding-inline-end: 3.5rem !important; min-height: 44px; }
+.dismissible-notice[hidden] { display: none !important; }
+span.dismissible-notice { display: inline-block; }
+.notice-close { position: absolute; inset: 0 0 auto auto; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: .65rem; background: transparent; color: inherit; box-shadow: none; opacity: .75; }
+.notice-close:hover { opacity: 1; background: color-mix(in srgb, currentColor 8%, transparent); box-shadow: none; transform: none; }
+.notice-close:focus-visible { opacity: 1; outline: 3px solid var(--bookedz-focus, var(--bookedz-primary-dark)); outline-offset: -4px; }

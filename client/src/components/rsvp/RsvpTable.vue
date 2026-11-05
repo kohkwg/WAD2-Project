@@ -1,74 +1,56 @@
 <script setup>
-import { answerText } from '../../utils/questionTypes.js';
-import GroupChip from './GroupChip.vue';
-import { ref, nextTick } from 'vue';
-import { formatShortDateTime } from '../../utils/helpers.js';
+import { answerText } from '../../utils/questionTypes.js'
+import GroupChip from './GroupChip.vue'
+import { ref, nextTick } from 'vue'
+import { formatShortDateTime } from '../../utils/helpers.js'
 
-// show pending and confirmed guests
-// send actions to the parent page so it can save the changes
-
-
+// Table of RSVPs for the organiser. Used for both "Pending approval" and "Confirmed".
+// It doesn't change any data itself — it emits events and the parent page does the work.
 const props = defineProps({
   rsvps: Array,
-  questions: Array,
-  // the event's custom questions, so we can show each answer
-  showActions: Boolean,
-  // show approve and reject buttons
-  showRemove: Boolean,
-  // allow confirmed guests to be removed
-  busyId: String,
-  // disable the row while it is saving
+  questions: Array, // the event's custom questions, so we can show each answer
+  showActions: Boolean, // true → show Approve / Reject buttons
+  showRemove: Boolean, // true → show a Remove button (for people already accepted)
+  busyId: String, // the RSVP currently being saved (its buttons are disabled)
   emptyText: String,
-  selectable: Boolean,
-  // true → a checkbox per row for bulk actions
-  selectedIds: {
-    type: Array,
-    default: () => []
-  }
-});
+  selectable: Boolean, // true → a checkbox per row for bulk actions
+  selectedIds: { type: Array, default: () => [] },
+})
+const emit = defineEmits(['approve', 'reject', 'remove', 'toggle-member', 'update:selectedIds'])
 
-const emit = defineEmits(['approve', 'reject', 'remove', 'toggle-member', 'update:selectedIds']);
-
-// remember which row is asking for removal confirmation
-
-
-const confirmRemoveId = ref(null);
+// Which row is showing "Remove them? Yes / Keep" (a second click, so one slip can't remove someone)
+const confirmRemoveId = ref(null)
 
 function confirmRemove(rsvpId) {
-  emit('remove', rsvpId);
-  confirmRemoveId.value = null;
+  emit('remove', rsvpId)
+  confirmRemoveId.value = null
 }
 
-// move focus when the removal buttons change
-
-
+// The pressed button is replaced by the confirm step (and back), so move focus with it
 async function askRemove(rsvpId) {
-  confirmRemoveId.value = rsvpId;
-  await nextTick();
-  document.getElementById(`keep-attendee-${rsvpId}`)?.focus(); // the safe choice is focused first
+  confirmRemoveId.value = rsvpId
+  await nextTick()
+  document.getElementById(`keep-attendee-${rsvpId}`)?.focus() // the safe choice is focused first
 }
 
 async function keepAttendee(rsvpId) {
-  confirmRemoveId.value = null;
-  await nextTick();
-  document.getElementById(`remove-attendee-${rsvpId}`)?.focus();
+  confirmRemoveId.value = null
+  await nextTick()
+  document.getElementById(`remove-attendee-${rsvpId}`)?.focus()
 }
 
-// let the parent page keep track of the selected guests
-
-
+// Bulk selection (pending tab): the parent owns the list of chosen RSVP ids
 function toggleSelected(rsvpId, on) {
-  const next = new Set(props.selectedIds);
-  on ? next.add(rsvpId) : next.delete(rsvpId);
-  emit('update:selectedIds', [...next]);
+  const next = new Set(props.selectedIds)
+  on ? next.add(rsvpId) : next.delete(rsvpId)
+  emit('update:selectedIds', [...next])
 }
-
 function toggleAll(on) {
-  emit('update:selectedIds', on ? props.rsvps.map(rsvp => rsvp.id) : []);
+  emit('update:selectedIds', on ? props.rsvps.map(rsvp => rsvp.id) : [])
 }
 
 function formatAnswer(question, answer) {
-  return answerText(question, answer);
+  return answerText(question, answer)
 }
 </script>
 
@@ -77,14 +59,11 @@ function formatAnswer(question, answer) {
 
   <div v-else class="table-responsive">
     <table class="table align-middle">
-      <caption class="visually-hidden">RSVPs</caption>
+        <caption class="visually-hidden">RSVPs</caption>
       <thead class="table-light">
         <tr>
           <th v-if="selectable" scope="col" class="select-col">
-            <input class="form-check-input" type="checkbox" aria-label="Select all RSVPs"
-              :checked="rsvps.length > 0 && selectedIds.length === rsvps.length"
-              :indeterminate.prop="selectedIds.length > 0 && selectedIds.length < rsvps.length"
-              @change="toggleAll($event.target.checked)" />
+            <input class="form-check-input" type="checkbox" aria-label="Select all RSVPs" :checked="rsvps.length > 0 && selectedIds.length === rsvps.length" :indeterminate.prop="selectedIds.length > 0 && selectedIds.length < rsvps.length" @change="toggleAll($event.target.checked)" />
           </th>
           <th scope="col">Name</th>
           <th scope="col" v-if="questions.length > 0">Answers</th>
@@ -97,9 +76,7 @@ function formatAnswer(question, answer) {
       <tbody>
         <tr v-for="rsvp in rsvps" :key="rsvp.id" :class="{ 'is-chosen': selectedIds.includes(rsvp.id) }">
           <td v-if="selectable" class="select-col" data-label="Select">
-            <input class="form-check-input" type="checkbox" :aria-label="`Select ${rsvp.user.name}`"
-              :checked="selectedIds.includes(rsvp.id)" :disabled="busyId === rsvp.id"
-              @change="toggleSelected(rsvp.id, $event.target.checked)" />
+            <input class="form-check-input" type="checkbox" :aria-label="`Select ${rsvp.user.name}`" :checked="selectedIds.includes(rsvp.id)" :disabled="busyId === rsvp.id" @change="toggleSelected(rsvp.id, $event.target.checked)" />
           </td>
           <td data-label="Name">
             <div class="fw-semibold">{{ rsvp.user.name }}</div>
@@ -115,11 +92,17 @@ function formatAnswer(question, answer) {
           </td>
 
           <td data-label="Member">
-            <!-- switch the guest membership on or off -->
+            <!-- form-switch = Bootstrap's on/off toggle look for a checkbox -->
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" role="switch" :id="'member-' + rsvp.id"
-                :checked="rsvp.isMember" :disabled="busyId === rsvp.id"
-                @change="emit('toggle-member', rsvp.userId, $event.target.checked)" />
+              <input
+                class="form-check-input"
+                type="checkbox"
+                role="switch"
+                :id="'member-' + rsvp.id"
+                :checked="rsvp.isMember"
+                :disabled="busyId === rsvp.id"
+                @change="emit('toggle-member', rsvp.userId, $event.target.checked)"
+              />
               <label class="form-check-label small" :for="'member-' + rsvp.id">
                 {{ rsvp.isMember ? 'Member' : 'No' }}
               </label>
@@ -129,13 +112,21 @@ function formatAnswer(question, answer) {
           <td data-label="RSVP'd" class="small text-secondary">{{ formatShortDateTime(rsvp.createdAt) }}</td>
 
           <td v-if="showActions" data-label="Decision" class="text-end text-nowrap">
-            <button type="button" class="btn event-cta btn-sm me-2" :disabled="busyId === rsvp.id"
-              @click="emit('approve', rsvp.id)">
+            <button
+              type="button"
+              class="btn event-cta btn-sm me-2"
+              :disabled="busyId === rsvp.id"
+              @click="emit('approve', rsvp.id)"
+            >
               Approve <span class="visually-hidden">{{ rsvp.user.name }}</span>
             </button>
-            <!-- keep reject separate from approve to avoid accidental clicks -->
-            <button type="button" class="btn btn-outline-danger btn-sm reject-btn" :disabled="busyId === rsvp.id"
-              @click="emit('reject', rsvp.id)">
+            <!-- Kept well apart from Approve so a slip doesn't reject someone; Reject also has an undo window -->
+            <button
+              type="button"
+              class="btn btn-outline-danger btn-sm reject-btn"
+              :disabled="busyId === rsvp.id"
+              @click="emit('reject', rsvp.id)"
+            >
               Reject <span class="visually-hidden">{{ rsvp.user.name }}</span>
             </button>
           </td>
@@ -143,17 +134,31 @@ function formatAnswer(question, answer) {
           <td v-if="showRemove" data-label="Remove" class="text-end text-nowrap">
             <template v-if="confirmRemoveId === rsvp.id">
               <span class="small me-2">Remove them?</span>
-              <button type="button" class="btn btn-danger btn-sm me-1" :disabled="busyId === rsvp.id"
-                @click="confirmRemove(rsvp.id)">
+              <button
+                type="button"
+                class="btn btn-danger btn-sm me-1"
+                :disabled="busyId === rsvp.id"
+                @click="confirmRemove(rsvp.id)"
+              >
                 Yes, remove <span class="visually-hidden">{{ rsvp.user.name }}</span>
               </button>
-              <button :id="`keep-attendee-${rsvp.id}`" type="button" class="btn btn-outline-secondary btn-sm"
-                @click="keepAttendee(rsvp.id)">
+              <button
+                :id="`keep-attendee-${rsvp.id}`"
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                @click="keepAttendee(rsvp.id)"
+              >
                 Keep
               </button>
             </template>
-            <button v-else :id="`remove-attendee-${rsvp.id}`" type="button" class="btn btn-outline-danger btn-sm"
-              :disabled="busyId === rsvp.id" @click="askRemove(rsvp.id)">
+            <button
+              v-else
+              :id="`remove-attendee-${rsvp.id}`"
+              type="button"
+              class="btn btn-outline-danger btn-sm"
+              :disabled="busyId === rsvp.id"
+              @click="askRemove(rsvp.id)"
+            >
               Remove <span class="visually-hidden">{{ rsvp.user.name }}</span>
             </button>
           </td>
@@ -164,137 +169,32 @@ function formatAnswer(question, answer) {
 </template>
 
 <style scoped>
-.table {
-  --bs-table-bg: transparent;
-  --bs-table-striped-bg: var(--bookedz-glass-solid);
-  margin-bottom: 0;
-}
-
-.table thead th {
-  padding-top: .8rem;
-  padding-bottom: .8rem;
-  color: var(--bookedz-muted);
-  font-size: .82rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.table td {
-  padding-top: .8rem;
-  padding-bottom: .8rem;
-}
-
-.table-responsive {
-  border: 1px solid var(--bookedz-border);
-  border-radius: 12px;
-}
-
-.table .btn {
-  white-space: nowrap;
-}
-
+.table { --bs-table-bg: transparent; --bs-table-striped-bg: var(--bookedz-glass-solid); margin-bottom: 0; }
+.table thead th { padding-top: .8rem; padding-bottom: .8rem; color: var(--bookedz-muted); font-size: .82rem; font-weight: 700; white-space: nowrap; }
+.table td { padding-top: .8rem; padding-bottom: .8rem; }
+.table-responsive { border: 1px solid var(--bookedz-border); border-radius: 12px; }
+.table .btn { white-space: nowrap; }
 @media (max-width: 767.98px) {
-  .table-responsive {
-    overflow: visible;
-    border: 0;
-    border-radius: 0;
-  }
-  .table,
-  .table tbody {
-    display: block;
-    width: 100%;
-  }
-  .table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    clip-path: inset(50%);
-  }
-  .table tbody {
-    display: grid;
-    gap: .75rem;
-  }
-  .table tr {
-    display: grid;
-    gap: 0;
-    padding: .6rem .85rem;
-    border: 1px solid var(--bookedz-border);
-    border-radius: 15px;
-    background: var(--bookedz-surface);
-    box-shadow: var(--bookedz-card-shadow);
-  }
-  .table td {
-    display: grid;
-    grid-template-columns: minmax(85px, 30%) minmax(0, 1fr);
-    align-items: center;
-    gap: .6rem;
-    padding: .55rem 0;
-    border-bottom: 1px solid var(--bookedz-border);
-    text-align: left !important;
-    white-space: normal;
-  }
-  .table td:last-child {
-    border-bottom: 0;
-  }
-  .table td::before {
-    content: attr(data-label);
-    color: var(--bookedz-muted);
-    font-size: .74rem;
-    font-weight: 700;
-  }
-  .table td[data-label="Name"] {
-    display: block;
-    padding-top: .25rem;
-  }
-  .table td[data-label="Name"]::before {
-    content: none;
-  }
-  .table td[data-label="Name"] .fw-semibold {
-    font-size: 1rem;
-    color: var(--bookedz-ink);
-  }
-  .table td[data-label="Name"] .small {
-    overflow-wrap: anywhere;
-  }
-  .table td[data-label="Answers"]>div+div {
-    margin-top: .35rem;
-  }
-  .table td[data-label="Decision"],
-  .table td[data-label="Remove"] {
-    display: block;
-    padding-top: .7rem;
-  }
-  .table td[data-label="Decision"]::before,
-  .table td[data-label="Remove"]::before {
-    display: block;
-    margin-bottom: .5rem;
-  }
-  .table td[data-label="Decision"] .btn+.btn {
-    margin-left: .4rem;
-  }
-  .table td[data-label="Remove"] .btn {
-    margin: .2rem .25rem .2rem 0;
-  }
+  .table-responsive { overflow: visible; border: 0; border-radius: 0; }
+  .table,.table tbody { display: block; width: 100%; }
+  .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+  .table tbody { display: grid; gap: .75rem; }
+  .table tr { display: grid; gap: 0; padding: .6rem .85rem; border: 1px solid var(--bookedz-border); border-radius: 15px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
+  .table td { display: grid; grid-template-columns: minmax(85px, 30%) minmax(0, 1fr); align-items: center; gap: .6rem; padding: .55rem 0; border-bottom: 1px solid var(--bookedz-border); text-align: left !important; white-space: normal; }
+  .table td:last-child { border-bottom: 0; }
+  .table td::before { content: attr(data-label); color: var(--bookedz-muted); font-size: .74rem; font-weight: 700; }
+  .table td[data-label="Name"] { display: block; padding-top: .25rem; }
+  .table td[data-label="Name"]::before { content: none; }
+  .table td[data-label="Name"] .fw-semibold { font-size: 1rem; color: var(--bookedz-ink); }
+  .table td[data-label="Name"] .small { overflow-wrap: anywhere; }
+  .table td[data-label="Answers"] > div + div { margin-top: .35rem; }
+  .table td[data-label="Decision"],.table td[data-label="Remove"] { display: block; padding-top: .7rem; }
+  .table td[data-label="Decision"]::before,.table td[data-label="Remove"]::before { display: block; margin-bottom: .5rem; }
+  .table td[data-label="Decision"] .btn + .btn { margin-left: .4rem; }
+  .table td[data-label="Remove"] .btn { margin: .2rem .25rem .2rem 0; }
 }
-
-.reject-btn {
-  margin-left: 1.5rem;
-}
-
-.select-col {
-  width: 44px;
-}
-
-.select-col .form-check-input {
-  width: 1.25rem;
-  height: 1.25rem;
-  margin: 0;
-}
-
-tr.is-chosen>td {
-  background: color-mix(in srgb, var(--bookedz-primary) 8%, var(--bookedz-surface));
-}
+.reject-btn { margin-left: 1.5rem; }
+.select-col { width: 44px; }
+.select-col .form-check-input { width: 1.25rem; height: 1.25rem; margin: 0; }
+tr.is-chosen > td { background: color-mix(in srgb, var(--bookedz-primary) 8%, var(--bookedz-surface)); }
 </style>

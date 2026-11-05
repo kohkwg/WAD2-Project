@@ -1,60 +1,49 @@
 <script setup>
-// boilerplate: manual check-in at the station. search confirmed attendees by name
+// BOILERPLATE: manual check-in at the station. Search confirmed attendees by name
 // (and email, for organisers) and pick one; the parent checks them in.
-import { computed, onMounted, ref } from 'vue';
-import { listAttendees } from '@/utils/checkin';
+import { computed, onMounted, ref } from 'vue'
+import { listAttendees } from '@/utils/checkin'
 
 const props = defineProps({
-  eventId: {
-    type: String,
-    required: true
-  },
-  busy: {
-    type: Boolean,
-    default: false
-  }
-});
+  eventId: { type: String, required: true },
+  busy: { type: Boolean, default: false },
+})
+const emit = defineEmits(['pick'])
 
-const emit = defineEmits(['pick']);
-
-const people = ref([]);
-
-const query = ref('');
-
-const loading = ref(true);
-
-const error = ref('');
+const people = ref([])
+const query = ref('')
+const loading = ref(true)
+const error = ref('')
 
 async function load() {
-  loading.value = true;
-  error.value = '';
+  loading.value = true
+  error.value = ''
   try {
-    people.value = await listAttendees(props.eventId);
+    people.value = await listAttendees(props.eventId)
   } catch (e) {
-    error.value = e.message ?? 'Could not load attendees.';
+    error.value = e.message ?? 'Could not load attendees.'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 const matches = computed(() => {
-  const q = query.value.trim().toLowerCase();
-  if (!q) return [];
-  return people.value.filter(p => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)).slice(0, 8);
-});
+  const q = query.value.trim().toLowerCase()
+  if (!q) return []
+  return people.value
+    .filter((p) => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q))
+    .slice(0, 8)
+})
 
-// the parent checks them in and calls done(ok); only mark them as in on success
-
+// The parent checks them in and calls done(ok); only mark them as in on success
 function pick(person) {
-  emit('pick', person.id, ok => {
-    if (ok) person.checkedIn = true;
-  });
+  emit('pick', person.id, (ok) => {
+    if (ok) person.checkedIn = true
+  })
 }
 
-onMounted(load);
-defineExpose({
-  reload: load
-});
+onMounted(load)
+defineExpose({ reload: load })
 </script>
 
 <template>
@@ -102,26 +91,5 @@ defineExpose({
 </template>
 
 <style scoped>
-:deep(.form-control) {
-  min-height: 44px;
-  border-color: var(--bookedz-border,#e9ded3);
-  border-radius: 12px;
-}
-
-:deep(.list-group) {
-  border: 1px solid var(--bookedz-border,#e9ded3);
-  border-radius: 14px;
-  overflow: hidden;
-}
-
-:deep(.list-group-item) {
-  border-color: var(--bookedz-border,#e9ded3);
-  gap: .75rem;
-  padding: .75rem;
-}
-
-:deep(.btn) {
-  border-radius: 10px;
-  min-height: 40px;
-}
+:deep(.form-control){min-height:44px;border-color:var(--bookedz-border,#e9ded3);border-radius:12px}:deep(.list-group){border:1px solid var(--bookedz-border,#e9ded3);border-radius:14px;overflow:hidden}:deep(.list-group-item){border-color:var(--bookedz-border,#e9ded3);gap:.75rem;padding:.75rem}:deep(.btn){border-radius:10px;min-height:40px}
 </style>

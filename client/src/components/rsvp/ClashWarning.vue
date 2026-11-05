@@ -1,10 +1,10 @@
 <script setup>
-import { formatEventTime } from '../../utils/helpers.js';
+import { formatEventTime } from '../../utils/helpers.js'
 
 // clashes: events you've already joined that overlap this one
 defineProps({
-  clashes: Array
-});
+  clashes: Array,
+})
 </script>
 
 <template>

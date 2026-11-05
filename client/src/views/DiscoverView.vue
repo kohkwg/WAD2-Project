@@ -1,171 +1,142 @@
 <script setup>
-import '../assets/design-baseline.css';
-import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { supabase } from '@/lib/supabase';
-import { USING_SUPABASE, getMyRsvps, JOINED_STATUSES } from '@/utils/api';
-import { observeDiscoverySession } from '@/lib/discoveryState';
-import { buildSuggestionIndex, suggest } from '@/lib/searchSuggestions';
-import { useEvents, useRecommendations } from '@/composables/useEvents';
-import { useDiscoveryMotion } from '@/composables/useDiscoveryMotion';
-import { toast } from '@/composables/useToast';
-import { EVENT_GROUPS, sameCategories } from '@/lib/eventGroups';
-import { normalizeDiscoveryFilters, discoveryDateRange, discoveryEventQuery, discoveryUrlQuery, discoveryFiltersFromQuery } from '@/lib/discoveryFilters';
-import DiscoveryEventRow from '@/components/discovery/DiscoveryEventRow.vue';
-import DiscoveryDayRow from '@/components/discovery/DiscoveryDayRow.vue';
-import DiscoveryWeekCalendar from '@/components/discovery/DiscoveryWeekCalendar.vue';
-import DiscoveryStreetMap from '@/components/discovery/DiscoveryStreetMap.vue';
-import EventFilters from '@/components/EventFilters.vue';
-import SkeletonList from '@/components/ui/SkeletonList.vue';
-import BumpValue from '@/components/ui/BumpValue.vue';
+import '../assets/design-baseline.css'
+import {
+  ref,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  computed,
+  nextTick,
+} from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { supabase } from '@/lib/supabase'
+import { USING_SUPABASE, getMyRsvps, JOINED_STATUSES } from '@/utils/api'
+import { observeDiscoverySession } from '@/lib/discoveryState'
+import { useEvents, useRecommendations } from '@/composables/useEvents'
+import { useDiscoveryMotion } from '@/composables/useDiscoveryMotion'
+import { toast } from '@/composables/useToast'
+import { EVENT_GROUPS, sameCategories } from '@/lib/eventGroups'
+import {
+  normalizeDiscoveryFilters,
+  discoveryDateRange,
+  discoveryEventQuery,
+  discoveryUrlQuery,
+  discoveryFiltersFromQuery,
+} from '@/lib/discoveryFilters'
 
-const BROWSING_STORAGE_KEY = 'bookedz-discover-browsing';
+import DiscoveryEventRow from '@/components/discovery/DiscoveryEventRow.vue'
+import DiscoveryDayRow from '@/components/discovery/DiscoveryDayRow.vue'
+import DiscoveryWeekCalendar from '@/components/discovery/DiscoveryWeekCalendar.vue'
+import DiscoveryStreetMap from '@/components/discovery/DiscoveryStreetMap.vue'
+import EventFilters from '@/components/EventFilters.vue'
+import SkeletonList from '@/components/ui/SkeletonList.vue'
+import BumpValue from '@/components/ui/BumpValue.vue'
 
-const MOBILE_QUERY = '(max-width: 991px)';
+const BROWSING_STORAGE_KEY = 'bookedz-discover-browsing'
+const MOBILE_QUERY = '(max-width: 991px)'
+const EVENTS_PER_PAGE = 10
+const MAX_WEEKS = 26
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
+const CLOCK_INTERVAL = 60000
 
-const EVENTS_PER_PAGE = 10;
+const route = useRoute()
+const router = useRouter()
 
-const MAX_WEEKS = 26;
-
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
-
-const CLOCK_INTERVAL = 60000;
-
-const route = useRoute();
-
-const router = useRouter();
-
-// restore the previous search and filters.
-
+// Restore the previous search and filters.
 function restoreBrowsing() {
   try {
-    const saved = JSON.parse(sessionStorage.getItem(BROWSING_STORAGE_KEY));
-    const restoredFilters = normalizeDiscoveryFilters(saved?.filters);
+    const saved = JSON.parse(sessionStorage.getItem(BROWSING_STORAGE_KEY))
+    const restoredFilters = normalizeDiscoveryFilters(saved?.filters)
 
-    // support older saved filters.
+    // Support older saved filters.
     if (saved?.filters?.availableOnly) {
-      restoredFilters.extras = ['spots_left'];
+      restoredFilters.extras = ['spots_left']
     }
+
     return {
       filters: restoredFilters,
       search: saved?.search || saved?.filters?.search || '',
-      sort: (saved?.sort || saved?.filters?.sort) === 'popular' ? 'popular' : 'soonest',
-      mode: saved?.mode === 'map' ? 'map' : 'list'
-    };
+      sort:
+        (saved?.sort || saved?.filters?.sort) === 'popular'
+          ? 'popular'
+          : 'soonest',
+      mode: saved?.mode === 'map' ? 'map' : 'list',
+    }
   } catch {
     return {
       filters: normalizeDiscoveryFilters(),
       search: '',
       sort: 'soonest',
-      mode: 'list'
-    };
+      mode: 'list',
+    }
   }
 }
 
-// state
+// State
+const browsing = restoreBrowsing()
 
-const browsing = restoreBrowsing();
+const filters = ref(browsing.filters)
+const search = ref(browsing.search)
+const sort = ref(browsing.sort)
+const viewMode = ref(browsing.mode)
 
-const filters = ref(browsing.filters);
-
-const search = ref(browsing.search);
-
-const sort = ref(browsing.sort);
-
-const viewMode = ref(browsing.mode);
-
-const loggedIn = ref(false);
-
-const selectedEventId = ref(null);
-
-const visibleCount = ref(EVENTS_PER_PAGE);
-
-const weekOffset = ref(0);
-// desktop: enlarge the map and calendar, and show one event card per row instead of two
-
-const MAP_LARGE_KEY = 'bookedz-discover-map-large';
-
-const mapLarge = ref(false);
-try {
-  mapLarge.value = localStorage.getItem(MAP_LARGE_KEY) === '1';
-} catch {/* the toggle just starts off */}
-
+const loggedIn = ref(false)
+const selectedEventId = ref(null)
+const visibleCount = ref(EVENTS_PER_PAGE)
+const weekOffset = ref(0)
+// Desktop: enlarge the map and calendar, and show one event card per row instead of two
+const MAP_LARGE_KEY = 'bookedz-discover-map-large'
+const mapLarge = ref(false)
+try { mapLarge.value = localStorage.getItem(MAP_LARGE_KEY) === '1' } catch { /* the toggle just starts off */ }
 function toggleMapSize() {
-  mapLarge.value = !mapLarge.value;
-  try {
-    localStorage.setItem(MAP_LARGE_KEY, mapLarge.value ? '1' : '0');
-  } catch {/* not remembered */}
+  mapLarge.value = !mapLarge.value
+  try { localStorage.setItem(MAP_LARGE_KEY, mapLarge.value ? '1' : '0') } catch { /* not remembered */ }
 }
+const weeksShown = ref(1)
+const clock = ref(Date.now())
 
-const weeksShown = ref(1);
+const mySchedule = ref([])
+const scheduleError = ref('')
 
-const clock = ref(Date.now());
+const pageRoot = ref(null)
+const searchControl = ref(null)
+const resultList = ref(null)
+const toolbar = ref(null)
+const categoryRow = ref(null)
 
-const mySchedule = ref([]);
-
-const scheduleError = ref('');
-
-const pageRoot = ref(null);
-
-const searchControl = ref(null);
-
-const resultList = ref(null);
-
-const toolbar = ref(null);
-
-const categoryRow = ref(null);
-
-const smallScreen = ref(window.matchMedia(MOBILE_QUERY).matches);
-
+const smallScreen = ref(window.matchMedia(MOBILE_QUERY).matches)
 const rowFade = ref({
   start: false,
-  end: false
-});
+  end: false,
+})
 
-let smallMedia;
+let smallMedia
+let rowObserver
+let clockTimer
+let stopAuth
+let listScrollY = 0
 
-let rowObserver;
+useDiscoveryMotion(pageRoot)
 
-let clockTimer;
-
-let stopAuth;
-
-let listScrollY = 0;
-useDiscoveryMotion(pageRoot);
-
-// list, map and saved count use separate requests.
-
+// List, map and saved count use separate requests.
 const {
   events,
   total,
   loading,
   error,
-  fetchEvents
-} = useEvents();
+  fetchEvents,
+} = useEvents()
 
 const {
   events: mapEvents,
   loading: mapLoading,
-  fetchEvents: fetchMapEvents
-} = useEvents();
+  fetchEvents: fetchMapEvents,
+} = useEvents()
 
 const {
   total: savedCount,
-  fetchEvents: fetchSavedCount
-} = useEvents();
-
-// search suggestions read every event the current filters allow (ignoring the typed text), so
-// a suggestion can't lead to an empty page. loaded on first focus; typing then needs no requests.
-
-const {
-  events: suggestionEvents,
-  error: suggestionError,
-  fetchEvents: fetchSuggestionEvents
-} = useEvents();
-
-const suggestionsRequested = ref(false);
-
-const typedSearch = ref('');
+  fetchEvents: fetchSavedCount,
+} = useEvents()
 
 const {
   recommended,
@@ -173,88 +144,101 @@ const {
   actionError,
   fetchRecommendations,
   clearRecommendations,
-  updatePreference
-} = useRecommendations();
+  updatePreference,
+} = useRecommendations()
 
-// display values
-
+// Display values
 const savedSelected = computed(() => {
-  return filters.value.saved && loggedIn.value;
-});
+  return filters.value.saved && loggedIn.value
+})
 
 const showSavedChip = computed(() => {
-  return loggedIn.value && (savedCount.value > 0 || filters.value.saved);
-});
+  return loggedIn.value && (savedCount.value > 0 || filters.value.saved)
+})
 
 const emptySuggestions = computed(() => {
-  return EVENT_GROUPS.filter(group => {
-    return !sameCategories(filters.value.categories, group.categories);
-  }).slice(0, 4);
-});
+  return EVENT_GROUPS.filter((group) => {
+    return !sameCategories(filters.value.categories, group.categories)
+  }).slice(0, 4)
+})
 
 const activeCategory = computed(() => {
-  return filters.value.categories.length === 1 ? filters.value.categories[0] : '';
-});
+  return filters.value.categories.length === 1
+    ? filters.value.categories[0]
+    : ''
+})
 
 const categoryTitle = computed(() => {
   if (savedSelected.value) {
-    return 'Your saved events';
+    return 'Your saved events'
   }
+
   if (activeCategory.value) {
-    const category = activeCategory.value;
-    const title = category.charAt(0).toUpperCase() + category.slice(1);
-    return `${title} events`;
+    const category = activeCategory.value
+    const title = category.charAt(0).toUpperCase() + category.slice(1)
+
+    return `${title} events`
   }
-  return 'Discover events';
-});
+
+  return 'Discover events'
+})
 
 const remaining = computed(() => {
-  return Math.max(0, total.value - events.value.length);
-});
+  return Math.max(0, total.value - events.value.length)
+})
 
 const whenActive = computed(() => {
-  const pickingWithoutDates = filters.value.when === 'pick_dates' && !(filters.value.dateFrom && filters.value.dateTo);
-  return Boolean(filters.value.when) && !pickingWithoutDates;
-});
+  const pickingWithoutDates =
+    filters.value.when === 'pick_dates' &&
+    !(filters.value.dateFrom && filters.value.dateTo)
+
+  return Boolean(filters.value.when) && !pickingWithoutDates
+})
 
 const filtersActive = computed(() => {
-  return Boolean(search.value || whenActive.value || filters.value.extras.length || filters.value.categories.length || savedSelected.value);
-});
+  return Boolean(
+    search.value ||
+      whenActive.value ||
+      filters.value.extras.length ||
+      filters.value.categories.length ||
+      savedSelected.value,
+  )
+})
 
-// browsing with no filters starts with a week of events, on every screen size.
-
+// Desktop browsing starts with one week.
 const weekMode = computed(() => {
-  return !filtersActive.value;
-});
-
-// the first view is the next seven days from today, then seven more per "show more". once the
-// week calendar moves to another week, the list follows that monday-to-sunday week instead.
+  return !smallScreen.value && !filtersActive.value
+})
 
 function weekAt(weeks) {
-  if (weekOffset.value === 0) {
-    const start = clock.value + weeks * 7 * MILLISECONDS_PER_DAY;
-    return {
-      dateFrom: discoveryDateRange('today', start).dateFrom,
-      dateTo: discoveryDateRange('today', start + 6 * MILLISECONDS_PER_DAY).dateTo
-    };
-  }
-  const offset = (weekOffset.value + weeks) * 7 * MILLISECONDS_PER_DAY;
-  return discoveryDateRange('week', clock.value + offset);
+  const offset = (weekOffset.value + weeks) * 7 * MILLISECONDS_PER_DAY
+
+  return discoveryDateRange('week', clock.value + offset)
 }
 
 function weekWindow(range) {
   if (!weekMode.value) {
-    return range;
+    return range
   }
-  const firstWeek = weekAt(0);
-  const lastWeek = weekAt(weeksShown.value - 1);
-  const dateFrom = range.dateFrom && range.dateFrom > firstWeek.dateFrom ? range.dateFrom : firstWeek.dateFrom;
-  const dateTo = range.dateTo && range.dateTo < lastWeek.dateTo ? range.dateTo : lastWeek.dateTo;
+
+  const firstWeek = weekAt(0)
+  const lastWeek = weekAt(weeksShown.value - 1)
+
+  const dateFrom =
+    range.dateFrom && range.dateFrom > firstWeek.dateFrom
+      ? range.dateFrom
+      : firstWeek.dateFrom
+
+  const dateTo =
+    range.dateTo && range.dateTo < lastWeek.dateTo
+      ? range.dateTo
+      : lastWeek.dateTo
+
   return {
     ...range,
     dateFrom,
-    dateTo
-  };
+    dateTo,
+  }
 }
 
 function dayLabel(key) {
@@ -262,115 +246,101 @@ function dayLabel(key) {
     timeZone: 'UTC',
     day: 'numeric',
     month: 'short',
-    year: 'numeric'
-  });
+    year: 'numeric',
+  })
 }
 
 const nextWeekLabel = computed(() => {
-  const next = weekAt(weeksShown.value);
-  return `${dayLabel(next.dateFrom)} – ${dayLabel(next.dateTo)}`;
-});
+  const next = weekAt(weeksShown.value)
 
-// build matching queries for the list and map.
+  return `${dayLabel(next.dateFrom)} – ${dayLabel(next.dateTo)}`
+})
 
+// Build matching queries for the list and map.
 function baseQuery() {
-  return weekWindow(filteredQuery());
-}
-
-// the chosen filters, before limiting a plain desktop browse to one week
-
-function filteredQuery() {
   const activeFilters = {
     ...filters.value,
-    saved: savedSelected.value
-  };
+    saved: savedSelected.value,
+  }
+
   const options = {
     search: search.value,
     sort: sort.value,
     page: 1,
-    now: clock.value
-  };
-  return discoveryEventQuery(activeFilters, options);
+    now: clock.value,
+  }
+
+  return weekWindow(discoveryEventQuery(activeFilters, options))
 }
 
 const eventQuery = computed(() => {
   return {
     ...baseQuery(),
-    limit: weekMode.value ? 200 : visibleCount.value
-  };
-});
+    limit: weekMode.value ? 200 : visibleCount.value,
+  }
+})
 
 const mapQuery = computed(() => {
   return {
     ...baseQuery(),
-    forMap: true
-  };
-});
-
-// not limited to one week: typing a search looks across every date, so suggestions must too
-
-const suggestionQuery = computed(() => {
-  return {
-    ...filteredQuery(),
-    search: '',
-    forMap: true
-  };
-});
-
-const suggestionIndex = computed(() => buildSuggestionIndex(suggestionEvents.value));
-
-const searchSuggestions = computed(() => {
-  return suggest(suggestionIndex.value, typedSearch.value, {
-    excludeCategories: filters.value.categories
-  });
-});
+    forMap: true,
+  }
+})
 
 const discoveryPicks = computed(() => {
-  return loggedIn.value ? recommended.value : [];
-});
+  return loggedIn.value ? recommended.value : []
+})
 
 const recommendationById = computed(() => {
-  return new Map(discoveryPicks.value.map(event => [event.id, event]));
-});
+  return new Map(discoveryPicks.value.map((event) => [event.id, event]))
+})
 
 const prominentEventIds = computed(() => {
-  return discoveryPicks.value.map(event => event.id);
-});
+  return discoveryPicks.value.map((event) => event.id)
+})
 
-// on phones the list is hidden while the map shows, so the chosen pin's card (with its view
-// event and rsvp buttons) sits under the map; the map itself only shows where the event is.
-
+// On phones the list is hidden while the map shows, so the chosen pin's card (with its View
+// event and RSVP buttons) sits under the map; the map itself only shows where the event is.
 const selectedMapEvent = computed(() => {
-  if (selectedEventId.value == null) return null;
-  return events.value.find(event => event.id === selectedEventId.value) || mappedPageEvents.value.find(event => event.id === selectedEventId.value) || null;
-});
+  if (selectedEventId.value == null) return null
+  return events.value.find((event) => event.id === selectedEventId.value)
+    || mappedPageEvents.value.find((event) => event.id === selectedEventId.value)
+    || null
+})
 
 const mappedPageEvents = computed(() => {
-  const rows = mapEvents.value.length || mapLoading.value ? mapEvents.value : events.value;
-  return rows.map(event => {
-    const pick = recommendationById.value.get(event.id);
+  const rows =
+    mapEvents.value.length || mapLoading.value
+      ? mapEvents.value
+      : events.value
+
+  return rows.map((event) => {
+    const pick = recommendationById.value.get(event.id)
+
     if (!pick) {
-      return event;
+      return event
     }
+
     return {
       ...event,
       pickedForYou: pick.source !== 'general_discovery',
       compatibilityScore: pick.compatibilityScore,
       source: pick.source,
-      reason: pick.reason
-    };
-  });
-});
+      reason: pick.reason,
+    }
+  })
+})
 
-// group events by their singapore date.
-
+// Group events by their Singapore date.
 const dateGroups = computed(() => {
-  const groups = new Map();
+  const groups = new Map()
+
   for (const event of events.value) {
-    const date = new Date(event.start_time);
+    const date = new Date(event.start_time)
     const key = date.toLocaleDateString('en-CA', {
-      timeZone: 'Asia/Singapore'
-    });
+      timeZone: 'Asia/Singapore',
+    })
+
     if (!groups.has(key)) {
       groups.set(key, {
         key,
@@ -378,402 +348,422 @@ const dateGroups = computed(() => {
         label: date.toLocaleDateString('en-SG', {
           timeZone: 'Asia/Singapore',
           day: 'numeric',
-          month: 'short'
+          month: 'short',
         }),
         weekday: date.toLocaleDateString('en-US', {
           timeZone: 'Asia/Singapore',
-          weekday: 'long'
+          weekday: 'long',
         }),
-        // always shown, so every day heading says which year it is
-        year: Number(date.toLocaleDateString('en-CA', {
-          timeZone: 'Asia/Singapore',
-          year: 'numeric'
-        })),
-        events: []
-      });
+        // Always shown, so every day heading says which year it is
+        year: Number(date.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric' })),
+        events: [],
+      })
     }
-    groups.get(key).events.push(event);
+
+    groups.get(key).events.push(event)
   }
-  return [...groups.values()];
-});
 
-// filters
+  return [...groups.values()]
+})
 
+// Filters
 function setCategories(categories) {
-  searchControl.value?.flushSearch();
+  searchControl.value?.flushSearch()
+
   filters.value = {
     ...filters.value,
     saved: false,
-    categories
-  };
+    categories,
+  }
 }
 
 function chooseCategory(category = '') {
-  setCategories(category ? [category] : []);
+  setCategories(category ? [category] : [])
 }
 
 function chooseGroup(group) {
-  setCategories([...group.categories]);
+  setCategories([...group.categories])
 }
 
 function chooseSuggestedGroup(group) {
-  search.value = '';
-  chooseGroup(group);
+  search.value = ''
+  chooseGroup(group)
 }
 
 function chooseSaved() {
-  searchControl.value?.flushSearch();
+  searchControl.value?.flushSearch()
+
   filters.value = {
     ...filters.value,
     saved: !filters.value.saved,
-    categories: []
-  };
+    categories: [],
+  }
 }
 
 function clearFilters() {
-  filters.value = normalizeDiscoveryFilters();
-  search.value = '';
-  sort.value = 'soonest';
-  visibleCount.value = EVENTS_PER_PAGE;
+  filters.value = normalizeDiscoveryFilters()
+  search.value = ''
+  sort.value = 'soonest'
+  visibleCount.value = EVENTS_PER_PAGE
 }
 
 function showMore() {
   if (!loading.value) {
-    visibleCount.value += EVENTS_PER_PAGE;
+    visibleCount.value += EVENTS_PER_PAGE
   }
 }
 
-// mobile list and map
-
+// Mobile list and map
 function updateSmallScreen() {
-  smallScreen.value = smallMedia?.matches ?? false;
+  smallScreen.value = smallMedia?.matches ?? false
 }
 
 function updateRowFade() {
-  const element = categoryRow.value;
+  const element = categoryRow.value
+
   if (!element) {
-    return;
+    return
   }
+
   rowFade.value = {
     start: element.scrollLeft > 4,
-    end: element.scrollLeft + element.clientWidth < element.scrollWidth - 4
-  };
+    end: element.scrollLeft + element.clientWidth < element.scrollWidth - 4,
+  }
 }
 
 async function showPane(pane) {
   if (pane === viewMode.value) {
-    return;
+    return
   }
-  searchControl.value?.flushSearch();
+
+  searchControl.value?.flushSearch()
+
   if (pane === 'map') {
-    listScrollY = window.scrollY;
+    listScrollY = window.scrollY
   }
-  viewMode.value = pane;
-  await nextTick();
+
+  viewMode.value = pane
+  await nextTick()
+
   if (pane === 'list') {
     window.scrollTo({
       top: listScrollY,
-      behavior: 'instant'
-    });
+      behavior: 'instant',
+    })
   } else {
-    const top = toolbar.value.getBoundingClientRect().top + window.scrollY - 80;
+    const top = toolbar.value.getBoundingClientRect().top + window.scrollY - 80
+
     if (window.scrollY > top) {
       window.scrollTo({
         top: Math.max(0, top),
-        behavior: 'instant'
-      });
+        behavior: 'instant',
+      })
     }
   }
 }
 
-// row clicks pass { scroll: false, toggle: true }: they open the card, or close it if it's already open
-
-function selectMapEvent(event, {
-  scroll = true,
-  toggle = false
-} = {}) {
+// Row clicks pass { scroll: false, toggle: true }: they open the card, or close it if it's already open
+function selectMapEvent(event, { scroll = true, toggle = false } = {}) {
   if (toggle && selectedEventId.value === event.id) {
-    selectedEventId.value = null;
-    return;
+    selectedEventId.value = null
+    return
   }
-  selectedEventId.value = event.id;
+
+  selectedEventId.value = event.id
+
   if (scroll && smallScreen.value) {
-    showPane('map');
+    showPane('map')
   }
 }
 
-// the open card also closes on a click outside the cards and the map/calendar (which pick events
-// themselves), or on escape while focus is inside it (focus goes back to its thumbnail)
-
+// The open card also closes on a click outside the cards and the map/calendar (which pick events
+// themselves), or on Escape while focus is inside it (focus goes back to its thumbnail)
 function closeOpenCard(event) {
   if (selectedEventId.value && !event.target.closest?.('.discovery-event-row, .discovery-map-column')) {
-    selectedEventId.value = null;
+    selectedEventId.value = null
   }
 }
 
 function closeOpenCardOnEscape(event) {
   if (event.key !== 'Escape' || !selectedEventId.value || !event.target.closest?.('.discovery-event-row.is-selected')) {
-    return;
+    return
   }
-  event.target.closest('.discovery-event-row').querySelector('.row-cover')?.focus();
-  selectedEventId.value = null;
+
+  event.target.closest('.discovery-event-row').querySelector('.row-cover')?.focus()
+  selectedEventId.value = null
 }
 
 async function showList() {
-  searchControl.value?.flushSearch();
-  viewMode.value = 'list';
-  await nextTick();
-  resultList.value?.focus({
-    preventScroll: true
-  });
+  searchControl.value?.flushSearch()
+  viewMode.value = 'list'
+
+  await nextTick()
+  resultList.value?.focus({ preventScroll: true })
 }
 
-// event actions
-
+// Event actions
 function refreshSavedCount() {
   if (loggedIn.value) {
     fetchSavedCount({
       savedOnly: true,
-      countOnly: true
-    });
+      countOnly: true,
+    })
   } else {
-    savedCount.value = 0;
+    savedCount.value = 0
   }
 }
 
 function refreshDiscovery() {
-  fetchEvents(eventQuery.value);
-  fetchMapEvents(mapQuery.value);
-  refreshSavedCount();
+  fetchEvents(eventQuery.value)
+  fetchMapEvents(mapQuery.value)
+  refreshSavedCount()
 }
 
 function openSavedEvents() {
   router.push({
     path: '/my-rsvps',
-    query: {
-      tab: 'saved'
-    }
-  });
+    query: { tab: 'saved' },
+  })
 }
 
 function openScheduleEvent(event) {
-  router.push(`/events/${event.id}/rsvp`);
-}
-
-// search suggestions
-
-function loadSuggestions() {
-  // a failed read shows no suggestions and tries again on the next focus
-  if (suggestionsRequested.value && !suggestionError.value) return;
-  suggestionsRequested.value = true;
-  fetchSuggestionEvents(suggestionQuery.value);
-}
-
-function chooseSuggestion(row) {
-  if (row.kind === 'event') {
-    openScheduleEvent({
-      id: row.eventId
-    });
-  } else if (row.kind === 'category') {
-    setCategories([...filters.value.categories, row.category]);
-  }
-  // venues and keywords are searches, which the search box has already applied
+  router.push(`/events/${event.id}/rsvp`)
 }
 
 async function changeListingPreference(payload) {
   if (!loggedIn.value || actionPending.value) {
-    return;
+    return
   }
-  await updatePreference(payload.event, payload.action);
+
+  await updatePreference(payload.event, payload.action)
+
   if (actionError.value) {
-    return;
+    return
   }
+
   if (payload.action === 'save') {
     toast('Saved to your list', {
       duration: 6000,
       action: {
         label: 'View saved',
-        onClick: openSavedEvents
-      }
-    });
+        onClick: openSavedEvents,
+      },
+    })
   } else {
-    toast(`Removed ${payload.event.title} from saved`);
+    toast(`Removed ${payload.event.title} from saved`)
   }
-  refreshDiscovery();
+
+  refreshDiscovery()
 }
 
-// load the user's rsvp schedule.
-
+// Load the user's RSVP schedule.
 async function loadSchedule(signedIn) {
   if (!signedIn) {
-    mySchedule.value = [];
-    scheduleError.value = '';
-    return;
+    mySchedule.value = []
+    scheduleError.value = ''
+    return
   }
+
   try {
-    const rsvps = await getMyRsvps();
-    mySchedule.value = rsvps.filter(rsvp => {
-      return JOINED_STATUSES.includes(rsvp.status) && rsvp.event;
-    }).map(rsvp => {
-      return {
-        id: rsvp.event.id,
-        title: rsvp.event.title,
-        start_time: rsvp.event.startTime,
-        category: rsvp.event.tags?.[0] || 'event',
-        status: rsvp.status
-      };
-    });
-    scheduleError.value = '';
+    const rsvps = await getMyRsvps()
+
+    mySchedule.value = rsvps
+      .filter((rsvp) => {
+        return JOINED_STATUSES.includes(rsvp.status) && rsvp.event
+      })
+      .map((rsvp) => {
+        return {
+          id: rsvp.event.id,
+          title: rsvp.event.title,
+          start_time: rsvp.event.startTime,
+          category: rsvp.event.tags?.[0] || 'event',
+          status: rsvp.status,
+        }
+      })
+
+    scheduleError.value = ''
   } catch {
-    scheduleError.value = 'Could not load your schedule.';
+    scheduleError.value = 'Could not load your schedule.'
   }
 }
 
-// remember browsing choices.
-
-watch([filters, search, sort, viewMode], () => {
-  try {
-    const browsingState = {
-      filters: filters.value,
-      search: search.value,
-      sort: sort.value,
-      mode: viewMode.value
-    };
-    sessionStorage.setItem(BROWSING_STORAGE_KEY, JSON.stringify(browsingState));
-  } catch {
-    // browsing still works without storage.
-  }
-}, {
-  deep: true,
-  flush: 'sync'
-});
-
-watch([filters, search, sort, weekOffset], () => {
-  visibleCount.value = EVENTS_PER_PAGE;
-  weeksShown.value = 1;
-}, {
-  deep: true
-});
-
-watch(mapEvents, rows => {
-  const selectionExists = rows.some(event => {
-    return event.id === selectedEventId.value;
-  });
-  if (!selectionExists) {
-    selectedEventId.value = null;
-  }
-});
-
-// keep filters and the url in sync.
-
-watch(() => route.query, query => {
-  const filterKeys = ['search', 'when', 'extras', 'categories', 'category', 'saved'];
-  const hasFilters = filterKeys.some(key => {
-    return Object.hasOwn(query, key);
-  });
-  if (hasFilters) {
-    const next = discoveryFiltersFromQuery(query);
-    if (JSON.stringify(filters.value) !== JSON.stringify(next)) {
-      filters.value = next;
-    }
-    search.value = typeof query.search === 'string' ? query.search : '';
-    sort.value = query.sort === 'popular' ? 'popular' : 'soonest';
-  }
-
-  // support older map links.
-  if (query.view === 'map') {
-    viewMode.value = 'map';
-    router.replace({
-      path: '/discover',
-      query: {
-        ...query,
-        view: 'list'
+// Remember browsing choices.
+watch(
+  [filters, search, sort, viewMode],
+  () => {
+    try {
+      const browsingState = {
+        filters: filters.value,
+        search: search.value,
+        sort: sort.value,
+        mode: viewMode.value,
       }
-    });
-  }
-}, {
-  immediate: true
-});
 
-watch([filters, search, sort], () => {
-  const query = discoveryUrlQuery(filters.value, search.value, 'list', sort.value);
-  const target = router.resolve({
-    path: '/discover',
-    query
-  });
-  if (target.fullPath !== route.fullPath) {
-    router.replace({
+      sessionStorage.setItem(
+        BROWSING_STORAGE_KEY,
+        JSON.stringify(browsingState),
+      )
+    } catch {
+      // Browsing still works without storage.
+    }
+  },
+  { deep: true, flush: 'sync' },
+)
+
+watch(
+  [filters, search, sort, weekOffset],
+  () => {
+    visibleCount.value = EVENTS_PER_PAGE
+    weeksShown.value = 1
+  },
+  { deep: true },
+)
+
+watch(mapEvents, (rows) => {
+  const selectionExists = rows.some((event) => {
+    return event.id === selectedEventId.value
+  })
+
+  if (!selectionExists) {
+    selectedEventId.value = null
+  }
+})
+
+// Keep filters and the URL in sync.
+watch(
+  () => route.query,
+  (query) => {
+    const filterKeys = [
+      'search',
+      'when',
+      'extras',
+      'categories',
+      'category',
+      'saved',
+    ]
+
+    const hasFilters = filterKeys.some((key) => {
+      return Object.hasOwn(query, key)
+    })
+
+    if (hasFilters) {
+      const next = discoveryFiltersFromQuery(query)
+
+      if (JSON.stringify(filters.value) !== JSON.stringify(next)) {
+        filters.value = next
+      }
+
+      search.value = typeof query.search === 'string' ? query.search : ''
+      sort.value = query.sort === 'popular' ? 'popular' : 'soonest'
+    }
+
+    // Support older map links.
+    if (query.view === 'map') {
+      viewMode.value = 'map'
+
+      router.replace({
+        path: '/discover',
+        query: {
+          ...query,
+          view: 'list',
+        },
+      })
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  [filters, search, sort],
+  () => {
+    const query = discoveryUrlQuery(
+      filters.value,
+      search.value,
+      'list',
+      sort.value,
+    )
+
+    const target = router.resolve({
       path: '/discover',
-      query
-    });
-  }
-}, {
-  deep: true
-});
+      query,
+    })
 
-// fetch again only when the query changes.
+    if (target.fullPath !== route.fullPath) {
+      router.replace({
+        path: '/discover',
+        query,
+      })
+    }
+  },
+  { deep: true },
+)
 
+// Fetch again only when the query changes.
 watch(eventQuery, (value, previous) => {
   if (JSON.stringify(value) !== JSON.stringify(previous)) {
-    fetchEvents(value);
+    fetchEvents(value)
   }
-});
-
-watch(suggestionQuery, (value, previous) => {
-  if (suggestionsRequested.value && JSON.stringify(value) !== JSON.stringify(previous)) {
-    fetchSuggestionEvents(value);
-  }
-});
+})
 
 watch(mapQuery, (value, previous) => {
   if (JSON.stringify(value) !== JSON.stringify(previous)) {
-    fetchMapEvents(value);
+    fetchMapEvents(value)
   }
-});
+})
 
-// set up listeners and load data.
-
+// Set up listeners and load data.
 onMounted(() => {
-  smallMedia = window.matchMedia(MOBILE_QUERY);
-  updateSmallScreen();
-  smallMedia.addEventListener('change', updateSmallScreen);
-  document.addEventListener('click', closeOpenCard);
-  document.addEventListener('keydown', closeOpenCardOnEscape);
-  rowObserver = new ResizeObserver(updateRowFade);
+  smallMedia = window.matchMedia(MOBILE_QUERY)
+  updateSmallScreen()
+  smallMedia.addEventListener('change', updateSmallScreen)
+  document.addEventListener('click', closeOpenCard)
+  document.addEventListener('keydown', closeOpenCardOnEscape)
+
+  rowObserver = new ResizeObserver(updateRowFade)
+
   if (categoryRow.value) {
-    rowObserver.observe(categoryRow.value);
+    rowObserver.observe(categoryRow.value)
   }
-  updateRowFade();
+
+  updateRowFade()
+
   clockTimer = setInterval(() => {
-    clock.value = Date.now();
-  }, CLOCK_INTERVAL);
+    clock.value = Date.now()
+  }, CLOCK_INTERVAL)
+
   if (!USING_SUPABASE) {
-    refreshDiscovery();
-    loadSchedule(true);
-    return;
+    refreshDiscovery()
+    loadSchedule(true)
+    return
   }
-  stopAuth = observeDiscoverySession(supabase, session => {
-    loggedIn.value = Boolean(session);
-    loadSchedule(Boolean(session));
-    clearRecommendations();
-    refreshDiscovery();
-    if (session) {
-      fetchRecommendations(24);
-    }
-  }, failure => {
-    error.value = failure.message || 'Could not load your session.';
-  });
-});
+
+  stopAuth = observeDiscoverySession(
+    supabase,
+    (session) => {
+      loggedIn.value = Boolean(session)
+      loadSchedule(Boolean(session))
+      clearRecommendations()
+      refreshDiscovery()
+
+      if (session) {
+        fetchRecommendations(24)
+      }
+    },
+    (failure) => {
+      error.value = failure.message || 'Could not load your session.'
+    },
+  )
+})
 
 onBeforeUnmount(() => {
-  smallMedia?.removeEventListener('change', updateSmallScreen);
-  document.removeEventListener('click', closeOpenCard);
-  document.removeEventListener('keydown', closeOpenCardOnEscape);
-  rowObserver?.disconnect();
-  clearInterval(clockTimer);
-  stopAuth?.();
-  clearRecommendations();
-});
+  smallMedia?.removeEventListener('change', updateSmallScreen)
+  document.removeEventListener('click', closeOpenCard)
+  document.removeEventListener('keydown', closeOpenCardOnEscape)
+  rowObserver?.disconnect()
+  clearInterval(clockTimer)
+  stopAuth?.()
+  clearRecommendations()
+})
 </script>
 
 <template>
@@ -790,12 +780,8 @@ onBeforeUnmount(() => {
         :loading="loading"
         :error="error"
         show-active
-        :suggestions="searchSuggestions"
         @show="showList"
         @retry="refreshDiscovery"
-        @search-focus="loadSuggestions"
-        @search-input="typedSearch = $event"
-        @suggestion-select="chooseSuggestion"
       />
     </div>
 
@@ -949,11 +935,11 @@ onBeforeUnmount(() => {
             </button>
           </template>
 
-          <template v-else-if="weekMode">
-            <h2>{{ weekOffset === 0 ? 'Nothing on in the next 7 days' : 'Nothing on this week' }}</h2>
+          <template v-else-if="!smallScreen && !filtersActive">
+            <h2>Nothing on this week</h2>
 
             <p>
-              {{ smallScreen ? 'Try the next week' : 'Try another week in the calendar' }}, or search or pick a category
+              Try another week in the calendar, or search or pick a category
               to see events on every date.
             </p>
 
@@ -1000,9 +986,8 @@ onBeforeUnmount(() => {
           </template>
         </div>
 
-        <!-- every width: a swipeable row per day with see more; narrow screens get one card per page -->
         <div
-          v-else
+          v-else-if="!smallScreen"
           class="event-days"
           :class="{ 'is-refreshing': loading }"
         >
@@ -1014,10 +999,49 @@ onBeforeUnmount(() => {
             :selected-event-id="selectedEventId"
             :bookmark-enabled="loggedIn"
             :preference-pending="actionPending"
-            :columns="!smallScreen && mapLarge ? 1 : 2"
+            :columns="mapLarge ? 1 : 2"
             @select="selectMapEvent"
             @preference="changeListingPreference"
           />
+        </div>
+
+        <div
+          v-else
+          class="event-timeline"
+          :class="{ 'is-refreshing': loading }"
+        >
+          <section
+            v-for="group in dateGroups"
+            :key="group.key"
+            class="date-group"
+            :aria-label="`${group.label}, ${group.weekday} ${group.year}`"
+          >
+            <div class="timeline-date">
+              <time :datetime="group.date">
+                <span class="date-label">{{ group.label }}<span v-if="group.year" class="date-year">{{ group.year }}</span></span>
+
+                <span class="weekday">{{ group.weekday }}</span>
+              </time>
+            </div>
+
+            <TransitionGroup
+              tag="div"
+              name="list-fade"
+              class="date-events"
+            >
+              <DiscoveryEventRow
+                v-for="event in group.events"
+                :key="event.id"
+                :event="event"
+                :recommendation="recommendationById.get(event.id)"
+                :selected="selectedEventId === event.id"
+                :bookmark-enabled="loggedIn"
+                :preference-pending="actionPending"
+                @select="selectMapEvent"
+                @preference="changeListingPreference"
+              />
+            </TransitionGroup>
+          </section>
         </div>
 
         <div
@@ -1107,8 +1131,7 @@ onBeforeUnmount(() => {
   outline: none;
 }
 
-/* search */
-
+/* Search */
 .discovery-search {
   position: relative;
   z-index: 12;
@@ -1131,8 +1154,7 @@ onBeforeUnmount(() => {
   font-size: 12px;
 }
 
-/* categories */
-
+/* Categories */
 .discovery-toolbar {
   display: flex;
   flex-wrap: nowrap;
@@ -1206,7 +1228,8 @@ onBeforeUnmount(() => {
   border-radius: 99px;
   color: var(--bookedz-ink);
   font-size: 12px;
-  transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease),
+  transition:
+    background-color var(--bookedz-motion-fast) var(--bookedz-ease),
     color var(--bookedz-motion-fast) var(--bookedz-ease),
     transform var(--bookedz-motion-feedback) var(--bookedz-ease);
 }
@@ -1264,8 +1287,7 @@ onBeforeUnmount(() => {
   font-size: 12px;
 }
 
-/* mobile list/map switch */
-
+/* Mobile list/map switch */
 .pane-switch {
   position: relative;
   display: inline-grid;
@@ -1287,7 +1309,8 @@ onBeforeUnmount(() => {
   color: var(--bookedz-muted);
   font-size: 12px;
   font-weight: 600;
-  transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease),
+  transition:
+    background-color var(--bookedz-motion-fast) var(--bookedz-ease),
     color var(--bookedz-motion-fast) var(--bookedz-ease);
 }
 
@@ -1311,8 +1334,7 @@ onBeforeUnmount(() => {
   transform: translateX(100%);
 }
 
-/* list and map layout */
-
+/* List and map layout */
 .discovery-workspace {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
@@ -1321,9 +1343,8 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 
-/* enlarged map: the list narrows to exactly one event card, the same size as before, and the
-   map and calendar take the rest. (the 2:1 list is two cards and a gap; 1px less because of the list padding and card gap.) */
-
+/* Enlarged map: the list narrows to exactly one event card, the same size as before, and the
+   map and calendar take the rest. (The 2:1 list is two cards and a gap; 1px less because of the list padding and card gap.) */
 .discovery-workspace.is-map-large {
   grid-template-columns: calc((100% - 16px) / 3 - 1px) minmax(0, 1fr);
 }
@@ -1338,12 +1359,75 @@ onBeforeUnmount(() => {
   top: calc(var(--topbar-h, 0px) + 18px);
 }
 
-.event-days {
+/* Mobile event timeline */
+.event-timeline {
+  --date-column: 66px;
+  position: relative;
   transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease);
 }
-
-.event-days.is-refreshing {
+.event-timeline::before {
+  content: '';
+  position: absolute;
+  left: var(--date-column);
+  top: 8px;
+  bottom: 12px;
+  width: 1px;
+  background: var(--bookedz-border);
+}
+.event-timeline.is-refreshing {
   opacity: 0.55;
+}
+
+.date-group {
+  display: grid;
+  grid-template-columns: var(--date-column) minmax(0, 1fr);
+  padding-bottom: 12px;
+  animation: route-in var(--bookedz-motion-normal) var(--bookedz-ease) both;
+}
+
+.timeline-date {
+  position: relative;
+  padding: 7px 12px 0 0;
+}
+
+.timeline-date::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bookedz-control-border);
+  box-shadow: 0 0 0 3px var(--bookedz-canvas);
+}
+.date-label,
+.weekday {
+  display: block;
+}
+
+.date-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+.weekday {
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--bookedz-muted);
+}
+/* The year sits under the day and month, so the narrow date column never breaks it mid-date */
+.date-year {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--bookedz-muted);
+}
+
+.date-events {
+  display: grid;
+  gap: 8px;
+  padding-left: 12px;
+  min-width: 0;
 }
 
 .event-more {
@@ -1356,7 +1440,6 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: var(--bookedz-muted);
 }
-
 .empty-state,
 .loading-state {
   padding: 28px 16px;
@@ -1379,8 +1462,7 @@ onBeforeUnmount(() => {
   margin: 4px 0 14px;
 }
 
-/* desktop */
-
+/* Desktop */
 @media (min-width: 992px) {
   .discover-page {
     display: flex;
@@ -1390,10 +1472,12 @@ onBeforeUnmount(() => {
     padding-bottom: 16px;
     overflow: hidden;
   }
+
   .discovery-workspace {
     flex: 1;
     min-height: 0;
   }
+
   .discovery-list {
     height: 100%;
     overflow-y: auto;
@@ -1401,6 +1485,7 @@ onBeforeUnmount(() => {
     padding: 4px 14px 8px 12px;
     margin-left: -12px;
   }
+
   .discovery-map-column {
     position: static;
     align-self: stretch;
@@ -1408,43 +1493,58 @@ onBeforeUnmount(() => {
     flex-direction: column;
     gap: 16px;
     min-height: 0;
-    /* on a short screen the calendar scrolls into view instead of being cut off */
+    /* On a short screen the calendar scrolls into view instead of being cut off */
     overflow-y: auto;
     padding: 0 10px 10px 0;
     margin-right: -10px;
   }
+
   .discovery-map-column > * {
     flex: none;
   }
+
+  .event-days {
+    transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease);
+  }
+
+  .event-days.is-refreshing {
+    opacity: 0.55;
+  }
 }
 
-/* phones and tablets */
-
+/* Phones and tablets */
 @media (max-width: 991px) {
   .discover-page {
     padding: 18px var(--page-gutter) 32px;
   }
+
   .discovery-toolbar {
     flex-wrap: wrap;
   }
+
   .category-shortcuts {
     flex-basis: 100%;
   }
+
   .results-tools {
     width: 100%;
     justify-content: space-between;
   }
+
   .discovery-workspace {
     display: block;
     min-width: 0;
   }
+
   .discovery-map-column {
     position: relative;
     top: auto;
   }
+
   .map-selected-card {
     margin-top: 12px;
   }
+
   .discovery-workspace[data-pane='list'] .discovery-map-column,
   .discovery-workspace[data-pane='map'] .discovery-list {
     display: none;
@@ -1452,6 +1552,22 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 575px) {
+  .event-timeline {
+    --date-column: 52px;
+  }
+
+  .date-events {
+    padding-left: 10px;
+  }
+
+  .date-label {
+    font-size: 12px;
+  }
+
+  .weekday {
+    font-size: 10px;
+  }
+
   .category-shortcut {
     padding-inline: 12px;
   }

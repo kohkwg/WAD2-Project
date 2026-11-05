@@ -1,99 +1,67 @@
 <script setup>
-// feature 3: attendance csv export + import panel (sits under the dashboard).
-// mostly boilerplate wiring. the real logic is in utils/csv.js (tocsv,
-// parseattendancecsv) and in the database functions export_attendance /
-// import_attendance. imported check-ins show up in the arrivals feed on their own,
-// through the dashboard's realtime subscription.
-import { ref } from 'vue';
-import { exportAttendance, importAttendance } from '@/utils/checkin';
-import { downloadCsv, parseAttendanceCsv, toCsv } from '@/utils/csv';
+// Feature 3: attendance CSV export + import panel (sits under the dashboard).
+// Mostly BOILERPLATE wiring. The real logic is in utils/csv.js (toCsv,
+// parseAttendanceCsv) and in the database functions export_attendance /
+// import_attendance. Imported check-ins show up in the arrivals feed on their own,
+// through the dashboard's Realtime subscription.
+import { ref } from 'vue'
+import { exportAttendance, importAttendance } from '@/utils/checkin'
+import { downloadCsv, parseAttendanceCsv, toCsv } from '@/utils/csv'
 
 const props = defineProps({
-  eventId: {
-    type: String,
-    required: true
-  },
-  eventTitle: {
-    type: String,
-    default: 'event'
-  }
-});
+  eventId: { type: String, required: true },
+  eventTitle: { type: String, default: 'event' },
+})
 
-const exporting = ref(false);
+const exporting = ref(false)
+const importing = ref(false)
+const error = ref('')
+const importResult = ref(null) // { matched, unmatched: [...], skipped }
+const fileInput = ref(null)
 
-const importing = ref(false);
-
-const error = ref('');
-
-const importResult = ref(null); // { matched, unmatched: [...], skipped }
-
-const fileInput = ref(null);
-
-// column order in the exported file. email + ticket_code + checked_in_at use the
-// same names parseattendancecsv accepts, so an export can be edited and re-imported.
-
-const EXPORT_COLUMNS = [{
-  key: 'display_name',
-  label: 'Name'
-}, {
-  key: 'email',
-  label: 'Email'
-}, {
-  key: 'ticket_code',
-  label: 'Ticket code'
-}, {
-  key: 'status',
-  label: 'Status'
-}, {
-  key: 'checked_in_at',
-  label: 'Checked in at'
-}, {
-  key: 'method',
-  label: 'Method'
-}];
+// Column order in the exported file. email + ticket_code + checked_in_at use the
+// same names parseAttendanceCsv accepts, so an export can be edited and re-imported.
+const EXPORT_COLUMNS = [
+  { key: 'display_name', label: 'Name' },
+  { key: 'email', label: 'Email' },
+  { key: 'ticket_code', label: 'Ticket code' },
+  { key: 'status', label: 'Status' },
+  { key: 'checked_in_at', label: 'Checked in at' },
+  { key: 'method', label: 'Method' },
+]
 
 async function onExport() {
-  exporting.value = true;
-  error.value = '';
+  exporting.value = true
+  error.value = ''
   try {
-    const rows = await exportAttendance(props.eventId);
-    // export_attendance filters to organisers in sql, so a helper gets [] rather than an error
-    if (!rows.length) throw new Error('Nothing to export. Only organisers can export attendance (it contains emails).');
-    const slug = props.eventTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    downloadCsv(`attendance-${slug}-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(rows, EXPORT_COLUMNS));
+    const rows = await exportAttendance(props.eventId)
+    // export_attendance filters to organisers in SQL, so a helper gets [] rather than an error
+    if (!rows.length) throw new Error('Nothing to export. Only organisers can export attendance (it contains emails).')
+    const slug = props.eventTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    downloadCsv(`attendance-${slug}-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(rows, EXPORT_COLUMNS))
   } catch (e) {
-    error.value = e.message;
+    error.value = e.message
   } finally {
-    exporting.value = false;
+    exporting.value = false
   }
 }
 
 async function onFileChosen(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  importing.value = true;
-  error.value = '';
-  importResult.value = null;
+  const file = e.target.files?.[0]
+  if (!file) return
+  importing.value = true
+  error.value = ''
+  importResult.value = null
   try {
-    const {
-      rows,
-      skipped
-    } = await parseAttendanceCsv(file);
-    if (!rows.length) throw new Error('No rows with an email or ticket code were found in that file.');
-    const {
-      matched,
-      unmatched
-    } = await importAttendance(props.eventId, rows);
-    importResult.value = {
-      matched,
-      unmatched: unmatched ?? [],
-      skipped
-    };
+    const { rows, skipped } = await parseAttendanceCsv(file)
+    if (!rows.length) throw new Error('No rows with an email or ticket code were found in that file.')
+    const { matched, unmatched } = await importAttendance(props.eventId, rows)
+    importResult.value = { matched, unmatched: unmatched ?? [], skipped }
   } catch (err) {
-    error.value = err.message;
+    error.value = err.message
   } finally {
-    importing.value = false;
-    fileInput.value.value = ''; // allow choosing the same file again
+    importing.value = false
+    fileInput.value.value = '' // allow choosing the same file again
   }
 }
 </script>
@@ -130,9 +98,7 @@ async function onFileChosen(e) {
         <div class="table-responsive">
           <table class="table table-sm small mb-0">
             <thead>
-              <tr>
-              <th>Email</th>
-              <th>Ticket code</th></tr>
+              <tr><th>Email</th><th>Ticket code</th></tr>
             </thead>
             <tbody>
               <tr v-for="(u, i) in importResult.unmatched" :key="i">
@@ -148,25 +114,5 @@ async function onFileChosen(e) {
 </template>
 
 <style scoped>
-.card {
-  border: 1px solid var(--bookedz-border,#e9ded3);
-  border-radius: 18px;
-  background: #ffffff;
-}
-
-.card-body {
-  padding: 1.25rem;
-}
-
-.card .btn {
-  border-radius: 11px;
-  min-height: 40px;
-}
-
-.card .btn-outline-primary {
-  --bs-btn-color: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-border-color: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-hover-bg: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-hover-border-color: var(--bookedz-coral-dark,#9a3412);
-}
+.card{border:1px solid var(--bookedz-border,#e9ded3);border-radius:18px;background:#ffffff}.card-body{padding:1.25rem}.card .btn{border-radius:11px;min-height:40px}.card .btn-outline-primary{--bs-btn-color:var(--bookedz-coral-dark,#9a3412);--bs-btn-border-color:var(--bookedz-coral-dark,#9a3412);--bs-btn-hover-bg:var(--bookedz-coral-dark,#9a3412);--bs-btn-hover-border-color:var(--bookedz-coral-dark,#9a3412)}
 </style>

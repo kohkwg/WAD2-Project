@@ -1,50 +1,40 @@
 <script setup>
-import { computed } from 'vue';
-import { RouterLink } from 'vue-router';
+import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 
 const props = defineProps({
-  event: {
-    type: Object,
-    required: true
-  }
-});
+  event: { type: Object, required: true },
+})
 
-const status = computed(() => props.event.my_rsvp_status || props.event.registration_status);
+const status = computed(() =>
+  props.event.my_rsvp_status || props.event.registration_status
+)
 
 const action = computed(() => {
   if (status.value === 'confirmed') {
-    return {
-      label: 'Confirmed',
-      status: 'confirmed'
-    };
+    return { label: 'Confirmed', status: 'confirmed' }
   }
+
   if (status.value === 'pending') {
-    return {
-      label: 'Pending approval',
-      status: 'pending'
-    };
+    return { label: 'Pending approval', status: 'pending' }
   }
+
   if (status.value === 'waitlisted') {
-    return {
-      label: 'On waitlist',
-      status: 'waitlisted'
-    };
+    return { label: 'On waitlist', status: 'waitlisted' }
   }
+
   if (status.value === 'offered') {
-    return {
-      label: 'Review offer',
-      hash: '#rsvp'
-    };
+    return { label: 'Review offer', hash: '#rsvp' }
   }
-  const full = props.event.is_full || props.event.spots_left != null && Number(props.event.spots_left) <= 0;
-  return full ? {
-    label: 'Join waitlist',
-    hash: '#waitlist'
-  } : {
-    label: 'RSVP',
-    hash: '#rsvp'
-  };
-});
+
+  const full = props.event.is_full ||
+    (props.event.spots_left != null &&
+      Number(props.event.spots_left) <= 0)
+
+  return full
+    ? { label: 'Join waitlist', hash: '#waitlist' }
+    : { label: 'RSVP', hash: '#rsvp' }
+})
 </script>
 
 <template>
@@ -172,4 +162,5 @@ const action = computed(() => {
   line-height: 1.4;
   text-align: center;
 }
+
 </style>
