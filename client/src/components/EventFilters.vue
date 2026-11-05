@@ -293,6 +293,9 @@ svg { flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; strok
 .active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .active-filter { min-height: 44px; padding: 7px 12px; border: 1px solid var(--bookedz-control-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .85rem; }.active-filter span { margin-left: 8px; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
+/* The search box fills most of the bar, so the whole bar shows its focus and the ring follows the bar's shape */
+.search-field input:focus-visible { outline: none; }
+.search-toolbar:has(.search-field input:focus-visible) { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
 @media(max-width:575px) { .filter-panel { padding: 18px; }.filter-toggle { padding-inline: 10px; gap: 5px; }.filter-toggle svg { width: 17px; height: 17px; } }
 .search-toolbar, .filter-panel { border-radius: 8px; }
 .filter-toggle { border-radius: 5px; }

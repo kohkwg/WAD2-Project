@@ -57,7 +57,12 @@ Demo pane at 575, 768, 1024 and 1280px (the spec covers 375px): no sideways scro
 in both themes. `event-filters.test.mjs` still fails 4 of 7, the same number recorded on 3 November;
 not compared against an untouched copy this time. Not done: choosing an event or category row in
 live mode, signed-in or filtered live use, screen reader or real-device checks, full suites, a
-build, commit or push. Aishani has not reviewed this yet.
+build. Aishani has not reviewed this yet.
+
+Follow-up: clicking into the search box drew a boxed outline inside the rounded bar. The focus ring
+now goes around the whole bar. Headless Chromium on an owned demo server (5196), in light or dark at
+375, 575, 768 and 1280px: the ring is on the bar, moves to Clear search on Tab, no sideways scroll,
+no page errors; light and dark screenshots at 1280px checked.
 
 ### 5 November — event navigation merge repair
 
