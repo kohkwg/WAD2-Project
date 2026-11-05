@@ -50,7 +50,7 @@ const statusNote = computed(() => ({
 // Row clicks don't jump to the map on phones; the thumbnail's "Show on map" still does.
 function selectFromRow(clickEvent) {
   if (clickEvent.target.closest('a, button, input, select, textarea, summary, label')) return
-  emit('select', props.event, { scroll: false })
+  emit('select', props.event, { scroll: false, toggle: true })
 }
 </script>
 

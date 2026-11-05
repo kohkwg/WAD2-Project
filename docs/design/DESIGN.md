@@ -137,6 +137,11 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
   title and the main button on one row, then the page's own controls in the same card.
 - **Bookmark:** an icon-only round button with no tooltip. Hover or keyboard focus slides out a
   "Save" / "Saved" pill from behind the icon; touch screens skip it.
+- **Buttons in dark mode:** outline buttons have white text, a bright edge and a see-through
+  fill, so they read on dark cards and coloured heroes; hover is a warm orange tint with an orange
+  edge, and disabled buttons stay dim. Clickable rows and tiles get the same bright edge and hover.
+  Big areas use the soft dark tokens in `main.css` (a plain dark hero with a soft orange glow, a
+  clean orange edge, hard shadows at 45–50%).
 - **Sort by** on Discover uses the browser's native list.
 - **Discover rows** are compact and equal height: thumbnail ("Show on map"), title,
   "time · spots · venue" on one line (cut off with "…", full text on hover and when
@@ -218,7 +223,8 @@ choosing a pin or a card highlights that pin (larger, with an orange halo, other
 centres the map on it and zooms to street level (15, or closer if already zoomed in); there is
 no pop-up, and Escape clears the choice. The chosen card opens up in the list with its category,
 match and **View event** and **RSVP** (or your RSVP status) buttons; on phones that card also
-appears under the map in the Map view. The "background couldn't load" warning only appears when
+appears under the map in the Map view. Clicking the open card again, clicking outside the cards
+and map, or pressing Escape inside it closes it. The "background couldn't load" warning only appears when
 no tiles loaded (OneMap has no tiles over the sea and Johor).
 
 ### Event page (`/events/:id/rsvp`)
@@ -395,13 +401,16 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **5 Nov 2026:** The soft dark mode is back on every ticket page and its four tokens live in
+  `main.css`; dark outline buttons, rows and tiles have bright edges and a warm hover; an open
+  Discover card closes on a second click, a click outside or Escape (Gregory).
 - **5 Nov 2026:** Discover's map only shows where an event is: no pop-up, the chosen pin is
   highlighted and the map zooms to its area; View event and RSVP moved into the chosen card (Denzel).
 - **5 Nov 2026:** "My RSVPs" is now **Plans** and "My Events" **Organise** (Gregory). Organise,
   Plans and Go together have slim headers that hold their own controls. The Discover bookmark's
-  tooltip is replaced by a Save / Saved pill on hover or focus. The soft dark mode, Discover
-  spacing and attached Sort by in the entry further down were dropped by a later `dev` merge and
-  are not in the code.
+  tooltip is replaced by a Save / Saved pill on hover or focus. The Discover spacing and attached
+  Sort by in the entry further down were dropped by a later `dev` merge and are not in the code
+  (the soft dark mode is back; see above).
 - **5 Nov 2026:** The sidebar starts as the icon rail at every laptop and desktop width and only
   expands when someone asks; the choice is remembered (Denzel).
 - **5 Nov 2026:** The signed-out landing page moves (Denzel): word-by-word headline with a drawn

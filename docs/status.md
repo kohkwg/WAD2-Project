@@ -48,6 +48,43 @@ Vue scripts, templates and styles compile, and working-file whitespace and confl
 marker checks pass. No browser navigation journey, full build/suite, hosted changes,
 commit or push performed in this repair.
 
+### 5 November — soft dark mode back, dark buttons, Discover cards close `gregory`
+
+- **Soft dark tokens:** 32 heavy dark rules in `design-baseline.css` were switched to the tokens
+  in place and 12 re-added (Profile form and Delete account, the Organise date strip, Go
+  together's chosen filter, Discover). Vivienne's event-page hero, cards and success panel and her
+  dashboard use them too. The four tokens moved into `main.css`'s dark theme block. A scan finds
+  no solid-orange or 60% dark shadows left.
+- **Scoped `:global` bug:** `AccountDashboard`, `CommunityView`, `GroupView`, `StartGroupDialog`
+  and `EventGroupsCard` wrote dark rules as `:global(:root[data-theme="dark"]) .x`, which Vue
+  compiles to a bare `:root[data-theme="dark"]` rule, so none of them applied (they styled
+  `<html>`). They are now `:root[data-theme="dark"] .x`, with selector lists instead of a final
+  `:is(…)`, which Vue also mis-scopes. Go together's group bar, chosen options and event-groups
+  card now use the soft tokens.
+- **Dark buttons** (`main.css`): outline buttons get white text, a bright edge (75% ink), a
+  see-through fill and a warm orange hover; pressed is stronger and disabled stays dim. Dashboard
+  rows and Community tiles get a bright edge with the same hover, dashboard chips are brighter,
+  and each dashboard card's buttons sit at its bottom.
+- **Also:** Go together's chips keep their own height with the text centred, and Organise's
+  Delete event has a red hover.
+- **Later the same evening**, after bringing in `dev` `a01ed14` (Vivienne's compact Organise header
+  kept, with the soft tokens): outline buttons on coloured headers (the dashboard hero's Create an
+  event, slim headers) get a card-coloured fill and an ink edge in both themes; the dashboard's
+  Next-up slides keep View ticket / View event at the bottom; Go together's and the group page's
+  plain chips share one soft warm colour with ink text; and the Go together title sits 16px above
+  Start a group when they wrap. Organise's search and tabs now start under the title, with search
+  filling the row (MatchaPandas' compact header had pushed them right, leaving a gap under the
+  title). Checked in both themes; 24/24 page loads clean. Note: `dev`'s Plans
+  page is back on the old `rsvps-heading` header (a teammate's change), so it has no slim header.
+- **Discover:** clicking an open card again closes it, as do a click outside the cards and the
+  map/calendar and Escape with focus inside it (focus returns to the thumbnail).
+- **Checks** on the owned demo server (5195): Discover, Plans, Organise, Go together, the landing
+  dashboard and Manage RSVPs at 375 and 1280px in both themes loaded with one `main`, no overflow
+  and no console errors (24/24). Light-mode outline buttons measured unchanged; the four Discover
+  open/close cases pass; each page has only one bare `:root[data-theme="dark"]` rule (the theme
+  itself). Dark-mode before/after screenshots were reviewed.
+- **Not done:** e2e specs, full suites, a production build, live and real-device checks.
+
 ### 5 November — Discover map shows location only
 
 Choosing an event no longer opens a pop-up on the map. The pin is highlighted (orange halo,

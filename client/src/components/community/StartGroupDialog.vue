@@ -173,7 +173,7 @@ async function submit() {
 
 <style scoped>
 .group-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border: 2px solid var(--bookedz-ink); border-radius: 24px; background: var(--bookedz-surface); color: var(--bookedz-ink); box-shadow: 8px 8px 0 var(--bookedz-teal); overflow: auto; }
-:global(:root[data-theme="dark"]) .group-dialog { border-color: var(--bookedz-border); }
+:root[data-theme="dark"] .group-dialog { border-color: var(--bookedz-border); }
 .group-dialog[open] { animation: group-dialog-in var(--bookedz-motion-normal) var(--bookedz-ease); }
 .group-dialog::backdrop { background: rgba(28, 25, 23, .45); }
 @keyframes group-dialog-in { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
@@ -193,7 +193,7 @@ async function submit() {
 .group-option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 2px solid var(--bookedz-control-border); border-radius: 16px; cursor: pointer; transition: border-color var(--bookedz-motion-fast) var(--bookedz-ease), background-color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .group-option > span { display: grid; gap: 2px; }
 .group-option.is-on { border-color: var(--bookedz-ink); background: var(--bookedz-orange-soft); box-shadow: 3px 3px 0 var(--bookedz-ink); }
-:global(:root[data-theme="dark"]) .group-option.is-on { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--bookedz-fill); }
+:root[data-theme="dark"] .group-option.is-on { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--db-dark-edge); }
 .group-option .form-check-input { margin-top: 4px; flex: none; }
 .group-friends { display: grid; gap: 6px; max-height: 220px; overflow: auto; padding: 2px; }
 .group-friend { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 10px; border: 2px solid var(--bookedz-control-border); border-radius: 14px; cursor: pointer; }

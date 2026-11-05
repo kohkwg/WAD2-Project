@@ -1,9 +1,7 @@
 <script setup>
 import BackLink from '../../components/ui/BackLink.vue'
 import '../../assets/design-baseline.css'
-// Feature 3: participant's ticket. Shows their personal QR for staff to scan.
-// Mostly BOILERPLATE (loading + layout). The one interesting bit is the small
-// live subscription so the page flips to "checked in" the moment staff scan it.
+// feature 3: personal QR and barcode ticket, with live check-in confirmation.
 import { onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useBackLink } from '../../composables/useBackLink.js'
@@ -24,10 +22,10 @@ const checkIn = ref(null) // check_ins row once they're in
 let channel = null
 let poll = null
 
-// Live: when staff scan this ticket, show the confirmation without a refresh.
-// Subscribe BEFORE reading check_ins and wait for SUBSCRIBED (same pattern as the
-// attendance dashboard), so a check-in during the load isn't missed. Gives up
-// waiting after 10 s so a Realtime outage doesn't block the page.
+// live: when staff scan this ticket, show the confirmation without a refresh.
+// subscribe before reading check_ins and wait for SUBSCRIBED (same pattern as the
+// attendance dashboard), so a check-in during the load isn't missed. gives up
+// waiting after 10 s so a realtime outage doesn't block the page.
 function subscribe(regId) {
   return new Promise((resolve) => {
     const giveUp = setTimeout(resolve, 10_000)
@@ -70,7 +68,7 @@ onMounted(async () => {
 
     await subscribe(reg.id)
     await loadCheckIn(reg.id)
-    // Fallback if Realtime is slow to start or drops: re-check every 5 s until checked in
+    // fallback if realtime is slow to start or drops: re-check every 5 s until checked in
     poll = setInterval(() => (checkIn.value ? clearInterval(poll) : loadCheckIn(reg.id)), 5_000)
   } catch (e) {
     error.value = e.message ?? 'Could not load your ticket.'
@@ -87,8 +85,7 @@ onUnmounted(() => {
 
 <template>
   <div class="container py-4 ticket-page text-center">
-    <RouterLink to="/my-rsvps" class="small d-block text-start mb-3">&larr; Plans</RouterLink>
-    <BackLink :to="back" class="small d-block text-start mb-3">&larr; Back</BackLink>
+    <BackLink to="/my-rsvps" class="small d-block text-start mb-3">&larr; Back</BackLink>
 
     <div v-if="loading" class="py-5">
       <div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>
@@ -131,6 +128,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.ticket-page{max-width:600px}.ticket-heading{padding:1.2rem 1.25rem;margin-bottom:1rem;border-radius:22px 22px 8px 8px;background:var(--bookedz-cream,#fff8f1);text-align:left}.ticket-kicker{display:block;margin-bottom:.55rem;color:#636975;font-size:.78rem;font-weight:700;}.ticket-stock{position:relative;display:flex;padding:1.5rem 1rem 1.25rem;border:1px solid var(--bookedz-border,#e9ded3);border-radius:8px 8px 22px 22px;background:#fff;flex-direction:column;box-shadow:0 10px 30px rgba(41,45,50,.07)}.ticket-stock:before,.ticket-stock:after{position:absolute;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--bookedz-cream,#fff8f1);content:''}.ticket-stock:before{left:-12px;border-right:1px solid var(--bookedz-border,#e9ded3)}.ticket-stock:after{right:-12px;border-left:1px solid var(--bookedz-border,#e9ded3)}.ticket-page :deep(.qr-code){width:min(280px,100%);padding:10px;border:1px solid #e9ded3;border-radius:12px;background:#fff}.ticket-page :deep(.barcode){width:min(360px,100%);padding:6px 10px}.ticket-page .btn-outline-primary{--bs-btn-color:var(--bookedz-coral-dark,#9a3412);--bs-btn-border-color:var(--bookedz-coral-dark,#9a3412);--bs-btn-hover-bg:var(--bookedz-coral-dark,#9a3412);--bs-btn-hover-border-color:var(--bookedz-coral-dark,#9a3412)}.ticket-page .alert{border-radius:14px}
+.ticket-page{max-width:600px}.ticket-heading{padding:1.2rem 1.25rem;margin-bottom:1rem;border-radius:22px 22px 8px 8px;background:var(--bookedz-cream,#fff8f1);text-align:left}.ticket-kicker{display:block;margin-bottom:.55rem;color:#636975;font-size:.78rem;font-weight:700;}.ticket-stock{position:relative;display:flex;padding:1.5rem 1rem 1.25rem;border:1px solid var(--bookedz-border,#e9ded3);border-radius:8px 8px 22px 22px;background:#fff;flex-direction:column;box-shadow:0 10px 30px rgba(41,45,50,.07)}.ticket-stock:before,.ticket-stock:after{position:absolute;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--bookedz-cream,#fff8f1);content:''}.ticket-stock:before{left:-12px;border-right:1px solid var(--bookedz-border,#e9ded3)}.ticket-stock:after{right:-12px;border-left:1px solid var(--bookedz-border,#e9ded3)}.ticket-page :deep(.qr-code){width:min(280px,100%);padding:10px;border:1px solid #e9ded3;border-radius:12px;background:#fff}.ticket-page :deep(.barcode){width:min(360px,100%);padding:6px 10px}.ticket-page .alert{border-radius:14px}
 @media(max-width:575.98px){.ticket-heading{padding:1rem;border-radius:18px 18px 8px 8px}.ticket-stock{padding:1rem .5rem;border-radius:8px 8px 18px 18px}}
 </style>
