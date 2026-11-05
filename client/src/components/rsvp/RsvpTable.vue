@@ -1,4 +1,5 @@
 <script setup>
+import GroupChip from './GroupChip.vue'
 import { ref, nextTick } from 'vue'
 import { formatShortDateTime } from '../../utils/helpers.js'
 
@@ -81,6 +82,7 @@ function formatAnswer(question, answer) {
           <td data-label="Name">
             <div class="fw-semibold">{{ rsvp.user.name }}</div>
             <div class="small text-secondary">{{ rsvp.user.email }}</div>
+            <GroupChip :group="rsvp.group" />
           </td>
 
           <td v-if="questions.length > 0" data-label="Answers" class="small">

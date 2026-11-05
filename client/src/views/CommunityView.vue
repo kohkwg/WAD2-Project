@@ -188,6 +188,9 @@ function showEventGroups(eventId) {
 
 <template>
   <div class="container community-page">
+    <!-- Two columns from the top: everything Go together on the left, Friends as a full-height sidebar -->
+    <div class="community-shell">
+    <div class="community-column">
     <header class="community-hero">
       <div class="community-hero-copy">
         <p class="community-eyebrow">Community</p>
@@ -225,7 +228,6 @@ function showEventGroups(eventId) {
       </TransitionGroup>
     </section>
 
-    <div class="community-layout">
     <div class="community-main">
       <div class="community-tools">
         <div class="community-filters" role="tablist" aria-label="Community">
@@ -288,8 +290,9 @@ function showEventGroups(eventId) {
       </div>
       </template>
     </div>
+    </div>
 
-    <!-- A small side panel: find people by username and handle friend requests -->
+    <!-- Friends sidebar: find people by username and handle friend requests -->
     <aside id="friends" class="community-aside" aria-label="Friends">
       <FriendsPanel v-if="signedIn" compact :updates="socialUpdates" />
       <section v-else class="community-empty"><h2 class="section-title">Find your people</h2><p>Sign in to add friends, start a group and join the conversation.</p><RouterLink class="btn btn-primary" :to="{ path: '/', query: { redirect: '/community#friends' }, hash: '#join-dino' }">Log in / Sign up</RouterLink></section>
@@ -302,10 +305,15 @@ function showEventGroups(eventId) {
 
 <style scoped>
 .community-page { width: 100%; max-width: none; padding-block: 1.5rem 3rem; }
-.community-layout { display: grid; gap: 22px; align-items: start; }
-.community-main { min-width: 0; }
+.community-shell { display: grid; gap: 24px; align-items: start; }
+.community-column, .community-main { min-width: 0; }
 .community-aside { min-width: 0; scroll-margin-top: 16px; }
-@media (min-width: 1200px) { .community-layout { grid-template-columns: minmax(0, 1fr) 320px; } .community-aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); } }
+/* Wide screens: Friends is a full-height sidebar beside everything, from the top of the page */
+@media (min-width: 1100px) {
+  .community-shell { grid-template-columns: minmax(0, 1fr) 340px; }
+  .community-aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px)); overflow-y: auto; overscroll-behavior: contain; border-radius: 24px; }
+  .community-aside > :deep(*) { min-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px)); }
+}
 .community-eyebrow { margin: 0 0 6px; color: var(--bookedz-muted); font-weight: 600; }
 .community-hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
 .community-lede { margin: 8px 0 0; max-width: 46ch; color: var(--bookedz-muted); }
