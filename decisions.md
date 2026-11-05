@@ -19,10 +19,11 @@ settings, the spots (not below the people already in) and the note, or delete th
 who was in it, asking or invited gets a "group deleted" notice in Community. Community now shows one
 card per event with its groups inside, a "Your groups" strip, and avatar stacks and countdowns; the
 group page has a sticky action bar. Friends work in demo mode with sample friends. Live mode needs
-migration `20261105120000_go_together_friends_invites.sql` (tables `group_invites`,
+migration `20261105050527_go_together_friends_invites.sql` (tables `group_invites`,
 `group_join_notes`, `group_notices`; `are_friends()`; updated `_group_can_view`, `_group_summary`,
-`group_view`, `create_group`, `join_group`), checked in PGlite and not yet applied to the hosted
-project. It creates `profile_friendships` only if it is missing.
+`group_view`, `create_group`, `join_group`), checked in PGlite and applied to the hosted
+project on 5 November (recorded as 20261105050527, so the file carries that name; a rolled-back smoke
+test passed). It creates `profile_friendships` only if it is missing.
 
 5 November 2026 — saved events are one journey, adopted after reviewing rendered previews. The
 words are **Save** / **Saved** everywhere: the bookmark reads "Save {event}" / "Remove {event} from

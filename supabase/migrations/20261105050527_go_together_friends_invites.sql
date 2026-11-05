@@ -1,6 +1,6 @@
 -- Go together: friends-only groups, invites, join messages, host settings and deleting
 -- (5 November 2026). Builds on 20261104142907_go_together_groups.sql and mirrors the demo
--- backend in client/src/utils/mockApi.js.
+-- backend in client/src/utils/mockApi.js. Applied to the hosted project on 5 November 2026.
 --
 -- * A private group is "friends only": the host's friends see it in Community; anyone
 --   else needs the invite link. Invited people can always see it.
