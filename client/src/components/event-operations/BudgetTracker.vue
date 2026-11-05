@@ -4,6 +4,7 @@ import { FALLBACK_BUDGET_CATEGORY, MAX_CATEGORY_LENGTH, MAX_QUANTITY, budgetCate
 import { parseReceiptDate, parseReceiptText } from '../../utils/receiptParse.js';
 import { toDateTimeInputValue } from '../../utils/helpers.js';
 import ConfirmationDialog from './ConfirmationDialog.vue';
+import WheelDateTime from '../ui/WheelDateTime.vue';
 
 const props = defineProps({
   budget: {
@@ -393,11 +394,11 @@ function importScanned() {
       <p class="form-text mt-0">Fix any misreads, untick lines you don't want, then add them as expenses.</p>
       <div class="scan-date">
       <label for="scan-date" class="form-label mb-0">Purchased</label>
-      <input
+      <WheelDateTime
         id="scan-date"
         v-model="scannedDate"
-        type="datetime-local"
-        class="form-control"
+        fixed
+        clearable
         aria-describedby="scan-date-help" />
       <span id="scan-date-help" class="form-text">Read from the receipt when possible. Applies to every line below.</span></div>
       <ul class="scan-lines">
@@ -545,14 +546,14 @@ function importScanned() {
                 @keydown.enter.prevent="commitRow(row)" /></td>
               <td class="num total" :class="{ 'text-danger': rowTotal(row) > row.linePlanned }">{{ money(rowTotal(row)) }}</td>
               <td class="when">
-              <input
+              <WheelDateTime
                 v-model="row.purchased"
-                type="datetime-local"
-                class="cell"
+                class="wheel-cell"
+                fixed
+                clearable
                 :aria-label="'Purchase date and time for ' + row.name"
                 :disabled="pending"
-                @change="commitRow(row)"
-                @keydown.enter.prevent="commitRow(row)" /></td>
+                @close="commitRow(row)" /></td>
               <td class="act">
               <button
                 type="button"
@@ -611,10 +612,11 @@ function importScanned() {
               :disabled="pending" /></td>
             <td class="num total"></td>
             <td class="when">
-            <input
+            <WheelDateTime
               v-model="draft.purchased"
-              type="datetime-local"
-              class="cell"
+              class="wheel-cell"
+              fixed
+              clearable
               aria-label="New item purchase date and time"
               :disabled="pending" /></td>
             <td class="act">
@@ -746,8 +748,27 @@ function importScanned() {
   margin-bottom: .75rem;
 }
 
-.scan-date input {
+.scan-date .wheel-field {
+  width: 100%;
   max-width: 15rem;
+}
+
+/* the wheel field in a sheet row looks like the other cells until hovered or focused */
+
+.sheet .wheel-cell :deep(.wheel-trigger) {
+  min-height: 44px;
+  padding: .4rem .5rem;
+  border: 2px solid transparent;
+  border-radius: .5rem;
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+}
+
+.sheet .wheel-cell :deep(.wheel-trigger:hover),
+.sheet .wheel-cell :deep(.wheel-trigger:focus-visible),
+.sheet .wheel-cell :deep(.wheel-trigger[aria-expanded="true"]) {
+  border-color: var(--bookedz-border);
 }
 
 .sheet {
