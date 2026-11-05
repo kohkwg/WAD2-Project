@@ -107,7 +107,12 @@ onUnmounted(() => {
 
 <template>
   <div class="mb-3">
-    <label :for="inputId" class="form-label">{{ label }}</label>
+    <!-- An optional note sits beside the label (the venue step says "Not decided yet?") -->
+    <div v-if="$slots.note" class="address-label-row">
+      <label :for="inputId" class="form-label mb-0">{{ label }}</label>
+      <span class="form-text m-0"><slot name="note" /></span>
+    </div>
+    <label v-else :for="inputId" class="form-label">{{ label }}</label>
     <div class="input-group">
       <input
         :id="inputId"
@@ -147,3 +152,7 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.address-label-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem; margin-bottom: .5rem; }
+</style>

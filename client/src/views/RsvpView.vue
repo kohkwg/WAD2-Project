@@ -1,4 +1,5 @@
 <script setup>
+import { blankAnswer, answerIsEmpty } from '../utils/questionTypes.js'
 import BackLink from '../components/ui/BackLink.vue'
 import '../assets/design-baseline.css'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
@@ -68,7 +69,7 @@ watch(eventId, async (id) => {
     // Go together groups have their own page
     if (isGroup(loadedEvent)) { router.replace(`/groups/${loadedEvent.id}`); return }
     event.value = loadedEvent
-    for (const question of loadedEvent.questions) answers.value[question.id] = ''
+    for (const question of loadedEvent.questions) answers.value[question.id] = blankAnswer(question.type)
     const sessionUser = await getCurrentUser()
     if (ticket !== loadRequest) return
     signedIn.value = Boolean(sessionUser)
@@ -109,7 +110,7 @@ function applyPublicEvent(latest) {
   if (latest.id !== eventId.value || event.value?.id !== latest.id) return
   event.value = latest
   for (const question of latest.questions) {
-    if (!(question.id in answers.value)) answers.value[question.id] = ''
+    if (!(question.id in answers.value)) answers.value[question.id] = blankAnswer(question.type)
   }
 }
 
@@ -132,7 +133,7 @@ const formErrors = computed(() => {
   if (name.value.trim() === '') errors.push('Please enter your name.')
   if (!email.value.includes('@')) errors.push('Please enter a valid email.')
   for (const question of event.value.questions) {
-    if (question.required && String(answers.value[question.id]).trim() === '') {
+    if (question.required && answerIsEmpty(answers.value[question.id])) {
       errors.push('Please answer: ' + question.text)
     }
   }
@@ -261,9 +262,6 @@ async function submitRsvp() {
           Full · {{ event.waitlistCount }} on the waitlist
         </p>
       </EventSummary>
-      <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
-      <!-- Go together groups meet at the venue: none for online events, or while the venue is hidden -->
-      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline && !event.venueRevealAt" :event-id="eventId" />
       <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
       <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>
@@ -362,22 +360,51 @@ async function submitRsvp() {
                 <div v-if="triedSubmit && question.required && !String(answers[question.id] || '').trim()" :id="question.id + '-error'" class="invalid-feedback d-block">Please answer: {{ question.text }}</div>
               </fieldset>
             </template>
+            <template v-else-if="question.type === 'choice' || question.type === 'multichoice'">
+              <fieldset class="border-0 p-0 m-0">
+                <legend class="form-label fs-6 mb-2">
+                  {{ question.text }}
+                  <span v-if="question.required" class="required-mark">(required)</span>
+                  <span v-if="question.type === 'multichoice'" class="text-secondary small"> Pick any that apply.</span>
+                </legend>
+                <div class="choice-group">
+                  <div v-for="(option, optionIndex) in question.options" :key="option" class="form-check choice-option">
+                    <input v-if="question.type === 'choice'" class="form-check-input" type="radio" :name="question.id" :id="`${question.id}-${optionIndex}`" :value="option" v-model="answers[question.id]" :aria-invalid="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? 'true' : undefined" />
+                    <input v-else class="form-check-input" type="checkbox" :name="question.id" :id="`${question.id}-${optionIndex}`" :value="option" v-model="answers[question.id]" :aria-invalid="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? 'true' : undefined" />
+                    <label class="form-check-label" :for="`${question.id}-${optionIndex}`">{{ option }}</label>
+                  </div>
+                </div>
+                <div v-if="triedSubmit && question.required && answerIsEmpty(answers[question.id])" :id="question.id + '-error'" class="invalid-feedback d-block">Please answer: {{ question.text }}</div>
+              </fieldset>
+            </template>
             <template v-else>
               <label class="form-label" :for="question.id">
                 {{ question.text }}
                 <span v-if="question.required" class="required-mark">(required)</span>
               </label>
 
-              <input
-                v-if="question.type === 'text'"
+              <textarea
+                v-if="question.type === 'longtext'"
                 :id="question.id"
                 class="form-control"
+                rows="4"
                 v-model="answers[question.id]"
                 :required="question.required"
-                :aria-invalid="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? 'true' : undefined"
-                :aria-describedby="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? question.id + '-error' : undefined"
+                :aria-invalid="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? 'true' : undefined"
+                :aria-describedby="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? question.id + '-error' : undefined"
+              ></textarea>
+              <input
+                v-else
+                :id="question.id"
+                class="form-control"
+                :type="question.type === 'number' ? 'number' : 'text'"
+                :inputmode="question.type === 'number' ? 'decimal' : undefined"
+                v-model="answers[question.id]"
+                :required="question.required"
+                :aria-invalid="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? 'true' : undefined"
+                :aria-describedby="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? question.id + '-error' : undefined"
               />
-              <div v-if="triedSubmit && question.required && !String(answers[question.id] || '').trim()" :id="question.id + '-error'" class="invalid-feedback d-block">Please answer: {{ question.text }}</div>
+              <div v-if="triedSubmit && question.required && answerIsEmpty(answers[question.id])" :id="question.id + '-error'" class="invalid-feedback d-block">Please answer: {{ question.text }}</div>
             </template>
           </div>
         </template>
@@ -399,8 +426,8 @@ async function submitRsvp() {
         </button>
       </form>
       </template>
-      <!-- Go together groups sit beside the details, then the updates. Groups meet at the venue, so online events have none -->
-      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline" :event-id="eventId" />
+      <!-- Go together groups sit beside the details, then the updates. Groups meet at the venue: none for online events, or while the venue is hidden -->
+      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline && !event.venueRevealAt" :event-id="eventId" />
       <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
     </div>
   </div>

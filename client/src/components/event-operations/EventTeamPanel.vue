@@ -110,7 +110,7 @@ const respond = (invite, accept) => mutate(() => api.respondToTeamInvite(invite.
 .team-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:start; gap:1rem; margin-bottom:1.5rem; }
 .event-team--compact { padding:0; border:0; background:transparent; box-shadow:none; }
 .team-notices { display:grid; gap:.75rem; }
-.team-notices li { padding:1rem; border:1px solid var(--bookedz-border); border-radius:1rem; background:var(--bookedz-surface); }
+.team-list.team-notices li { padding:1rem 1.25rem; border:1px solid var(--bookedz-border); border-radius:1rem; background:var(--bookedz-surface); }
 .event-team--compact .team-heading { margin-bottom: .75rem; }
 .event-team--compact h2 { font-size: 1.2rem; }
 .team-event-link { color: inherit; text-decoration: underline; text-underline-offset: .15em; }
