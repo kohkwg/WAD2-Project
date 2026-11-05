@@ -39,6 +39,7 @@ const ICONS = {
   signOut: 'M12 1.5a10.5 10.5 0 1 1 0 21 10.5 10.5 0 0 1 0-21ZM13.9 9.7V7.5H8.7v9h5.2v-2.2M11.5 12h6M15.6 10l2 2-2 2',
   discover: 'M3 11.5 12 4l9 7.5M5.5 10v10h13V10M10 20v-5h4v5',
   community: 'M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM22 20v-2a4 4 0 0 0-3-3.9M15.5 3.7a3.5 3.5 0 0 1 0 6.6',
+  profile: 'M20 21v-1.5a4.5 4.5 0 0 0-4.5-4.5h-7A4.5 4.5 0 0 0 4 19.5V21M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
   rsvps: 'M4 6.5h16V20H4zM4 11h16M8 3.5v5M16 3.5v5',
   events: 'M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4zM14 6v12',
 }
@@ -116,10 +117,9 @@ function resetDemo() {
           <button type="button" class="side-link sidebar-theme-cycle" :data-label="`Theme: ${THEME_CYCLE[themePreference].label}`" :aria-label="themeCycleLabel" @click="cycleTheme">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="THEME_ICONS[themePreference]" /></svg>
           </button>
-          <!-- Expanded: the icon and "Theme" cycle Auto → Light → Dark; the dropdown still picks one directly -->
+          <!-- Expanded: the icon and "Theme" cycle Auto → Light → Dark -->
           <div class="theme-control sidebar-theme">
-            <button type="button" class="sidebar-theme-toggle" :aria-label="themeCycleLabel" @click="cycleTheme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="THEME_ICONS[themePreference]"/></svg><span>Theme</span></button>
-            <label class="sidebar-theme-select"><span class="visually-hidden">Color theme</span><select :value="themePreference" name="color-theme" @change="setTheme($event.target.value)"><option value="system">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+            <button type="button" class="sidebar-theme-toggle" :aria-label="themeCycleLabel" @click="cycleTheme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="THEME_ICONS[themePreference]"/></svg><span>Theme</span><span class="sidebar-theme-state">{{ THEME_CYCLE[themePreference].label }}</span></button>
           </div>
         </li>
       </ul>
@@ -133,7 +133,7 @@ function resetDemo() {
         <p class="nav-profile nav-profile--demo m-0"><span class="nav-avatar" aria-hidden="true"><img v-if="userDino" class="nav-avatar-dino" :src="userDino.src" alt="">{{ userDino ? '' : accountName.charAt(0).toUpperCase() }}</span><span class="sidebar-profile-copy"><strong>{{ accountName }}</strong><span class="nav-account-name">Demo account</span></span></p>
       </div>
     </div>
-    <header class="app-topbar" :class="{ 'app-topbar--minimal': USING_SUPABASE && (hasSession || route.path === '/') }">
+    <header class="app-topbar" :class="{ 'has-tabs': showBottomTabs, 'app-topbar--minimal': USING_SUPABASE && (hasSession || route.path === '/') }">
       <!-- Own icon: Bootstrap's .navbar-toggler-icon only has an image inside a .navbar (none in light mode here) -->
       <button ref="menuToggle" class="navbar-toggler" type="button" aria-controls="mainNav" :aria-expanded="menuOpen" aria-label="Toggle navigation" @click="menuOpen = !menuOpen"><svg class="toggler-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
       <RouterLink class="topbar-brand" to="/" aria-label="Dino home" translate="no"><img class="brand-symbol" :src="dinoMark" alt="" aria-hidden="true"> <span class="brand-word" aria-hidden="true">Din<img class="brand-o" :src="donutO" alt="" aria-hidden="true"></span></RouterLink>
@@ -150,6 +150,7 @@ function resetDemo() {
     <RouterLink class="bottom-tab" active-class="active" to="/community"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.community" /></svg>Community</RouterLink>
     <RouterLink class="bottom-tab" active-class="active" to="/my-rsvps"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg>My RSVPs</RouterLink>
     <RouterLink class="bottom-tab" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>My events</RouterLink>
+    <RouterLink class="bottom-tab" active-class="active" to="/profile"><img v-if="userDino" class="bottom-tab-dino" :src="userDino.src" alt=""><svg v-else viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.profile" /></svg>Profile</RouterLink>
   </nav>
 </template>
 
@@ -190,8 +191,8 @@ function resetDemo() {
 .sidebar-theme-toggle { display: flex; flex: 1; align-items: center; gap: 12px; min-width: 0; min-height: 48px; padding: 0 8px 0 16px; border: 0; border-radius: 14px; background: transparent; color: inherit; font: inherit; text-align: left; transition: background-color .15s ease, color .15s ease; }
 .sidebar-theme-toggle:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }
 .sidebar-theme svg { flex: 0 0 22px; width: 22px; height: 22px; }
-.sidebar-theme-select { display: flex; align-items: center; margin: 0; }
-.sidebar-account :focus-visible, .sidebar-theme select:focus-visible, .sidebar-theme-toggle:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
+.sidebar-theme-state { margin-left: auto; color: var(--bookedz-muted); font-size: .8125rem; }
+.sidebar-account :focus-visible, .sidebar-theme-toggle:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
 @media(min-width:992px) { .app-topbar--minimal { display: none; } }
 .nav-sign-in, .nav-quiet, .nav-profile { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 9px 15px; border: 0; border-radius: 14px; text-decoration: none; font-size: .875rem; font-weight: 600; white-space: nowrap; }
 .nav-sign-in { background: var(--bookedz-primary); color: var(--bookedz-on-action); }
@@ -209,6 +210,8 @@ function resetDemo() {
 .navbar-toggler { width: 44px; height: 44px; padding: 9px; border-color: var(--bookedz-control-border); border-radius: 12px; color: var(--bookedz-ink); }
 .toggler-icon { display: block; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .sidebar-scrim { display: none; }
+.bottom-tab-dino { width: 24px; height: 24px; object-fit: contain; }
+@media(max-width:767.98px) { .app-topbar.has-tabs .navbar-toggler { display: none; } }
 @media(max-width:991.98px) {
   .navbar-toggler { display: block; }
   .topbar-brand { display: inline-flex; margin-right: auto; font-size: 1.45rem; }

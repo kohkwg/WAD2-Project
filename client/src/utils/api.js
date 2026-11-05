@@ -75,6 +75,7 @@ export const updateGroupSettings = (groupId, settings) => groupsBackend.updateGr
 export const deleteGroup = (groupId) => groupsBackend.deleteGroup(groupId) // host; members get a notice
 export const getGroupNotices = () => groupsBackend.getGroupNotices() // "a group you were in was deleted"
 export const dismissGroupNotice = (noticeId) => groupsBackend.dismissGroupNotice(noticeId)
+export const getEventGroupMembers = (eventId) => groupsBackend.getEventGroupMembers(eventId) // organiser: who's coming with a group
 
 // Food places and deals near a point, from the Express server (/api/food/nearby).
 // Works in both modes; needs the server running.

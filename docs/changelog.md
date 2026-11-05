@@ -32,6 +32,11 @@ and a short celebration after signing in. We wrote `composables/useLandingMotion
 No new dependencies: this uses the installed GSAP (now also its bundled SplitText and DrawSVG
 plugins, same GSAP Standard License), Motion for Vue and Lenis, all credited in the README.
 
+On 5 November 2026, organisers got a "coming with a group" indicator on Manage RSVPs
+(`components/rsvp/GroupChip.vue`, `getEventGroupMembers`), Friends became a full-height sidebar in
+Community, and migration `20261105074842_event_group_members.sql` added the live lookup and merged the
+two `create_group` definitions into one.
+
 Also on 5 November 2026: only people going to an event can start a group for it, joining a group
 RSVPs you to the event, Community has a "Your events" strip and group carousels, and event teams
 moved out of Community. Changed `CommunityView.vue`, `EventGroupsCard.vue`, `StartGroupDialog.vue`,

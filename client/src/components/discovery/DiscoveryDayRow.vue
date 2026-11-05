@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import DiscoveryEventRow from './DiscoveryEventRow.vue'
 
 // One date on laptops and up: a sideways row of event cards, or every event in a grid after "See more".
@@ -24,6 +24,17 @@ function scrollBy(direction) {
   el?.scrollBy({ left: direction * el.clientWidth * .9, behavior: 'smooth' })
 }
 async function toggle() { expanded.value = !expanded.value; await nextTick(); updateArrows() }
+// Picking an event on the map or the week calendar brings its card into view: the carousel
+// slides sideways to it and the page scrolls down to this day if it is off screen.
+const root = ref(null)
+watch(() => props.selectedEventId, async id => {
+  if (id == null || !props.group.events.some(event => event.id === id)) return
+  await nextTick()
+  const card = [...(root.value?.querySelectorAll('[data-event-id]') ?? [])].find(el => el.dataset.eventId === String(id))
+  if (!card) return
+  const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  card.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' })
+})
 let observer
 onMounted(() => {
   observer = new ResizeObserver(updateArrows)
@@ -34,7 +45,7 @@ onBeforeUnmount(() => observer?.disconnect())
 </script>
 
 <template>
-  <section class="day-row" :class="{ 'is-expanded': expanded }" :aria-label="`${group.label}, ${group.weekday} ${group.year}`">
+  <section ref="root" class="day-row" :class="{ 'is-expanded': expanded }" :aria-label="`${group.label}, ${group.weekday} ${group.year}`">
     <header class="day-head">
       <span class="day-dot" aria-hidden="true"></span>
       <time :datetime="group.date"><strong>{{ group.label }}<template v-if="group.year">, {{ group.year }}</template></strong><span class="day-weekday">{{ group.weekday }}</span></time>
