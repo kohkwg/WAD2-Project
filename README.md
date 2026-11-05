@@ -114,7 +114,7 @@ access; and reduced-motion support.
 
 ## Team
 
-Denzel, Aishani, Gregory, Huxley, Denzel, Timothy, Vivienne
+Denzel, Aishani, Gregory, Huxley, Timothy, Vivienne
 
 ## Tech stack
 
