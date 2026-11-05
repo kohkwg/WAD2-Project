@@ -1,15 +1,42 @@
 # Bookedz
 
-Bookedz is a web app for finding things to do in Singapore, going with friends, and running
-small events. Participants discover events, RSVP, join waitlists and check in with a ticket.
-Organisers create events, manage RSVPs and run the day from one workspace.
+SMU IS216 Web Application Development II, group project (G2).
+
+Small events in Singapore are hard to find and hard to run. Details sit in chat groups, people
+have no one to go with, and organisers juggle separate tools for RSVPs, tasks, budgets and the
+weather. Bookedz puts this in one web app: participants discover events, RSVP, join waitlists,
+find people to go with and check in with a ticket; organisers create events, manage RSVPs and run
+the day from one workspace.
 
 **Name:** the repository, the documents, the CSS tokens (`--bookedz-*`) and the storage keys
 (`bookedz-*`) use **Bookedz**. The app itself shows **Dino**: the page title, the logo word and
-the names of the brand links. This README says Bookedz for the project and Dino for what users
-see.
+the names of the brand links.
 
-SMU IS216 Web Application Development II, group project (G2).
+## Submission details
+
+| Item | Details |
+| --- | --- |
+| Git repository | <https://github.com/kohkwg/WAD2-Project> (public), branch `dev` |
+| Hosted application | None. Run the app locally: [set up and run](#set-up-and-run) |
+| First page when running | <http://127.0.0.1:5173/> |
+| Accounts | Demo mode needs none. Live mode: [accounts](#accounts) |
+| Tests | [How to test](#how-to-test) |
+| Use of AI | [AI use](#ai-use) |
+
+Please view the app in Google Chrome. The layouts are built for widths from 375px (phone) to
+desktop.
+
+## How the project meets the requirements
+
+| Requirement | How Bookedz meets it |
+| --- | --- |
+| Identify and solve a problem | Finding, joining and running small events ([features](#features)) |
+| HTML, CSS and JavaScript, with a framework | Vue 3 Composition API, Vue Router and Bootstrap 5 |
+| Responsive design | Layouts from phone to desktop, with bottom tabs on phones when signed in |
+| Backend data store | Supabase PostgreSQL with row-level security, in live mode |
+| User authentication | Supabase Auth, in live mode, with protected routes |
+| External public API, called asynchronously | OneMap, NEA weather through data.gov.sg, and Geoapify ([APIs](#external-apis)) |
+| End-to-end testing | Playwright specs for the main user journeys ([tests](#how-to-test)) |
 
 ## Features
 
@@ -57,66 +84,142 @@ access; and reduced-motion support.
 ## Tech stack
 
 - **Frontend** (`client/`): Vue 3 (Composition API, JavaScript), Vue Router, Bootstrap 5, Vite.
-- **Data and auth:** Supabase (PostgreSQL with row-level security, Auth, Realtime, an Edge
-  Function), used directly from the browser with the signed-in user's permissions.
+- **Data store and authentication:** Supabase (PostgreSQL with row-level security, Auth, Realtime,
+  an Edge Function), used directly from the browser with the signed-in user's permissions. Event
+  images are stored in Cloudflare R2. Demo mode stores sample data in the browser's local storage.
 - **API** (`server/`): Express 5 (CommonJS) for recommendations, plan suggestions, signed image
-  uploads to Cloudflare R2, account deletion, group-time ranking for hangouts, the OneMap routing
-  proxy and food near events.
+  uploads, account deletion, the OneMap routing proxy and food near events.
 - **Tests:** Node's test runner and Playwright.
 
-## Getting started
+### External APIs
 
-You need **Node 22** and **pnpm**.
+| API | Used for | How it is integrated | Key needed |
+| --- | --- | --- | --- |
+| [OneMap](https://www.onemap.gov.sg/) | Map tiles, address search, travel routes | Search runs from the browser; routes go through the Express proxy | Routes only (`ONEMAP_EMAIL`, `ONEMAP_PASSWORD`) |
+| [NEA weather on data.gov.sg](https://data.gov.sg/) | Two-hour forecast and rain venue switch | Read from the browser; the `venue-switch` Edge Function checks it again before a switch | No |
+| [Geoapify Places](https://www.geoapify.com/) | Food places near an event | Called by Express, with a cache and a daily cap (`GEOAPIFY_DAILY_LIMIT`) | Yes (`GEOAPIFY_API_KEY`) |
 
-```sh
+Without the optional keys, those features show labelled estimates or let you search and type
+places.
+
+## Set up and run
+
+### 1. Install
+
+You need **Node 22** and **pnpm**. From a terminal:
+
+```bash
+git clone --branch dev https://github.com/kohkwg/WAD2-Project.git
+cd WAD2-Project
 pnpm --dir client install --frozen-lockfile --ignore-scripts
 pnpm --dir server install --frozen-lockfile --ignore-scripts
-pnpm --dir client dev
 ```
 
-Open <http://localhost:5173/>. The Express API is only needed for recommendations, image
-uploads and food near events; start it in a second terminal:
+If you received the submitted zip, skip the clone and run the two install commands in the
+unzipped folder.
 
-```sh
-pnpm --dir server dev
-```
+### 2. Choose a mode
 
-### Demo mode and live mode
+- **Demo mode** needs no keys and no account. Without Supabase settings (or with
+  `VITE_USE_MOCK=true`), the app runs on sample data in your browser, signed in as a sample
+  account. Use *Reset demo data* in the top bar to start over. Profile editing, check-in, event
+  teams and the floor plan need live mode.
+- **Live mode** uses the team's hosted Supabase project and shows the backend and sign-in. Copy
+  `client/.env.example` to `client/.env` and `server/.env.example` to `server/.env`, then fill them
+  in. Only the publishable Supabase key belongs in the client; secret keys stay in `server/.env`.
 
-- **Demo mode** needs no keys. Without Supabase settings (or with `VITE_USE_MOCK=true`), the app
-  runs on sample data stored in your browser, signed in as a sample account. Use *Reset demo
-  data* in the top bar to start over.
-- **Live mode** uses the team's Supabase project. Copy `client/.env.example` to `client/.env`
-  and `server/.env.example` to `server/.env`, and fill them in with the values the team shares
-  privately. Only the publishable Supabase key belongs in the client; secret keys stay in
-  `server/.env`.
-
-Environment variable names (the values stay private):
-
-| File | Names |
+| File | Variable names |
 | --- | --- |
 | `client/.env` | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_R2_PUBLIC_URL`; optional `VITE_API_URL`, `VITE_USE_MOCK` |
 | `server/.env` | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`; optional `PORT`, `ONEMAP_EMAIL`, `ONEMAP_PASSWORD`, `GEOAPIFY_API_KEY`, `GEOAPIFY_DAILY_LIMIT` |
 
-The OneMap keys give live travel routes. The Geoapify keys give food places near events. Without
-them, those features show labelled estimates or let you search and type places.
+### 3. Run
 
-## Testing
+Start the app, then open <http://127.0.0.1:5173/>:
 
-```sh
-pnpm --dir client test:unit
-pnpm --dir client test:e2e e2e/landing-page.spec.js
-node --test server/tests/*.test.js
+```bash
+pnpm --dir client dev
 ```
 
-`test:e2e` starts its own demo server on `127.0.0.1:5173` (it reuses a server already on that
-port, so stop a live-mode server first). Other scripts: `pnpm --dir client test:e2e:live` (needs
-the hosted project) and `npm --prefix server run check`. Neither package has a lint script. The
-commands use a POSIX shell (macOS, Linux or Git Bash on Windows).
+The Express API runs on port 3000. Live mode needs it for recommendations, image uploads and food
+near events. It reads `server/.env`, so create that file first, then start the API in a second
+terminal:
 
-Browser tests should run against a demo server you own. [docs/testing.md](docs/testing.md) has
-every command, the live-mode tests, database checks and known limits; [docs/status.md](docs/status.md)
-records what has been verified and when.
+```bash
+pnpm --dir server dev
+```
+
+### Accounts
+
+Demo mode needs no username or password. Live mode has two test accounts:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Organiser | `test1@example.com` | `<ADD BEFORE SUBMITTING>` |
+| Participant | `test2@example.com` | `<ADD BEFORE SUBMITTING>` |
+
+You can also create an account on the home page.
+
+## How to test
+
+Use a POSIX shell such as Git Bash on Windows, from the repository root.
+
+**End-to-end tests** run in Chromium against demo data. They start their own server on port 5173,
+so stop any server on that port first: an existing server is reused, and a live-mode one makes the
+tests fail.
+
+```bash
+pnpm --dir client exec playwright install chromium
+pnpm --dir client test:e2e
+pnpm --dir client test:e2e e2e/current-app.spec.js
+```
+
+The second command runs every spec. The third runs one file. `client/playwright-report/` holds the
+HTML report.
+
+| Journey | Specs in `client/e2e/` |
+| --- | --- |
+| Main journeys, one pass | `current-app` |
+| Sign-in and landing page | `signed-out-sign-in`, `landing-page` |
+| Discover and search | `immersive-discovery`, `search-suggestions` |
+| RSVP, Plans and saved events | `my-rsvps`, `saved-events`, `legacy-review-fixes` |
+| Create and organise events | `motion-theme`, `organiser-events`, `manage-event-edit`, `manage-event-navigation`, `event-team`, `event-coorganisers` |
+| Tasks, announcements, budget, weather | `feature4`, `feature4-consistency`, `feature4-interactions`, `feature4-public-weather`, `feature4-ux` |
+| Floor plan and programme | `feature6` |
+| Go together and friends | `go-together`, `community-friends`, `community-public` |
+| Profile, notifications and navigation | `f1-profile-design`, `notifications`, `user-notifications`, `navbar-account`, `sidebar-collapse` |
+| Layout at 375, 575, 768 and 1280px | `design-polish` |
+
+**Unit and route tests** run with Node and need no browser or keys:
+
+```bash
+(cd client && NODE_ENV=test node --test src/utils/__tests__/*.test.js src/utils/__tests__/waitlistScore.spec.js)
+node --test client/tests/*.test.mjs
+node --test server/tests/*.test.js
+npm --prefix server run check
+```
+
+On Windows, use the first command above instead of `pnpm --dir client test:unit`: that script sets
+`NODE_ENV` in a way the Windows command prompt does not accept.
+
+**Live tests** (`pnpm --dir client test:e2e:live`) use the hosted project, need a person to sign in
+and write temporary `[TEST]` data. [docs/testing.md](docs/testing.md) explains them, along with the
+database checks.
+
+### Latest results and known limits
+
+- **End-to-end (6 November 2026):** 99 passed, 0 failed, 0 skipped on a demo server. This followed
+  the removal of 82 outdated tests, which include some that may have found real problems. The
+  [status timeline](docs/status.md) lists them.
+- **Unit and route tests:** the complete suites have not been re-run since the 6 November cleanup,
+  and some tests are known to fail. Two of the three cases in `server/tests/hangoutsRoute.test.js`
+  fail because `/api/hangouts` imports a client file that was deleted; these routes belonged to the
+  old hangout planner, which is no longer in the app. `client/tests/event-filters.test.mjs` failed 4
+  of 7 when last recorded (5 November). `feature4WeatherSnapshot.test.js`, `supabaseApi.test.js` and
+  `discover-workspace.test.mjs` do not load under plain Node.
+- **Not proven by automated tests:** real-phone camera scanning and geolocation, Safari and iOS
+  behaviour, and a successful rain venue switch, which needs real rain.
+- **Storage:** the R2 bucket is public, so uploaded images are public objects.
 
 ## Project structure
 
@@ -206,6 +309,21 @@ shows them now. The dino character art in
 `client/src/assets/dinos/` and `client/src/assets/brand/` was added by Vivienne; its source is
 not yet recorded in the asset register.
 
-**AI assistance:** parts of this project were written with an AI coding assistant at team
-members' requests. The [change history](docs/changelog.md) records which work that was, who
-asked for it and who reviewed it; each teammate keeps the authorship of their own code.
+## AI use
+
+The team used an AI coding assistant. The [change history](docs/changelog.md) records each piece of
+work it wrote, who asked for it and when. It records the assistant writing these parts:
+
+- **Feature 4:** the first version of tasks, announcements, budget and weather, and the live
+  preparation of Feature 4 and the rain venue switch.
+- **Integration:** combining teammates' branches, including the shared API boundary.
+- **Frontend redesign:** the shared visual system, navigation and page redesigns (23 October), with
+  later changes across pages at team members' requests.
+- **Feature 3:** the remaining check-in work, at Huxley's request (23 October).
+- **Go together:** the live-mode database migrations (4 November).
+- **Later features at team members' requests:** among others, Discover search suggestions, online
+  events, hidden venues and notifications (5 November).
+- **Tests and documents:** test cases, spec updates, code comments, the code cleanup and much of the
+  documentation, including this README.
+
+Each teammate keeps the authorship of their own code.

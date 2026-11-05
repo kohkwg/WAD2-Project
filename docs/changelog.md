@@ -12,6 +12,10 @@ the day their status entry gives.
 
 ## 6 November 2026
 
+On 6 November 2026, at Denzel's request, we rewrote `README.md` for submission, using the course
+briefing as a reference (the briefing stays outside the repository). We also added this entry and
+a status entry.
+
 On 6 November 2026, at Denzel's request, we cleaned up the code area by area. We removed unused
 imports, exports, helpers and scoped and global CSS. We added JSDoc and short comments, written in
 ASD-STE100 Simplified Technical English. The cleanup touched files in `client/src`, `client/e2e`,

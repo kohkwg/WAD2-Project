@@ -39,6 +39,17 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 6 November — README prepared for submission (Denzel)
+
+The README now has submission details, a requirements table, step-by-step setup, run and test
+instructions, external API details, known limits and an AI use section. The app is not hosted, so
+the README gives no cloud URL. Test account passwords are placeholders (`<ADD BEFORE SUBMITTING>`).
+
+Evidence: README links and all 29 listed spec names exist, and whitespace checks pass. Targeted
+Node runs: `feature4Money.test.js` 4/4 and `rsvp-rules.test.mjs` 3/3 pass;
+`hangoutsRoute.test.js` still fails with 500 responses. Not done: full suites, a production build,
+a browser run of the commands (port 5173 was in use) and a setup run from a fresh clone.
+
 ### 6 November — Failing e2e specs removed, current-app spec added (Huxley)
 
 The 6 November run on `dev` `5ce2127` had 77 failing demo browser tests, mostly specs written for
