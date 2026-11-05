@@ -3,6 +3,8 @@ import VueKonva from 'vue-konva'
 import App from './App.vue'
 import { initTheme } from './lib/theme.js'
 import router from './router'
+import { dismissibleNotice } from './directives/dismissibleNotice.js'
+import './assets/notifications.css'
 
 // Bootstrap: CSS for the styling, JS bundle for things like the navbar hamburger menu
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -15,6 +17,7 @@ const stopTheme = initTheme()
 if (import.meta.hot) import.meta.hot.dispose(stopTheme)
 
 const app = createApp(App) // 1. create the app first
+app.directive('dismissible', dismissibleNotice)
 app.use(router)            // 2. then switch on routing
 app.use(VueKonva)          // Feature 6: Konva canvas for the floor plan editor
 app.mount('#app')          // 3. then show it on the page

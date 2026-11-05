@@ -90,7 +90,7 @@ onUnmounted(() => {
       <div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>
     </div>
 
-    <div v-else-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
+    <div v-dismissible v-else-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
 
     <template v-else>
       <div class="ticket-heading"><span class="ticket-kicker">Your ticket</span><h1 class="h3 mb-1">{{ event?.title }}</h1>
@@ -98,14 +98,14 @@ onUnmounted(() => {
         {{ event && new Date(event.starts_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) }}
       </p></div>
 
-      <div v-if="!registration" class="alert alert-secondary">You haven't registered for this event.</div>
+      <div v-dismissible v-if="!registration" class="alert alert-secondary">You haven't registered for this event.</div>
 
-      <div v-else-if="registration.status !== 'confirmed'" class="alert alert-warning">
+      <div v-dismissible v-else-if="registration.status !== 'confirmed'" class="alert alert-warning">
         Your registration is <strong>{{ registration.status }}</strong>. Your ticket appears once it's confirmed.
       </div>
 
       <template v-else>
-        <div v-if="checkIn" class="alert alert-success" role="status">
+        <div v-dismissible v-if="checkIn" class="alert alert-success" role="status">
           ✓ Checked in at {{ formatTime(checkIn.checked_in_at) }}
         </div>
         <div class="ticket-stock align-items-center" :class="{ 'opacity-50': checkIn }">

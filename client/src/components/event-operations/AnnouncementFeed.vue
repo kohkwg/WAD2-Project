@@ -34,7 +34,7 @@ onBeforeUnmount(() => { request++ })
   <section class="card card-body shadow-sm mt-4" aria-labelledby="public-announcements-heading">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3"><h2 id="public-announcements-heading" class="h5 mb-0">Event announcements</h2><button class="btn btn-sm btn-outline-secondary" type="button" :disabled="loading" @click="refresh()">{{ loading ? 'Refreshing…' : 'Refresh announcements' }}</button></div>
     <p v-if="loading" role="status">Loading announcements…</p>
-    <div v-if="error" class="alert alert-danger" role="alert">{{ error }} <button class="btn btn-sm btn-outline-danger" type="button" :disabled="loading" @click="refresh()">Retry announcements</button></div>
+    <div v-dismissible v-if="error" class="alert alert-danger" role="alert">{{ error }} <button class="btn btn-sm btn-outline-danger" type="button" :disabled="loading" @click="refresh()">Retry announcements</button></div>
     <p v-if="!loading && !error && !posts.length" class="text-secondary mb-0">No announcements yet.</p>
     <article v-for="post in posts" :key="post.id" class="post border-top pt-3 mt-2">
       <p class="post-body mb-2">{{ post.body }}</p>

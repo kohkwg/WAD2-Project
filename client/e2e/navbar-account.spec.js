@@ -103,6 +103,43 @@ test('mobile sidebar retains profile, theme and sign-out with keyboard dismissal
   await expect(toggle).toHaveAttribute('aria-expanded', 'false')
 })
 
+test('expanded sidebar: clicking the Theme text or icon cycles Auto → Light → Dark, the dropdown still picks directly', async ({ page }, testInfo) => {
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  await mockNavigation(page)
+  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'light' })
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/discover')
+  const sidebar = page.locator('.app-sidebar')
+  const select = sidebar.getByLabel('Color theme')
+  const toggle = sidebar.locator('.sidebar-theme-toggle')
+  const html = page.locator('html')
+  await expect(select).toHaveValue('system')
+  await expect(toggle).toHaveAccessibleName('Theme: Auto. Switch to Light')
+  // The word and the icon are the same button
+  await toggle.getByText('Theme', { exact: true }).click()
+  await expect(select).toHaveValue('light')
+  await expect(html).toHaveAttribute('data-theme', 'light')
+  await toggle.locator('svg').click()
+  await expect(select).toHaveValue('dark')
+  await expect(html).toHaveAttribute('data-theme', 'dark')
+  await expect(toggle).toHaveAccessibleName('Theme: Dark. Switch to Auto')
+  await toggle.screenshot({ path: testInfo.outputPath('theme-toggle-dark.png') })
+  await toggle.focus()
+  await page.keyboard.press('Enter')
+  await expect(select).toHaveValue('system')
+  // The dropdown keeps working on its own
+  await select.selectOption('dark')
+  await expect(toggle).toHaveAccessibleName('Theme: Dark. Switch to Auto')
+  // Phones: the same row in the drawer
+  await page.setViewportSize({ width: 375, height: 800 })
+  await page.getByRole('button', { name: 'Toggle navigation' }).click()
+  await sidebar.getByRole('button', { name: 'Theme: Dark. Switch to Auto', exact: true }).click()
+  await expect(select).toHaveValue('system')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  expect(errors).toEqual([])
+})
+
 test('collapsed sidebar swaps the theme dropdown for an Auto → Light → Dark cycle button', async ({ page }, testInfo) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))

@@ -97,7 +97,7 @@ onMounted(() =>
     <div v-if="busy" class="alert alert-secondary mt-3 mb-0" role="status">
       <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Checking…
     </div>
-    <div v-else-if="last" class="alert mt-3 mb-0" :class="bannerClass[last.kind]" role="status" aria-live="polite">
+    <div v-dismissible v-else-if="last" class="alert mt-3 mb-0" :class="bannerClass[last.kind]" role="status" aria-live="polite">
       <template v-if="last.kind === 'success'">
         <div class="h5 mb-0">✓ {{ last.name }}</div>
         <small>Checked in at {{ last.time }}</small>

@@ -243,7 +243,7 @@ async function submitRsvp() {
         <div class="spinner-border text-primary" aria-hidden="true"></div>
         <span class="visually-hidden">Loading event and RSVP information…</span>
       </div>
-      <div v-else-if="!event" class="alert alert-danger mt-3" role="alert">{{ errorMessage }}</div>
+      <div v-dismissible v-else-if="!event" class="alert alert-danger mt-3" role="alert">{{ errorMessage }}</div>
       <template v-else>
       <div v-if="!signedIn" class="card card-body shadow-sm rsvp-state rsvp-state--signin">
         <span class="state-mark" aria-hidden="true">↗</span>
@@ -355,12 +355,12 @@ async function submitRsvp() {
 
         <div class="rsvp-next"><span class="next-icon" aria-hidden="true">i</span><p>{{ whatHappensNext }}</p></div>
 
-        <div v-if="triedSubmit && formErrors.length > 0" ref="validationSummary" class="alert alert-danger" role="alert" aria-live="assertive" tabindex="-1">
+        <div v-dismissible v-if="triedSubmit && formErrors.length > 0" ref="validationSummary" class="alert alert-danger" role="alert" aria-live="assertive" tabindex="-1">
           <ul class="mb-0">
             <li v-for="error in formErrors" :key="error">{{ error }}</li>
           </ul>
         </div>
-        <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+        <div v-dismissible v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
 
         <button type="submit" class="btn event-cta rsvp-submit" :disabled="submitting">
           <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>

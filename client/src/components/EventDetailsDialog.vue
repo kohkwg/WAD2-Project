@@ -105,12 +105,12 @@ async function submitRsvp() {
       <p v-if="event.venue_name" class="text-secondary mb-2">{{ event.venue_name }}</p>
       <p class="small text-secondary">{{ event.confirmed_count ?? 0 }} going<template v-if="event.spots_left != null"> · {{ Number(event.spots_left) === 0 ? 'Full' : `${event.spots_left} spots left` }}</template></p>
       <p v-if="event.description" class="event-description">{{ event.description }}</p>
-      <div v-if="success" class="alert alert-success" role="status">{{ success }}</div>
+      <div v-dismissible v-if="success" class="alert alert-success" role="status">{{ success }}</div>
       <template v-else-if="showRegistration">
         <hr />
         <h3 class="h6 fw-bold">RSVP</h3>
         <p v-if="loading" class="text-secondary" role="status">Loading registration…</p>
-        <div v-else-if="error && !questionsReady" class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link btn-sm" @click="loadRegistration">Try again</button></div>
+        <div v-dismissible v-else-if="error && !questionsReady" class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-link btn-sm" @click="loadRegistration">Try again</button></div>
         <p v-else-if="!signedIn" class="text-secondary" role="status">Please sign in to RSVP for this event.</p>
         <p v-else-if="alreadyRegistered" class="text-secondary" role="status">Your registration status: {{ registrationStatus }}.</p>
         <p v-else-if="closed" class="text-secondary">Registration for this event has closed.</p>
@@ -135,7 +135,7 @@ async function submitRsvp() {
               <input v-else :id="`answer-${q.id}`" v-model="answers[q.id]" :type="q.type === 'number' ? 'number' : 'text'" :step="q.type === 'number' ? 'any' : undefined" :required="q.required" :disabled="submitting" class="form-control" />
             </template>
           </div>
-          <p v-if="error" class="alert alert-danger" role="alert">{{ error }}</p>
+          <p v-dismissible v-if="error" class="alert alert-danger" role="alert">{{ error }}</p>
           <button type="submit" class="btn btn-primary" :disabled="submitting">{{ submitting ? 'Saving…' : 'Confirm RSVP' }}</button>
         </form>
       </template>
