@@ -262,14 +262,14 @@ async function cancel(rsvpId) {
 
 <template>
   <div class="container my-rsvps-page">
-    <header class="rsvps-heading">
-      <div class="rsvps-heading-copy">
-        <p class="rsvps-eyebrow">Your plans</p>
-        <h1 class="page-title m-0">My RSVPs</h1>
-        <p class="rsvps-lede">Your plans, saved favourites and good times to come.</p>
+    <!-- One slim header: star, title and refresh, then the section tabs -->
+    <header class="rsvps-heading smart-head">
+      <div class="smart-head-top">
+        <div class="smart-head-title"><span class="header-star smart-head-star" aria-hidden="true">★</span><h1 class="page-title">My RSVPs</h1></div>
+        <div class="rsvps-toolbar"><button v-if="!loading" type="button" class="btn btn-primary" :disabled="busyId !== null" @click="refreshRsvps">Refresh RSVPs</button></div>
       </div>
-      <div class="rsvps-heading-actions">
-        <button v-if="!loading" type="button" class="btn btn-primary" :disabled="busyId !== null" @click="refreshRsvps">Refresh RSVPs</button>
+      <div class="rsvp-tabs" role="tablist" aria-label="Your events">
+        <button v-for="(tab, index) in tabs" :id="`tab-${tab.id}`" :key="tab.id" role="tab" type="button" :aria-selected="activeTab === tab.id" :aria-controls="`panel-${tab.id}`" :tabindex="activeTab === tab.id ? 0 : -1" @click="activeTab = tab.id" @keydown="moveTab($event, index)">{{ tab.label }} <span v-if="!loading">{{ tab.count }}</span></button>
       </div>
     </header>
     <SkeletonList v-if="loading" class="mt-4" :count="3" label="Loading your RSVPs…" />
