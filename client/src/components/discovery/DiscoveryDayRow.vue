@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import DiscoveryEventRow from './DiscoveryEventRow.vue'
 // Show each day's events two at a time in a swipeable row, with a dot per page.
 // "See more" opens them all as a grid.
@@ -27,7 +27,25 @@ const countLabel = computed(() => {
   const count = props.group.events.length
   return `${count} ${count === 1 ? 'event' : 'events'}`
 })
-const pageSize = computed(() => props.columns)
+// Cards per page: the most that fit at a readable width, up to what the page asks for (2, or 1 when
+// the map is enlarged). A narrow list drops to one card per page instead of squeezing two.
+const MIN_CARD = 320
+const section = ref(null)
+const width = ref(0)
+let observer = null
+onMounted(() => {
+  if (!section.value || typeof ResizeObserver === 'undefined') return
+  width.value = section.value.clientWidth
+  observer = new ResizeObserver(([entry]) => { width.value = Math.round(entry.contentRect.width) })
+  observer.observe(section.value)
+})
+onBeforeUnmount(() => observer?.disconnect())
+const cols = computed(() => {
+  const gap = props.columns === 1 ? 20 : 16
+  if (!width.value) return props.columns
+  return Math.max(1, Math.min(props.columns, Math.floor((width.value + gap) / (MIN_CARD + gap))))
+})
+const pageSize = computed(() => cols.value)
 const pageCount = computed(() => Math.ceil(props.group.events.length / pageSize.value))
 const paged = computed(() => !expanded.value && pageCount.value > 1)
 // Arrow when closed, cross when open.
@@ -96,8 +114,9 @@ watch([expanded, pageSize], () => {
 
 <template>
   <section
+    ref="section"
     class="day-row"
-    :style="{ '--cols': columns, '--gap': columns === 1 ? '20px' : '16px' }"
+    :style="{ '--cols': cols, '--gap': columns === 1 ? '20px' : '16px' }"
     :class="{ 'is-expanded': expanded }"
     :aria-label="ariaLabel"
   >
@@ -236,10 +255,12 @@ watch([expanded, pageSize], () => {
   stroke-linejoin: round;
 }
 /* Bleed so a hovered card's shadow isn't clipped */
+/* The left bleed is smaller than the gap between cards, so the card scrolled out of view never shows
+   its edge or shadow; the right bleed holds the card's 6-7px shadow */
 .day-track,
 .day-grid {
-  padding: 10px 14px 16px 12px;
-  margin: -10px -14px -16px -12px;
+  padding: 10px 14px 16px 8px;
+  margin: -10px -14px -16px -8px;
 }
 .day-track {
   position: relative;
@@ -248,7 +269,11 @@ watch([expanded, pageSize], () => {
   gap: var(--gap);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: 12px;
+  /* No snap padding: with it the second page onward landed 16px further in (card at 24px, not 8px) and the
+     previous card showed at the edge. The 8px lives on each card instead (.day-card) so every page lines up. */
+  scroll-padding-inline: 0;
+  /* Fewer cards than fit are centred; a full row still scrolls from its start */
+  justify-content: safe center;
 }
 .day-track {
   scrollbar-width: none;
@@ -256,14 +281,21 @@ watch([expanded, pageSize], () => {
 .day-track::-webkit-scrollbar {
   display: none;
 }
+/* Pages land with the card 8px from the edge, the same as the first page */
 .day-card {
+  scroll-margin-left: 8px;
   flex: 0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
   scroll-snap-align: start;
 }
 .day-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--gap);
+}
+.day-grid > * {
+  flex: 0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  min-width: 0;
 }
 /* One dot per page of cards */
 .day-dots {

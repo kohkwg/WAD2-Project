@@ -1,5 +1,11 @@
 # Testing and local operation
 
+5 November search-suggestions checkpoint: `node --test client/tests/search-suggestions.test.mjs` from
+the repo root covers the ranking and keyword rules, and `client/e2e/search-suggestions.spec.js` covers
+the list in demo mode. Run the spec against a fresh demo server, as described below. A hidden browser
+pane doesn't fire focus events, and the suggestion data loads on focus, so scripted checks there must
+dispatch `focus` on `#event-search` themselves.
+
 5 November saved-events checkpoint: `client/src/utils/__tests__/savedEvents.test.js` (badge, action
 and ordering rules) passes with `NODE_ENV=test node --test` from `client/`, and
 `client/e2e/saved-events.spec.js` covers the Saved chip (live Discover with an in-browser Supabase

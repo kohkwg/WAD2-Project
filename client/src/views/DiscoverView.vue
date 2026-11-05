@@ -12,6 +12,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { USING_SUPABASE, getMyRsvps, JOINED_STATUSES } from '@/utils/api'
 import { observeDiscoverySession } from '@/lib/discoveryState'
+import { buildSuggestionIndex, suggest } from '@/lib/searchSuggestions'
 import { useEvents, useRecommendations } from '@/composables/useEvents'
 import { useDiscoveryMotion } from '@/composables/useDiscoveryMotion'
 import { toast } from '@/composables/useToast'
@@ -138,6 +139,16 @@ const {
   fetchEvents: fetchSavedCount,
 } = useEvents()
 
+// Search suggestions read every event the current filters allow (ignoring the typed text), so
+// a suggestion can't lead to an empty page. Loaded on first focus; typing then needs no requests.
+const {
+  events: suggestionEvents,
+  error: suggestionError,
+  fetchEvents: fetchSuggestionEvents,
+} = useEvents()
+const suggestionsRequested = ref(false)
+const typedSearch = ref('')
+
 const {
   recommended,
   actionPending,
@@ -246,6 +257,7 @@ function dayLabel(key) {
     timeZone: 'UTC',
     day: 'numeric',
     month: 'short',
+    year: 'numeric',
   })
 }
 
@@ -257,6 +269,11 @@ const nextWeekLabel = computed(() => {
 
 // Build matching queries for the list and map.
 function baseQuery() {
+  return weekWindow(filteredQuery())
+}
+
+// The chosen filters, before limiting a plain desktop browse to one week
+function filteredQuery() {
   const activeFilters = {
     ...filters.value,
     saved: savedSelected.value,
@@ -269,7 +286,7 @@ function baseQuery() {
     now: clock.value,
   }
 
-  return weekWindow(discoveryEventQuery(activeFilters, options))
+  return discoveryEventQuery(activeFilters, options)
 }
 
 const eventQuery = computed(() => {
@@ -284,6 +301,23 @@ const mapQuery = computed(() => {
     ...baseQuery(),
     forMap: true,
   }
+})
+
+// Not limited to one week: typing a search looks across every date, so suggestions must too
+const suggestionQuery = computed(() => {
+  return {
+    ...filteredQuery(),
+    search: '',
+    forMap: true,
+  }
+})
+
+const suggestionIndex = computed(() => buildSuggestionIndex(suggestionEvents.value))
+
+const searchSuggestions = computed(() => {
+  return suggest(suggestionIndex.value, typedSearch.value, {
+    excludeCategories: filters.value.categories,
+  })
 })
 
 const discoveryPicks = computed(() => {
@@ -353,10 +387,8 @@ const dateGroups = computed(() => {
           timeZone: 'Asia/Singapore',
           weekday: 'long',
         }),
-        year:
-          date.getFullYear() !== new Date().getFullYear()
-            ? date.getFullYear()
-            : '',
+        // Always shown, so every day heading says which year it is
+        year: Number(date.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric' })),
         events: [],
       })
     }
@@ -529,6 +561,23 @@ function openSavedEvents() {
 
 function openScheduleEvent(event) {
   router.push(`/events/${event.id}/rsvp`)
+}
+
+// Search suggestions
+function loadSuggestions() {
+  // A failed read shows no suggestions and tries again on the next focus
+  if (suggestionsRequested.value && !suggestionError.value) return
+  suggestionsRequested.value = true
+  fetchSuggestionEvents(suggestionQuery.value)
+}
+
+function chooseSuggestion(row) {
+  if (row.kind === 'event') {
+    openScheduleEvent({ id: row.eventId })
+  } else if (row.kind === 'category') {
+    setCategories([...filters.value.categories, row.category])
+  }
+  // Venues and keywords are searches, which the search box has already applied
 }
 
 async function changeListingPreference(payload) {
@@ -706,6 +755,12 @@ watch(eventQuery, (value, previous) => {
   }
 })
 
+watch(suggestionQuery, (value, previous) => {
+  if (suggestionsRequested.value && JSON.stringify(value) !== JSON.stringify(previous)) {
+    fetchSuggestionEvents(value)
+  }
+})
+
 watch(mapQuery, (value, previous) => {
   if (JSON.stringify(value) !== JSON.stringify(previous)) {
     fetchMapEvents(value)
@@ -781,8 +836,12 @@ onBeforeUnmount(() => {
         :loading="loading"
         :error="error"
         show-active
+        :suggestions="searchSuggestions"
         @show="showList"
         @retry="refreshDiscovery"
+        @search-focus="loadSuggestions"
+        @search-input="typedSearch = $event"
+        @suggestion-select="chooseSuggestion"
       />
     </div>
 
@@ -1019,10 +1078,7 @@ onBeforeUnmount(() => {
           >
             <div class="timeline-date">
               <time :datetime="group.date">
-                <span class="date-label">
-                  {{ group.label }}
-                  <template v-if="group.year">, {{ group.year }}</template>
-                </span>
+                <span class="date-label">{{ group.label }}<span v-if="group.year" class="date-year">{{ group.year }}</span></span>
 
                 <span class="weekday">{{ group.weekday }}</span>
               </time>
@@ -1417,6 +1473,13 @@ onBeforeUnmount(() => {
 .weekday {
   margin-top: 2px;
   font-size: 10px;
+  color: var(--bookedz-muted);
+}
+/* The year sits under the day and month, so the narrow date column never breaks it mid-date */
+.date-year {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--bookedz-muted);
 }
 

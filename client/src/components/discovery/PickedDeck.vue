@@ -33,7 +33,7 @@ const score = computed(() => {
   return event && event.source !== 'general_discovery' && Number.isFinite(event.compatibilityScore) ? `${Math.round(event.compatibilityScore)}% match` : 'Upcoming'
 })
 const when = computed(() => current.value
-  ? new Date(current.value.start_time).toLocaleDateString('en-SG', { timeZone: 'Asia/Singapore', weekday: 'short', day: 'numeric', month: 'short' }) : '')
+  ? new Date(current.value.start_time).toLocaleDateString('en-SG', { timeZone: 'Asia/Singapore', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '')
 const venue = computed(() => current.value?.venue_name || current.value?.venue?.name || 'Venue to be announced')
 const reason = computed(() => current.value?.reason || 'Upcoming event')
 const spots = computed(() => {
