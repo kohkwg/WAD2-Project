@@ -12,6 +12,12 @@ the day their status entry gives.
 
 ## 5 November 2026
 
+On 5 November 2026, at Denzel's request, Discover's map stopped showing a pop-up card: choosing an
+event highlights its pin (halo, other pins dimmed) and zooms to its area, and View event and RSVP
+moved into the chosen event card, which also appears under the map on phones. We changed
+`DiscoveryEventRow.vue`, `DiscoveryDayRow.vue`, `DiscoveryStreetMap.vue` and `DiscoverView.vue`, and
+updated the map steps in four browser specs.
+
 On 5 November 2026, at Denzel's request, the sidebar starts as the 76px icon rail at every
 laptop and desktop size (992px and up) and only expands when someone uses its toggle; an
 expand or collapse is remembered per browser. Phones and tablets keep the drawer. The width

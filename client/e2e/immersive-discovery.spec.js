@@ -16,8 +16,11 @@ test('Discover uses the committed street-map workspace', async ({ page }, testIn
   const map=page.getByRole('region',{name:'Explore events on the Singapore map',exact:true})
   await expect(map).toBeVisible()
   await expect(map.locator('[data-marker]').first()).toBeVisible()
-  await map.locator('[data-marker]').first().click()
-  await expect(map.getByRole('region',{name:'Selected map events'})).toBeVisible()
+  await map.locator('[data-marker]:not(.street-marker--cluster)').first().click()
+  // Choosing a pin highlights it (no pop-up) and opens that event's card in the list
+  await expect(map.getByRole('region',{name:'Selected map events'})).toHaveCount(0)
+  await expect(map.locator('.street-marker--selected')).toHaveCount(1)
+  await expect(page.locator('.discovery-event-row.is-selected .card-actions')).toBeVisible()
   await page.getByRole('searchbox',{name:'Search by title, description or venue'}).fill('no-such-event-XYZ')
   await expect(page.getByRole('heading',{name:'No events found',exact:true})).toBeVisible()
   await page.getByRole('button',{name:'Clear search and filters',exact:true}).click()

@@ -9,6 +9,12 @@ the [README](../README.md#credits-and-licences). Original supplied material stay
 
 ## Decision log, newest first
 
+5 November 2026 — Denzel, Discover map shows location only: choosing an event (its card or its
+pin) no longer opens a pop-up card on the map. The map highlights the pin and zooms to the
+event's general area (street level), and the event's **View event** and **RSVP** buttons move
+inside its card in the list. Phones, where the Map view hides the list, show the chosen card
+under the map. This replaces the map preview card (and its cluster list) on Discover.
+
 5 November 2026 — Denzel, sidebar collapsed by default: from 992px (Bootstrap lg, xl and xxl)
 the sidebar starts as the 76px icon rail and expands only when someone uses its toggle. Denzel
 chose to keep remembering that choice per browser, so someone who prefers the full sidebar keeps

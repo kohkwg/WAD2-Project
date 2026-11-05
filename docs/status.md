@@ -38,6 +38,25 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — Discover map shows location only
+
+Choosing an event no longer opens a pop-up on the map. The pin is highlighted (orange halo,
+other pins at 55% opacity), the map centres on it at street level, and View event and RSVP (or
+the RSVP status) sit inside the chosen card, which grows to fit them; on phones the card also
+shows under the map. A cluster zooms in until its pins separate. Escape on the map clears the
+choice, and a polite live region announces the event shown.
+
+Evidence, headless Chromium on an owned demo server (5196): at 1280 and 1100px a clicked card
+shows View event and Join waitlist, the map has no pop-up or tooltip, the selected pin is
+centred (within 1px) with others dimmed, Escape clears it, and clicking a pin selects its card;
+at 375 and 768px the Map view shows the chosen card under the map with View event and RSVP, with
+no sideways scroll; no page errors. In the four specs whose map steps changed, the updated
+steps pass where they run (`discover-browse` pin-to-card case, `immersive-discovery`,
+`discovery-list-palette` up to its retired "All categories" heading); the other twelve failing
+cases stop earlier or later at retired features (desktop Map button, category directory,
+`.map-surface`, the theme drop-down), so the `redesign.spec.js` map step is not exercised. No
+full suite, build, commit or push.
+
 ### 5 November — navbar cleanup merge repair
 
 Combined Aishani's formatted navbar and comments with dev's collapsed-by-default

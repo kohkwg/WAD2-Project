@@ -210,8 +210,14 @@ open the map on phones and keep their filters.
 attribution. The map is framed like a card with its own + / − buttons. Single pins use
 their category colour; "Picked for you" events are orange stars; nearby events merge into a
 dark count bubble (with a small star if it contains a pick). Cluster labels name their
-events for screen readers and open a list. The "background couldn't load" warning only
-appears when no tiles loaded (OneMap has no tiles over the sea and Johor).
+events for screen readers; choosing a cluster zooms in until its pins separate (events at the
+very same venue choose the first). **The map only shows where an event is** (5 November):
+choosing a pin or a card highlights that pin (larger, with an orange halo, other pins dimmed),
+centres the map on it and zooms to street level (15, or closer if already zoomed in); there is
+no pop-up, and Escape clears the choice. The chosen card opens up in the list with its category,
+match and **View event** and **RSVP** (or your RSVP status) buttons; on phones that card also
+appears under the map in the Map view. The "background couldn't load" warning only appears when
+no tiles loaded (OneMap has no tiles over the sea and Johor).
 
 ### Event page (`/events/:id/rsvp`)
 Facts first (title, time, venue, spots), then the cover, description, map and
@@ -309,8 +315,8 @@ ease-out for most movement and a stamp ease only for one-off feedback.
 - **Toggles and tabs:** the List | Map pill slides between options; the My RSVPs tab
   underline grows under the chosen tab; Manage RSVPs tab panels ease in when switched.
 - **Selection:** the chosen category chip pops once; the selected map pin bounces once and
-  stays enlarged; pins grow slightly on hover; the selected Discover row's details and RSVP
-  button ease down into place (`.reveal-down`).
+  stays enlarged with a halo while other pins dim; pins grow slightly on hover; the selected
+  Discover card's View event and RSVP buttons ease down into place (`.reveal-down`).
 - **Saving:** the bookmark icon pops when an event is saved; likes pop for the post you
   just liked.
 - **Attention:** a new waitlist offer glows once (`.attention-once`), then settles.
@@ -320,7 +326,7 @@ ease-out for most movement and a stamp ease only for one-off feedback.
 - **GSAP** handles scoped entrances and section reveals (on the signed-out landing also
   SplitText for the headline and DrawSVG for its squiggle); **Lenis** smooth scrolling only for
   desktop wheel input outside forms, maps, editors and dialogs; **Motion for Vue** springs
-  map previews, the landing hero card's shuffle and the landing dino hop.
+  the landing hero card's shuffle and the landing dino hop.
 - **Placement vs motion:** where GSAP animates an element, its resting tilt or offset uses the
   CSS `rotate`/`translate` properties (GSAP folds them in), hover effects use `translate`,
   `rotate` and `scale` rather than `transform`, and anything else animating it sits on a
@@ -384,6 +390,8 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **5 Nov 2026:** Discover's map only shows where an event is: no pop-up, the chosen pin is
+  highlighted and the map zooms to its area; View event and RSVP moved into the chosen card (Denzel).
 - **5 Nov 2026:** The sidebar starts as the icon rail at every laptop and desktop width and only
   expands when someone asks; the choice is remembered (Denzel).
 - **5 Nov 2026:** The signed-out landing page moves (Denzel): word-by-word headline with a drawn

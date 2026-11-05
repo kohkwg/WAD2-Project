@@ -29,9 +29,10 @@ test('Discover pairs a street map with the timeline and legacy links retain filt
   await expect(page.locator('.discovery-street-map')).toBeVisible()
   const mapAction = page.getByRole('button', {name:'Show Acoustic Night @ Campus Green on map'})
   await mapAction.click()
-  await expect(page.getByRole('region', {name:'Selected map events'})).toBeVisible()
-  await page.getByRole('button', {name:'Close event preview'}).click()
-  await expect(mapAction).toBeFocused()
+  // No pop-up on the map: the pin is highlighted and the card itself shows View event and RSVP
+  await expect(page.getByRole('region', {name:'Selected map events'})).toHaveCount(0)
+  await expect(page.locator('.street-marker--selected')).toHaveCount(1)
+  await expect(page.locator('.discovery-event-row.is-selected').getByRole('link', {name:'View Acoustic Night @ Campus Green'})).toBeVisible()
   const title = page.locator('.discovery-event-row .row-title').first()
   const href = await title.getAttribute('href')
   await title.click()

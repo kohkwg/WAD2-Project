@@ -199,6 +199,7 @@ watch(
 }
 .day-track {
   display: flex;
+  align-items: flex-start;
   gap: 12px;
   overflow-x: auto;
   scroll-snap-type: x proximity;
@@ -235,6 +236,11 @@ watch(
   height: 144px;
   box-sizing: border-box;
 }
+/* The selected card grows to show its View event and RSVP buttons */
+.day-row :deep(.discovery-event-row.is-selected) {
+  height: auto;
+  min-height: 144px;
+}
 .day-row :deep(.row-cover) {
   width: 66px;
   height: 66px;
@@ -255,8 +261,7 @@ watch(
 .day-row :deep(.row-title),
 .day-row :deep(.row-facts),
 .day-row :deep(.row-reason),
-.day-row :deep(.row-going),
-.day-row :deep(.row-selected-info) {
+.day-row :deep(.row-going) {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
