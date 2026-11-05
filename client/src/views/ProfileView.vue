@@ -550,15 +550,6 @@ onBeforeUnmount(() => {
       </div>
       <div v-if="error" v-dismissible class="alert alert-danger" role="alert">{{ error }}</div>
 
-      <section class="profile-section" aria-labelledby="dino-heading">
-        <h2 id="dino-heading" class="profile-section-title">Pick your dino</h2>
-        <p class="profile-help">Your mascot shows next to your name. Change it any time.</p>
-        <DinoPicker :model-value="dino" :disabled="dinoSaving" @update:model-value="chooseDino" />
-        <p v-if="dinoError" v-dismissible class="text-danger mt-2 mb-0" role="alert">
-          {{ dinoError }}
-        </p>
-      </section>
-
       <div class="profile-summary" :class="{ 'is-viewing': !editing }">
         <div class="profile-top">
           <span class="profile-avatar" :class="{ 'has-dino': chosenDino }" aria-hidden="true"><img v-if="chosenDino" class="profile-avatar-dino" :src="chosenDino.src" alt="">{{ chosenDino ? '' : initial }}</span>
@@ -813,6 +804,15 @@ onBeforeUnmount(() => {
           </button>
         </div>
       </div>
+
+      <section class="profile-section" aria-labelledby="dino-heading">
+        <h2 id="dino-heading" class="profile-section-title">Profile Picture</h2>
+        <p class="profile-help">Your mascot shows next to your name. Change it any time.</p>
+        <DinoPicker :model-value="dino" :disabled="dinoSaving" @update:model-value="chooseDino" />
+        <p v-if="dinoError" v-dismissible class="text-danger mt-2 mb-0" role="alert">
+          {{ dinoError }}
+        </p>
+      </section>
 
       <div v-if="editing" class="profile-actions">
         <button type="submit" class="btn btn-primary" :disabled="saving">

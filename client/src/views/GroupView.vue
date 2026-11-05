@@ -2,6 +2,7 @@
 import BackLink from '../components/ui/BackLink.vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useBackLink } from '../composables/useBackLink.js'
 import { requireCommunityAccount } from '../utils/communityAccount.js'
 import EventArtwork from '../components/EventArtwork.vue'
 import BumpValue from '../components/ui/BumpValue.vue'
@@ -61,6 +62,7 @@ const invite = computed(() => group.value?.myInvite || null)
 const countdown = computed(() => (group.value ? countdownLabel(group.value.startTime) : ''))
 const people = computed(() => (group.value ? [{ ...group.value.host, host: true }, ...group.value.members] : []))
 import { useMyDino } from '@/lib/myDino'
+const back = useBackLink('/community')
 const { dinoFor } = useMyDino()
 const initials = (name) => name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()
 const inviteUrl = computed(() => (group.value?.inviteToken ? `${location.origin}${router.resolve(`/g/${group.value.inviteToken}`).href}` : ''))
@@ -204,7 +206,7 @@ async function removeGroup() {
 
 <template>
   <div class="container group-page">
-    <BackLink to="/community" class="group-back">&larr; Back</BackLink>
+    <BackLink :to="back" class="group-back">&larr; Back</BackLink>
 
     <div v-if="loading" class="group-loading" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Loading the group…</div>
     <div v-dismissible v-else-if="error" class="group-empty" role="alert">
@@ -332,9 +334,9 @@ async function removeGroup() {
         <span class="group-event-go" aria-hidden="true">›</span>
       </RouterLink>
 
-      <!-- Going, invite and chat on the left; Before and after on the right -->
+      <!-- Going, invite and chat in a sidebar; Before and after gets the wide column -->
       <div class="group-columns">
-        <div class="group-col">
+        <div class="group-col group-col-side">
       <section class="group-card" aria-labelledby="group-people-title">
         <div class="group-people-head">
           <h2 id="group-people-title" class="section-title m-0"><BumpValue :value="people.length" /> going</h2>
@@ -381,13 +383,13 @@ async function removeGroup() {
         <GroupChat :key="group.id" :group-id="group.id" :can-post="isMember" @changed="load({ quiet: true })" />
       </section>
         </div>
-        <div class="group-col">
+        <div class="group-col group-col-main">
       <section v-if="isMember && group.plan" class="group-card">
         <GroupPlan :group="group" @update:plan="group.plan = $event" />
       </section>
       <section v-else class="group-card group-teaser">
         <h2 class="section-title m-0">Before and after</h2>
-        <p class="text-meta text-secondary m-0">Members plan food before or after the event, with deals nearby. Join the group to see and add ideas.</p>
+        <p class="text-meta text-secondary m-0">Members plan food before or after the event, with places nearby. Join the group to see and add ideas.</p>
       </section>
         </div>
       </div>
@@ -399,7 +401,7 @@ async function removeGroup() {
 .group-page { max-width: none; padding-block: 1.25rem 3rem; display: grid; gap: 16px; }
 .group-columns { display: grid; gap: 16px; align-items: start; }
 .group-col { display: grid; gap: 16px; min-width: 0; }
-@media (min-width: 992px) { .group-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; } }
+@media (min-width: 992px) { .group-columns { grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 20px; } }
 .group-back { justify-self: start; color: var(--bookedz-muted); text-decoration: none; font-weight: 600; }
 .group-back:hover { color: var(--bookedz-ink); }
 .group-loading { display: flex; align-items: center; gap: 10px; padding: 40px 0; color: var(--bookedz-muted); }
@@ -451,13 +453,13 @@ async function removeGroup() {
 .group-share .form-control { flex: 1 1 240px; min-height: 44px; font-size: .9rem; }
 .group-share .btn { min-height: 44px; }
 .group-teaser { border-style: dashed; box-shadow: none; }
-.group-rules { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px !important; }
-.group-rule { padding: 2px 9px; border: 1.5px solid var(--bookedz-control-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .74rem; font-weight: 700; }
+.group-rules { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px !important; }
+/* Same chips as the Community cards: one soft warm colour; the time and "Your friend" keep their own */
+.group-rule { display: inline-flex; align-items: center; line-height: 1.2; padding: 2px 9px; border: 1.5px solid transparent; border-radius: 99px; background: color-mix(in srgb, var(--bookedz-fill) 18%, var(--bookedz-surface)); color: var(--bookedz-ink); font-size: .74rem; font-weight: 700; }
 .group-rule--when { border-color: var(--bookedz-ink); background: var(--bookedz-mango-soft); }
-.group-rule.is-friends { border-color: var(--bookedz-pink); }
 .group-rule.is-friend { border-color: var(--bookedz-teal); background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
 .group-bar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 8px 8px 8px 16px; border: 2px solid var(--bookedz-ink); border-radius: 99px; background: var(--bookedz-surface); box-shadow: 4px 4px 0 var(--bookedz-ink); }
-:global(:root[data-theme="dark"]) .group-bar { border-color: var(--bookedz-fill); box-shadow: 4px 4px 0 var(--bookedz-fill); }
+:root[data-theme="dark"] .group-bar { border-color: var(--db-dark-edge); box-shadow: 4px 4px 0 var(--db-dark-orange); }
 .group-bar-title { min-width: 0; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 160px; }
 .group-bar-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .group-bar-actions .btn { min-height: 40px; }
@@ -467,7 +469,7 @@ async function removeGroup() {
 .group-option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 2px solid var(--bookedz-control-border); border-radius: 16px; cursor: pointer; }
 .group-option > span { display: grid; gap: 2px; }
 .group-option.is-on { border-color: var(--bookedz-ink); background: var(--bookedz-orange-soft); box-shadow: 3px 3px 0 var(--bookedz-ink); }
-:global(:root[data-theme="dark"]) .group-option.is-on { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--bookedz-fill); }
+:root[data-theme="dark"] .group-option.is-on { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--db-dark-edge); }
 .group-option .form-check-input { margin-top: 4px; flex: none; }
 .settings-capacity { width: 90px; }
 .group-danger { display: grid; gap: 8px; padding-top: 14px; border-top: 2px dashed var(--bookedz-control-border); }

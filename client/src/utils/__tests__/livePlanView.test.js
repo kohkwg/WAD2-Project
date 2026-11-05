@@ -16,7 +16,7 @@ test('toPlan shapes the live plan like the demo and fits the best shared stretch
     choices: { before: 'i2', after: null },
     ideas: [
       { id: 'i1', slot: 'before', kind: 'custom', name: 'Lau Pa Sat', suggestedBy: 'b', suggestedByName: 'Bob', votes: 3, myVote: false },
-      { id: 'i2', slot: 'before', kind: 'deal', name: 'Kopi Corner', suggestedBy: 'h', suggestedByName: 'Hana', votes: 1, myVote: true },
+      { id: 'i2', slot: 'before', kind: 'place', name: 'Kopi Corner', suggestedBy: 'h', suggestedByName: 'Hana', votes: 1, myVote: true },
     ],
     availability: { h: { before: before.slice(4).map(pg) }, b: { before: before.slice(6).map(pg), after: [] } },
   }

@@ -116,7 +116,7 @@ function createOneMapRouting({ fetchImpl = globalThis.fetch, env = process.env, 
     return { ...value, cached: false };
   }
 
-  // getToken is shared with the food-deal geocoder (OneMap search uses the same token).
+  // getToken is exposed for other OneMap calls that need the same token.
   return { configured, route, getToken, cacheSize: () => cache.size };
 }
 

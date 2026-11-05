@@ -12,6 +12,35 @@ the day their status entry gives.
 
 ## 5 November 2026
 
+On 5 November 2026, at Denzel's request, we added search suggestions to Discover
+(`lib/searchSuggestions.js`, with the list in Aishani's `EventFilters.vue` and its wiring in
+`DiscoverView.vue`), and changed the live search so text containing a comma or bracket still matches.
+
+On 5 November 2026, at Huxley's request, the food deals were removed from Go together: the
+Python `pipeline/` (Telegram and deal sites, Gemini extraction), the server's deal code and
+`/api/food/ingest/run`, the planner's Deals tab and the related env keys. The food service is now
+`server/services/foodPlaces.js`. Also at Huxley's request: places closed at the meal time are
+hidden and the rest are listed nearest first (`server/services/openingHours.js` reads
+OpenStreetMap opening hours); "Suggest a spot" is one place box, a search field over one list of
+nearby places and OneMap matches that saves the address and map pin; the group page gives Before
+and after the wide column with a Before | After switch on narrow screens, folds the free-time grid
+into one line and leads each slot with "The plan" and the ideas; the free-time grid no longer
+leaves an outline on the group column; and sending a group chat message no longer shows a
+"nextTick" error.
+
+On 5 November 2026, at Gregory's request, we brought back the soft dark mode on every ticket page
+(now including Vivienne's event page and dashboard and the Go together pages) and moved its four
+tokens into `main.css`; made dark-mode outline buttons, dashboard rows and Community tiles easier
+to see as clickable; put each dashboard card's buttons at its bottom; kept Go together's chips
+their own height; gave Delete event a red hover; and let an open Discover card close on a second
+click, a click outside or Escape. Later that evening we gave outline buttons on coloured headers a
+card-coloured fill and ink edge, kept the dashboard's Next-up buttons at the bottom of each slide,
+gave the plain group chips one soft warm colour and added space under the Go together title. We also fixed dark rules in five components that never applied,
+because `:global(…)` dropped the rest of their selector. We changed `main.css`,
+`design-baseline.css`, `AccountDashboard.vue`, `CommunityView.vue`, `GroupView.vue`,
+`StartGroupDialog.vue`, `EventGroupsCard.vue`, `GroupCard.vue`, `OrganiserEventCard.vue`,
+`DiscoverView.vue` and `DiscoveryEventRow.vue`; teammates keep authorship of their files.
+
 On 5 November 2026, at Denzel's request, Discover's map stopped showing a pop-up card: choosing an
 event highlights its pin (halo, other pins dimmed) and zooms to its area, and View event and RSVP
 moved into the chosen event card, which also appears under the map on phones. We changed

@@ -4,6 +4,7 @@ import BackLink from '../components/ui/BackLink.vue'
 import '../assets/design-baseline.css'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useBackLink } from '../composables/useBackLink.js'
 import { useDiscoveryMotion } from '../composables/useDiscoveryMotion'
 import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnouncementFeed from '../components/event-operations/AnnouncementFeed.vue'
@@ -12,6 +13,7 @@ import VenueMap from '../components/VenueMap.vue'
 import ShowHideButton from '../components/ui/ShowHideButton.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import EventGroups from '../components/community/EventGroups.vue'
+import EventHosts from '../components/rsvp/EventHosts.vue'
 import OnlineEventLink from '../components/rsvp/OnlineEventLink.vue'
 import { isGroup } from '../utils/groups.js'
 import { isEventFull } from '../utils/onlineEvents.js'
@@ -31,6 +33,7 @@ const FloorPlan = defineAsyncComponent(() => import('../editor.vue'))
 import { eventsOverlap } from '../utils/helpers.js'
 import { toast } from '@/composables/useToast'
 
+const back = useBackLink('/events')
 const pageMotion = ref(null)
 useDiscoveryMotion(pageMotion)
 const route = useRoute()
@@ -255,6 +258,10 @@ async function submitRsvp() {
     <!-- public context and updates come first in both DOM and mobile reading order. -->
     <div class="col-lg-8 order-1 event-public-details">
       <EventSummary v-if="event" :event="event" heading-tag="h1">
+        <!-- "Hosted by" the organiser and co-organisers, in the banner under the time -->
+        <template #hosts>
+          <EventHosts :event-id="eventId" />
+        </template>
         <!-- online events: one card in the "where" spot, green with the link once this viewer can open it -->
         <template #online-venue>
           <OnlineEventLink :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />

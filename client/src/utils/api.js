@@ -53,6 +53,8 @@ export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
 // Online events: { hasLink, revealAt, url } (url only for the organiser, or confirmed attendees
 // once revealAt has passed); null for physical events. The link is saved with createEvent/updateEvent.
 export const getEventOnlineAccess = (eventId) => backend.getEventOnlineAccess(eventId)
+// The organiser and co-organisers shown in the event page's "Hosted by" card (public profile fields)
+export const getEventHosts = (eventId) => backend.getEventHosts(eventId)
 // Physical events may have no venue yet (venuePending, shown as "Venue to be announced"), or keep
 // a chosen venue hidden until venueRevealAt; the event's organisers get it as hiddenVenue. Saved
 // with createEvent/updateEvent (form.venueRevealAt). The event page calls this at the reveal time
@@ -70,7 +72,7 @@ export const joinGroup = (target) => groupsBackend.joinGroup(target) // { id, to
 export const getGroupComments = (groupId) => groupsBackend.getGroupComments(groupId)
 export const addGroupComment = (groupId, text) => groupsBackend.addGroupComment(groupId, text)
 export const deleteGroupComment = (commentId) => groupsBackend.deleteGroupComment(commentId)
-export const suggestGroupStop = (groupId, slot, item) => groupsBackend.suggestGroupStop(groupId, slot, item) // slot is 'before' or 'after'; a place, deal or { name }
+export const suggestGroupStop = (groupId, slot, item) => groupsBackend.suggestGroupStop(groupId, slot, item) // slot is 'before' or 'after'; a nearby place, a searched place or { name }
 export const setGroupAvailability = (groupId, slot, cells) => groupsBackend.setGroupAvailability(groupId, slot, cells) // [cell start ISO]; when2meet-style
 export const voteGroupStop = (groupId, slot, suggestionId, keen) => groupsBackend.voteGroupStop(groupId, slot, suggestionId, keen)
 export const chooseGroupStop = (groupId, slot, suggestionId) => groupsBackend.chooseGroupStop(groupId, slot, suggestionId) // host; suggestionId or null
@@ -83,7 +85,7 @@ export const getGroupNotices = () => groupsBackend.getGroupNotices() // "a group
 export const dismissGroupNotice = (noticeId) => groupsBackend.dismissGroupNotice(noticeId)
 export const getEventGroupMembers = (eventId) => groupsBackend.getEventGroupMembers(eventId) // organiser: who's coming with a group
 
-// Food places and deals near a point, from the Express server (/api/food/nearby).
+// Food places near a point that are open at a time, from the Express server (/api/food/nearby).
 // Works in both modes; needs the server running.
 const SERVER = import.meta.env?.VITE_API_URL || 'http://127.0.0.1:3000'
 export async function getFoodNearby({ lat, lng, at, radius = 800 }) {

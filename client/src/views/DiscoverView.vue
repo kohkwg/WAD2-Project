@@ -12,6 +12,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { USING_SUPABASE, getMyRsvps, JOINED_STATUSES } from '@/utils/api'
 import { observeDiscoverySession } from '@/lib/discoveryState'
+import { buildSuggestionIndex, suggest } from '@/lib/searchSuggestions'
 import { useEvents, useRecommendations } from '@/composables/useEvents'
 import { useDiscoveryMotion } from '@/composables/useDiscoveryMotion'
 import { toast } from '@/composables/useToast'
@@ -84,6 +85,14 @@ const loggedIn = ref(false)
 const selectedEventId = ref(null)
 const visibleCount = ref(EVENTS_PER_PAGE)
 const weekOffset = ref(0)
+// Desktop: enlarge the map and calendar, and show one event card per row instead of two
+const MAP_LARGE_KEY = 'bookedz-discover-map-large'
+const mapLarge = ref(false)
+try { mapLarge.value = localStorage.getItem(MAP_LARGE_KEY) === '1' } catch { /* the toggle just starts off */ }
+function toggleMapSize() {
+  mapLarge.value = !mapLarge.value
+  try { localStorage.setItem(MAP_LARGE_KEY, mapLarge.value ? '1' : '0') } catch { /* not remembered */ }
+}
 const weeksShown = ref(1)
 const clock = ref(Date.now())
 
@@ -129,6 +138,16 @@ const {
   total: savedCount,
   fetchEvents: fetchSavedCount,
 } = useEvents()
+
+// Search suggestions read every event the current filters allow (ignoring the typed text), so
+// a suggestion can't lead to an empty page. Loaded on first focus; typing then needs no requests.
+const {
+  events: suggestionEvents,
+  error: suggestionError,
+  fetchEvents: fetchSuggestionEvents,
+} = useEvents()
+const suggestionsRequested = ref(false)
+const typedSearch = ref('')
 
 const {
   recommended,
@@ -197,12 +216,22 @@ const filtersActive = computed(() => {
   )
 })
 
-// Desktop browsing starts with one week.
+// Browsing with no filters starts with a week of events, on every screen size.
 const weekMode = computed(() => {
-  return !smallScreen.value && !filtersActive.value
+  return !filtersActive.value
 })
 
+// The first view is the next seven days from today, then seven more per "Show more". Once the
+// week calendar moves to another week, the list follows that Monday-to-Sunday week instead.
 function weekAt(weeks) {
+  if (weekOffset.value === 0) {
+    const start = clock.value + weeks * 7 * MILLISECONDS_PER_DAY
+    return {
+      dateFrom: discoveryDateRange('today', start).dateFrom,
+      dateTo: discoveryDateRange('today', start + 6 * MILLISECONDS_PER_DAY).dateTo,
+    }
+  }
+
   const offset = (weekOffset.value + weeks) * 7 * MILLISECONDS_PER_DAY
 
   return discoveryDateRange('week', clock.value + offset)
@@ -238,6 +267,7 @@ function dayLabel(key) {
     timeZone: 'UTC',
     day: 'numeric',
     month: 'short',
+    year: 'numeric',
   })
 }
 
@@ -249,6 +279,11 @@ const nextWeekLabel = computed(() => {
 
 // Build matching queries for the list and map.
 function baseQuery() {
+  return weekWindow(filteredQuery())
+}
+
+// The chosen filters, before limiting a plain desktop browse to one week
+function filteredQuery() {
   const activeFilters = {
     ...filters.value,
     saved: savedSelected.value,
@@ -261,7 +296,7 @@ function baseQuery() {
     now: clock.value,
   }
 
-  return weekWindow(discoveryEventQuery(activeFilters, options))
+  return discoveryEventQuery(activeFilters, options)
 }
 
 const eventQuery = computed(() => {
@@ -276,6 +311,23 @@ const mapQuery = computed(() => {
     ...baseQuery(),
     forMap: true,
   }
+})
+
+// Not limited to one week: typing a search looks across every date, so suggestions must too
+const suggestionQuery = computed(() => {
+  return {
+    ...filteredQuery(),
+    search: '',
+    forMap: true,
+  }
+})
+
+const suggestionIndex = computed(() => buildSuggestionIndex(suggestionEvents.value))
+
+const searchSuggestions = computed(() => {
+  return suggest(suggestionIndex.value, typedSearch.value, {
+    excludeCategories: filters.value.categories,
+  })
 })
 
 const discoveryPicks = computed(() => {
@@ -345,10 +397,8 @@ const dateGroups = computed(() => {
           timeZone: 'Asia/Singapore',
           weekday: 'long',
         }),
-        year:
-          date.getFullYear() !== new Date().getFullYear()
-            ? date.getFullYear()
-            : '',
+        // Always shown, so every day heading says which year it is
+        year: Number(date.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric' })),
         events: [],
       })
     }
@@ -455,12 +505,35 @@ async function showPane(pane) {
   }
 }
 
-function selectMapEvent(event, { scroll = true } = {}) {
+// Row clicks pass { scroll: false, toggle: true }: they open the card, or close it if it's already open
+function selectMapEvent(event, { scroll = true, toggle = false } = {}) {
+  if (toggle && selectedEventId.value === event.id) {
+    selectedEventId.value = null
+    return
+  }
+
   selectedEventId.value = event.id
 
   if (scroll && smallScreen.value) {
     showPane('map')
   }
+}
+
+// The open card also closes on a click outside the cards and the map/calendar (which pick events
+// themselves), or on Escape while focus is inside it (focus goes back to its thumbnail)
+function closeOpenCard(event) {
+  if (selectedEventId.value && !event.target.closest?.('.discovery-event-row, .discovery-map-column')) {
+    selectedEventId.value = null
+  }
+}
+
+function closeOpenCardOnEscape(event) {
+  if (event.key !== 'Escape' || !selectedEventId.value || !event.target.closest?.('.discovery-event-row.is-selected')) {
+    return
+  }
+
+  event.target.closest('.discovery-event-row').querySelector('.row-cover')?.focus()
+  selectedEventId.value = null
 }
 
 async function showList() {
@@ -498,6 +571,23 @@ function openSavedEvents() {
 
 function openScheduleEvent(event) {
   router.push(`/events/${event.id}/rsvp`)
+}
+
+// Search suggestions
+function loadSuggestions() {
+  // A failed read shows no suggestions and tries again on the next focus
+  if (suggestionsRequested.value && !suggestionError.value) return
+  suggestionsRequested.value = true
+  fetchSuggestionEvents(suggestionQuery.value)
+}
+
+function chooseSuggestion(row) {
+  if (row.kind === 'event') {
+    openScheduleEvent({ id: row.eventId })
+  } else if (row.kind === 'category') {
+    setCategories([...filters.value.categories, row.category])
+  }
+  // Venues and keywords are searches, which the search box has already applied
 }
 
 async function changeListingPreference(payload) {
@@ -675,6 +765,12 @@ watch(eventQuery, (value, previous) => {
   }
 })
 
+watch(suggestionQuery, (value, previous) => {
+  if (suggestionsRequested.value && JSON.stringify(value) !== JSON.stringify(previous)) {
+    fetchSuggestionEvents(value)
+  }
+})
+
 watch(mapQuery, (value, previous) => {
   if (JSON.stringify(value) !== JSON.stringify(previous)) {
     fetchMapEvents(value)
@@ -686,6 +782,8 @@ onMounted(() => {
   smallMedia = window.matchMedia(MOBILE_QUERY)
   updateSmallScreen()
   smallMedia.addEventListener('change', updateSmallScreen)
+  document.addEventListener('click', closeOpenCard)
+  document.addEventListener('keydown', closeOpenCardOnEscape)
 
   rowObserver = new ResizeObserver(updateRowFade)
 
@@ -725,6 +823,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   smallMedia?.removeEventListener('change', updateSmallScreen)
+  document.removeEventListener('click', closeOpenCard)
+  document.removeEventListener('keydown', closeOpenCardOnEscape)
   rowObserver?.disconnect()
   clearInterval(clockTimer)
   stopAuth?.()
@@ -746,8 +846,12 @@ onBeforeUnmount(() => {
         :loading="loading"
         :error="error"
         show-active
+        :suggestions="searchSuggestions"
         @show="showList"
         @retry="refreshDiscovery"
+        @search-focus="loadSuggestions"
+        @search-input="typedSearch = $event"
+        @suggestion-select="chooseSuggestion"
       />
     </div>
 
@@ -840,6 +944,7 @@ onBeforeUnmount(() => {
     <div
       id="event-directory"
       class="discovery-workspace"
+      :class="{ 'is-map-large': mapLarge }"
       :data-pane="smallScreen ? viewMode : undefined"
     >
       <section
@@ -900,11 +1005,11 @@ onBeforeUnmount(() => {
             </button>
           </template>
 
-          <template v-else-if="!smallScreen && !filtersActive">
-            <h2>Nothing on this week</h2>
+          <template v-else-if="weekMode">
+            <h2>{{ weekOffset === 0 ? 'Nothing on in the next 7 days' : 'Nothing on this week' }}</h2>
 
             <p>
-              Try another week in the calendar, or search or pick a category
+              {{ smallScreen ? 'Try the next week' : 'Try another week in the calendar' }}, or search or pick a category
               to see events on every date.
             </p>
 
@@ -951,8 +1056,9 @@ onBeforeUnmount(() => {
           </template>
         </div>
 
+        <!-- Every width: a swipeable row per day with See more; narrow screens get one card per page -->
         <div
-          v-else-if="!smallScreen"
+          v-else
           class="event-days"
           :class="{ 'is-refreshing': loading }"
         >
@@ -964,51 +1070,10 @@ onBeforeUnmount(() => {
             :selected-event-id="selectedEventId"
             :bookmark-enabled="loggedIn"
             :preference-pending="actionPending"
+            :columns="!smallScreen && mapLarge ? 1 : 2"
             @select="selectMapEvent"
             @preference="changeListingPreference"
           />
-        </div>
-
-        <div
-          v-else
-          class="event-timeline"
-          :class="{ 'is-refreshing': loading }"
-        >
-          <section
-            v-for="group in dateGroups"
-            :key="group.key"
-            class="date-group"
-            :aria-label="`${group.label}, ${group.weekday} ${group.year}`"
-          >
-            <div class="timeline-date">
-              <time :datetime="group.date">
-                <span class="date-label">
-                  {{ group.label }}
-                  <template v-if="group.year">, {{ group.year }}</template>
-                </span>
-
-                <span class="weekday">{{ group.weekday }}</span>
-              </time>
-            </div>
-
-            <TransitionGroup
-              tag="div"
-              name="list-fade"
-              class="date-events"
-            >
-              <DiscoveryEventRow
-                v-for="event in group.events"
-                :key="event.id"
-                :event="event"
-                :recommendation="recommendationById.get(event.id)"
-                :selected="selectedEventId === event.id"
-                :bookmark-enabled="loggedIn"
-                :preference-pending="actionPending"
-                @select="selectMapEvent"
-                @preference="changeListingPreference"
-              />
-            </TransitionGroup>
-          </section>
         </div>
 
         <div
@@ -1054,8 +1119,10 @@ onBeforeUnmount(() => {
           :prominent-ids="prominentEventIds"
           :loading="loading"
           :error="error"
+          :large="mapLarge"
           @select="selectedEventId = $event"
           @retry="refreshDiscovery"
+          @toggle-size="toggleMapSize"
         />
 
         <DiscoveryEventRow
@@ -1308,6 +1375,12 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 
+/* Enlarged map: the list narrows to exactly one event card, the same size as before, and the
+   map and calendar take the rest. (The 2:1 list is two cards and a gap; 1px less because of the list padding and card gap.) */
+.discovery-workspace.is-map-large {
+  grid-template-columns: calc((100% - 16px) / 3 - 1px) minmax(0, 1fr);
+}
+
 .discovery-list,
 .discovery-map-column {
   min-width: 0;
@@ -1318,68 +1391,11 @@ onBeforeUnmount(() => {
   top: calc(var(--topbar-h, 0px) + 18px);
 }
 
-/* Mobile event timeline */
-.event-timeline {
-  --date-column: 66px;
-  position: relative;
+.event-days {
   transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease);
 }
-.event-timeline::before {
-  content: '';
-  position: absolute;
-  left: var(--date-column);
-  top: 8px;
-  bottom: 12px;
-  width: 1px;
-  background: var(--bookedz-border);
-}
-.event-timeline.is-refreshing {
+.event-days.is-refreshing {
   opacity: 0.55;
-}
-
-.date-group {
-  display: grid;
-  grid-template-columns: var(--date-column) minmax(0, 1fr);
-  padding-bottom: 12px;
-  animation: route-in var(--bookedz-motion-normal) var(--bookedz-ease) both;
-}
-
-.timeline-date {
-  position: relative;
-  padding: 7px 12px 0 0;
-}
-
-.timeline-date::after {
-  content: '';
-  position: absolute;
-  top: 12px;
-  right: -4px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--bookedz-control-border);
-  box-shadow: 0 0 0 3px var(--bookedz-canvas);
-}
-.date-label,
-.weekday {
-  display: block;
-}
-
-.date-label {
-  font-size: 13px;
-  font-weight: 700;
-}
-.weekday {
-  margin-top: 2px;
-  font-size: 10px;
-  color: var(--bookedz-muted);
-}
-
-.date-events {
-  display: grid;
-  gap: 8px;
-  padding-left: 12px;
-  min-width: 0;
 }
 
 .event-more {
@@ -1445,19 +1461,16 @@ onBeforeUnmount(() => {
     flex-direction: column;
     gap: 16px;
     min-height: 0;
+    /* On a short screen the calendar scrolls into view instead of being cut off */
+    overflow-y: auto;
+    padding: 0 10px 10px 0;
+    margin-right: -10px;
   }
 
-  .discovery-map-column > :first-child {
+  .discovery-map-column > * {
     flex: none;
   }
 
-  .event-days {
-    transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease);
-  }
-
-  .event-days.is-refreshing {
-    opacity: 0.55;
-  }
 }
 
 /* Phones and tablets */
@@ -1500,22 +1513,6 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 575px) {
-  .event-timeline {
-    --date-column: 52px;
-  }
-
-  .date-events {
-    padding-left: 10px;
-  }
-
-  .date-label {
-    font-size: 12px;
-  }
-
-  .weekday {
-    font-size: 10px;
-  }
-
   .category-shortcut {
     padding-inline: 12px;
   }

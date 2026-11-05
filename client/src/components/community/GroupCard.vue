@@ -126,16 +126,18 @@ async function join() {
 .dino-face { width: 100%; height: 100%; object-fit: contain; }
 /* A dino shows whole, not cropped to the circle */
 :is(.group-avatar, .group-mini):has(.dino-face) { overflow: visible; background: none; border-color: transparent; }
-:is(.group-avatar, .group-mini) .dino-face { transform: scale(1.25); }
+/* Same size as the initials circles, so dinos and initials line up */
+:is(.group-avatar, .group-mini) .dino-face { transform: none; }
 .group-avatar,.group-mini { overflow: hidden; }
 .group-avatar { width: 40px; height: 40px; font-size: .9rem; }
 .group-mini { width: 28px; height: 28px; font-size: .7rem; border: 2px solid var(--bookedz-surface); }
 .group-badge { flex: none; padding: 3px 10px; border-radius: 99px; background: var(--bookedz-hover); color: var(--bookedz-muted); font-size: var(--text-caption); font-weight: 700; }
 .group-badge--host { background: var(--bookedz-mango-soft); color: var(--bookedz-ink); }
 .group-badge--in { background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
-.group-rules { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; }
-.group-rule { padding: 2px 9px; border: 1.5px solid var(--bookedz-control-border); border-radius: 99px; color: var(--bookedz-muted); font-size: .74rem; font-weight: 700; }
-.group-rule.is-friends { border-color: var(--bookedz-pink); color: var(--bookedz-ink); }
+/* Chips keep their own height with the text centred, even if the row is stretched */
+.group-rules { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 6px; }
+/* Plain chips (who can see it, who can join) share one soft warm colour; "Your friend" and requests keep their own */
+.group-rule { display: inline-flex; align-items: center; line-height: 1.2; padding: 2px 9px; border: 1.5px solid transparent; border-radius: 99px; background: color-mix(in srgb, var(--bookedz-fill) 18%, var(--bookedz-surface)); color: var(--bookedz-ink); font-size: .74rem; font-weight: 700; }
 .group-rule.is-friend { border-color: var(--bookedz-teal); background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
 .group-rule.is-alert { border-color: var(--bookedz-fill); background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); }
 .group-card.is-compact { gap: 10px; padding: 14px 16px; box-shadow: none; }

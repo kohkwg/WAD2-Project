@@ -3,6 +3,7 @@ import BackLink from '../components/ui/BackLink.vue';
 import '../assets/design-baseline.css';
 import { computed, defineAsyncComponent, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
+import { useBackLink } from '../composables/useBackLink.js';
 import * as api from '../utils/api.js';
 import { formatEventTime } from '../utils/helpers.js';
 import { hasPlace, venuePendingText } from '../utils/venueReveal.js';
@@ -27,6 +28,8 @@ const AttendanceDashboardView = defineAsyncComponent(() => import('./checkin/Att
 const FloorPlanEditor = defineAsyncComponent(() => import('../editor.vue'));
 
 const GuestList = defineAsyncComponent(() => import('./ManageRsvpsView.vue'));
+
+const back = useBackLink('/organiser/events');
 
 const route = useRoute();
 
@@ -425,7 +428,7 @@ function switchVenue(action) {
 
 <template>
 <div class="design-baseline">
-  <BackLink to="/organiser/events" class="workspace-back">← Back</BackLink>
+  <BackLink :to="back" class="workspace-back">← Back</BackLink>
   <p v-if="loading" class="my-5 text-center" role="status">Loading event workspace…</p>
   <div v-dismissible v-else-if="loadError" class="alert alert-danger mt-3" role="alert">{{ loadError }} <button type="button" class="btn btn-sm btn-outline-danger" @click="load">Retry event</button></div>
   <div v-dismissible v-else-if="workspace && !canManage" class="alert alert-danger mt-3" role="alert">Only this event’s organisers can use these tools.</div>

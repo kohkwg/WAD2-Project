@@ -50,7 +50,7 @@ const router = createRouter({
     { path: '/reset-password', component: () => import('../views/ResetPasswordView.vue'), meta: { title: 'Reset password' } },
     { path: '/events', redirect: to => ({ path: '/discover', query: to.query, hash: to.hash }) },
     { path: '/events/:id/rsvp', component: RsvpView, meta: { title: 'Event RSVP' } },
-    { path: '/community', component: () => import('../views/CommunityView.vue'), meta: { title: 'Go together' } },
+    { path: '/community', component: () => import('../views/CommunityView.vue'), meta: { title: 'Community' } },
     { path: '/community/plan', redirect: '/community' },
     { path: '/groups/:id', component: () => import('../views/GroupView.vue'), meta: { title: 'Group' } },
     // Invite links: /g/<token> opens the group, private or public

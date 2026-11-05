@@ -84,6 +84,8 @@ const descriptionToShow = computed(() => {
             </div>
           </div>
         </div>
+        <!-- who hosts it (the event page fills this; create event's review has no saved hosts yet) -->
+        <slot name="hosts"></slot>
       </header>
 
       <!-- The details card, and anything the page puts below it (the floor plan), flow as one column -->

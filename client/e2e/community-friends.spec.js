@@ -71,7 +71,7 @@ test('Friends in Community supports username search, request retry, acceptance a
   await page.emulateMedia({reducedMotion:'reduce'})
   await fixture(page)
   await page.goto('/community')
-  await expect(page.getByRole('heading',{name:'Go together',exact:true})).toBeVisible()
+  await expect(page.getByRole('heading',{level:1,name:'Community',exact:true})).toBeVisible()
   await expect(panel(page).getByRole('heading',{name:'Your friends (0)',exact:true})).toBeVisible()
   for (const scheme of ['light','dark']) {
     await page.getByLabel('Color theme').selectOption(scheme)
@@ -154,7 +154,7 @@ test('Community fills the available width and keeps its responsive Friends panel
   await fixture(page)
   await page.emulateMedia({reducedMotion:'reduce'})
   await page.goto('/community')
-  await expect(page.getByRole('heading',{name:'Go together',exact:true})).toBeVisible()
+  await expect(page.getByRole('heading',{level:1,name:'Community',exact:true})).toBeVisible()
   for(const scheme of ['light','dark']){
     await page.getByLabel('Color theme').selectOption(scheme)
     for(const width of [375,575,768,1280,1920,2560]){

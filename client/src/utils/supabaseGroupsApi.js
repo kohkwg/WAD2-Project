@@ -83,7 +83,7 @@ export async function deleteGroupComment(commentId) {
   await rpc('delete_group_message', { p_message_id: commentId })
 }
 
-// Suggest a place or deal for before or after the event (members only)
+// Suggest a place for before or after the event (members only)
 export async function suggestGroupStop(groupId, slot, item) {
   await requireUser()
   await rpc('suggest_group_idea', { p_group_id: groupId, p_slot: slot, p: suggestionFrom(item) })

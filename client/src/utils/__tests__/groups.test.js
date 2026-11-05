@@ -29,16 +29,20 @@ test('slotTimes fit an hour before and after with a 15-minute walk', () => {
   assert.equal(mealLabel('2026-12-05T11:00:00Z'), 'Dinner') // 19:00
 })
 
-test('suggestions come from deals, places or typed names, without duplicates', () => {
-  const deal = suggestionFrom({ kind: 'deal', id: 'd1', title: '1-for-1', merchant: 'Cafe', outlet: { lat: 1, lng: 2 }, source: { url: 'https://t.me/x' } })
-  assert.equal(deal.name, 'Cafe')
-  assert.equal(deal.sourceUrl, 'https://t.me/x')
+test('suggestions come from nearby places, searched places or typed names, without duplicates', () => {
+  const place = suggestionFrom({ kind: 'place', id: 'place:1', name: 'Kopi Corner', category: 'cafe', lat: 1, lng: 2 })
+  assert.equal(place.name, 'Kopi Corner')
+  assert.equal(place.refId, 'place:1')
+  // A place picked from search keeps its address and pin; a typed name has neither
+  const searched = suggestionFrom({ name: 'Maxwell Food Centre', address: '1 Kadayanallur Street', lat: 1.28, lng: 103.84 })
+  assert.deepEqual([searched.kind, searched.address, searched.lat, searched.lng], ['custom', '1 Kadayanallur Street', 1.28, 103.84])
+  assert.deepEqual([suggestionFrom({ name: 'Lau Pa Sat' }).lat, suggestionFrom({ name: 'Lau Pa Sat' }).address], [null, null])
   const plan = emptyPlan()
-  plan.before.suggestions.push({ ...deal, id: 's1' })
-  assert.equal(suggestionErrors(plan, 'before', deal), 'That place is already suggested.')
-  assert.equal(suggestionErrors(plan, 'after', deal), '')
+  plan.before.suggestions.push({ ...place, id: 's1' })
+  assert.equal(suggestionErrors(plan, 'before', place), 'That place is already suggested.')
+  assert.equal(suggestionErrors(plan, 'after', place), '')
   assert.equal(suggestionErrors(plan, 'before', suggestionFrom({ name: '  ' })), 'Name the place you have in mind.')
-  assert.equal(suggestionErrors(plan, 'during', deal), 'Choose before or after the event.')
+  assert.equal(suggestionErrors(plan, 'during', place), 'Choose before or after the event.')
 })
 
 test('slotCells gives twelve 15-minute cells each side, leaving a walk gap', () => {

@@ -196,13 +196,13 @@ function showEventGroups(eventId) {
 
 <template>
   <div class="container community-page">
-    <!-- Two columns from the top: everything Go together on the left, Friends as a full-height sidebar -->
+    <!-- Two columns from the top: everything group-related on the left, Friends as a full-height sidebar -->
     <div class="community-shell">
     <div class="community-column">
     <!-- One slim header: title and Start a group, with the explainer folded away after the first visit -->
     <header class="community-hero smart-head">
       <div class="smart-head-top">
-        <div class="smart-head-title"><span class="smart-head-star" aria-hidden="true">★</span><h1 class="page-title m-0">Go together</h1></div>
+        <div class="smart-head-title"><span class="smart-head-star" aria-hidden="true">★</span><h1 class="page-title m-0">Community</h1></div>
         <div class="community-hero-actions">
           <button type="button" class="btn btn-primary" :disabled="loading" @click="openComposer()">Start a group</button>
         </div>
@@ -341,7 +341,7 @@ function showEventGroups(eventId) {
 .community-notices { display: grid; gap: 8px; margin-bottom: 18px; }
 .community-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 0; padding: 10px 14px; border: 2px dashed var(--bookedz-control-border); border-radius: 16px; background: var(--bookedz-surface); }
 .community-invites { margin-bottom: 22px; padding: 16px; border: 2px solid var(--bookedz-ink); border-radius: 24px; background: color-mix(in srgb, var(--bookedz-pink) 12%, var(--bookedz-surface)); box-shadow: 6px 6px 0 var(--bookedz-pink); }
-:global(:root[data-theme="dark"]) .community-invites { border-color: var(--bookedz-border); }
+:root[data-theme="dark"] .community-invites { border-color: var(--bookedz-border); }
 .community-invite-list { display: grid; gap: 8px; }
 .community-invite { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 16px; background: var(--bookedz-surface); }
 .community-invite-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -357,7 +357,9 @@ function showEventGroups(eventId) {
 .community-mine-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 4px 10px; scroll-snap-type: x proximity; }
 .community-mine-list li { flex: 0 0 min(240px, 78vw); scroll-snap-align: start; }
 .community-tile { display: grid; gap: 4px; height: 100%; padding: 12px 14px; border: 2px solid var(--bookedz-ink); border-radius: 20px; background: var(--bookedz-surface); color: var(--bookedz-ink); text-decoration: none; box-shadow: 4px 4px 0 var(--bookedz-mango); transition: transform var(--bookedz-motion-normal) var(--bookedz-ease); }
-:global(:root[data-theme="dark"]) .community-tile { border-color: var(--bookedz-border); }
+/* Tiles open something, so in dark mode they get a bright edge that turns orange on hover */
+:root[data-theme="dark"] .community-tile { border-color: color-mix(in srgb, var(--bookedz-ink) 60%, var(--bookedz-surface)); }
+:root[data-theme="dark"] .community-tile:hover { border-color: var(--bookedz-fill); }
 .community-tile:hover { color: var(--bookedz-ink); transform: translate(-1px, -2px); }
 .community-tile.is-alert { box-shadow: 4px 4px 0 var(--bookedz-fill); }
 .community-tile-when { justify-self: start; padding: 1px 8px; border-radius: 99px; background: var(--bookedz-mango-soft); font-size: .72rem; font-weight: 800; }

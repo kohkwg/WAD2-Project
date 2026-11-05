@@ -38,6 +38,79 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — Discover search suggestions
+
+Typing two or more characters in the Discover search box now lists up to six suggestions: event
+titles (open the event), categories (apply the filter), venues and keywords (run that search), each
+with its event count. `lib/searchSuggestions.js` builds them in the browser from one read on first
+focus, with the current filters and every date, so typing makes no extra requests and no row leads
+to an empty page. Keywords need to be in a title or in two or more descriptions; two-word phrases
+need two or more events and are dropped when a venue row already covers them. No migration, route
+or dependency. The live search now puts a wildcard in place of `,()%"\`, as a space there stopped
+text like "The Projector, Golden Mile Tower" matching.
+
+Evidence: `search-suggestions.test.mjs` 15/15; `search-suggestions.spec.js` 10/10 on an owned demo
+server (port 5198), including a fix it prompted: an event row clicked within 250ms of typing used to
+stay on Discover. Live and read-only on Bookerz, signed out (5195): suggestions read sensibly on the
+real events and choosing that venue returned its 3 events, matching the row's count. No page errors.
+Demo pane at 575, 768, 1024 and 1280px (the spec covers 375px): no sideways scroll, one `main`. Seen
+in both themes. `event-filters.test.mjs` still fails 4 of 7, the same number recorded on 3 November;
+not compared against an untouched copy this time. Not done: choosing an event or category row in
+live mode, signed-in or filtered live use, screen reader or real-device checks, full suites, a
+build. Aishani has not reviewed this yet.
+
+Follow-up: clicking into the search box drew a boxed outline inside the rounded bar. The focus ring
+now goes around the whole bar. Headless Chromium on an owned demo server (5196), in light or dark at
+375, 575, 768 and 1280px: the ring is on the bar, moves to Clear search on Tab, no sideways scroll,
+no page errors; light and dark screenshots at 1280px checked.
+
+### 5 November — event navigation merge repair
+
+Resolved seven conflicts after the event-view/navigation commit. The six affected
+pages use dev's shared BackLink with the local useBackLink destination; the ticket
+page also retains dev's separate Plans link. DiscoveryDayRow retains the local
+paging layout and dev's styles allowing selected-card text to expand. Nine related
+Vue scripts, templates and styles compile, and working-file whitespace and conflict
+marker checks pass. No browser navigation journey, full build/suite, hosted changes,
+commit or push performed in this repair.
+
+### 5 November — soft dark mode back, dark buttons, Discover cards close `gregory`
+
+- **Soft dark tokens:** 32 heavy dark rules in `design-baseline.css` were switched to the tokens
+  in place and 12 re-added (Profile form and Delete account, the Organise date strip, Go
+  together's chosen filter, Discover). Vivienne's event-page hero, cards and success panel and her
+  dashboard use them too. The four tokens moved into `main.css`'s dark theme block. A scan finds
+  no solid-orange or 60% dark shadows left.
+- **Scoped `:global` bug:** `AccountDashboard`, `CommunityView`, `GroupView`, `StartGroupDialog`
+  and `EventGroupsCard` wrote dark rules as `:global(:root[data-theme="dark"]) .x`, which Vue
+  compiles to a bare `:root[data-theme="dark"]` rule, so none of them applied (they styled
+  `<html>`). They are now `:root[data-theme="dark"] .x`, with selector lists instead of a final
+  `:is(…)`, which Vue also mis-scopes. Go together's group bar, chosen options and event-groups
+  card now use the soft tokens.
+- **Dark buttons** (`main.css`): outline buttons get white text, a bright edge (75% ink), a
+  see-through fill and a warm orange hover; pressed is stronger and disabled stays dim. Dashboard
+  rows and Community tiles get a bright edge with the same hover, dashboard chips are brighter,
+  and each dashboard card's buttons sit at its bottom.
+- **Also:** Go together's chips keep their own height with the text centred, and Organise's
+  Delete event has a red hover.
+- **Later the same evening**, after bringing in `dev` `a01ed14` (Vivienne's compact Organise header
+  kept, with the soft tokens): outline buttons on coloured headers (the dashboard hero's Create an
+  event, slim headers) get a card-coloured fill and an ink edge in both themes; the dashboard's
+  Next-up slides keep View ticket / View event at the bottom; Go together's and the group page's
+  plain chips share one soft warm colour with ink text; and the Go together title sits 16px above
+  Start a group when they wrap. Organise's search and tabs now start under the title, with search
+  filling the row (MatchaPandas' compact header had pushed them right, leaving a gap under the
+  title). Checked in both themes; 24/24 page loads clean. Note: `dev`'s Plans
+  page is back on the old `rsvps-heading` header (a teammate's change), so it has no slim header.
+- **Discover:** clicking an open card again closes it, as do a click outside the cards and the
+  map/calendar and Escape with focus inside it (focus returns to the thumbnail).
+- **Checks** on the owned demo server (5195): Discover, Plans, Organise, Go together, the landing
+  dashboard and Manage RSVPs at 375 and 1280px in both themes loaded with one `main`, no overflow
+  and no console errors (24/24). Light-mode outline buttons measured unchanged; the four Discover
+  open/close cases pass; each page has only one bare `:root[data-theme="dark"]` rule (the theme
+  itself). Dark-mode before/after screenshots were reviewed.
+- **Not done:** e2e specs, full suites, a production build, live and real-device checks.
+
 ### 5 November — Discover map shows location only
 
 Choosing an event no longer opens a pop-up on the map. The pin is highlighted (orange halo,

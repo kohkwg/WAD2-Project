@@ -21,8 +21,9 @@ function updateDate(field, value) {
 const props = defineProps({
   modelValue: { type: Object, required: true }, search: { type: String, default: '' },
   sort: { type: String, default: 'soonest' }, total: { type: Number, default: null }, loading: Boolean, error: { type: String, default: '' }, showActive: Boolean,
+  suggestions: { type: Array, default: () => [] }, // rows from suggest() in lib/searchSuggestions.js
 })
-const emit = defineEmits(['update:modelValue', 'update:search', 'update:sort', 'show', 'retry', 'pick-dates'])
+const emit = defineEmits(['update:modelValue', 'update:search', 'update:sort', 'show', 'retry', 'pick-dates', 'search-focus', 'search-input', 'suggestion-select'])
 const root = ref(null)
 const searchInput = ref(null)
 const toggle = ref(null)
@@ -39,7 +40,52 @@ function flushSearch() {
   if (search.value !== props.search) emit('update:search', search.value)
 }
 defineExpose({ flushSearch })
-const selected = computed(() => normalizeDiscoveryFilters(props.modelValue))
+
+// Suggestions under the search box. The parent supplies the rows; this handles the list itself.
+const suggestionsOpen = ref(false)
+const activeSuggestion = ref(-1)
+const SUGGESTION_KINDS = { event: 'Event', category: 'Category', venue: 'Venue', keyword: 'Keyword' }
+const listOpen = computed(() => suggestionsOpen.value && !expanded.value && props.suggestions.length > 0)
+watch(() => props.suggestions, () => { activeSuggestion.value = -1 })
+function closeSuggestions() { suggestionsOpen.value = false; activeSuggestion.value = -1 }
+function onSearchInput(event) {
+  suggestionsOpen.value = true
+  emit('search-input', event.target.value)
+}
+function chooseSuggestion(row) {
+  // An event row leaves the page, and applying a search now would replace the URL and cancel that
+  // navigation. Other rows update the box first, so the debounce can't put half-typed text back.
+  if (row.kind === 'event') {
+    clearTimeout(timer)
+  } else {
+    search.value = row.kind === 'category' ? '' : row.searchText
+    flushSearch()
+  }
+  closeSuggestions()
+  emit('suggestion-select', row)
+}
+function onSearchKeydown(event) {
+  const count = props.suggestions.length
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    if (!count || expanded.value) return
+    event.preventDefault()
+    const step = event.key === 'ArrowDown' ? 1 : -1
+    if (!suggestionsOpen.value) { suggestionsOpen.value = true; activeSuggestion.value = step === 1 ? 0 : count - 1; return }
+    // -1 is back in the box: step past the ends through it, like a browser's own suggestions
+    const position = activeSuggestion.value + 1 + step
+    activeSuggestion.value = ((position % (count + 1)) + count + 1) % (count + 1) - 1
+  } else if (event.key === 'Enter' && listOpen.value && activeSuggestion.value >= 0) {
+    event.preventDefault()
+    chooseSuggestion(props.suggestions[activeSuggestion.value])
+  } else if (event.key === 'Escape' && listOpen.value) {
+    // Only closes the list: doesn't clear the box or reach the filter panel's Escape handler
+    event.preventDefault()
+    event.stopPropagation()
+    closeSuggestions()
+  }
+}
+
+const selected =computed(() => normalizeDiscoveryFilters(props.modelValue))
 const whenOptions = [
   { value: 'today', label: 'Today', icon: 'M8 3v4m8-4v4M4 10h16M5 5h14v15H5zM8 14h3' },
   { value: 'weekend', label: 'This weekend', icon: 'M4 10h16M5 5h14v15H5zM8 3v4m8-4v4m-8 8 2 2 5-5' },
@@ -79,13 +125,14 @@ const activeChips = computed(() => groups.value.flatMap(group => {
 }))
 function clearAll() { flushSearch(); emit('update:modelValue', normalizeDiscoveryFilters()); emit('update:sort', 'soonest') }
 async function removeChip(chip) { choose(chip.group, chip.value); await nextTick(); searchInput.value?.focus({ preventScroll: true }) }
-async function clearSearch() { search.value = ''; flushSearch(); await nextTick(); searchInput.value?.focus() }
+async function clearSearch() { search.value = ''; flushSearch(); closeSuggestions(); await nextTick(); searchInput.value?.focus() }
 function close(restoreFocus = false) { expanded.value = false; if (restoreFocus) nextTick(() => toggle.value?.focus()) }
 function outside(event) { if (expanded.value && !root.value?.contains(event.target)) close() }
 function escape(event) { if (event.key === 'Escape' && expanded.value) { event.preventDefault(); event.stopPropagation(); close(true) } }
 function showEvents() {
   if (invalidCustomRange.value) return
   flushSearch()
+  closeSuggestions()
   close()
   emit('show')
 }
@@ -100,7 +147,10 @@ onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('point
         <div class="search-field">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
           <label for="event-search" class="visually-hidden">Search by title, description or venue</label>
-          <input id="event-search" ref="searchInput" v-model="search" type="search" autocomplete="off" placeholder="Search events or places…" />
+          <input id="event-search" ref="searchInput" v-model="search" type="search" autocomplete="off" placeholder="Search events or places…"
+            role="combobox" aria-autocomplete="list" aria-controls="search-suggestions" :aria-expanded="listOpen"
+            :aria-activedescendant="listOpen && activeSuggestion >= 0 ? `search-suggestion-${activeSuggestion}` : undefined"
+            @input="onSearchInput" @focus="emit('search-focus')" @blur="closeSuggestions" @keydown="onSearchKeydown" />
           <button v-if="search" type="button" class="clear-search" aria-label="Clear search" @click="clearSearch">×</button>
         </div>
         <button ref="toggle" type="button" class="filter-toggle" :class="{ 'is-active': activeCount > 0 }" :aria-expanded="expanded" aria-controls="event-filter-panel" @click="expanded = !expanded">
@@ -108,6 +158,17 @@ onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('point
           Filters<span v-if="activeCount" class="filter-count">{{ activeCount }}<span class="visually-hidden"> active</span></span>
         </button>
       </div>
+      <!-- mousedown.prevent keeps focus in the box, so blur doesn't close the list before the click lands -->
+      <ul v-show="listOpen" id="search-suggestions" class="search-suggestions" role="listbox" aria-label="Search suggestions">
+        <li v-for="(row, index) in suggestions" :id="`search-suggestion-${index}`" :key="row.id" role="option"
+          class="search-suggestion" :class="{ 'is-active': index === activeSuggestion }" :aria-selected="index === activeSuggestion"
+          @mousedown.prevent @click="chooseSuggestion(row)">
+          <span class="suggestion-kind">{{ SUGGESTION_KINDS[row.kind] }}</span>
+          <span class="suggestion-label">{{ row.parts.before }}<mark>{{ row.parts.match }}</mark>{{ row.parts.after }}</span>
+          <span v-if="row.kind !== 'event'" class="suggestion-count">{{ row.count }} {{ row.count === 1 ? 'event' : 'events' }}</span>
+        </li>
+      </ul>
+      <p class="visually-hidden" role="status">{{ listOpen ? `${suggestions.length} ${suggestions.length === 1 ? 'suggestion' : 'suggestions'} available. Use the up and down arrows to choose.` : '' }}</p>
       <div v-if="expanded" id="event-filter-panel" class="filter-panel" role="region" aria-label="Event filters">
         <!-- The Filters button above already names this panel, so it has no second "Filters" title -->
         <button type="button" class="close-panel" aria-label="Close filters" @click="close(true)">×</button>
@@ -196,6 +257,14 @@ onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('point
 .search-wrap { position: relative; }
 .search-toolbar, .filter-panel { box-sizing: border-box; border: 1px solid var(--bookedz-control-border); border-radius: 18px; background: var(--bookedz-surface); }
 .search-toolbar { display: flex; align-items: stretch; gap: 6px; padding: 6px; box-shadow: var(--bookedz-search-shadow); }
+.search-suggestions { position: absolute; z-index: 30; top: calc(100% + 8px); left: 0; box-sizing: border-box; width: 100%; max-height: min(360px, 60svh); margin: 0; padding: 6px; overflow-y: auto; list-style: none; border: 1px solid var(--bookedz-control-border); border-radius: 8px; background: var(--bookedz-surface); box-shadow: var(--bookedz-search-shadow); }
+.search-suggestion { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 10px; border-radius: 5px; color: var(--bookedz-ink); cursor: pointer; }
+.search-suggestion:hover, .search-suggestion.is-active { background: var(--bookedz-glass-hover); }
+.search-suggestion.is-active { outline: 2px solid var(--bookedz-primary-dark); outline-offset: -2px; }
+.suggestion-kind { flex: 0 0 4.75rem; color: var(--bookedz-muted); font-size: .75rem; font-weight: 600; }
+.suggestion-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.suggestion-label mark { padding: 0; background: transparent; color: inherit; font-weight: 700; }
+.suggestion-count { flex-shrink: 0; color: var(--bookedz-muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
 .search-field { display: flex; align-items: center; position: relative; flex: 1; min-width: 0; }
 .search-field > svg { position: absolute; left: 12px; width: 22px; height: 22px; pointer-events: none; color: var(--bookedz-muted); }
 svg { flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
@@ -224,6 +293,9 @@ svg { flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; strok
 .active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .active-filter { min-height: 44px; padding: 7px 12px; border: 1px solid var(--bookedz-control-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .85rem; }.active-filter span { margin-left: 8px; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
+/* The search box fills most of the bar, so the whole bar shows its focus and the ring follows the bar's shape */
+.search-field input:focus-visible { outline: none; }
+.search-toolbar:has(.search-field input:focus-visible) { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
 @media(max-width:575px) { .filter-panel { padding: 18px; }.filter-toggle { padding-inline: 10px; gap: 5px; }.filter-toggle svg { width: 17px; height: 17px; } }
 .search-toolbar, .filter-panel { border-radius: 8px; }
 .filter-toggle { border-radius: 5px; }

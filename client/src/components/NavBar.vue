@@ -20,7 +20,9 @@ const ICONS = {
   // A door with an arrow leaving it, inside a circle
   signOut:
     'M12 1.5a10.5 10.5 0 1 1 0 21 10.5 10.5 0 0 1 0-21ZM13.9 9.7V7.5H8.7v9h5.2v-2.2M11.5 12h6M15.6 10l2 2-2 2',
-  discover: 'M3 11.5 12 4l9 7.5M5.5 10v10h13V10M10 20v-5h4v5',
+  home: 'M3 11.5 12 4l9 7.5M5.5 10v10h13V10M10 20v-5h4v5',
+  // A compass: a circle with a needle
+  discover: 'M12 2.5a9.5 9.5 0 1 1 0 19 9.5 9.5 0 0 1 0-19ZM15.8 8.2l-1.9 5.7-5.7 1.9 1.9-5.7z',
   community:
     'M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM22 20v-2a4 4 0 0 0-3-3.9M15.5 3.7a3.5 3.5 0 0 1 0 6.6',
   profile:
@@ -29,19 +31,16 @@ const ICONS = {
   events:
     'M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4zM14 6v12',
 }
-// Icons for Auto, Light and Dark themes.
+// Icons for the Light and Dark themes.
 const THEME_ICONS = {
-  system:
-    'M7 4.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4ZM7 2.4v1M7 10.6v1M2.4 7h1M10.6 7h1M3.75 3.75l.7.7M9.55 9.55l.7.7M3.75 10.25l.7-.7M9.55 4.45l.7-.7M19 5 5 19M17 12.5a4.5 4.5 0 1 0 4.5 4.5 4.5 4.5 0 0 1-4.5-4.5Z',
   light:
     'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41',
   dark: 'M12 3a9 9 0 1 0 9 9A9 9 0 0 1 12 3Z',
 }
-// Set the next theme when the theme button is clicked.
+// Set the next theme when the theme button is clicked: Light and Dark swap.
 const THEME_CYCLE = {
-  system: { label: 'Auto', next: 'light' },
   light: { label: 'Light', next: 'dark' },
-  dark: { label: 'Dark', next: 'system' },
+  dark: { label: 'Dark', next: 'light' },
 }
 
 const route = useRoute()
@@ -115,11 +114,11 @@ function toggleSidebar() {
   }
 }
 
-// Theme button: cycles Auto -> Light -> Dark
+// Theme button: switches between Light and Dark
 const themeLabel = computed(() => THEME_CYCLE[themePreference.value].label)
 const themeIconPath = computed(() => THEME_ICONS[themePreference.value])
 
-// Change the theme: Auto → Light → Dark → Auto.
+// Change the theme: Light ⇄ Dark.
 const themeCycleLabel = computed(() => {
   const now = THEME_CYCLE[themePreference.value]
   return `Theme: ${now.label}. Switch to ${THEME_CYCLE[now.next].label}`
@@ -223,6 +222,13 @@ function resetDemo() {
 
       <ul class="sidebar-links">
         <li>
+          <RouterLink class="side-link" data-label="Home" active-class="" exact-active-class="active" to="/">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.home" /></svg>
+            <span class="side-label">Home</span>
+          </RouterLink>
+        </li>
+
+        <li>
           <RouterLink
             class="side-link"
             data-label="Discover"
@@ -295,7 +301,7 @@ function resetDemo() {
 
       <ul class="sidebar-links sidebar-links--secondary">
         <li>
-          <!-- Collapsed rail only: one button cycling Auto -> Light -> Dark.
+          <!-- Collapsed rail only: one button switching between Light and Dark.
                The button below covers every other layout -->
           <button
             type="button"
@@ -307,7 +313,7 @@ function resetDemo() {
             <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="themeIconPath" /></svg>
           </button>
 
-          <!-- Expanded: the icon and "Theme" cycle Auto -> Light -> Dark -->
+          <!-- Expanded: the icon and "Theme" switch between Light and Dark -->
           <div class="theme-control sidebar-theme">
             <button
               type="button"
@@ -430,6 +436,11 @@ function resetDemo() {
   <!-- Phones: the four main destinations at thumb reach; the menu button keeps everything else.
        A separate landmark, so "Main navigation" still holds one link per destination -->
   <nav v-if="showBottomTabs" class="bottom-tabs" aria-label="Quick links">
+    <RouterLink class="bottom-tab" active-class="" exact-active-class="active" to="/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.home" /></svg>
+      Home
+    </RouterLink>
+
     <RouterLink
       class="bottom-tab"
       :class="{ active: isOnDiscover }"

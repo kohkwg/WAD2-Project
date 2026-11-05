@@ -20,7 +20,7 @@ SMU IS216 Web Application Development II, group project (G2).
 - **Tickets and check-in:** a QR code and barcode ticket, staff scanning or name search, and
   venue QR self check-in with live updates.
 - **Go together:** start a public or friends-only group for an event, invite friends by link,
-  chat, and plan food before and after the event from nearby deals and places.
+  chat, and plan food before and after the event from nearby places that are open then.
 - **Profile and friends:** interests (which shape recommendations) and a dino avatar in
   Profile; friends are found by username in Community.
 
@@ -54,7 +54,6 @@ and reduced-motion support.
   Function), used directly from the browser with the signed-in user's permissions.
 - **API** (`server/`): Express 5 for recommendations, signed image uploads to Cloudflare R2, the
   OneMap routing proxy and food near events.
-- **Food deals pipeline** (`pipeline/`): Python; optional, feeds Go together's planner.
 - **Tests:** Node's test runner and Playwright.
 
 ## Getting started
@@ -84,9 +83,8 @@ pnpm --dir server dev
   privately. Only the publishable Supabase key belongs in the client; secret keys stay in
   `server/.env`.
 
-Optional server keys: OneMap (live travel routes), Geoapify (places near events) and Gemini or
-Telegram (the deals pipeline, see [pipeline/README.md](pipeline/README.md)). Without them those
-features fall back to labelled estimates or typed places.
+Optional server keys: OneMap (live travel routes) and Geoapify (food places near events). Without
+them those features fall back to labelled estimates, or to searching and typing places.
 
 ## Testing
 
@@ -108,7 +106,6 @@ client/      Vue app: src/views (pages), src/components, src/utils (demo and liv
              e2e (Playwright), e2e-live (tests against the hosted project)
 server/      Express API: routes, services, tests and isolated database checks
 supabase/    SQL migrations, the venue-switch Edge Function and SQL tests
-pipeline/    Python food-deals pipeline used by Go together
 docs/        Project documentation (below)
 AGENTS.md    Rules for AI coding agents working in this repository
 ```

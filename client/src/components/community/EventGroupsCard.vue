@@ -58,7 +58,7 @@ const initials = (name = '') => name.split(/\s+/).map((part) => part[0]).join(''
 
 <style scoped>
 .event-groups-card { display: grid; gap: 14px; padding: 16px; border: 2px solid var(--bookedz-ink); border-radius: 24px; background: var(--bookedz-surface); box-shadow: 6px 6px 0 var(--bookedz-teal); }
-:global(:root[data-theme="dark"]) .event-groups-card { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+:root[data-theme="dark"] .event-groups-card { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 var(--db-dark-teal); }
 .egc-head { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 14px; }
 .egc-art { display: block; width: 64px; height: 64px; overflow: hidden; border-radius: 16px; }
 .egc-art :deep(svg) { width: 100%; height: 100%; }
@@ -74,7 +74,8 @@ const initials = (name = '') => name.split(/\s+/).map((part) => part[0]).join(''
 .egc-mini { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 2px solid var(--bookedz-surface); border-radius: 50%; background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); font-size: .68rem; font-weight: 800; }
 .egc-mini + .egc-mini { margin-left: -9px; }
 .egc-more { background: var(--bookedz-ink); color: var(--bookedz-surface); }
-.egc-groups { display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 10px; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; }
+/* A scroll row clips what grows past its edge, so leave room for the hover lift, tilt and larger shadow */
+.egc-groups { display: flex; gap: 12px; overflow-x: auto; padding: 10px 14px 18px 8px; scroll-padding-inline: 8px; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; }
 .egc-slide { flex: 0 0 min(340px, 84%); scroll-snap-align: start; display: flex; }
 .egc-slide > :deep(.group-card) { width: 100%; }
 .egc-groups:has(> .egc-slide:only-child) .egc-slide { flex-basis: 100%; }
