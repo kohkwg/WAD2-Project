@@ -1,5 +1,14 @@
 # Decisions
 
+5 November 2026 — Huxley, groups follow RSVPs: only people with an RSVP to an event (going,
+waitlisted, pending or offered) can start a group for it, so the Start a group list shows just your
+upcoming RSVP'd events. Anyone can still join a group; getting in (an open join, an accepted invite
+or the host's approval) RSVPs them to the event by the event's own rules, unless they already have
+an RSVP, organise it, or it's an open-join event that's full. In live mode a trigger on
+registrations (`group_member_event_rsvp`) does this, skipping required RSVP questions. Community no
+longer shows event teams (they stay in My events and Manage event), adds a "Your events" strip, and
+shows each event's groups as a sideways carousel.
+
 5 November 2026 — Huxley, Go together with friends: every group has two settings shown as badges,
 **who can see it** (Public, or Friends only: the host's friends see it in Community, anyone else
 needs the invite link) and **who can join** (Anyone can join, or Host approves). People asking to

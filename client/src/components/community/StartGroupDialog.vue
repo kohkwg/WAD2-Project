@@ -1,11 +1,12 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { createGroup } from '../../utils/api.js'
 import { getFriends } from '../../utils/profileFriends.js'
 import { CAPACITY_RANGE, groupErrors, NOTE_LIMIT } from '../../utils/groups.js'
 import { formatEventTime } from '../../utils/helpers.js'
 
-// "Start a group": pick an upcoming event, add a note and spots, choose who can see it
+// "Start a group": pick one of your upcoming RSVP'd events (only people going can start one), add a note and spots, choose who can see it
 // (public, or friends only) and who can join (anyone, or the host approves), and tick
 // friends to invite. Native <dialog>: Escape closes it and focus returns to the opener.
 const props = defineProps({ events: { type: Array, default: () => [] }, eventId: { type: String, default: '' } })
@@ -81,9 +82,15 @@ async function submit() {
         <button type="button" class="group-close" aria-label="Close" @click="emit('close')">×</button>
       </header>
 
-      <label class="form-label" for="group-event">Event</label>
+      <div v-if="!events.length" class="group-no-events" role="status">
+        <strong>RSVP to an event first.</strong>
+        <span class="text-meta text-secondary">Groups are started by people going to the event. Find something on Discover, RSVP, then come back.</span>
+        <RouterLink to="/discover" class="btn btn-primary btn-sm justify-self-start" @click="emit('close')">Browse events</RouterLink>
+      </div>
+      <template v-else>
+      <label class="form-label" for="group-event">Event you’re going to</label>
       <select id="group-event" v-model="form.eventId" class="form-select" :aria-invalid="Boolean(errorFor('event')) || undefined" aria-describedby="group-event-error">
-        <option value="" disabled>Choose an upcoming event</option>
+        <option value="" disabled>Choose one of your events</option>
         <option v-for="event in events" :key="event.id" :value="event.id">{{ event.title }}</option>
       </select>
       <p v-if="chosen" class="group-chosen text-meta">{{ formatEventTime(chosen) }} · {{ chosen.venue?.name || 'Venue to be announced' }}</p>
@@ -154,10 +161,11 @@ async function submit() {
       </fieldset>
 
       <p v-dismissible v-if="failure" class="group-error" role="alert">{{ failure }}</p>
+      </template>
 
       <footer class="group-form-foot">
         <button type="button" class="btn btn-outline-secondary" @click="emit('close')">Cancel</button>
-        <button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? 'Starting…' : invited.length ? `Start group & invite ${invited.length}` : 'Start group' }}</button>
+        <button v-if="events.length" type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? 'Starting…' : invited.length ? `Start group & invite ${invited.length}` : 'Start group' }}</button>
       </footer>
     </form>
   </dialog>
@@ -193,6 +201,8 @@ async function submit() {
 .group-friend .form-check-input { flex: none; margin: 0; }
 .group-friend-avatar { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); font-size: .78rem; font-weight: 700; }
 .min-w-0 { min-width: 0; overflow-wrap: anywhere; }
+.group-no-events { display: grid; gap: 6px; padding: 14px; border: 2px dashed var(--bookedz-control-border); border-radius: 16px; }
+.justify-self-start { justify-self: start; }
 .group-error { margin: 6px 0 0; color: var(--bookedz-danger); font-size: .88rem; }
 .group-form-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 22px; }
 .group-form-foot .btn { min-height: 44px; border-radius: 99px; border-width: 2px; }

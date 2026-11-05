@@ -1,14 +1,17 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getGroups } from '../../utils/api.js'
+import { getGroups, getMyRsvps } from '../../utils/api.js'
 
-// On an event page: Go together groups for this event (public ones and any you're in), and a way to start one.
+// On an event page: Go together groups for this event, and (for people who RSVP'd) a way to
+// start one. Joining a group RSVPs you to the event too.
 const props = defineProps({ eventId: { type: String, required: true } })
 const groups = ref([])
 const loaded = ref(false)
+const going = ref(false) // you have an RSVP for this event, so you can start a group
 async function load() {
   try { groups.value = (await getGroups()).filter((group) => group.event?.id === props.eventId) } catch { groups.value = [] }
+  try { going.value = (await getMyRsvps()).some((r) => r.eventId === props.eventId && ['confirmed', 'pending', 'waitlisted', 'offered'].includes(r.status)) } catch { going.value = false }
   loaded.value = true
 }
 onMounted(load)
@@ -21,19 +24,19 @@ const openSpots = computed(() => groups.value.filter((group) => group.spotsLeft 
     <div class="card-body">
       <div class="event-groups-head">
         <h2 id="event-groups-title" class="h5 m-0">Go together</h2>
-        <RouterLink :to="{ path: '/community', query: { start: eventId } }" class="btn btn-outline-secondary btn-sm">Start a group</RouterLink>
+        <RouterLink v-if="going" :to="{ path: '/community', query: { start: eventId } }" class="btn btn-outline-secondary btn-sm">Start a group</RouterLink>
       </div>
-      <p v-if="!groups.length" class="text-meta text-secondary mb-0 mt-2">No groups for this event yet. Start one and others can join you.</p>
+      <p v-if="!groups.length" class="text-meta text-secondary mb-0 mt-2">{{ going ? 'No groups for this event yet. Start one and others can join you.' : 'No groups for this event yet. RSVP, then you can start one.' }}</p>
       <ul v-else class="list-unstyled m-0 mt-3 stagger-in">
         <li v-for="group in groups" :key="group.id">
           <RouterLink :to="`/groups/${group.id}`" class="event-group lift-on-hover">
-            <strong>{{ group.myStatus === 'host' ? 'Your group' : `${group.host.name}’s group` }}</strong><span v-if="group.visibility === 'private'" class="text-caption text-secondary">Private · you’re in it</span>
+            <strong>{{ group.myStatus === 'host' ? 'Your group' : `${group.host.name}’s group` }}</strong><span v-if="group.visibility === 'private'" class="text-caption text-secondary">Friends only</span>
             <span class="text-meta text-secondary">{{ group.members.length + 1 }} going · {{ group.spotsLeft > 0 ? `${group.spotsLeft} ${group.spotsLeft === 1 ? 'spot' : 'spots'} left` : 'Full' }}</span>
             <span v-if="group.note" class="event-group-note">{{ group.note }}</span>
           </RouterLink>
         </li>
       </ul>
-      <p v-if="openSpots.length" class="text-caption text-secondary mb-0 mt-2">Joining a group doesn’t RSVP you to the event; you’ll be reminded to do both.</p>
+      <p v-if="openSpots.length" class="text-caption text-secondary mb-0 mt-2">Joining a group RSVPs you to the event too.</p>
     </div>
   </section>
 </template>

@@ -362,6 +362,8 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
   outline ease, slot times and picks fade in, Keen counts and filter counts bump, members
   and chat messages slide in, map pins drop in, and the group page refreshes every 20 seconds
   (chat every 15) and on focus. All of it is off with reduced motion.
+- **5 Nov 2026:** Start a group lists only events you've RSVP'd to; joining a group RSVPs you to
+  the event. Community: "Your events" strip, each event's groups in a sideways carousel, no event teams.
 - **5 Nov 2026:** Groups show "Public / Friends only" and "Anyone can join / Host approves"
   badges; Community groups sit inside one card per event, with a "Your groups" strip, invites and
   "group deleted" notices at the top; the group page has a sticky action bar and host settings.

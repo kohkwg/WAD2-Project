@@ -8,6 +8,10 @@
 -- * A join request can carry a short message for the host.
 -- * The host can change visibility, who can join, spots and the note, or delete the group;
 --   deleting leaves a notice for everyone who was in it, asking or invited.
+-- * Only people who have RSVP'd to the event can start a group for it.
+-- * Getting into a group (joining, an accepted invite, or the host's approval) RSVPs you to
+--   the event too, by the event's own rules, unless you already have an RSVP or it is an
+--   open-join event that is full. Required RSVP questions are skipped for these.
 --
 -- profile_friendships already exists on the hosted project (added from
 -- docs/sql/profile-friends-draft.sql); it is created here only where it is missing, with
@@ -178,6 +182,10 @@ begin
   select * into t from public.events where id = p_event_id and kind = 'official' and status = 'published';
   if not found then raise exception 'Choose the event you want company for.'; end if;
   if t.starts_at <= now() then raise exception 'That event has already started. Choose another one.'; end if;
+  if not exists (select 1 from public.registrations r where r.event_id = t.id and r.user_id = auth.uid()
+                 and r.status in ('pending', 'confirmed', 'waitlisted', 'offered')) then
+    raise exception 'RSVP to this event first, then start a group for it.';
+  end if;
   if char_length(v_note) > 200 then raise exception 'Keep the note to 200 characters or fewer.'; end if;
   if p_capacity is null or p_capacity not between 2 and 8 then raise exception 'A group has 2 to 8 spots, including you.'; end if;
   if p_join_mode not in ('open', 'approval') then raise exception 'Choose who can join.'; end if;
@@ -267,6 +275,37 @@ begin
   return v_reg;
 end $$;
 
+-- Getting into a group RSVPs you to its event. Runs for every path in: an open join, an
+-- accepted invite, or the host approving a request (an organiser status update).
+create or replace function public.group_member_event_rsvp()
+returns trigger language plpgsql security definer set search_path = '' as $$
+declare
+  g public.groups;
+  t public.events;
+  v_held int;
+  v_status public.registration_status;
+begin
+  if new.status <> 'confirmed' or (tg_op = 'UPDATE' and old.status = 'confirmed') then return null; end if;
+  select * into g from public.groups where event_id = new.event_id;
+  if not found then return null; end if;
+  if exists (select 1 from public.registrations r where r.event_id = g.official_event_id and r.user_id = new.user_id
+             and r.status in ('pending', 'confirmed', 'waitlisted', 'offered')) then return null; end if;
+  select * into t from public.events where id = g.official_event_id for update;
+  if not found or t.status <> 'published' or now() > t.ends_at then return null; end if;
+  if t.registration_closes_at is not null and now() > t.registration_closes_at then return null; end if;
+  if exists (select 1 from public.event_members m where m.event_id = t.id and m.user_id = new.user_id) then return null; end if;
+  select count(*) into v_held from public.registrations where event_id = t.id and status in ('confirmed', 'offered');
+  v_status := public._admission_status(t, v_held);
+  if v_status is null then return null; end if; -- open-join event that's full: they can RSVP later
+  insert into public.registrations (event_id, user_id, status) values (t.id, new.user_id, v_status)
+  on conflict (event_id, user_id) do update set status = excluded.status, offer_expires_at = null, late_cancel = false,
+    created_at = now(), decided_at = null, decided_by = null
+    where public.registrations.status in ('cancelled', 'declined', 'expired');
+  return null;
+end $$;
+create trigger group_member_event_rsvp after insert or update of status on public.registrations
+  for each row execute function public.group_member_event_rsvp();
+
 -- Invites waiting for you, newest first
 create or replace function public.group_invites_list()
 returns jsonb language sql stable security definer set search_path = '' as $$
@@ -351,7 +390,7 @@ returns void language sql security definer set search_path = '' as $$
 $$;
 
 -- 7. Grants --------------------------------------------------------------------------------------
-revoke execute on function public._accept_group_invite(uuid) from public, anon, authenticated;
+revoke execute on function public._accept_group_invite(uuid), public.group_member_event_rsvp() from public, anon, authenticated;
 revoke execute on function public.are_friends(uuid, uuid) from public, anon, authenticated;
 revoke execute on function public.create_group(uuid, text, int, text, text, uuid[]), public.join_group(uuid, text, text),
   public.group_invites_list(), public.respond_group_invite(uuid, boolean), public.update_group_settings(uuid, text, text, int, text),

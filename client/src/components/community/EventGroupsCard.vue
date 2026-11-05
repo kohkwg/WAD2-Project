@@ -6,10 +6,10 @@ import GroupCard from './GroupCard.vue'
 import { formatEventTime } from '../../utils/helpers.js'
 import { countdownLabel } from '../../utils/groups.js'
 
-// One event in Community with every group going to it, so many groups don't become one
-// long list. Shows a countdown, everyone going across its groups, and a quick way to start
-// another group for the same event.
-const props = defineProps({ event: { type: Object, default: null }, groups: { type: Array, required: true } })
+// One event in Community with its groups in a sideways carousel, so many groups don't become
+// one long list. Shows a countdown and everyone going; people going to the event can start
+// another group for it.
+const props = defineProps({ event: { type: Object, default: null }, groups: { type: Array, required: true }, canStart: Boolean })
 const emit = defineEmits(['changed', 'start'])
 
 const category = computed(() => props.event?.category || '')
@@ -48,10 +48,11 @@ const initials = (name = '') => name.split(/\s+/).map((part) => part[0]).join(''
         <span class="text-caption text-secondary">{{ people.length }} going</span>
       </div>
     </header>
-    <TransitionGroup tag="div" name="list-fade" class="egc-groups">
-      <GroupCard v-for="group in groups" :key="group.id" :group="group" compact @changed="emit('changed')" />
+    <TransitionGroup tag="div" name="list-fade" class="egc-groups" :aria-label="`Groups going to ${event?.title || 'this event'}`" role="list">
+      <div v-for="group in groups" :key="group.id" class="egc-slide" role="listitem"><GroupCard :group="group" compact @changed="emit('changed')" /></div>
     </TransitionGroup>
-    <button v-if="event" type="button" class="egc-start" @click="emit('start', event.id)">+ Start another group for this event</button>
+    <button v-if="event && canStart" type="button" class="egc-start" @click="emit('start', event.id)">+ Start another group for this event</button>
+    <p v-else-if="event" class="egc-hint text-caption text-secondary m-0">Joining a group RSVPs you to {{ event.title }} too.</p>
   </section>
 </template>
 
@@ -73,7 +74,10 @@ const initials = (name = '') => name.split(/\s+/).map((part) => part[0]).join(''
 .egc-mini { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 2px solid var(--bookedz-surface); border-radius: 50%; background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); font-size: .68rem; font-weight: 800; }
 .egc-mini + .egc-mini { margin-left: -9px; }
 .egc-more { background: var(--bookedz-ink); color: var(--bookedz-surface); }
-.egc-groups { display: grid; gap: 10px; }
+.egc-groups { display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 10px; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; }
+.egc-slide { flex: 0 0 min(340px, 84%); scroll-snap-align: start; display: flex; }
+.egc-slide > :deep(.group-card) { width: 100%; }
+.egc-groups:has(> .egc-slide:only-child) .egc-slide { flex-basis: 100%; }
 .egc-start { justify-self: start; min-height: 40px; padding: 6px 14px; border: 2px dashed var(--bookedz-control-border); border-radius: 99px; background: transparent; color: var(--bookedz-primary-dark); font-weight: 700; font-size: .88rem; }
 .egc-start:hover { border-color: var(--bookedz-fill); background: var(--bookedz-orange-soft); }
 @media (max-width: 575px) {

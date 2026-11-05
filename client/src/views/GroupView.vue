@@ -80,7 +80,7 @@ async function join() {
     asking.value = false
     joinMessage.value = ''
     justJoined.value = rsvp?.status === 'confirmed'
-    toast(rsvp?.status === 'pending' ? 'Request sent to the host' : 'You joined the group')
+    toast(rsvp?.status === 'pending' ? 'Request sent to the host — you’ll be RSVP’d to the event if they approve' : rsvp?.eventRsvpStatus && !group.value.myEventStatus ? `You joined the group and RSVP’d to ${event.value?.title || 'the event'}` : 'You joined the group')
     await load({ quiet: true })
   } catch (e) {
     actionError.value = e.message
