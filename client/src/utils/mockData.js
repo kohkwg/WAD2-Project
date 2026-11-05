@@ -400,7 +400,7 @@ export function createSeedData() {
 
 // Sample Go together groups from other students (Community), tied to upcoming official
 // events. Also brings demo data saved by older versions up to date (open jios became groups).
-export const GROUP_SEED_VERSION = 5
+export const GROUP_SEED_VERSION = 6
 export function addSampleGroups(db) {
   db.groupComments = db.groupComments || []
   // Older demo data: jio comments become group comments; groups get an invite link and a plan
@@ -459,5 +459,42 @@ export function addSampleGroups(db) {
     const old = Object.values(first.plan.availability || {}).some((a) => Object.values(a).some((v) => !Array.isArray(v)))
     if (old || !Object.keys(first.plan.availability || {}).length) first.plan.availability = { u2: { before: before.slice(4), after: [] }, u3: { before: before.slice(7) } }
   }
+  addFriendsAndInvites(db, upcoming, now)
   db.groupSeedVersion = GROUP_SEED_VERSION
+}
+
+// Version 6: usernames and friends (Alex is friends with Bea and Chen; Dina has asked),
+// friends-only groups, an invite for Alex, a group Alex hosts with a request waiting, and
+// one "group deleted" notice, so every Go together state can be tried in the demo.
+const USERNAMES = { u1: 'alex_tan', u2: 'bea_lim', u3: 'chen_wei', u4: 'dina_r', u5: 'ethan_ng', u6: 'farah_ali' }
+function addFriendsAndInvites(db, upcoming, now) {
+  for (const user of db.users || []) if (USERNAMES[user.id] && !user.username) user.username = USERNAMES[user.id]
+  db.friendships = db.friendships || [
+    { a: 'u1', b: 'u2', requester: 'u2', status: 'accepted', createdAt: new Date(now - 9 * 864e5).toISOString() },
+    { a: 'u1', b: 'u3', requester: 'u1', status: 'accepted', createdAt: new Date(now - 6 * 864e5).toISOString() },
+    { a: 'u1', b: 'u4', requester: 'u4', status: 'pending', createdAt: new Date(now - 864e5).toISOString() },
+  ]
+  db.groupInvites = db.groupInvites || []
+  db.groupNotices = db.groupNotices || []
+  const add = (sample) => {
+    const target = upcoming(sample.eventId)
+    if (!target || db.events.some((e) => e.id === sample.id)) return null
+    const group = { ...groupEventData(target, { ...sample, token: `inv-${sample.id}` }), id: sample.id, organiserId: sample.host, status: 'published', createdAt: new Date(now - 2 * 3600e3).toISOString() }
+    db.events.push(group)
+    for (const userId of sample.members || []) db.rsvps.push({ id: `r-${sample.id}-${userId}`, eventId: sample.id, userId, status: 'confirmed', answers: {}, createdAt: new Date(now - 3600e3).toISOString(), offerExpiresAt: null })
+    return group
+  }
+  // Friends only: Bea's private group shows for Alex because they're friends
+  add({ id: 'grp4', eventId: 'e1', host: 'u2', capacity: 4, joinMode: 'approval', visibility: 'private', note: 'Just my friends for this one, we’re grabbing dinner after.', members: [] })
+  // Chen invited Alex to a private group
+  if (add({ id: 'grp5', eventId: 'e5', host: 'u3', capacity: 4, joinMode: 'open', visibility: 'private', note: 'Pottery date! Bring an apron.', members: [] })) {
+    db.groupInvites.push({ id: 'inv-grp5-u1', groupId: 'grp5', userId: 'u1', invitedBy: 'u3', status: 'pending', createdAt: new Date(now - 3600e3).toISOString() })
+  }
+  // A group Alex hosts: Chen is in, Farah is asking with a message
+  if (add({ id: 'grp6', eventId: 'e4', host: 'org1', capacity: 4, joinMode: 'approval', visibility: 'public', note: 'Going to the career talk, happy to swap resume tips after.', members: ['u3'] })) {
+    db.rsvps.push({ id: 'r-grp6-u6', eventId: 'grp6', userId: 'u6', status: 'pending', answers: {}, message: 'Hi! I’m also in SCIS year 2, would love to tag along.', createdAt: new Date(now - 1800e3).toISOString(), offerExpiresAt: null })
+  }
+  if (!db.groupNotices.some((n) => n.id === 'notice-sample')) {
+    db.groupNotices.push({ id: 'notice-sample', userId: 'u1', hostName: 'Ethan Ng', eventTitle: 'Board Games Night', deletedAt: new Date(now - 5 * 3600e3).toISOString(), seen: false })
+  }
 }

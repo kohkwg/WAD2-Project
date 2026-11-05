@@ -59,6 +59,20 @@ status. Use the timeline for the latest verified checkpoint and remaining limits
 
 ## Change history
 
+Also on 5 November 2026: only people going to an event can start a group for it, joining a group
+RSVPs you to the event, Community has a "Your events" strip and group carousels, and event teams
+moved out of Community. Changed `CommunityView.vue`, `EventGroupsCard.vue`, `StartGroupDialog.vue`,
+`EventGroups.vue`, `GroupCard.vue`, `GroupView.vue`, `mockApi.js` and the unapplied migration
+`20261105050527_go_together_friends_invites.sql`.
+
+On 5 November 2026, Go together gained friends-only groups, friend invites, join messages, host
+settings and deleting, and a new layout (groups under their event, a "Your groups" strip, a sticky
+bar on the group page). We wrote migration `20261105050527_go_together_friends_invites.sql`,
+`components/community/EventGroupsCard.vue`, and changed `StartGroupDialog.vue`, `GroupCard.vue`,
+`CommunityView.vue`, `GroupView.vue`, `FriendsPanel.vue`, `profileFriends.js` (demo friends),
+`groups.js`, `mockApi.js`, `mockData.js` (seed version 6), `supabaseGroupsApi.js` and `api.js`, with
+tests in `groups.test.js`, `e2e/go-together.spec.js` and `server/checks/groups-db.check.mjs`.
+
 On 5 November 2026, added more space between Discover's rows, toned down
 dark mode on every ticket page (Discover included) after Vivienne's feedback that the colours felt heavy,
 renamed "My events" to "My Events", and restyled the Sort by drop-downs. We changed `design-baseline.css`, `DiscoverView.vue`,

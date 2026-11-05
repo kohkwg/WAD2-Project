@@ -5,11 +5,12 @@ import EventArtwork from '../EventArtwork.vue'
 import BumpValue from '../ui/BumpValue.vue'
 import { joinGroup } from '../../utils/api.js'
 import { formatEventTime } from '../../utils/helpers.js'
+import { joinModeLabel, visibilityLabel } from '../../utils/groups.js'
 import { toast } from '../../composables/useToast'
 
-// One group in the Community feed: who is going to which event, spots left and Join.
-// Everything else (plan, chat, invite link) is on the group's own page.
-const props = defineProps({ group: { type: Object, required: true }, highlight: Boolean })
+// One group: who is hosting, who's going, spots left and Join. In Community it sits inside
+// its event's card (compact: no event row). Plan, chat and settings are on the group page.
+const props = defineProps({ group: { type: Object, required: true }, highlight: Boolean, compact: Boolean })
 const emit = defineEmits(['changed'])
 const busy = ref(false)
 const justJoined = ref(false)
@@ -39,7 +40,7 @@ async function join() {
   try {
     const rsvp = await joinGroup({ id: props.group.id })
     justJoined.value = true
-    toast(rsvp?.status === 'pending' ? 'Request sent to the host' : 'You joined the group')
+    toast(rsvp?.status === 'pending' ? 'Request sent to the host' : rsvp?.eventRsvpStatus && !props.group.myEventStatus ? `You joined the group and RSVP’d to ${event.value?.title || 'the event'}` : 'You joined the group')
     emit('changed')
   } catch (e) {
     error.value = e.message
@@ -50,21 +51,27 @@ async function join() {
 </script>
 
 <template>
-  <article :id="`group-${group.id}`" class="group-card lift-on-hover" :class="{ 'is-highlighted': highlight, 'is-joined': joined || isHost }" :aria-labelledby="`group-title-${group.id}`">
+  <article :id="`group-${group.id}`" class="group-card" :class="{ 'is-highlighted': highlight, 'is-joined': joined || isHost, 'is-compact': compact, 'lift-on-hover': !compact }" :aria-labelledby="`group-title-${group.id}`">
     <header class="group-head">
       <span class="group-avatar" aria-hidden="true"><img v-if="dinoFor(group.host.id)" class="dino-face" :src="dinoFor(group.host.id)" alt="">{{ dinoFor(group.host.id) ? '' : initials(group.host.name) }}</span>
       <p class="group-who m-0">
         <strong :id="`group-title-${group.id}`">{{ isHost ? 'You' : group.host.name }}</strong>{{ ' ' }}<span class="text-secondary">{{ isHost ? 'are' : 'is' }} looking for people to go with</span>{{ ' ' }}<span class="group-ago text-caption text-secondary">· {{ ago }}</span>
       </p>
-      <span v-if="group.visibility === 'private'" class="group-badge">Private</span>
       <span v-if="isHost" class="group-badge group-badge--host">Hosting</span>
       <span v-else-if="group.myStatus === 'confirmed'" class="group-badge group-badge--in">You’re in</span>
       <span v-else-if="group.myStatus === 'pending'" class="group-badge">Request sent</span>
     </header>
+    <!-- Who can see it and who can join, on every group -->
+    <p class="group-rules m-0">
+      <span class="group-rule" :class="{ 'is-friends': group.visibility === 'private' }">{{ visibilityLabel(group.visibility) }}</span>
+      <span class="group-rule">{{ joinModeLabel(group.joinMode) }}</span>
+      <span v-if="group.hostIsFriend" class="group-rule is-friend">Your friend</span>
+      <span v-if="isHost && group.pendingCount" class="group-rule is-alert">{{ group.pendingCount }} {{ group.pendingCount === 1 ? 'request' : 'requests' }}</span>
+    </p>
 
     <p v-if="group.note" class="group-note">{{ group.note }}</p>
 
-    <RouterLink v-if="event" :to="`/events/${event.id}/rsvp`" class="group-event cat-tint" :class="`cat-${category}`">
+    <RouterLink v-if="event && !compact" :to="`/events/${event.id}/rsvp`" class="group-event cat-tint" :class="`cat-${category}`">
       <span class="group-event-art" aria-hidden="true"><EventArtwork :category="category" /></span>
       <span class="group-event-copy">
         <strong>{{ event.title }}</strong>
@@ -85,8 +92,9 @@ async function join() {
         <RouterLink :to="pageLink" class="btn btn-outline-secondary btn-sm">
           {{ joined || isHost ? 'Open group' : 'View group' }}<span v-if="group.commentCount"> · {{ group.commentCount }} {{ group.commentCount === 1 ? 'message' : 'messages' }}</span>
         </RouterLink>
-        <button v-if="!joined && !isHost" type="button" class="btn btn-primary btn-sm" :disabled="busy || full" @click="join">
-          {{ busy ? 'Joining…' : full ? 'Full' : group.joinMode === 'approval' ? 'Ask to join' : 'Join group' }}
+        <RouterLink v-if="!joined && !isHost && group.joinMode === 'approval' && !group.myInvite" :to="pageLink" class="btn btn-primary btn-sm">Ask to join</RouterLink>
+        <button v-else-if="!joined && !isHost" type="button" class="btn btn-primary btn-sm" :disabled="busy || full" @click="join">
+          {{ busy ? 'Joining…' : full ? 'Full' : group.myInvite ? 'Accept invite' : group.joinMode === 'approval' ? 'Ask to join' : 'Join group' }}
         </button>
       </div>
     </div>
@@ -116,6 +124,12 @@ async function join() {
 .group-badge { flex: none; padding: 3px 10px; border-radius: 99px; background: var(--bookedz-hover); color: var(--bookedz-muted); font-size: var(--text-caption); font-weight: 700; }
 .group-badge--host { background: var(--bookedz-mango-soft); color: var(--bookedz-ink); }
 .group-badge--in { background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
+.group-rules { display: flex; flex-wrap: wrap; gap: 6px; }
+.group-rule { padding: 2px 9px; border: 1.5px solid var(--bookedz-control-border); border-radius: 99px; color: var(--bookedz-muted); font-size: .74rem; font-weight: 700; }
+.group-rule.is-friends { border-color: var(--bookedz-pink); color: var(--bookedz-ink); }
+.group-rule.is-friend { border-color: var(--bookedz-teal); background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
+.group-rule.is-alert { border-color: var(--bookedz-fill); background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); }
+.group-card.is-compact { gap: 10px; padding: 14px 16px; box-shadow: none; }
 .group-note { margin: 0; font-size: 1rem; line-height: 1.55; overflow-wrap: anywhere; }
 .group-event { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px; border-radius: 14px; color: var(--bookedz-ink); text-decoration: none; transition: transform var(--bookedz-motion-fast) var(--bookedz-ease); }
 .group-event:hover { color: var(--bookedz-ink); }

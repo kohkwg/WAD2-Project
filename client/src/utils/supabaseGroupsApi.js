@@ -51,19 +51,20 @@ export async function getGroup({ id, token } = {}) {
   return { ...withEvent, plan: member ? await getPlan(view.id) : null }
 }
 
-export async function createGroup({ eventId, note = '', capacity = 4, joinMode = 'open', visibility = 'public' }) {
+export async function createGroup({ eventId, note = '', capacity = 4, joinMode = 'open', visibility = 'public', inviteIds = [] }) {
   await requireUser()
   const id = await rpc('create_group', {
-    p_event_id: eventId, p_note: note, p_capacity: Number(capacity), p_join_mode: joinMode, p_visibility: visibility,
+    p_event_id: eventId, p_note: note, p_capacity: Number(capacity), p_join_mode: joinMode, p_visibility: visibility, p_invite_ids: inviteIds,
   })
   const [view] = await withEvents([await rpc('group_view', { p_group_id: id, p_token: null })])
   return view
 }
 
-// Join a group. Private groups need the invite token. Returns the new RSVP.
-export async function joinGroup({ id, token }) {
+// Join a group, with an optional message for the host. Friends-only groups need the link,
+// an invite or friendship with the host. Returns the new RSVP.
+export async function joinGroup({ id, token, message = '' }) {
   await requireUser()
-  const row = await rpc('join_group', { p_group_id: id, p_token: token || null })
+  const row = await rpc('join_group', { p_group_id: id, p_token: token || null, p_note: message || null })
   return { id: row.id, eventId: row.event_id, userId: row.user_id, status: row.status, createdAt: row.created_at }
 }
 
@@ -117,4 +118,42 @@ export async function removeGroupStop(groupId, slot, suggestionId) {
   await requireUser()
   await rpc('remove_group_idea', { p_idea_id: suggestionId })
   return getPlan(groupId)
+}
+
+// Invites from friends waiting for you (the invite id is the group id in live mode)
+export async function getGroupInvites() {
+  if (!(await getCurrentUser())) return []
+  const rows = await rpc('group_invites_list')
+  const groups = await withEvents(rows.map((r) => r.group))
+  return rows.map((r, i) => ({ id: r.id, from: r.from, createdAt: r.createdAt, group: groups[i] }))
+}
+
+// Accept (join straight away, if there's a spot) or decline
+export async function respondGroupInvite(inviteId, accept) {
+  await requireUser()
+  const row = await rpc('respond_group_invite', { p_group_id: inviteId, p_accept: Boolean(accept) })
+  return row?.id ? { id: row.id, eventId: row.event_id, status: row.status } : null
+}
+
+// The host changes who can see or join the group, its spots or its note
+export async function updateGroupSettings(groupId, { visibility, joinMode, capacity, note = '' }) {
+  await requireUser()
+  await rpc('update_group_settings', { p_group_id: groupId, p_visibility: visibility, p_join_mode: joinMode, p_capacity: Number(capacity), p_note: note })
+  const [view] = await withEvents([await rpc('group_view', { p_group_id: groupId, p_token: null })])
+  return view
+}
+
+// The host deletes the group; its people get a notice
+export async function deleteGroup(groupId) {
+  await requireUser()
+  await rpc('delete_group', { p_group_id: groupId })
+}
+
+export async function getGroupNotices() {
+  if (!(await getCurrentUser())) return []
+  return rpc('group_notices_list')
+}
+export async function dismissGroupNotice(noticeId) {
+  await requireUser()
+  await rpc('dismiss_group_notice', { p_notice_id: noticeId })
 }

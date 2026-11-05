@@ -8,7 +8,7 @@
 import { createSeedData, addSampleGroups, GROUP_SEED_VERSION } from './mockData.js'
 import { calculateWaitlistScore } from './waitlistScore.js'
 import { OFFER_HOURS, ACTIVE_STATUSES } from './helpers.js'
-import { isGroup, isOfficialEvent, joinOutcome, groupErrors, groupEventData, emptyPlan, fitSlots, mealLabel, SLOTS, suggestionFrom, suggestionErrors, availabilityError } from './groups.js'
+import { isGroup, isOfficialEvent, joinOutcome, groupErrors, settingsErrors, JOIN_MESSAGE_LIMIT, groupEventData, emptyPlan, fitSlots, mealLabel, SLOTS, suggestionFrom, suggestionErrors, availabilityError } from './groups.js'
 import { TASK_STATUSES, FALLBACK_BUDGET_CATEGORY, budgetCategoryOptions, validateCategoryName, validateCents, validateExpenseAmounts, summariseBudget } from './feature4.js'
 import { fetchForecastData, forecastAreas, eventForecast } from './feature4Weather.js'
 
@@ -273,6 +273,35 @@ const isGroupHost = (group) => group.organiserId === CURRENT_ORGANISER_ID || gro
 const myGroupRsvp = (db, group) => db.rsvps.find((r) => r.eventId === group.id && r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status))
 const isGroupMember = (db, group) => isGroupHost(group) || myGroupRsvp(db, group)?.status === 'confirmed'
 
+// Friends: the browser identity is Alex (u1); hosting as the Demo Club (org1) counts as Alex
+const asPerson = (id) => (id === CURRENT_ORGANISER_ID ? CURRENT_USER_ID : id)
+function friendIds(db, userId) {
+  const me = asPerson(userId)
+  return (db.friendships || []).filter((f) => f.status === 'accepted' && (f.a === me || f.b === me)).map((f) => (f.a === me ? f.b : f.a))
+}
+const areFriends = (db, x, y) => friendIds(db, x).includes(asPerson(y))
+const myInvite = (db, group) => (db.groupInvites || []).find((i) => i.groupId === group.id && i.userId === CURRENT_USER_ID && i.status === 'pending')
+// Public groups are for everyone; friends-only (private) ones for the host's friends, the
+// group's own people, anyone invited, or anyone holding the invite link
+function canSeeGroup(db, group, token) {
+  return group.group.visibility !== 'private' || isGroupMember(db, group) || Boolean(myGroupRsvp(db, group))
+    || Boolean(myInvite(db, group)) || areFriends(db, group.organiserId, CURRENT_USER_ID) || Boolean(token && token === group.group.inviteToken)
+}
+// Getting into a group RSVPs you to its event too, following the event's own rules
+// (confirmed, waitlisted or pending approval). Nothing happens if you already have an RSVP,
+// or if the event is open-join and full. Returns the event RSVP status, or null.
+function ensureEventRsvp(db, group, userId) {
+  const target = db.events.find((e) => e.id === group.group?.eventId)
+  if (!target || target.status !== 'published') return null
+  const existing = db.rsvps.find((r) => r.eventId === target.id && r.userId === userId && ACTIVE_STATUSES.includes(r.status))
+  if (existing) return existing.status
+  const status = joinOutcome(target, spotsTaken(db, target.id))
+  if (status === 'full') return null
+  db.rsvps.push({ id: newId('r'), eventId: target.id, userId, status, answers: {}, viaGroup: group.id, createdAt: new Date().toISOString(), offerExpiresAt: null })
+  return status
+}
+const hasEventRsvp = (db, eventId, userId) => db.rsvps.some((r) => r.eventId === eventId && asPerson(r.userId) === asPerson(userId) && ACTIVE_STATUSES.includes(r.status))
+
 function groupView(db, group) {
   const counted = withCounts(db, group)
   const target = db.events.find((e) => e.id === group.group.eventId)
@@ -300,6 +329,10 @@ function groupView(db, group) {
     myEventStatus: myEventRsvp?.status || null,
     commentCount: (db.groupComments || []).filter((c) => c.groupId === group.id).length,
     event: target ? { ...withCounts(db, target), category: target.tags?.[0] || '' } : null,
+    hostIsFriend: !host && areFriends(db, group.organiserId, CURRENT_USER_ID),
+    // Join requests waiting for the host, with the message each person wrote
+    requests: host ? rsvps.filter((r) => r.status === 'pending').map((r) => ({ rsvpId: r.id, userId: r.userId, name: userName(db, r.userId), message: r.message || '', createdAt: r.createdAt })) : [],
+    myInvite: (() => { const i = myInvite(db, group); return i ? { id: i.id, from: { id: i.invitedBy, name: userName(db, i.invitedBy) } } : null })(),
   }
 }
 
@@ -354,7 +387,7 @@ export async function getGroups() {
   const db = loadFreshDb()
   return db.events
     .filter((e) => isGroup(e) && e.status === 'published' && new Date(e.endTime) > new Date())
-    .filter((e) => e.group.visibility !== 'private' || isGroupMember(db, e) || myGroupRsvp(db, e))
+    .filter((e) => canSeeGroup(db, e))
     .map((e) => groupView(db, e))
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
 }
@@ -367,33 +400,180 @@ export async function getGroup({ id, token } = {}) {
     ? db.events.find((e) => isGroup(e) && e.group.inviteToken === token && e.status === 'published')
     : db.events.find((e) => isGroup(e) && e.id === id && e.status === 'published')
   if (!group) throw new Error(token ? 'This invite link isn’t valid any more. Ask the host for a new one.' : 'This group isn’t available any more.')
-  if (!token && group.group.visibility === 'private' && !isGroupMember(db, group) && !myGroupRsvp(db, group)) {
-    throw new Error('This group is private. Ask the host for the invite link.')
-  }
+  if (!canSeeGroup(db, group, token)) throw new Error('This group is for the host’s friends. Ask them for the invite link.')
   const view = groupView(db, group)
   return { ...view, plan: isGroupMember(db, group) ? planView(db, group) : null, viaInvite: Boolean(token) }
 }
 
-export async function createGroup({ eventId, note = '', capacity = 4, joinMode = 'open', visibility = 'public' }) {
+export async function createGroup({ eventId, note = '', capacity = 4, joinMode = 'open', visibility = 'public', inviteIds = [] }) {
   await fakeDelay()
   const db = loadFreshDb()
   const official = db.events.filter(isOfficialEvent)
   const errors = groupErrors({ eventId, note, capacity, visibility }, official)
   if (errors.length) throw new Error(errors[0].message)
   const target = official.find((e) => e.id === eventId)
+  if (!hasEventRsvp(db, eventId, CURRENT_USER_ID)) throw new Error('RSVP to this event first, then start a group for it.')
   const group = { ...groupEventData(target, { note, capacity, joinMode, visibility }), id: newId('g'), organiserId: CURRENT_ORGANISER_ID, status: 'published', createdAt: new Date().toISOString() }
   db.events.push(group)
+  // Quick add: invite the friends ticked in the form
+  db.groupInvites = db.groupInvites || []
+  for (const userId of new Set(inviteIds)) {
+    if (!areFriends(db, CURRENT_USER_ID, userId)) continue
+    db.groupInvites.push({ id: newId('inv'), groupId: group.id, userId, invitedBy: CURRENT_USER_ID, status: 'pending', createdAt: new Date().toISOString() })
+  }
   saveDb(db)
   return groupView(db, group)
 }
 
-// Join a group. Private groups need the invite token.
-export async function joinGroup({ id, token }) {
+// Join a group, with an optional message for the host. Friends-only groups need the link,
+// an invite or friendship with the host; an invite counts as the host's approval.
+export async function joinGroup({ id, token, message = '' }) {
   const db = loadFreshDb()
   const group = findGroup(db, id)
-  if (group.group.visibility === 'private' && token !== group.group.inviteToken) throw new Error('This group is private. Ask the host for the invite link.')
+  if (!canSeeGroup(db, group, token)) throw new Error('This group is for the host’s friends. Ask them for the invite link.')
+  const note = String(message || '').trim()
+  if (note.length > JOIN_MESSAGE_LIMIT) throw new Error(`Keep your message to ${JOIN_MESSAGE_LIMIT} characters or fewer.`)
+  const invite = myInvite(db, group)
+  if (invite) return respondGroupInvite(invite.id, true)
   const user = await getUser()
-  return createRsvp({ eventId: id, name: user.name, email: user.email, answers: {} })
+  const rsvp = await createRsvp({ eventId: id, name: user.name, email: user.email, answers: {} })
+  const fresh = loadDb()
+  const row = fresh.rsvps.find((r) => r.id === rsvp.id)
+  if (row && note) { row.message = note; rsvp.message = note }
+  if (rsvp.status === 'confirmed') rsvp.eventRsvpStatus = ensureEventRsvp(fresh, findGroup(fresh, id), CURRENT_USER_ID)
+  saveDb(fresh)
+  return rsvp
+}
+
+// Invites from friends waiting for you, newest first
+export async function getGroupInvites() {
+  await fakeDelay()
+  const db = loadFreshDb()
+  return (db.groupInvites || [])
+    .filter((i) => i.userId === CURRENT_USER_ID && i.status === 'pending')
+    .map((i) => ({ invite: i, group: db.events.find((e) => e.id === i.groupId && isGroup(e) && e.status === 'published') }))
+    .filter(({ group }) => group && new Date(group.endTime) > new Date())
+    .map(({ invite, group }) => ({ id: invite.id, from: { id: invite.invitedBy, name: userName(db, invite.invitedBy) }, createdAt: invite.createdAt, group: groupView(db, group) }))
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+}
+
+// Accept (join straight away, if there's a spot) or decline an invite
+export async function respondGroupInvite(inviteId, accept) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const invite = (db.groupInvites || []).find((i) => i.id === inviteId && i.userId === CURRENT_USER_ID)
+  if (!invite || invite.status !== 'pending') throw new Error('This invite isn’t open any more.')
+  const group = findGroup(db, invite.groupId)
+  if (!accept) { invite.status = 'declined'; saveDb(db); return null }
+  let rsvp = myGroupRsvp(db, group)
+  if (!rsvp || rsvp.status !== 'confirmed') {
+    if (spotsTaken(db, group.id) >= group.capacity) throw new Error('This group is full now. Ask the host to add a spot.')
+    if (rsvp) rsvp.status = 'confirmed'
+    else {
+      rsvp = { id: newId('r'), eventId: group.id, userId: CURRENT_USER_ID, status: 'confirmed', answers: {}, createdAt: new Date().toISOString(), offerExpiresAt: null }
+      db.rsvps.push(rsvp)
+    }
+  }
+  invite.status = 'accepted'
+  rsvp.eventRsvpStatus = ensureEventRsvp(db, group, CURRENT_USER_ID)
+  saveDb(db)
+  return rsvp
+}
+
+// The host changes who can see or join the group, its spots or its note
+export async function updateGroupSettings(groupId, { visibility, joinMode, capacity, note = '' }) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const group = findGroup(db, groupId)
+  if (!isGroupHost(group)) throw new Error('Only the host can change the group.')
+  const members = 1 + db.rsvps.filter((r) => r.eventId === groupId && ['confirmed', 'offered'].includes(r.status)).length
+  const errors = settingsErrors({ visibility, joinMode, capacity, note }, members)
+  if (errors.length) throw new Error(errors[0].message)
+  group.group.visibility = visibility
+  group.joinMode = joinMode
+  group.requiresApproval = joinMode === 'approval'
+  group.capacity = Number(capacity)
+  group.description = String(note).trim()
+  saveDb(db)
+  return groupView(db, group)
+}
+
+// The host deletes the group; its people (members, requests, invites) get a notice
+export async function deleteGroup(groupId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const group = findGroup(db, groupId)
+  if (!isGroupHost(group)) throw new Error('Only the host can delete the group.')
+  const target = db.events.find((e) => e.id === group.group.eventId)
+  const told = new Set([
+    ...db.rsvps.filter((r) => r.eventId === groupId && ACTIVE_STATUSES.includes(r.status)).map((r) => r.userId),
+    ...(db.groupInvites || []).filter((i) => i.groupId === groupId && i.status === 'pending').map((i) => i.userId),
+  ])
+  told.delete(group.organiserId)
+  db.groupNotices = db.groupNotices || []
+  for (const userId of told) db.groupNotices.push({ id: newId('notice'), userId, hostName: userName(db, group.organiserId), eventTitle: target?.title || 'an event', deletedAt: new Date().toISOString(), seen: false })
+  db.events = db.events.filter((e) => e.id !== groupId)
+  db.rsvps = db.rsvps.filter((r) => r.eventId !== groupId)
+  db.groupComments = (db.groupComments || []).filter((c) => c.groupId !== groupId)
+  db.groupInvites = (db.groupInvites || []).filter((i) => i.groupId !== groupId)
+  saveDb(db)
+}
+
+// "A group you were in was deleted" notices, until dismissed
+export async function getGroupNotices() {
+  await fakeDelay()
+  const db = loadFreshDb()
+  return (db.groupNotices || []).filter((n) => n.userId === CURRENT_USER_ID && !n.seen).sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt))
+}
+export async function dismissGroupNotice(noticeId) {
+  const db = loadDb()
+  const notice = (db.groupNotices || []).find((n) => n.id === noticeId && n.userId === CURRENT_USER_ID)
+  if (notice) { notice.seen = true; saveDb(db) }
+}
+
+// ---------- Friends (demo) ----------
+const personOf = (db, id) => { const u = db.users.find((x) => x.id === id); return { id, username: u?.username || '', displayName: u?.name || '' } }
+export async function getFriends() {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const mine = (db.friendships || []).filter((f) => f.a === CURRENT_USER_ID || f.b === CURRENT_USER_ID)
+  const other = (f) => personOf(db, f.a === CURRENT_USER_ID ? f.b : f.a)
+  return {
+    friends: mine.filter((f) => f.status === 'accepted').map(other),
+    incoming: mine.filter((f) => f.status === 'pending' && f.requester !== CURRENT_USER_ID).map(other),
+    outgoing: mine.filter((f) => f.status === 'pending' && f.requester === CURRENT_USER_ID).map(other),
+  }
+}
+export async function searchFriends(query) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const q = String(query || '').trim().replace(/^@/, '').toLowerCase()
+  const pair = (id) => (db.friendships || []).find((f) => (f.a === CURRENT_USER_ID && f.b === id) || (f.b === CURRENT_USER_ID && f.a === id))
+  return db.users
+    .filter((u) => u.id !== CURRENT_USER_ID && u.username && u.username.startsWith(q))
+    .map((u) => {
+      const f = pair(u.id)
+      const relationship = f?.status === 'accepted' ? 'friends' : f?.status === 'pending' ? (f.requester === CURRENT_USER_ID ? 'outgoing' : 'incoming') : 'none'
+      return { ...personOf(db, u.id), relationship }
+    })
+}
+export async function sendFriendRequest(userId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  db.friendships = db.friendships || []
+  const f = db.friendships.find((x) => (x.a === CURRENT_USER_ID && x.b === userId) || (x.b === CURRENT_USER_ID && x.a === userId))
+  if (f?.status === 'accepted') return
+  if (f?.status === 'pending' && f.requester !== CURRENT_USER_ID) throw new Error('This person already sent you a request. Accept it under Friend requests.')
+  if (f) { f.status = 'pending'; f.requester = CURRENT_USER_ID } else db.friendships.push({ a: CURRENT_USER_ID, b: userId, requester: CURRENT_USER_ID, status: 'pending', createdAt: new Date().toISOString() })
+  saveDb(db)
+}
+export async function respondFriendRequest(userId, accept) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const f = (db.friendships || []).find((x) => ((x.a === CURRENT_USER_ID && x.b === userId) || (x.b === CURRENT_USER_ID && x.a === userId)) && x.status === 'pending' && x.requester === userId)
+  if (!f) throw new Error('No incoming request found.')
+  f.status = accept ? 'accepted' : 'declined'
+  saveDb(db)
 }
 
 export async function getGroupComments(groupId) {
@@ -722,6 +902,8 @@ export async function approveRsvp(rsvpId) {
 
   const event = findEvent(db, rsvp.eventId)
   rsvp.status = spotsTaken(db, event.id) < event.capacity ? 'confirmed' : 'waitlisted'
+  // Approved into a group: RSVP them to the event too
+  if (isGroup(event) && rsvp.status === 'confirmed') ensureEventRsvp(db, event, rsvp.userId)
   saveDb(db)
   return rsvp
 }
