@@ -17,6 +17,7 @@ import { usernameAvailable as checkUsernameFree } from '@/lib/usernameAvailabili
 import PasswordInput from '@/components/ui/PasswordInput.vue'
 import DeleteAccount from '@/components/profile/DeleteAccount.vue'
 import DinoPicker from '@/components/profile/DinoPicker.vue'
+import { dinoById } from '@/lib/dinos'
 
 defineProps({ embedded: { type: Boolean, default: false } })
 // Wait this long (ms) after typing stops before checking the username
@@ -36,6 +37,7 @@ const email = ref('')
 const selected = ref([]) // the interests the user has ticked
 // Dino (saved in the user's account data, not in the profiles table)
 const dino = ref('')
+const chosenDino = computed(() => dinoById(dino.value))
 const dinoSaving = ref(false)
 const dinoError = ref('')
 // Username checking
@@ -559,7 +561,7 @@ onBeforeUnmount(() => {
 
       <div class="profile-summary" :class="{ 'is-viewing': !editing }">
         <div class="profile-top">
-          <span class="profile-avatar" aria-hidden="true">{{ initial }}</span>
+          <span class="profile-avatar" :class="{ 'has-dino': chosenDino }" aria-hidden="true"><img v-if="chosenDino" class="profile-avatar-dino" :src="chosenDino.src" alt="">{{ chosenDino ? '' : initial }}</span>
 
           <div class="profile-id">
             <h2 class="profile-name">{{ displayName || 'No name yet' }}</h2>
@@ -930,6 +932,10 @@ onBeforeUnmount(() => {
   color: var(--bookedz-ink);
   font: 700 1.4rem var(--bookedz-heading);
 }
+
+/* The picked dino shows whole, with no circle or background behind it */
+.profile-avatar.has-dino { width: 72px; height: 72px; background: none; }
+.profile-avatar-dino { width: 100%; height: 100%; object-fit: contain; }
 
 .profile-id {
   flex: 1;
