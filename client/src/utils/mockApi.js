@@ -600,6 +600,21 @@ export async function dismissGroupNotice(noticeId) {
   if (notice) { notice.seen = true; saveDb(db) }
 }
 
+// For an event's organiser: which of its RSVPs are going with a Go together group (an
+// indicator on the RSVP list). One row per person in a group; the host counts too.
+export async function getEventGroupMembers(eventId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const rows = []
+  for (const group of db.events.filter((e) => isGroup(e) && e.status === 'published' && e.group.eventId === eventId)) {
+    const people = [group.organiserId, ...db.rsvps.filter((r) => r.eventId === group.id && r.status === 'confirmed').map((r) => r.userId)]
+    for (const id of people) {
+      rows.push({ userId: asPerson(id), groupId: group.id, hostName: group.group.visibility === 'private' ? null : userName(db, group.organiserId), groupSize: people.length, isHost: id === group.organiserId })
+    }
+  }
+  return rows
+}
+
 // ---------- Friends (demo) ----------
 const personOf = (db, id) => { const u = db.users.find((x) => x.id === id); return { id, username: u?.username || '', displayName: u?.name || '' } }
 export async function getFriends() {

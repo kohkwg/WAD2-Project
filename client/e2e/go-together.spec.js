@@ -26,7 +26,9 @@ test('join a group, get the event RSVP prompt, plan lunch and chat', async ({ pa
   await expect(card).toContainText('You’re waiting for the organiser to approve your RSVP')
   await expect(page.getByText(/You joined the group and RSVP’d to Intro to Vue Workshop/)).toBeVisible()
   // Now going to Intro to Vue, Alex can start a group for it: it's in Your events
-  await expect(page.getByRole('region', { name: /Your events/ })).toContainText('Intro to Vue Workshop')
+  await page.getByRole('tab', { name: /Your events & groups/ }).click()
+  await expect(page.getByRole('tabpanel')).toContainText('Intro to Vue Workshop')
+  await page.getByRole('tab', { name: /All groups/ }).click()
   // Event teams are not in Community
   await expect(page.getByRole('heading', { name: 'Your event teams' })).toHaveCount(0)
 
@@ -69,7 +71,8 @@ test('only people going can start a group; start a friends-only one and open it 
   await expect(box.getByRole('link', { name: 'Start a group' })).toHaveCount(0)
   // The dropdown only lists events Alex has RSVPd to
   await page.goto('/community')
-  await expect(page.getByRole('region', { name: /Your events/ })).toContainText('Career Fair Prep Talk')
+  await page.getByRole('tab', { name: /Your events & groups/ }).click()
+  await expect(page.getByRole('tabpanel')).toContainText('Career Fair Prep Talk')
   await page.getByRole('button', { name: 'Start a group' }).first().click()
   const dialog = page.getByRole('dialog', { name: 'Start a group' })
   const options = await dialog.getByLabel('Event you’re going to').locator('option:not([disabled])').allTextContents()
@@ -154,4 +157,33 @@ test('invites, join messages, host settings and deleting a group', async ({ page
   await page.getByRole('button', { name: 'Yes, delete this group' }).click()
   await expect(page).toHaveURL(/\/community$/)
   await expect(page.locator('#group-grp6')).toHaveCount(0)
+})
+
+test('organisers see which RSVPs are coming with a group, as an indicator', async ({ page }) => {
+  // Intro to Vue (e2) approves RSVPs by hand; Ethan hosts a group for it and is waiting
+  await page.goto('/organiser/events/e2/rsvps?status=pending')
+  await expect(page.getByRole('status').filter({ hasText: /coming with 1 Go together group/ })).toContainText('waiting for your approval')
+  const ethan = page.locator('tr', { hasText: 'Ethan Ng' })
+  await expect(ethan).toContainText('Hosting a group of 1')
+  // Approving works as normal
+  await expect(ethan.getByRole('button', { name: /Approve/ })).toBeEnabled()
+  // Acoustic Night (e1): Bea hosts groups; Chen is on the waitlist and in Bea's group
+  await page.goto('/organiser/events/e1/rsvps?status=waitlist')
+  await expect(page.locator('tr, li', { hasText: 'Chen Wei' }).first()).toContainText('With Bea Lim’s group')
+})
+
+test('Friends is a full-height sidebar beside Community on wide screens', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/community')
+  await expect(page.getByRole('heading', { name: 'Friends', level: 2 })).toBeVisible()
+  const box = await page.evaluate(() => {
+    const hero = document.querySelector('.community-hero').getBoundingClientRect()
+    const aside = document.querySelector('#friends').getBoundingClientRect()
+    return { heroTop: hero.top, asideTop: aside.top, asideLeft: aside.left, heroRight: hero.right, asideHeight: aside.height, vh: innerHeight }
+  })
+  expect(Math.abs(box.asideTop - box.heroTop)).toBeLessThan(4) // starts level with the top of the page
+  expect(box.asideLeft).toBeGreaterThan(box.heroRight) // beside everything, not below
+  expect(box.asideHeight).toBeGreaterThan(box.vh - 60) // fills the screen's height
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 })

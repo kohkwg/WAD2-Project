@@ -1,4 +1,5 @@
 <script setup>
+import GroupChip from './GroupChip.vue'
 import { formatTimeLeft } from '../../utils/helpers.js'
 import { WEIGHTS } from '../../utils/waitlistScore.js'
 
@@ -29,6 +30,7 @@ function percent(value) {
       <div>
         <div class="fw-semibold">{{ rsvp.user.name }}</div>
         <div class="small text-secondary">{{ rsvp.user.email }}</div>
+        <GroupChip :group="rsvp.group" />
       </div>
       <!-- Styled by .offer-item .badge (theme tokens); text-bg-info forced black text in dark mode -->
       <span class="badge">
@@ -64,6 +66,7 @@ function percent(value) {
           <td data-label="Name">
             <div class="fw-semibold">{{ rsvp.user.name }}</div>
             <div class="small text-secondary">{{ rsvp.user.email }}</div>
+            <GroupChip :group="rsvp.group" />
           </td>
           <td data-label="Score">
             <div class="small fw-semibold">{{ rsvp.score.total.toFixed(2) }}</div>

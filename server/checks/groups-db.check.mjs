@@ -288,6 +288,29 @@ await test('host settings: visibility, who can join, spots and note, with checks
   expect(v.visibility === 'public' && v.joinMode === 'open' && v.capacity === 5 && v.note === 'New note' && v.spotsLeft === 2, 'settings saved');
 });
 
+await test('one create_group with every rule, including no groups for online events', async () => {
+  await admin();
+  const n = (await query("select count(*)::int as n from pg_proc p join pg_namespace s on s.oid = p.pronamespace where s.nspname = 'public' and p.proname = 'create_group'"))[0].n;
+  expect(n === 1, `one create_group, found ${n}`);
+  await asUser(DAN);
+  const online = (await query(`insert into public.events(title,status,starts_at,ends_at,capacity,is_online) values ('[TEST] online talk','published',now()+interval '3 days',now()+interval '3 days 1 hour',30,true) returning id`))[0].id;
+  await asUser(BOB);
+  await query('select public.register_for_event($1)', [online]);
+  await rejects('select public.create_group($1,$2,$3,$4,$5)', [online, '', 4, 'open', 'public'], /online events/);
+  await admin();
+  await query('delete from public.events where id = $1', [online]);
+});
+
+await test('organisers see who is coming with a group; others cannot', async () => {
+  await asUser(BOB);
+  await rejects('select * from public.event_group_members($1)', [official.id], /event's team/);
+  await asUser(DAN);
+  const rows = await query('select * from public.event_group_members($1)', [official.id]);
+  const inPub = rows.filter((r) => r.group_id === pub);
+  expect(inPub.length >= 2 && inPub.some((r) => r.is_host && r.user_id === HOST) && inPub.every((r) => r.host_name === 'Hana' && r.group_size === inPub.length), 'public group: host and members with the host name');
+  expect(rows.filter((r) => r.group_id === priv).every((r) => r.host_name === null), 'friends-only group hides the host name');
+});
+
 await test('deleting a group removes it and tells its people', async () => {
   await asUser(HOST);
   // Dan is invited after becoming a friend, so he gets a notice too
