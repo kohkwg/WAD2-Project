@@ -27,6 +27,8 @@ const match = computed(() => {
     ? `${Math.round(pick.compatibilityScore)}% match` : ''
 })
 const picked = computed(() => Boolean(props.recommendation) && props.recommendation.source !== 'general_discovery')
+// The tag goes beside the title only when the line below is taken by something else (the opened card or an RSVP note)
+const pickedBesideTitle = computed(() => props.selected || Boolean(statusNote.value))
 const reason = computed(() => props.recommendation?.reason === 'Upcoming event' ? '' : props.recommendation?.reason || '')
 const status = computed(() => props.event.my_rsvp_status || props.event.registration_status)
 const categoryLabel = computed(() => {
@@ -63,13 +65,14 @@ function selectFromRow(clickEvent) {
     <div class="row-details">
       <div class="row-title-line">
         <h3><RouterLink class="row-title" :to="`/events/${event.id}/rsvp`" :title="event.title">{{ event.title }}</RouterLink></h3>
-        <span v-if="picked" class="row-picked">Picked for you</span>
+        <span v-if="picked && pickedBesideTitle" class="row-picked">Picked for you</span>
       </div>
       <!-- Time and spots on one line; the venue, often long, gets its own line below -->
       <p class="row-facts" :title="factsText"><time :datetime="event.start_time">{{ time }}</time><template v-if="places"> · {{ places }}</template></p>
       <p class="row-facts row-venue" :title="venue">{{ venue }}</p>
       <p v-if="!selected && statusNote" class="row-going" :class="`row-going--${status}`">{{ statusNote }}</p>
-      <p v-else-if="!selected && match" class="row-reason">{{ match }}</p>
+      <!-- "Picked for you" sits beside the match score, which saves a line and keeps the title from wrapping -->
+      <p v-else-if="!selected && (match || picked)" class="row-reason row-reason--picked"><span v-if="picked" class="row-picked">Picked for you</span><span v-if="match">{{ match }}</span></p>
     </div>
     <div class="row-actions">
       <EventBookmark v-if="bookmarkEnabled" :saved="Boolean(event.saved)" :pending="preferencePending" :event-title="event.title" @toggle="emit('preference', {event, action: event.saved ? 'unsave' : 'save'})" />
@@ -107,6 +110,9 @@ h3 { margin: 0; font-family: var(--bookedz-body); font-size: 15px; font-weight: 
 .row-facts { color: var(--bookedz-muted); }
 .row-venue { margin-top: 1px; }
 .row-reason { color: var(--bookedz-primary-dark); }
+.row-reason--picked { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0; }
+/* A margin rather than a flex gap: the Discover list turns this line into a line-clamped text box, which ignores gap */
+.row-reason--picked .row-picked { margin-right: 10px; vertical-align: middle; }
 .row-going { color: var(--bookedz-success); font-weight: 600; }
 .row-going--pending,.row-going--waitlisted { color: var(--bookedz-muted); }
 .row-going--offered { color: var(--bookedz-primary-dark); }

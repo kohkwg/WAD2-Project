@@ -126,7 +126,8 @@ async function join() {
 .dino-face { width: 100%; height: 100%; object-fit: contain; }
 /* A dino shows whole, not cropped to the circle */
 :is(.group-avatar, .group-mini):has(.dino-face) { overflow: visible; background: none; border-color: transparent; }
-:is(.group-avatar, .group-mini) .dino-face { transform: scale(1.25); }
+/* Same size as the initials circles, so dinos and initials line up */
+:is(.group-avatar, .group-mini) .dino-face { transform: none; }
 .group-avatar,.group-mini { overflow: hidden; }
 .group-avatar { width: 40px; height: 40px; font-size: .9rem; }
 .group-mini { width: 28px; height: 28px; font-size: .7rem; border: 2px solid var(--bookedz-surface); }

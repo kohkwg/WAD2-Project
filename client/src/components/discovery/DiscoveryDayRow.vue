@@ -339,16 +339,20 @@ watch([expanded, pageSize], () => {
   -webkit-box-orient: vertical;
   overflow: hidden;
   white-space: normal;
-  text-overflow: clip;
+  text-overflow: ellipsis;
   overflow-wrap: anywhere;
   -webkit-line-clamp: 1;
   line-clamp: 1;
 }
-/* ...except title and venue, which get two */
-.day-row :deep(.row-title),
-.day-row :deep(.row-venue) {
+/* ...except the title, which gets two. The venue stays on one line so title, time, venue and match
+   always fit the fixed card height; anything longer ends with "…" (full text is in the tooltip) */
+.day-row :deep(.row-title) {
   -webkit-line-clamp: 2;
   line-clamp: 2;
+}
+/* Keep the "Picked for you" tag beside the title instead of on a line of its own */
+.day-row :deep(.discovery-event-row:not(.is-selected) .row-title-line) {
+  flex-wrap: nowrap;
 }
 /* Selected cards grow so the recommendation can be read without clipping. */
 .day-row :deep(.discovery-event-row.is-selected) {
