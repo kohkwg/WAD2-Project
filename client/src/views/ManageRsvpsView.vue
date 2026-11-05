@@ -3,6 +3,7 @@ import BackLink from '../components/ui/BackLink.vue'
 import '../assets/design-baseline.css'
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { useBackLink } from '../composables/useBackLink.js'
 import RsvpTable from '../components/rsvp/RsvpTable.vue'
 import WaitlistTable from '../components/rsvp/WaitlistTable.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
@@ -24,6 +25,7 @@ import {
 import { formatEventTime, formatShortDateTime } from '../utils/helpers.js'
 
 // Inside Manage event the page already shows the event's title and links, so only the guest list itself is drawn
+const back = useBackLink('/organiser/events')
 const props = defineProps({ embedded: { type: Boolean, default: false } })
 const route = useRoute()
 const eventId = computed(() => String(route.params.id || ''))
@@ -365,7 +367,7 @@ async function demoExpireOffers() {
 
 <template>
 <div class="design-baseline">
-  <div v-if="!embedded" class="d-flex justify-content-between flex-wrap gap-2"><BackLink to="/organiser/events" class="rsvp-back">&larr; Back</BackLink><div class="d-flex flex-wrap gap-2"><RouterLink v-if="isMyEvent && new Date(event.startTime) > new Date()" class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage?tab=edit`">Edit event</RouterLink><RouterLink class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage`">Event tools</RouterLink></div></div>
+  <div v-if="!embedded" class="d-flex justify-content-between flex-wrap gap-2"><BackLink :to="back" class="rsvp-back">&larr; Back</BackLink><div class="d-flex flex-wrap gap-2"><RouterLink v-if="isMyEvent && new Date(event.startTime) > new Date()" class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage?tab=edit`">Edit event</RouterLink><RouterLink class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage`">Event tools</RouterLink></div></div>
 
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status">

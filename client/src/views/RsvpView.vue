@@ -4,6 +4,7 @@ import BackLink from '../components/ui/BackLink.vue'
 import '../assets/design-baseline.css'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useBackLink } from '../composables/useBackLink.js'
 import { useDiscoveryMotion } from '../composables/useDiscoveryMotion'
 import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnouncementFeed from '../components/event-operations/AnnouncementFeed.vue'
@@ -31,6 +32,7 @@ const FloorPlan = defineAsyncComponent(() => import('../editor.vue'))
 import { eventsOverlap } from '../utils/helpers.js'
 import { toast } from '@/composables/useToast'
 
+const back = useBackLink('/events')
 const pageMotion = ref(null)
 useDiscoveryMotion(pageMotion)
 const route = useRoute()
@@ -239,7 +241,7 @@ async function submitRsvp() {
   </div>
   <div v-else ref="pageMotion" class="public-event-page">
   <div class="rsvp-intro">
-    <BackLink to="/events" class="rsvp-back">&larr; Back</BackLink>
+    <BackLink :to="back" class="rsvp-back">&larr; Back</BackLink>
     <!-- Tablets only: the RSVP panel sits below the details; phones get the pinned bar instead -->
     <a v-if="!loading && event && !event.isOnTeam" href="#rsvp" class="rsvp-jump d-none d-md-inline-flex d-lg-none" @click.prevent="jumpToRsvp">
       {{ jumpLabel }}<span aria-hidden="true">&nbsp;↓</span>

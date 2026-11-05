@@ -1,18 +1,21 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import DiscoveryEventRow from './DiscoveryEventRow.vue'
-// Show the first two events of each day.
-// "See more" reveals the rest.
+// Show each day's events two at a time in a swipeable row, with a dot per page.
+// "See more" opens them all as a grid.
 const props = defineProps({
   group: { type: Object, required: true },
   recommendationById: { type: Object, required: true },
   selectedEventId: { type: [String, Number], default: null },
   bookmarkEnabled: Boolean,
   preferencePending: Boolean,
+  // Cards side by side: 2, or 1 when the map is enlarged
+  columns: { type: Number, default: 2 },
 })
 const emit = defineEmits(['select', 'preference'])
 const expanded = ref(false)
-const PREVIEW_COUNT = 2
+const track = ref(null)
+const page = ref(0)
 const ariaLabel = computed(() => {
   return `${props.group.label}, ${props.group.weekday} ${props.group.year}`
 })
@@ -24,9 +27,9 @@ const countLabel = computed(() => {
   const count = props.group.events.length
   return `${count} ${count === 1 ? 'event' : 'events'}`
 })
-const visibleEvents = computed(() => {
-  return expanded.value ? props.group.events : props.group.events.slice(0, PREVIEW_COUNT)
-})
+const pageSize = computed(() => props.columns)
+const pageCount = computed(() => Math.ceil(props.group.events.length / pageSize.value))
+const paged = computed(() => !expanded.value && pageCount.value > 1)
 // Arrow when closed, cross when open.
 const moreIconPath = computed(() => {
   return expanded.value ? 'M6 6l12 12M18 6 6 18' : 'm6 9 6 6 6-6'
@@ -40,22 +43,61 @@ function onSelect(...args) {
 function onPreference(payload) {
   emit('preference', payload)
 }
-// Open the day when the selected event is one of the hidden ones.
+function cards() {
+  return track.value ? [...track.value.querySelectorAll('[data-event-id]')] : []
+}
+// Which page is showing, from how far the row has scrolled.
+function onScroll() {
+  const list = cards()
+  const el = track.value
+  if (!el || list.length <= pageSize.value) {
+    return
+  }
+  if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 2) {
+    page.value = pageCount.value - 1
+    return
+  }
+  const stride = list[pageSize.value].offsetLeft - list[0].offsetLeft
+  page.value = Math.min(pageCount.value - 1, Math.round(el.scrollLeft / stride))
+}
+function goToPage(index) {
+  const card = cards()[index * pageSize.value]
+  if (!card || !track.value) {
+    return
+  }
+  page.value = index
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  track.value.scrollTo({
+    left: card.offsetLeft - cards()[0].offsetLeft,
+    behavior: reduceMotion ? 'auto' : 'smooth',
+  })
+}
+
+// Bring the selected event's card into view.
 watch(
   () => props.selectedEventId,
-  (id) => {
+  async (id) => {
     const index = props.group.events.findIndex((event) => event.id === id)
-    if (index >= PREVIEW_COUNT) {
-      expanded.value = true
+    if (index < 0) {
+      return
+    }
+    await nextTick()
+    if (paged.value) {
+      goToPage(Math.floor(index / pageSize.value))
     }
   },
 )
+watch([expanded, pageSize], () => {
+  page.value = 0
+  if (track.value) track.value.scrollLeft = 0
+})
 </script>
 
 
 <template>
   <section
     class="day-row"
+    :style="{ '--cols': columns, '--gap': columns === 1 ? '20px' : '16px' }"
     :class="{ 'is-expanded': expanded }"
     :aria-label="ariaLabel"
   >
@@ -68,7 +110,7 @@ watch(
       <span class="day-line" aria-hidden="true"></span>
       <span class="day-count">{{ countLabel }}</span>
       <button
-        v-if="expanded || group.events.length > PREVIEW_COUNT"
+        v-if="expanded || group.events.length > pageSize"
         type="button"
         class="day-more"
         :aria-expanded="expanded"
@@ -82,10 +124,15 @@ watch(
     </header>
 
 
-    <div class="day-grid">
+    <div
+      ref="track"
+      :class="expanded ? 'day-grid' : 'day-track'"
+      @scroll.passive="onScroll"
+    >
       <DiscoveryEventRow
-        v-for="event in visibleEvents"
+        v-for="event in group.events"
         :key="event.id"
+        :class="{ 'day-card': !expanded }"
         :event="event"
         :recommendation="recommendationById.get(event.id)"
         :selected="selectedEventId === event.id"
@@ -94,6 +141,19 @@ watch(
         @select="onSelect"
         @preference="onPreference"
       />
+    </div>
+
+    <div v-if="paged" class="day-dots" role="group" :aria-label="`${group.label} pages`">
+      <button
+        v-for="n in pageCount"
+        :key="n"
+        type="button"
+        class="day-dot-btn"
+        :class="{ 'is-active': page === n - 1 }"
+        :aria-label="`Page ${n} of ${pageCount}`"
+        :aria-current="page === n - 1 ? 'true' : undefined"
+        @click="goToPage(n - 1)"
+      ></button>
     </div>
   </section>
 </template>
@@ -176,13 +236,61 @@ watch(
   stroke-linejoin: round;
 }
 /* Bleed so a hovered card's shadow isn't clipped */
+.day-track,
 .day-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  gap: 12px;
   padding: 10px 14px 16px 12px;
   margin: -10px -14px -16px -12px;
+}
+.day-track {
+  position: relative;
+  display: flex;
+  /* Wider than the padding around the row, so a neighbouring card never peeks in at the edge */
+  gap: var(--gap);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 12px;
+}
+.day-track {
+  scrollbar-width: none;
+}
+.day-track::-webkit-scrollbar {
+  display: none;
+}
+.day-card {
+  flex: 0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  scroll-snap-align: start;
+}
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: var(--gap);
+}
+/* One dot per page of cards */
+.day-dots {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 14px;
+}
+.day-dot-btn {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.day-dot-btn::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 2px solid var(--bookedz-ink);
+  border-radius: 50%;
+  background: transparent;
+  transition: background 0.15s;
+}
+.day-dot-btn.is-active::before {
+  background: var(--bookedz-fill);
 }
 /* "See more" opens every event of the day as one raised card */
 .is-expanded {

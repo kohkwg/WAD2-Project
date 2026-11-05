@@ -84,6 +84,14 @@ const loggedIn = ref(false)
 const selectedEventId = ref(null)
 const visibleCount = ref(EVENTS_PER_PAGE)
 const weekOffset = ref(0)
+// Desktop: enlarge the map and calendar, and show one event card per row instead of two
+const MAP_LARGE_KEY = 'bookedz-discover-map-large'
+const mapLarge = ref(false)
+try { mapLarge.value = localStorage.getItem(MAP_LARGE_KEY) === '1' } catch { /* the toggle just starts off */ }
+function toggleMapSize() {
+  mapLarge.value = !mapLarge.value
+  try { localStorage.setItem(MAP_LARGE_KEY, mapLarge.value ? '1' : '0') } catch { /* not remembered */ }
+}
 const weeksShown = ref(1)
 const clock = ref(Date.now())
 
@@ -840,6 +848,7 @@ onBeforeUnmount(() => {
     <div
       id="event-directory"
       class="discovery-workspace"
+      :class="{ 'is-map-large': mapLarge }"
       :data-pane="smallScreen ? viewMode : undefined"
     >
       <section
@@ -964,6 +973,7 @@ onBeforeUnmount(() => {
             :selected-event-id="selectedEventId"
             :bookmark-enabled="loggedIn"
             :preference-pending="actionPending"
+            :columns="mapLarge ? 1 : 2"
             @select="selectMapEvent"
             @preference="changeListingPreference"
           />
@@ -1054,8 +1064,10 @@ onBeforeUnmount(() => {
           :prominent-ids="prominentEventIds"
           :loading="loading"
           :error="error"
+          :large="mapLarge"
           @select="selectedEventId = $event"
           @retry="refreshDiscovery"
+          @toggle-size="toggleMapSize"
         />
 
         <DiscoveryEventRow
@@ -1308,6 +1320,12 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 
+/* Enlarged map: the list narrows to exactly one event card, the same size as before, and the
+   map and calendar take the rest. (The 2:1 list is two cards and a gap; 1px less because of the list padding and card gap.) */
+.discovery-workspace.is-map-large {
+  grid-template-columns: calc((100% - 16px) / 3 - 1px) minmax(0, 1fr);
+}
+
 .discovery-list,
 .discovery-map-column {
   min-width: 0;
@@ -1445,9 +1463,13 @@ onBeforeUnmount(() => {
     flex-direction: column;
     gap: 16px;
     min-height: 0;
+    /* On a short screen the calendar scrolls into view instead of being cut off */
+    overflow-y: auto;
+    padding: 0 10px 10px 0;
+    margin-right: -10px;
   }
 
-  .discovery-map-column > :first-child {
+  .discovery-map-column > * {
     flex: none;
   }
 

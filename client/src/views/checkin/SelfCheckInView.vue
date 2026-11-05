@@ -7,6 +7,7 @@ import BackLink from '../../components/ui/BackLink.vue'
 //      opens here and checks in straight away.
 import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useBackLink } from '../../composables/useBackLink.js'
 import QrScanner from '@/components/checkin/QrScanner.vue'
 import {
   formatTime,
@@ -17,6 +18,7 @@ import {
   wasAlreadyCheckedIn,
 } from '@/utils/checkin'
 
+const back = useBackLink('/my-rsvps')
 const route = useRoute()
 const router = useRouter()
 const eventId = route.params.eventId
@@ -109,7 +111,7 @@ onMounted(async () => {
 
 <template>
   <div class="container py-4 self-checkin-page">
-    <BackLink to="/my-rsvps" class="small d-block mb-3">&larr; Back</BackLink>
+    <BackLink :to="back" class="small d-block mb-3">&larr; Back</BackLink>
     <header class="checkin-heading"><span class="ticket-kicker">At the venue</span><h1 class="h3 mb-1">Check in</h1>
     <p class="text-body-secondary small mb-4">{{ event?.title ?? '' }}</p></header>
 

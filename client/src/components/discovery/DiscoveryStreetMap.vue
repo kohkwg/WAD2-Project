@@ -14,8 +14,9 @@ const props = defineProps({
   focusedEventId: { type: String, default: null },
   searchText: { type: String, default: '' },
   loading: Boolean, error: String,
+  large: Boolean,
 })
-const emit = defineEmits(['select', 'retry'])
+const emit = defineEmits(['select', 'retry', 'toggle-size'])
 const container = ref(null)
 const selectedId = ref(null)
 const tileError = ref(false)
@@ -250,6 +251,9 @@ onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abo
     <!-- One chip: how many events are on the map, or the way back to all of them once zoomed in -->
     <button v-if="zoomed" type="button" class="street-chip street-chip--action" @click="zoomOutAll">{{ points.length ? `← Show all ${points.length} ${points.length === 1 ? 'event' : 'events'}` : '← Zoom out' }}</button>
     <span v-else class="street-chip">{{ points.length }} {{ points.length === 1 ? 'event' : 'events' }} on the map</span>
+    <button type="button" class="street-expand" :aria-label="large ? 'Shrink map' : 'Enlarge map'" :aria-pressed="large" @click="emit('toggle-size')">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="large ? 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5' : 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5'" /></svg>
+    </button>
     <div class="street-zoom" role="group" aria-label="Map zoom">
       <button type="button" class="street-zoom-plus" aria-label="Zoom in" :disabled="zoomLevel >= 19" @click="zoomIn">+</button>
       <button type="button" class="street-zoom-minus" aria-label="Zoom out" :disabled="zoomLevel <= 11" @click="zoomOut">−</button>
@@ -303,8 +307,11 @@ onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abo
 @media (hover: hover) { :deep(.street-marker:hover .street-pin) { transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { :deep(.street-marker--selected .street-pin) { animation: none; } }
 :deep(.leaflet-control-attribution) { background: var(--bookedz-surface); color: var(--bookedz-muted); font-size: 10px; }:deep(.leaflet-control-attribution a) { color: var(--bookedz-primary-dark); }
+.street-expand { position: absolute; z-index: 450; top: 20px; right: 20px; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--bookedz-border); border-radius: 12px; background: var(--bookedz-surface); color: var(--bookedz-ink); box-shadow: var(--bookedz-card-shadow); }
+.street-expand:hover { background: var(--bookedz-hover); }
+.street-expand svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 /* Phones (Map pane): fit between the toolbar and the bottom tab bar */
-@media(max-width:991px) { .street-map-canvas { max-height: 480px; } }
+@media(max-width:991px) { .street-map-canvas { max-height: 480px; } .street-expand { display: none; } }
 @media(max-width:767px) { .street-map-canvas { aspect-ratio: 1.45 / 1; } }
-@media(pointer:coarse) { .street-zoom button { width: 44px; height: 44px; } }
+@media(pointer:coarse) { .street-zoom button, .street-expand { width: 44px; height: 44px; } }
 </style>

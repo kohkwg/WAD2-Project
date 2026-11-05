@@ -38,6 +38,16 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — event navigation merge repair
+
+Resolved seven conflicts after the event-view/navigation commit. The six affected
+pages use dev's shared BackLink with the local useBackLink destination; the ticket
+page also retains dev's separate Plans link. DiscoveryDayRow retains the local
+paging layout and dev's styles allowing selected-card text to expand. Nine related
+Vue scripts, templates and styles compile, and working-file whitespace and conflict
+marker checks pass. No browser navigation journey, full build/suite, hosted changes,
+commit or push performed in this repair.
+
 ### 5 November — Discover map shows location only
 
 Choosing an event no longer opens a pop-up on the map. The pin is highlighted (orange halo,
