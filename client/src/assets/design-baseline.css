@@ -13,6 +13,12 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 }
 
 /* Hero */
+/* Create / edit event: the step tracker sits inside the banner, on the banner's own colours */
+.design-baseline.design-baseline .create-heading > * { position: relative; z-index: 1; }
+.design-baseline.design-baseline .create-heading .creation-steps { margin: 1.1rem 0 0 !important; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.design-baseline.design-baseline .create-heading .step-item.is-current { background: color-mix(in srgb, var(--bookedz-surface) 75%, transparent); }
+.design-baseline.design-baseline .create-heading .progress-track { background: color-mix(in srgb, var(--bookedz-surface) 70%, transparent); }
+.design-baseline.design-baseline .create-heading .step-number { background: var(--bookedz-surface); }
 .design-baseline.design-baseline :is(.create-heading, .workspace-header, .rsvp-heading, .organiser-heading) {
   position: relative; margin: .5rem 0 1.75rem; padding: clamp(1.4rem, 4vw, 2.4rem); overflow: hidden;
   border: 2px solid var(--bookedz-ink); border-left-width: 2px; border-radius: var(--db-r);
@@ -505,8 +511,40 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
   /* The long form runs alongside the banner and the details; short state cards match the banner's height */
   .public-event-page.public-event-page .participant-rsvp .rsvp-action-panel > .rsvp-form { grid-row: 1 / span 2; }
   .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-form) .event-hero { align-self: start; }
+  /* With the long form showing, the right column is one plain stack, so Go together and the
+     announcements follow the form directly instead of waiting for the details card's rows */
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-form) > .rsvp-action-panel { display: flex; flex-direction: column; gap: 22px; grid-column: 2; grid-row: 1 / span 3; align-self: start; min-width: 0; width: 100%; max-width: none; padding: 0; margin: 0; }
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-form) .rsvp-action-panel > * { grid-column: auto; grid-row: auto; }
 }
 @media (max-width: 767.98px) {
   .public-event-page.public-event-page .event-hero { box-shadow: 4px 4px 0 var(--bookedz-ink); }
   .public-event-page.public-event-page .event-hero::after { right: 1rem; top: 1.6rem; translate: 0; font-size: 4rem; }
 }
+
+/* ---- Smart headers (Organise, Plans, Go together) ---------------------------------------------
+   One slim ticket header per page: a small star sticker, the title and the main button on one row,
+   then the page's own controls inside the same card (search and section tabs, the tabs and refresh,
+   or the explainer) and pending requests when there are any. Borders, shadows and dark mode come
+   from each page's rules above. */
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head { display: grid; gap: 12px; align-items: stretch; justify-content: stretch; margin-bottom: 20px; padding: 16px 20px; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head::after { content: none; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .smart-head-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .smart-head-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head h1 { margin: 0; font-size: clamp(1.6rem, 3.2vw, 2.15rem); line-height: 1.1; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .smart-head-star { display: inline-block; font-size: 1.6rem; line-height: 1; color: var(--bookedz-fill); opacity: .8; transform: none; rotate: 12deg; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head :is(.events-controls, .rsvps-toolbar, .rsvp-tabs) { margin: 0; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .rsvps-toolbar { gap: 10px; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .rsvps-toolbar p { color: var(--bookedz-ink); opacity: .75; }
+/* Pending requests sit in the header as a slim strip */
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .pending-summary { margin: 0; padding: 6px 6px 6px 14px; border-radius: 99px; }
+@media (max-width: 575.98px) {
+  :is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head { padding: 14px 16px; }
+  :is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .pending-summary { padding: 12px 14px; border-radius: 18px; }
+}
+/* Go together's explainer: open on a first visit, folded into one line after */
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .smart-head-intro summary { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-block: -8px; cursor: pointer; color: var(--bookedz-ink); font-weight: 700; list-style: none; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .smart-head-intro summary::-webkit-details-marker { display: none; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .smart-head-intro summary::before { content: ''; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; rotate: -45deg; transition: rotate var(--bookedz-motion-fast) var(--bookedz-ease); }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .smart-head-intro[open] summary::before { rotate: 45deg; }
+:is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .smart-head-intro .community-lede { max-width: 62ch; margin: 6px 0 0; }
+@media (prefers-reduced-motion: reduce) { :is(.organiser-events-page.organiser-events-page, .my-rsvps-page.my-rsvps-page, .community-page.community-page) .smart-head.smart-head .smart-head-intro summary::before { transition: none; } }

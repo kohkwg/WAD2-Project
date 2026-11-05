@@ -14,6 +14,7 @@ export function blankEventForm() {
     startTime: '', // from <input type="datetime-local">, e.g. "2026-10-20T19:00"
     endTime: '',
     capacity: 30,
+    noLimit: false, // true = unlimited spots (saved as no capacity); capacity keeps its number meanwhile
     hideCapacity: false, // true = participants see only whether it's full
     isOnline: false, // online events have no venue; the link is kept privately
     onlineLink: { url: '', revealAt: '' }, // revealAt is a datetime-local value; '' url = no link yet
@@ -22,7 +23,7 @@ export function blankEventForm() {
     isOutdoor: false,
     backupVenue: null, // used by Denzel's rain check
     requiresApproval: false,
-    questions: [], // [{ id, text, type: 'text' | 'yesno', required }]
+    questions: [], // [{ id, text, type: see utils/questionTypes.js, required, options? }]
   }
 }
 
@@ -43,7 +44,9 @@ export function errorsForStep(f, stepNumber, { now = new Date(), editing = false
       errors.push('The start time cannot be in the past.')
     }
     const keepsNoLimit = editing && originalCapacity === '' && f.capacity === ''
-    if (!keepsNoLimit && (!Number.isInteger(f.capacity) || f.capacity < 1)) {
+    if (f.noLimit) {
+      // Unlimited: nothing to check, and nobody can be pushed out by it
+    } else if (!keepsNoLimit && (!Number.isInteger(f.capacity) || f.capacity < 1)) {
       errors.push('Capacity must be a whole number, at least 1.')
     } else if (editing && !keepsNoLimit && f.capacity < minCapacity) {
       errors.push(`Capacity can't be lower than ${minCapacity}: that many people are already confirmed or offered a place.`)
@@ -71,6 +74,9 @@ export function errorsForStep(f, stepNumber, { now = new Date(), editing = false
 
   if (stepNumber === 3 && f.questions.some((question) => question.text.trim() === '')) {
     errors.push('Every RSVP question needs some wording.')
+  }
+  if (stepNumber === 3 && f.questions.some((question) => (question.type === 'choice' || question.type === 'multichoice') && (question.options?.length || 0) < 2)) {
+    errors.push('Pick-one and pick-several questions need at least 2 options.')
   }
 
   return errors

@@ -1,4 +1,6 @@
 <script setup>
+import WheelDateTime from '../components/ui/WheelDateTime.vue'
+import { QUESTION_TYPES, needsOptions, parseOptions, optionsError, questionTypeLabel } from '../utils/questionTypes.js'
 import BackLink from '../components/ui/BackLink.vue'
 import { ref, computed, nextTick, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -9,7 +11,7 @@ import VenueMap from '../components/VenueMap.vue'
 import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue'
 import { uploadCover } from '../lib/uploadCover.js'
-import { createEvent, getEvent, getEventOnlineAccess, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
+import { createEvent, setEventPublished, getEvent, getEventOnlineAccess, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
 import { defaultRevealTime } from '../utils/onlineEvents.js'
 import { defaultVenueRevealTime, venueRevealToSave } from '../utils/venueReveal.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
@@ -33,6 +35,8 @@ const step = ref(1)
 const direction = ref(1)
 const showErrors = ref(false) // only show errors after they press Next
 const publishing = ref(false)
+const publishWhen = ref('now') // 'now' goes live straight away; 'later' saves it as a draft to publish from Manage event
+let visibilitySettled = false
 const errorMessage = ref('')
 let createAttempt = null
 let createdEventId = null
@@ -146,7 +150,8 @@ function formFromEvent(event, access = null) {
     tags: [...(event.tags || [])],
     startTime: Number.isFinite(Date.parse(event.startTime)) ? toDateTimeInputValue(new Date(event.startTime)) : '',
     endTime: Number.isFinite(Date.parse(event.endTime)) ? toDateTimeInputValue(new Date(event.endTime)) : '',
-    capacity: event.capacity ?? '', // '' = no capacity limit (older events only)
+    capacity: event.capacity ?? 30, // shown again if "No limit" is switched off
+    noLimit: event.capacity == null,
     hideCapacity: Boolean(event.hideCapacity),
     isOnline: Boolean(event.isOnline),
     onlineLink: { url: access?.url || '', revealAt: Number.isFinite(reveal) ? toDateTimeInputValue(new Date(reveal)) : '' },
@@ -156,7 +161,7 @@ function formFromEvent(event, access = null) {
     isOutdoor: Boolean(place.isOutdoor),
     backupVenue: venueCopy(place.backupVenue),
     requiresApproval: Boolean(event.requiresApproval),
-    questions: (event.questions || []).map(({ id, text, type, required }) => ({ id, text, type, required: Boolean(required) })),
+    questions: (event.questions || []).map(({ id, text, type, required, options }) => ({ id, text, type, required: Boolean(required), ...(options?.length ? { options: [...options] } : {}) })),
   }
 }
 
@@ -201,7 +206,7 @@ const isExistingQuestion = (question) => Boolean(original.value?.questions.some(
 const canRemoveQuestion = (question) => !(isEditing.value && hasRsvps.value && isExistingQuestion(question))
 
 // The question currently being typed in step 3
-const newQuestion = ref({ text: '', type: 'text', required: false })
+const newQuestion = ref({ text: '', type: 'text', required: false, optionsText: '' })
 // Shown on Review when a typed-but-not-added question was added for the organiser
 const questionNotice = ref('')
 
@@ -319,7 +324,7 @@ async function generatePlan() {
       title: f.title.trim(),
       description: f.description.trim(),
       tags: f.tags,
-      capacity: Number.isInteger(f.capacity) ? f.capacity : null,
+      capacity: !f.noLimit && Number.isInteger(f.capacity) ? f.capacity : null,
       startsAt: iso(f.startTime),
       endsAt: iso(f.endTime),
     }, planController.signal)
@@ -410,7 +415,7 @@ async function focusStep() {
     else if (!f.startTime) targetId = 'start'
     else if (!f.endTime || new Date(f.endTime) <= new Date(f.startTime)) targetId = 'end'
     else if (new Date(f.startTime) < new Date()) targetId = 'start'
-    else if (!Number.isInteger(f.capacity) || f.capacity < 1) targetId = 'capacity'
+    else if (!f.noLimit && (!Number.isInteger(f.capacity) || f.capacity < 1)) targetId = 'capacity'
     else if (f.tags.length === 0) targetId = 'tag-music'
   } else if (step.value === 2 && form.value.isOnline) {
     const link = form.value.onlineLink
@@ -427,6 +432,11 @@ async function focusStep() {
 function nextStep() {
   // A question typed but never added would otherwise be left out of the event without warning
   if (step.value === 3 && newQuestion.value.text.trim() !== '') {
+    if (!canAddQuestion.value) {
+      questionNotice.value = `${newQuestionError.value} Add the options, or clear the question, to continue.`
+      focusById('q-options')
+      return
+    }
     addQuestion()
     questionNotice.value = 'The question you typed was added to your RSVP questions.'
   }
@@ -495,15 +505,20 @@ function changeBackupVenue() {
 
 // ---------- Step 3: custom RSVP questions ----------
 
+const newOptions = computed(() => parseOptions(newQuestion.value.optionsText))
+const newQuestionError = computed(() => (needsOptions(newQuestion.value.type) ? optionsError(newOptions.value) : ''))
+const canAddQuestion = computed(() => newQuestion.value.text.trim() !== '' && !newQuestionError.value)
 function addQuestion() {
-  if (newQuestion.value.text.trim() === '') return
+  if (!canAddQuestion.value) return
   form.value.questions.push({
     id: crypto.randomUUID(), // a real id up front, so a retried live save can't add it twice
     text: newQuestion.value.text.trim(),
     type: newQuestion.value.type,
     required: newQuestion.value.required,
+    ...(needsOptions(newQuestion.value.type) ? { options: newOptions.value } : {}),
   })
-  newQuestion.value = { text: '', type: 'text', required: false } // clear the inputs
+  newQuestion.value = { text: '', type: 'text', required: false, optionsText: '' } // clear the inputs
+  focusById('q-text')
 }
 
 function removeQuestion(index) {
@@ -522,7 +537,7 @@ function eventDataFromForm() {
     description: f.description.trim(),
     startTime: new Date(f.startTime).toISOString(), // store one standard date format
     endTime: new Date(f.endTime).toISOString(),
-    capacity: f.capacity === '' ? null : f.capacity,
+    capacity: f.noLimit || f.capacity === '' ? null : f.capacity,
     hideCapacity: Boolean(f.hideCapacity),
     isOnline: Boolean(f.isOnline),
     // Online events keep no venue or rain plan; a typed venue stays in the form in case they switch
@@ -617,6 +632,20 @@ function closeAnnounceDialog() {
   if (changesSaved.value) finishEditing()
 }
 
+// New events are created live; "publish later" hides the new event again before anyone is sent there
+async function settleVisibility(eventId) {
+  if (publishWhen.value !== 'later' || visibilitySettled) return true
+  try {
+    await setEventPublished(eventId, false)
+    visibilitySettled = true
+    return true
+  } catch (error) {
+    errorMessage.value = 'The event was created, but could not be saved as a draft: ' + error.message + ' Press the button again to retry.'
+    return false
+  }
+}
+const afterCreateUrl = (eventId) => '/organiser/events?created=' + eventId + (publishWhen.value === 'later' ? '&draft=1' : '')
+
 async function publish() {
   if (publishing.value || uploadingCover.value) return
   const invalidStep = [1, 2].find((stepNumber) => errorsForStep(form.value, stepNumber, ruleContext()).length > 0)
@@ -631,11 +660,12 @@ async function publish() {
     publishing.value = true
     errorMessage.value = ''
     try {
+      if (!(await settleVisibility(createdEventId))) return
       if (!(await finishPlan(createdEventId))) return
     } finally {
       publishing.value = false
     }
-    await router.push('/organiser/events?created=' + createdEventId)
+    await router.push(afterCreateUrl(createdEventId))
     return
   }
   publishing.value = true
@@ -654,8 +684,9 @@ async function publish() {
     createdDates = { startsAt: eventData.startTime, endsAt: eventData.endTime }
     eventCreated.value = true
     createAttempt = null
+    if (!(await settleVisibility(created.id))) return
     if (!(await finishPlan(created.id))) return
-    const navigationFailure = await router.push('/organiser/events?created=' + created.id)
+    const navigationFailure = await router.push(afterCreateUrl(created.id))
     if (navigationFailure) errorMessage.value = 'Event was created, but could not open its organiser page. Press Publish to continue.'
   } catch (error) {
     errorMessage.value = createdEventId
@@ -671,7 +702,8 @@ async function publish() {
   <div class="design-baseline create-event-page col-12 mx-auto" :class="{ 'is-embedded': props.embedded }">
     <header class="create-heading">
       <component :is="props.embedded ? 'h2' : 'h1'">{{ isEditing ? 'Edit event' : 'Create an event' }}</component>
-      <p>{{ isEditing ? 'Update the details below. Saving changes the live event straight away.' : 'Start with the essentials. You can review everything before it goes live.' }}</p>
+      <!-- The step tracker lives in the banner; it waits until the event has loaded when editing -->
+      <StepIndicator v-if="!(isEditing && (editLoading || editBlocked))" :steps="steps" :current="step" @select="jumpToStep" />
     </header>
 
     <p v-dismissible v-if="editSuccess" class="alert alert-success" role="status">{{ editSuccess }}</p>
@@ -686,8 +718,6 @@ async function publish() {
     </div>
 
     <template v-else>
-    <StepIndicator :steps="steps" :current="step" @select="jumpToStep" />
-
     <div class="creation-layout">
     <div class="card shadow-sm creation-form-card">
       <div class="card-body p-4">
@@ -735,12 +765,14 @@ async function publish() {
             </div>
           </div>
 
+          <!-- Description takes about 70% of the row, the cover image the rest; stacked on small screens -->
+          <div class="description-row" :class="{ 'has-cover': USING_SUPABASE }">
           <div class="mb-3">
             <label for="description" class="form-label">Description</label>
             <textarea
               id="description"
               class="form-control"
-              rows="4"
+              rows="5"
               v-model="form.description"
               placeholder="What will happen? What should people bring?"
             ></textarea>
@@ -749,7 +781,7 @@ async function publish() {
           <div v-if="USING_SUPABASE" class="mb-3">
             <label for="event-cover" class="form-label">Cover image (optional)</label>
             <input id="event-cover" type="file" class="form-control" accept="image/jpeg,image/png,image/webp" :disabled="uploadingCover || publishing" aria-describedby="cover-help" @change="chooseCover" />
-            <p id="cover-help" class="form-text">Public event image. JPEG, PNG or WebP, up to 10 MiB.</p>
+            <p id="cover-help" class="form-text">JPEG, PNG or WebP, up to 10 MiB.</p>
             <p v-if="uploadingCover" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Uploading image…</p>
             <p v-dismissible v-if="coverError" class="text-danger" role="alert">{{ coverError }}</p>
             <figure v-if="form.coverImageUrl" class="cover-preview">
@@ -758,13 +790,12 @@ async function publish() {
               <button type="button" class="btn btn-outline-secondary btn-sm" @click="form.coverImageUrl = ''">Remove cover</button>
             </figure>
           </div>
+          </div>
           <div class="row">
             <div class="col-md-4 mb-3">
               <label for="start" class="form-label">Starts</label>
-              <input
+              <WheelDateTime
                 id="start"
-                type="datetime-local"
-                class="form-control"
                 :aria-describedby="showErrors && stepErrors.length ? 'validation-error-list' : undefined"
                 :aria-invalid="showErrors && stepErrors.some((error) => error.includes('time')) || undefined"
                 v-model="form.startTime"
@@ -773,10 +804,8 @@ async function publish() {
             </div>
             <div class="col-md-4 mb-3">
               <label for="end" class="form-label">Ends</label>
-              <input
+              <WheelDateTime
                 id="end"
-                type="datetime-local"
-                class="form-control"
                 v-model="form.endTime"
                 :min="form.startTime || nowForInput"
                 :aria-invalid="endBeforeStart || undefined"
@@ -785,24 +814,28 @@ async function publish() {
               <p v-dismissible v-if="endBeforeStart" id="end-error" class="small text-danger mt-1 mb-0" role="alert">The event has to end after it starts.</p>
             </div>
             <div class="col-md-4 mb-3">
-              <label for="capacity" class="form-label">Capacity</label>
+              <div class="capacity-head">
+                <label for="capacity" class="form-label mb-0">Capacity</label>
+                <div class="form-check form-switch m-0">
+                  <input id="show-capacity" v-model="showCapacity" class="form-check-input" type="checkbox" role="switch" />
+                  <label class="form-check-label" for="show-capacity">Show to participants</label>
+                </div>
+              </div>
               <input
                 id="capacity"
                 type="number"
                 min="1"
                 class="form-control"
+                :disabled="form.noLimit"
+                :placeholder="form.noLimit ? 'No limit' : undefined"
                 :aria-describedby="showErrors && stepErrors.length ? 'validation-error-list' : undefined"
-                v-model.number="form.capacity"
+                :value="form.noLimit ? '' : form.capacity"
+                @input="form.capacity = $event.target.value === '' ? '' : Number($event.target.value)"
               />
-              <div class="form-text">When it's full, new RSVPs join the waitlist.</div>
-            </div>
-          </div>
-
-          <div class="form-check form-switch mb-3">
-            <input id="show-capacity" v-model="showCapacity" class="form-check-input" type="checkbox" role="switch" aria-describedby="show-capacity-help" />
-            <label class="form-check-label" for="show-capacity">Show the capacity to participants</label>
-            <div id="show-capacity-help" class="form-text">
-              Off: participants still see when the event is full, but not how many spots there are or how many are left. You always see the numbers.
+              <div class="form-check mt-2">
+                <input id="no-limit" v-model="form.noLimit" class="form-check-input" type="checkbox" />
+                <label class="form-check-label" for="no-limit">No limit (unlimited spots)</label>
+              </div>
             </div>
           </div>
 
@@ -861,6 +894,7 @@ async function publish() {
 
           <template v-if="form.isOnline">
             <h3 class="h5 step-subheading">Online link</h3>
+            <div class="online-grid">
             <div class="mb-3">
               <label for="online-link" class="form-label">Meeting or stream link (optional for now)</label>
               <input
@@ -872,27 +906,19 @@ async function publish() {
                 placeholder="https://zoom.us/j/123456"
                 autocomplete="off"
                 :maxlength="2048"
-                aria-describedby="online-link-help"
                 :aria-invalid="showErrors && stepErrors.some((error) => error.includes('https://')) || undefined"
               />
-              <div id="online-link-help" class="form-text">
-                Only you and confirmed attendees can open it. You can add or change it later in Manage event → Edit event.
-              </div>
             </div>
             <div class="mb-3">
               <label for="online-reveal" class="form-label">Show the link from</label>
-              <input
+              <WheelDateTime
                 id="online-reveal"
                 v-model="form.onlineLink.revealAt"
-                type="datetime-local"
-                class="form-control online-reveal"
-                :max="form.endTime || undefined"
-                aria-describedby="online-reveal-help"
+                class="online-reveal"
+                clearable
                 :aria-invalid="showErrors && stepErrors.some((error) => error.includes('appear')) || undefined"
               />
-              <div id="online-reveal-help" class="form-text">
-                Confirmed attendees see the link on the event page from this date and time. Before then they see when it will appear.
-              </div>
+            </div>
             </div>
           </template>
 
@@ -920,11 +946,9 @@ async function publish() {
               label="Search for the venue"
               input-id="venue-search"
               @select="setVenue"
-            />
-            <p class="form-text venue-later-note">
-              Not decided yet? Leave it blank: the event shows "Venue to be announced" and you can add it
-              later in Manage event → Edit event. The rain plan is set up once there's a venue.
-            </p>
+            >
+              <template #note>Not decided yet? Leave it blank!</template>
+            </AddressSearch>
           </template>
 
           <template v-if="form.venue">
@@ -945,12 +969,11 @@ async function publish() {
           </div>
           <div v-if="hideVenue" class="mb-3">
             <label for="venue-reveal" class="form-label">Reveal the venue on</label>
-            <input
+            <WheelDateTime
               id="venue-reveal"
               v-model="form.venueRevealAt"
-              type="datetime-local"
-              class="form-control online-reveal"
-              :max="form.startTime || undefined"
+              class="online-reveal"
+              clearable
               aria-describedby="venue-reveal-help"
               :aria-invalid="showErrors && stepErrors.some((error) => error.includes('revealed')) || undefined"
             />
@@ -1000,23 +1023,13 @@ async function publish() {
         <!-- ================= STEP 3: RSVP QUESTIONS ================= -->
         <div v-else-if="step === 3" aria-labelledby="step-content-heading">
           <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">RSVP questions</h2>
-          <div class="form-check form-switch mb-4">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              role="switch"
-              id="approval"
-              v-model="form.requiresApproval"
-            />
-            <label class="form-check-label" for="approval"
-              >I want to approve each RSVP myself</label
-            >
-            <div class="form-text">
-              Off: people are confirmed straight away while spots last, then join the waitlist.
+          <div class="questions-head">
+            <h3 class="h5 step-subheading mb-0">Questions for people who RSVP</h3>
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" role="switch" id="approval" v-model="form.requiresApproval" />
+              <label class="form-check-label" for="approval">I want to approve each RSVP myself</label>
             </div>
           </div>
-
-          <h3 class="h5 step-subheading">Questions for people who RSVP</h3>
           <p class="form-text mt-0">
             Optional. Use these to screen sign-ups, e.g. "Which year are you in?"
           </p>
@@ -1037,7 +1050,8 @@ async function publish() {
                   <input :id="'q-edit-' + question.id" v-model="question.text" class="form-control form-control-sm question-reword" />
                 </template>
                 <span v-else class="question-text">{{ question.text }}</span>
-                <span class="question-chip">{{ question.type === 'yesno' ? 'Yes / No' : 'Short answer' }}</span>
+                <span class="question-chip">{{ questionTypeLabel(question.type) }}</span>
+                <span v-if="question.options?.length" class="question-options">{{ question.options.join(' · ') }}</span>
                 <span v-if="question.required" class="question-chip question-chip--required">Required</span>
               </div>
               <button
@@ -1057,19 +1071,30 @@ async function publish() {
             <div class="row g-2 align-items-end">
               <div class="col-md-6">
                 <label for="q-text" class="form-label small">Question</label>
-                <input
-                  id="q-text"
-                  class="form-control"
-                  v-model="newQuestion.text"
-                  placeholder="Type a question"
-                  @keyup.enter="addQuestion"
-                />
+                <div class="question-add-row">
+                  <button
+                    type="button"
+                    class="question-add"
+                    :disabled="!canAddQuestion"
+                    aria-label="Add question"
+                    title="Add question"
+                    @click="addQuestion"
+                  >
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                  </button>
+                  <input
+                    id="q-text"
+                    class="form-control"
+                    v-model="newQuestion.text"
+                    placeholder="Type a question"
+                    @keyup.enter="addQuestion"
+                  />
+                </div>
               </div>
               <div class="col-md-3">
                 <label for="q-type" class="form-label small">Answer type</label>
                 <select id="q-type" class="form-select" v-model="newQuestion.type">
-                  <option value="text">Short answer</option>
-                  <option value="yesno">Yes / No</option>
+                  <option v-for="type in QUESTION_TYPES" :key="type.value" :value="type.value">{{ type.label }}</option>
                 </select>
               </div>
               <div class="col-md-3">
@@ -1083,15 +1108,12 @@ async function publish() {
                   <label class="form-check-label small" for="q-required">Required</label>
                 </div>
               </div>
+              <div v-if="needsOptions(newQuestion.type)" class="col-12">
+                <label for="q-options" class="form-label small">Options (one per line, or separated by commas)</label>
+                <textarea id="q-options" class="form-control" rows="3" v-model="newQuestion.optionsText" placeholder="Year 1&#10;Year 2&#10;Year 3" :aria-invalid="newQuestion.optionsText.trim() && newQuestionError ? 'true' : undefined" aria-describedby="q-options-help"></textarea>
+                <div id="q-options-help" class="form-text" :class="{ 'text-danger': newQuestion.optionsText.trim() && newQuestionError }">{{ newQuestion.optionsText.trim() && newQuestionError ? newQuestionError : `${newOptions.length} ${newOptions.length === 1 ? 'option' : 'options'}` }}</div>
+              </div>
             </div>
-            <button
-              type="button"
-              class="btn btn-outline-primary btn-sm mt-3"
-              :disabled="newQuestion.text.trim() === ''"
-              @click="addQuestion"
-            >
-              Add question
-            </button>
           </div>
         </div>
 
@@ -1104,6 +1126,19 @@ async function publish() {
               : 'Check everything before publishing. Use Back to change anything; nothing is lost.' }}
           </p>
           <p v-dismissible v-if="questionNotice" class="question-notice" role="status">{{ questionNotice }}</p>
+          <fieldset v-if="!isEditing" class="publish-choice" :disabled="publishing || eventCreated">
+            <legend class="form-label">When should it go live?</legend>
+            <div class="choice-group">
+              <div class="form-check choice-option">
+                <input id="publish-now" v-model="publishWhen" class="form-check-input" type="radio" name="publish-when" value="now" />
+                <label class="form-check-label" for="publish-now">Publish now</label>
+              </div>
+              <div class="form-check choice-option">
+                <input id="publish-later" v-model="publishWhen" class="form-check-input" type="radio" name="publish-when" value="later" />
+                <label class="form-check-label" for="publish-later">Save as a draft, publish later</label>
+              </div>
+            </div>
+          </fieldset>
           <EventSummary :event="form">
             <hr />
             <p v-if="form.isOnline" class="mb-1">
@@ -1240,7 +1275,7 @@ async function publish() {
             @click="publish"
           >
             <span v-if="publishing" class="spinner-border spinner-border-sm me-2"></span>
-            {{ publishing ? 'Publishing…' : 'Publish event' }}
+            {{ publishWhen === 'later' ? (publishing ? 'Saving…' : 'Save as draft') : (publishing ? 'Publishing…' : 'Publish event') }}
           </button>
         </div>
       </div>
@@ -1257,7 +1292,7 @@ async function publish() {
           <h2>{{ form.title.trim() || 'Your event title' }}</h2>
           <p class="preview-description">{{ form.description.trim() || 'Your description will appear here as you write it.' }}</p>
           <div class="preview-meta"><span aria-hidden="true">⌖</span><span>{{ form.isOnline ? 'Online' : !form.venue ? 'Venue to be announced' : venueRevealToSave(form) ? `Venue revealed on ${venueRevealLabel}` : form.venue.name }}</span></div>
-          <div class="preview-meta"><span aria-hidden="true">◎</span><span>{{ form.hideCapacity ? 'Capacity hidden from participants' : Number.isInteger(form.capacity) && form.capacity > 0 ? `${form.capacity} spots` : 'Capacity to be set' }}</span></div>
+          <div class="preview-meta"><span aria-hidden="true">◎</span><span>{{ form.hideCapacity ? 'Capacity hidden from participants' : form.noLimit ? 'Unlimited spots' : Number.isInteger(form.capacity) && form.capacity > 0 ? `${form.capacity} spots` : 'Capacity to be set' }}</span></div>
         </div>
       </article>
       <p class="preview-note">This is a guide to how your event details come together.</p>
@@ -1306,7 +1341,7 @@ async function publish() {
 .create-event-page :deep(.card) { border: 1px solid var(--bookedz-border); border-radius: 20px; box-shadow: var(--bookedz-card-shadow) !important; }
 .create-event-page :deep(.card-body) { padding: clamp(1rem, 3vw, 2rem) !important; }
 /* Sits above the phone tab bar when there is one (--bottom-nav-h, main.css) */
-.create-event-page :deep(.card-footer) { position: sticky; bottom: var(--bottom-nav-h, 0px); z-index: 2; padding: .85rem clamp(1rem, 3vw, 2rem); border-color: var(--bookedz-border); background: var(--bookedz-glass-solid) !important; backdrop-filter: blur(14px); }
+.create-event-page :deep(.card-footer) { padding: .85rem clamp(1rem, 3vw, 2rem); border-color: var(--bookedz-border); background: var(--bookedz-glass-solid) !important; backdrop-filter: blur(14px); }
 .create-event-page :deep(.card-footer .btn) { min-width: 6.5rem; min-height: 44px; }
 .create-event-page :deep(.form-control), .create-event-page :deep(.form-select) { border-radius: 10px; transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease; }
 .create-event-page :deep(.form-control:focus), .create-event-page :deep(.form-select:focus) { border-color: var(--bookedz-primary-dark); box-shadow: var(--bookedz-focus-glow); }
@@ -1346,6 +1381,12 @@ async function publish() {
 .venue-choice { margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 14px; background: color-mix(in srgb, var(--bookedz-mint) 22%, var(--bookedz-surface)); }
 .venue-choice-name { margin: 0; color: var(--bookedz-ink); font-weight: 700; overflow-wrap: anywhere; }
 .venue-choice-meta { margin: .15rem 0 0; color: var(--bookedz-muted); font-size: .875rem; overflow-wrap: anywhere; }
+.question-add-row { display: flex; align-items: center; gap: .5rem; }
+.question-add { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 2px solid var(--bookedz-ink); border-radius: 50%; background: var(--bookedz-fill); color: var(--bookedz-on-fill); cursor: pointer; transition: transform var(--bookedz-motion-fast) var(--bookedz-ease-stamp); }
+.question-add:disabled { border-color: var(--bookedz-control-border); background: var(--bookedz-glass-active); color: var(--bookedz-muted); cursor: not-allowed; }
+.question-add:not(:disabled):hover { transform: rotate(90deg); }
+.question-options { color: var(--bookedz-muted); font-size: .8rem; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .question-add { transition: none; } .question-add:not(:disabled):hover { transform: none; } }
 .question-composer { padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 14px; background: var(--bookedz-glass-solid); }
 .question-summary { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem; min-width: 0; }
 .question-text { color: var(--bookedz-ink); overflow-wrap: anywhere; }
@@ -1375,6 +1416,22 @@ async function publish() {
 .btn-check:focus-visible + .event-mode-option { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
 .btn-check:disabled + .event-mode-option { cursor: not-allowed; opacity: .7; }
 .online-reveal { max-width: 20rem; }
+/* The link takes about 70% of the row, the reveal time the rest; stacked on small screens */
+.online-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); column-gap: 1rem; align-items: start; }
+.online-grid .online-reveal { max-width: none; }
+.online-grid :deep(.wheel-panel) { left: auto; right: 0; }
+@media (max-width: 767.98px) { .online-grid { grid-template-columns: 1fr; } .online-grid :deep(.wheel-panel) { left: 0; right: auto; } }
+.publish-choice { margin: 0 0 1rem; padding: 0; border: 0; }
+.publish-choice legend { float: none; width: auto; padding: 0; margin-bottom: .5rem; font-size: 1rem; }
+.publish-choice .choice-group { display: flex; flex-wrap: wrap; gap: .5rem; }
+.publish-choice .choice-option { display: inline-flex; align-items: center; gap: .55rem; min-height: 44px; margin: 0; padding: 0 1.1rem 0 2.2rem; border: 2px solid var(--bookedz-control-border); border-radius: 12px; background: var(--bookedz-surface); }
+.publish-choice .choice-option:has(.form-check-input:checked) { border-color: var(--bookedz-primary-dark); background: color-mix(in srgb, var(--bookedz-primary-dark) 12%, var(--bookedz-surface)); }
+.publish-choice .choice-option .form-check-label { cursor: pointer; }
+.questions-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1.5rem; margin-bottom: .5rem; }
+.capacity-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem .75rem; margin-bottom: .5rem; }
+.capacity-head .form-check-label { font-size: .85rem; }
+.description-row.has-cover { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); column-gap: 1rem; align-items: start; }
+@media (max-width: 767.98px) { .description-row.has-cover { grid-template-columns: 1fr; } }
 .step-subheading-note { color: var(--bookedz-muted); font-size: .85rem; font-weight: 500; }
 .venue-later-note { margin-top: .5rem; }
 @media (max-width: 399.98px) { .event-mode-options { grid-template-columns: minmax(0, 1fr); } }

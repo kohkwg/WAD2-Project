@@ -901,10 +901,14 @@ onBeforeUnmount(() => {
 
   .profile-summary.is-viewing > .profile-block {
     height: 100%;
-    padding: 0 0 0 2rem;
+    padding: 0 9rem 0 2rem; /* room on the right for the Edit profile button */
     border-top: 0;
     border-left: 1px solid var(--bookedz-border);
   }
+
+  /* Edit profile sits at the far right of the whole box, past the interests */
+  .profile-summary.is-viewing { position: relative; }
+  .profile-summary.is-viewing .profile-edit { position: absolute; top: 0; right: 0; margin: 0; }
 }
 
 /* Avatar, name and contact details */
