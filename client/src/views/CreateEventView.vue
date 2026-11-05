@@ -10,6 +10,7 @@ import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue'
 import { uploadCover } from '../lib/uploadCover.js'
 import { createEvent, getEvent, getEventOnlineAccess, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
 import { defaultRevealTime } from '../utils/onlineEvents.js'
+import { defaultVenueRevealTime, venueRevealToSave } from '../utils/venueReveal.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
 import { PLANNER_AVAILABLE, searchEventTitles, fetchPlanSuggestion, addPlanToEvent } from '../utils/planSuggestions.js'
 import { normalizeTitle } from '../utils/planSuggestModel.js'
@@ -89,9 +90,20 @@ watch(() => [form.value, form.value.startTime], ([currentForm, start], [previous
   if (!Number.isFinite(s)) return
   const length = Number.isFinite(p) && Number.isFinite(e) && e > p ? e - p : 2 * 60 * 60000
   if (!Number.isFinite(e) || e <= s || Number.isFinite(p)) form.value.endTime = toDateTimeInputValue(new Date(s + length))
-  // The online link keeps appearing the same time before the start
+  // The online link and a hidden venue keep appearing the same time before the start
   const reveal = Date.parse(form.value.onlineLink.revealAt)
   if (Number.isFinite(p) && Number.isFinite(reveal)) form.value.onlineLink.revealAt = toDateTimeInputValue(new Date(reveal + s - p))
+  const venueReveal = Date.parse(form.value.venueRevealAt)
+  if (Number.isFinite(p) && Number.isFinite(venueReveal)) form.value.venueRevealAt = toDateTimeInputValue(new Date(venueReveal + s - p))
+})
+// "Keep the venue hidden" suggests revealing it a day before the start
+const hideVenue = computed({
+  get: () => Boolean(form.value.venueRevealAt),
+  set: (value) => { form.value.venueRevealAt = value ? defaultVenueRevealTime(form.value.startTime) : '' },
+})
+const venueRevealLabel = computed(() => {
+  const reveal = new Date(form.value.venueRevealAt)
+  return Number.isNaN(reveal.getTime()) ? '' : new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'short' }).format(reveal)
 })
 // Choosing Online suggests a time for the link to appear (15 minutes before the start)
 watch(() => form.value.isOnline, (isOnline) => {
@@ -120,8 +132,12 @@ const venueLocked = ref(false) // the rain switch already moved the event to its
 
 const venueCopy = (venue) => (venue ? { name: venue.name, address: venue.address || '', postal: venue.postal || '', lat: venue.lat ?? null, lng: venue.lng ?? null } : null)
 // access = getEventOnlineAccess(id) for an online event (the organiser always gets the link)
+// A hidden venue comes from event.hiddenVenue (organisers only); "to be announced" loads as no venue
 function formFromEvent(event, access = null) {
   const reveal = Date.parse(access?.revealAt)
+  const place = event.hiddenVenue
+    || (event.isOnline || event.venuePending ? { venue: null, backupVenue: null, isOutdoor: false } : event)
+  const venueReveal = event.hiddenVenue ? Date.parse(event.venueRevealAt) : NaN
   return {
     title: event.title || '',
     coverImageUrl: event.coverImageUrl || '',
@@ -133,10 +149,11 @@ function formFromEvent(event, access = null) {
     hideCapacity: Boolean(event.hideCapacity),
     isOnline: Boolean(event.isOnline),
     onlineLink: { url: access?.url || '', revealAt: Number.isFinite(reveal) ? toDateTimeInputValue(new Date(reveal)) : '' },
-    // An online event's "Online" label isn't a venue to edit
-    venue: event.isOnline ? null : venueCopy(event.venue),
-    isOutdoor: Boolean(event.isOutdoor),
-    backupVenue: venueCopy(event.backupVenue),
+    // An online event's "Online" label and "Venue to be announced" aren't venues to edit
+    venue: venueCopy(place.venue),
+    venueRevealAt: Number.isFinite(venueReveal) ? toDateTimeInputValue(new Date(venueReveal)) : '',
+    isOutdoor: Boolean(place.isOutdoor),
+    backupVenue: venueCopy(place.backupVenue),
     requiresApproval: Boolean(event.requiresApproval),
     questions: (event.questions || []).map(({ id, text, type, required }) => ({ id, text, type, required: Boolean(required) })),
   }
@@ -400,7 +417,8 @@ async function focusStep() {
     else if (link.url.trim() && stepErrors.value.length) targetId = 'online-reveal'
   } else if (step.value === 2) {
     targetId = form.value.venue ? 'step-content-heading' : 'venue-search'
-    if (form.value.isOutdoor && !form.value.backupVenue) targetId = 'backup-search'
+    if (stepErrors.value.some((error) => error.includes('revealed'))) targetId = 'venue-reveal'
+    else if (form.value.venue && form.value.isOutdoor && !form.value.backupVenue) targetId = 'backup-search'
   }
   document.getElementById(targetId)?.focus()
 }
@@ -506,10 +524,12 @@ function eventDataFromForm() {
     capacity: f.capacity === '' ? null : f.capacity,
     hideCapacity: Boolean(f.hideCapacity),
     isOnline: Boolean(f.isOnline),
-    // Online events keep no venue or rain plan; a typed venue stays in the form in case they switch back
-    isOutdoor: f.isOnline ? false : f.isOutdoor,
+    // Online events keep no venue or rain plan; a typed venue stays in the form in case they switch
+    // back. With no venue yet there is no rain plan, and only a time still to come hides a venue.
+    isOutdoor: f.isOnline || !f.venue ? false : f.isOutdoor,
     venue: f.isOnline ? null : f.venue,
-    backupVenue: !f.isOnline && f.isOutdoor ? f.backupVenue : null,
+    backupVenue: !f.isOnline && f.venue && f.isOutdoor ? f.backupVenue : null,
+    venueRevealAt: venueRevealToSave(f),
     onlineLink: f.isOnline && f.onlineLink.url.trim()
       ? { url: f.onlineLink.url.trim(), revealAt: new Date(f.onlineLink.revealAt).toISOString() }
       : null,
@@ -540,7 +560,9 @@ async function reviewChanges() {
     return
   }
   editSuccess.value = ''
-  pendingChanges.value = describeEventChanges(original.value, form.value)
+  // Settings left from a cleared venue aren't saved, so they aren't announced either
+  const f = form.value
+  pendingChanges.value = describeEventChanges(original.value, { ...f, isOutdoor: Boolean(f.venue) && f.isOutdoor, venueRevealAt: f.venue ? f.venueRevealAt : '' })
   if (pendingChanges.value.length === 0) {
     errorMessage.value = 'Nothing has changed yet, so there is nothing to save.'
     return
@@ -874,7 +896,7 @@ async function publish() {
           </template>
 
           <template v-else>
-          <h3 class="h5 step-subheading">Main venue</h3>
+          <h3 class="h5 step-subheading">Main venue <span class="step-subheading-note">(optional for now)</span></h3>
           <!-- Theme-aware chosen-venue card; it receives focus after a search result is picked -->
           <div v-if="form.venue" class="venue-choice">
             <p id="venue-chosen" class="venue-choice-name" tabindex="-1">
@@ -892,12 +914,49 @@ async function publish() {
               Change venue
             </button>
           </div>
-          <AddressSearch
-            v-else
-            label="Search for the venue"
-            input-id="venue-search"
-            @select="setVenue"
-          />
+          <template v-else>
+            <AddressSearch
+              label="Search for the venue"
+              input-id="venue-search"
+              @select="setVenue"
+            />
+            <p class="form-text venue-later-note">
+              Not decided yet? Leave it blank: the event shows "Venue to be announced" and you can add it
+              later in Manage event → Edit event. The rain plan is set up once there's a venue.
+            </p>
+          </template>
+
+          <template v-if="form.venue">
+          <div class="form-check form-switch my-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="venue-hide"
+              v-model="hideVenue"
+              :disabled="venueLocked"
+              aria-describedby="venue-hide-help"
+            />
+            <label class="form-check-label" for="venue-hide">Keep the venue hidden until a set time</label>
+            <div id="venue-hide-help" class="form-text">
+              Until then, participants see only when it will be revealed. You and your co-organisers can still see it.
+            </div>
+          </div>
+          <div v-if="hideVenue" class="mb-3">
+            <label for="venue-reveal" class="form-label">Reveal the venue on</label>
+            <input
+              id="venue-reveal"
+              v-model="form.venueRevealAt"
+              type="datetime-local"
+              class="form-control online-reveal"
+              :max="form.startTime || undefined"
+              aria-describedby="venue-reveal-help"
+              :aria-invalid="showErrors && stepErrors.some((error) => error.includes('revealed')) || undefined"
+            />
+            <div id="venue-reveal-help" class="form-text">
+              Everyone sees the venue from this date and time, no later than the start. A time that has already passed shows it straight away.
+            </div>
+          </div>
 
           <div class="form-check form-switch my-3">
             <input
@@ -932,6 +991,7 @@ async function publish() {
               input-id="backup-search"
               @select="setBackupVenue"
             />
+          </template>
           </template>
           </template>
         </div>
@@ -1048,6 +1108,11 @@ async function publish() {
             <p v-if="form.isOnline" class="mb-1">
               <strong>Online link:</strong>
               {{ form.onlineLink.url.trim() ? `confirmed attendees can open it from ${revealLabel}` : 'not added yet. Add it later in Manage event → Edit event.' }}
+            </p>
+            <p v-if="!form.isOnline" class="mb-1">
+              <strong>Venue:</strong>
+              {{ !form.venue ? 'to be announced. Add it later in Manage event → Edit event.'
+                : venueRevealToSave(form) ? `hidden from participants until ${venueRevealLabel}` : 'shown to everyone' }}
             </p>
             <p v-if="form.hideCapacity" class="mb-1">
               <strong>Capacity:</strong> hidden from participants (they only see when it's full)
@@ -1190,7 +1255,7 @@ async function publish() {
           <p class="preview-date">{{ previewDate }}</p>
           <h2>{{ form.title.trim() || 'Your event title' }}</h2>
           <p class="preview-description">{{ form.description.trim() || 'Your description will appear here as you write it.' }}</p>
-          <div class="preview-meta"><span aria-hidden="true">⌖</span><span>{{ form.isOnline ? 'Online' : form.venue?.name || 'Venue to be chosen' }}</span></div>
+          <div class="preview-meta"><span aria-hidden="true">⌖</span><span>{{ form.isOnline ? 'Online' : !form.venue ? 'Venue to be announced' : venueRevealToSave(form) ? `Venue revealed on ${venueRevealLabel}` : form.venue.name }}</span></div>
           <div class="preview-meta"><span aria-hidden="true">◎</span><span>{{ form.hideCapacity ? 'Capacity hidden from participants' : Number.isInteger(form.capacity) && form.capacity > 0 ? `${form.capacity} spots` : 'Capacity to be set' }}</span></div>
         </div>
       </article>
@@ -1309,6 +1374,8 @@ async function publish() {
 .btn-check:focus-visible + .event-mode-option { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
 .btn-check:disabled + .event-mode-option { cursor: not-allowed; opacity: .7; }
 .online-reveal { max-width: 20rem; }
+.step-subheading-note { color: var(--bookedz-muted); font-size: .85rem; font-weight: 500; }
+.venue-later-note { margin-top: .5rem; }
 @media (max-width: 399.98px) { .event-mode-options { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .event-mode-option { transition: none; } }
 </style>

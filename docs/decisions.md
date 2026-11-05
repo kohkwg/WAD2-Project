@@ -9,6 +9,20 @@ the [README](../README.md#credits-and-licences). Original supplied material stay
 
 ## Decision log, newest first
 
+5 November 2026 — the user, venue to be announced or revealed later: organisers no longer have to
+choose a venue to create a physical event. Left blank, the event shows "Venue to be announced" and
+the venue can be added later in Manage event → Edit event; the rain plan is set up once there is a
+venue. A chosen venue can instead be kept hidden until a set date and time, no later than the
+start (suggested: a day before). Before then nobody but the event's organisers sees the name,
+address or map, only "Venue revealed on …"; afterwards it is an ordinary venue for everyone (the
+user chose "everyone", not confirmed attendees only). Announcements of edits never name a hidden
+venue. Go together waits while a venue is hidden; events with no venue at all keep allowing
+groups as before, because older hosted events and the group checks rely on that. Live mode needs
+migration `20261105150000_venue_to_be_announced.sql`: the hidden venue waits in an
+organisers-only table, because `venues` is publicly readable, and a once-a-minute job (also called
+by the event page at the reveal time) turns it into ordinary venue rows. Applied to Bookerz on
+5 November at the user's request ("i want to migrate to the db"), after a dry run.
+
 5 November 2026 — Denzel, sidebar collapsed by default: from 992px (Bootstrap lg, xl and xxl)
 the sidebar starts as the 76px icon rail and expands only when someone uses its toggle. Denzel
 chose to keep remembering that choice per browser, so someone who prefers the full sidebar keeps

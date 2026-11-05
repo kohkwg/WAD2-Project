@@ -12,6 +12,7 @@ import { isGroup, isOfficialEvent, joinOutcome, groupErrors, settingsErrors, JOI
 import { TASK_STATUSES, FALLBACK_BUDGET_CATEGORY, budgetCategoryOptions, validateCategoryName, validateCents, validateExpenseAmounts, summariseBudget } from './feature4.js'
 import { fetchForecastData, forecastAreas, eventForecast } from './feature4Weather.js'
 import { applyEventDefaults, onlineVenue, onlineAccess, onlineLinkErrors, hideCapacityNumbers, ONLINE_GROUP_ERROR } from './onlineEvents.js'
+import { pendingVenue, isStillHidden, isVenueHiddenForGroups, HIDDEN_VENUE_GROUP_ERROR } from './venueReveal.js'
 
 // Who is "logged in" for the demo. In Supabase mode this comes from the login session instead.
 // Alex (u1) is the participant and the Demo Club (org1) is the organiser, so one person can
@@ -23,7 +24,8 @@ const CURRENT_ORGANISER_ID = 'org1'
 // Placeholder "database" kept in localStorage
 // ---------------------------------------------------------------------------
 
-const STORAGE_KEY = 'bookedz-feature2-demo'
+// Exported so other tabs can tell when the demo data changed (api.watchEventAnnouncements)
+export const STORAGE_KEY = 'bookedz-feature2-demo'
 
 function emptyOperations() {
   return { version: 1, tasks: [], announcements: [], budgets: {}, forecastAreas: {} }
@@ -53,11 +55,15 @@ function loadDb() {
 // Every event records whether it is online and whether its capacity is hidden, like the
 // database columns; older demo data is physical with capacity shown. Online links are kept
 // apart from the events (like public.event_online_links), so reading an event never shows one.
+// A venue kept hidden until a set time waits in hiddenVenues (like public.event_hidden_venues);
+// the event itself then has no venue and records venueRevealAt, which is null on every other event.
 // Returns true when anything had to be added.
 function withEventOptions(db) {
   let changed = !Array.isArray(db.onlineLinks)
   if (changed) db.onlineLinks = []
+  if (!Array.isArray(db.hiddenVenues)) { db.hiddenVenues = []; changed = true }
   for (const event of db.events) {
+    if (!('venueRevealAt' in event)) { event.venueRevealAt = null; changed = true }
     if (typeof event.isOnline !== 'boolean' || typeof event.hideCapacity !== 'boolean' || 'onlineLink' in event) {
       delete event.onlineLink
       applyEventDefaults(event)
@@ -116,13 +122,19 @@ function spotsTaken(db, eventId) {
 }
 
 // Adds live numbers to an event: how many confirmed, waiting, spots left, etc.
-// Online events show "Online" as their venue; hidden capacity stays visible to the event's team only.
+// Online events show "Online" as their venue; a physical event with no visible venue shows
+// "Venue to be announced" (venuePending). Hidden capacity stays visible to the event's team only,
+// and a hidden venue to its organiser only (hiddenVenue), like the live RLS.
 function withCounts(db, event) {
   const rsvps = db.rsvps.filter((r) => r.eventId === event.id)
   const count = (status) => rsvps.filter((r) => r.status === status).length
+  const hidden = event.organiserId === CURRENT_ORGANISER_ID ? db.hiddenVenues.find((saved) => saved.eventId === event.id) : null
   const result = {
     ...event,
-    venue: event.isOnline ? onlineVenue() : event.venue,
+    venue: event.isOnline ? onlineVenue() : event.venue || pendingVenue(),
+    venuePending: !event.isOnline && !event.venue,
+    venueRevealAt: event.venueRevealAt || null,
+    hiddenVenue: hidden ? { venue: hidden.venue, backupVenue: hidden.backupVenue, isOutdoor: Boolean(hidden.backupVenue) } : null,
     isOnTeam: event.organiserId === CURRENT_USER_ID || (db.eventMembers || []).some(member => member.eventId === event.id && member.userId === CURRENT_USER_ID),
     isMine: event.organiserId === CURRENT_ORGANISER_ID, // can the logged-in person manage it?
     confirmedCount: count('confirmed'),
@@ -140,16 +152,31 @@ function saveOnlineLink(db, eventId, link) {
   if (link) db.onlineLinks.push({ eventId, url: link.url, revealAt: link.revealAt, updatedAt: new Date().toISOString() })
 }
 
-// Event fields both create and update accept; online events never keep a venue or rain plan
+// Event fields both create and update accept; online events never keep a venue or rain plan,
+// and a venue to be announced has no rain plan yet
 function eventFields(eventData) {
   const isOnline = Boolean(eventData.isOnline)
+  const venue = isOnline ? null : eventData.venue || null
+  if (!isOnline && !venue && (eventData.isOutdoor || eventData.backupVenue)) throw new Error('Choose the venue before adding a rain plan.')
   return {
     isOnline,
     hideCapacity: Boolean(eventData.hideCapacity),
-    isOutdoor: isOnline ? false : Boolean(eventData.isOutdoor),
-    venue: isOnline ? null : eventData.venue,
-    backupVenue: !isOnline && eventData.isOutdoor ? eventData.backupVenue : null,
+    isOutdoor: Boolean(venue) && Boolean(eventData.isOutdoor),
+    venue,
+    backupVenue: venue && eventData.isOutdoor ? eventData.backupVenue : null,
   }
+}
+
+// The hidden venue to save, or null when the venue shows now. Same rules as the database.
+function checkedHiddenVenue(eventData, fields) {
+  if (!eventData.venueRevealAt) return null
+  if (fields.isOnline) throw new Error('Online events have no venue to hide.')
+  if (!fields.venue) throw new Error('Choose the venue to keep hidden, or leave it to be announced.')
+  const reveal = Date.parse(eventData.venueRevealAt)
+  if (!Number.isFinite(reveal)) throw new Error('The venue reveal time must be a date and time.')
+  if (reveal > Date.parse(eventData.startTime)) throw new Error('The venue has to be revealed before the event starts.')
+  if (!isStillHidden(eventData.venueRevealAt)) return null // already passed: show it now
+  return { venue: fields.venue, backupVenue: fields.backupVenue, revealAt: new Date(reveal).toISOString() }
 }
 
 function checkedOnlineLink(eventData) {
@@ -237,8 +264,37 @@ function expireOldOffers(db) {
 }
 
 // Every read goes through this so expired offers are always cleaned up first
+// Hidden venues whose time has come become ordinary venues (public.release_due_event_venues)
+function releaseDueVenues(db, now = Date.now()) {
+  const due = db.hiddenVenues.filter((hidden) => !isStillHidden(hidden.revealAt, now))
+  for (const hidden of due) {
+    const event = db.events.find((e) => e.id === hidden.eventId)
+    if (event) Object.assign(event, { venue: hidden.venue, backupVenue: hidden.backupVenue, isOutdoor: Boolean(hidden.backupVenue), venueRevealAt: null })
+  }
+  db.hiddenVenues = db.hiddenVenues.filter((hidden) => !due.includes(hidden))
+  return due.length
+}
+
+// Saves (or clears) an event's hidden venue, keeping venueRevealAt in step like the database
+function saveHiddenVenue(db, event, hidden) {
+  db.hiddenVenues = db.hiddenVenues.filter((saved) => saved.eventId !== event.id)
+  event.venueRevealAt = null
+  if (!hidden) return
+  db.hiddenVenues.push({ eventId: event.id, ...hidden, updatedAt: new Date().toISOString() })
+  Object.assign(event, { venue: null, backupVenue: null, isOutdoor: false, venueRevealAt: hidden.revealAt })
+}
+
+// The event page calls this at the reveal time (live: the release_due_event_venues RPC)
+export async function releaseDueEventVenues() {
+  const db = loadDb()
+  const released = releaseDueVenues(db)
+  if (released) saveDb(db)
+  return released
+}
+
 function loadFreshDb() {
   const db = loadDb()
+  releaseDueVenues(db)
   expireOldOffers(db)
   saveDb(db)
   return db
@@ -321,6 +377,7 @@ export async function deleteEvent(eventId) {
   db.events = db.events.filter((e) => e.id !== eventId)
   db.rsvps = db.rsvps.filter((r) => r.eventId !== eventId) // its RSVPs go too
   db.onlineLinks = db.onlineLinks.filter((link) => link.eventId !== eventId)
+  db.hiddenVenues = db.hiddenVenues.filter((hidden) => hidden.eventId !== eventId)
   db.feature4.tasks = db.feature4.tasks.filter((task) => task.eventId !== eventId)
   db.feature4.announcements = db.feature4.announcements.filter((post) => post.eventId !== eventId)
   delete db.feature4.budgets[eventId]
@@ -482,6 +539,7 @@ export async function createGroup({ eventId, note = '', capacity = 4, joinMode =
   const target = official.find((e) => e.id === eventId)
   if (!hasEventRsvp(db, eventId, CURRENT_USER_ID)) throw new Error('RSVP to this event first, then start a group for it.')
   if (target.isOnline) throw new Error(ONLINE_GROUP_ERROR)
+  if (isVenueHiddenForGroups(target)) throw new Error(HIDDEN_VENUE_GROUP_ERROR)
   const group = { ...groupEventData(target, { note, capacity, joinMode, visibility }), id: newId('g'), organiserId: CURRENT_ORGANISER_ID, status: 'published', createdAt: new Date().toISOString() }
   db.events.push(group)
   // Quick add: invite the friends ticked in the form
@@ -774,13 +832,16 @@ export async function createEvent(eventData) {
   await fakeDelay()
   const db = loadFreshDb()
   const link = checkedOnlineLink(eventData)
-  // The link is stored apart from the event, and the live retry id isn't stored at all
+  const fields = eventFields(eventData)
+  const hidden = checkedHiddenVenue(eventData, fields)
+  // The link and a hidden venue are stored apart from the event; the live retry id isn't stored
   const details = { ...eventData }
   delete details.onlineLink
   delete details.requestId
   const event = {
     ...details,
-    ...eventFields(eventData),
+    ...fields,
+    venueRevealAt: null,
     id: newId('e'),
     organiserId: CURRENT_ORGANISER_ID,
     status: 'published',
@@ -788,6 +849,7 @@ export async function createEvent(eventData) {
   }
   db.events.push(event)
   saveOnlineLink(db, event.id, link)
+  saveHiddenVenue(db, event, hidden)
   saveDb(db)
   return { ...event }
 }
@@ -811,11 +873,16 @@ export async function updateEvent(eventId, changes) {
   }
   const fields = eventFields(changes)
   const link = checkedOnlineLink(changes)
+  const hidden = checkedHiddenVenue(changes, fields)
+  // Compare with the venue as the organiser knows it, hidden or not
+  const saved = db.hiddenVenues.find((entry) => entry.eventId === eventId)
+  const current = saved ? { venue: saved.venue, backupVenue: saved.backupVenue, isOutdoor: Boolean(saved.backupVenue) } : event
   const venueKey = (venue) => JSON.stringify(venue ? [venue.name, venue.address || '', venue.lat ?? null, venue.lng ?? null] : null)
-  const venuesChanged = venueKey(event.venue) !== venueKey(fields.venue)
+  const venuesChanged = venueKey(current.venue) !== venueKey(fields.venue)
     || event.isOnline !== fields.isOnline
-    || Boolean(event.isOutdoor) !== fields.isOutdoor
-    || venueKey(event.backupVenue) !== venueKey(fields.backupVenue)
+    || Boolean(current.isOutdoor) !== fields.isOutdoor
+    || venueKey(current.backupVenue) !== venueKey(fields.backupVenue)
+    || (saved?.revealAt || null) !== (hidden?.revealAt || null)
   if (event.usingBackup && venuesChanged) {
     throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.')
   }
@@ -843,6 +910,7 @@ export async function updateEvent(eventId, changes) {
     updatedAt: new Date().toISOString(),
   })
   saveOnlineLink(db, eventId, link) // a physical event (or a cleared link) keeps no link
+  saveHiddenVenue(db, event, hidden) // a venue shown now (or none) keeps nothing hidden
   if (raisedCapacity) fillFreeSpots(db, eventId) // new places go to the waitlist first, like the database trigger
   saveDb(db)
   return withCounts(db, event)

@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import * as api from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
+import { hasPlace, venuePendingText } from '../utils/venueReveal.js'
 import EventToolNavigation from '../components/event-operations/EventToolNavigation.vue'
 import TaskBoard from '../components/event-operations/TaskBoard.vue'
 import AnnouncementManager from '../components/event-operations/AnnouncementManager.vue'
@@ -91,7 +92,7 @@ async function load() {
   finally { if (ticket === epoch) loading.value = false }
 }
 watch(() => route.params.id, load, { immediate: true })
-watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => { if (tab === 'weather' && eventId && canManage.value) refreshWeather() })
+watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => { if (tab === 'weather' && eventId && canManage.value && hasPlace(workspace.value.event)) refreshWeather() })
 onBeforeUnmount(() => { epoch++; weatherRequest++ })
 
 async function refreshEditedEvent() {
@@ -195,8 +196,8 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
       <div class="workspace-title-row"><div class="workspace-title-copy"><p class="workspace-eyebrow">Organiser workspace</p><h1>{{ workspace.event.title }}</h1></div><span class="workspace-mode">{{ api.USING_SUPABASE ? 'Live workspace' : 'Demo workspace' }}</span></div>
       <div class="workspace-overview">
         <div class="overview-item"><span class="overview-label">Event time</span><strong>{{ formatEventTime(workspace.event) }}</strong></div>
-        <div class="overview-item"><span class="overview-label">Active venue</span><strong>{{ workspace.event.venue?.name || 'Venue not set' }}</strong><span v-if="workspace.event.usingBackup" class="workspace-mode workspace-mode--success">Backup active</span></div>
-        <details class="workspace-address"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
+        <div class="overview-item"><span class="overview-label">Active venue</span><strong>{{ workspace.event.hiddenVenue?.venue?.name || workspace.event.venue?.name || 'Venue not set' }}</strong><span v-if="workspace.event.venueRevealAt" class="workspace-mode">{{ venuePendingText(workspace.event).replace('Venue revealed', 'Hidden until revealed') }}</span><span v-if="workspace.event.usingBackup" class="workspace-mode workspace-mode--success">Backup active</span></div>
+        <details v-if="hasPlace(workspace.event)" class="workspace-address"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
       </div>
       <div class="workspace-link-groups">
         <div class="workspace-primary-links"><RouterLink class="btn event-cta" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink><span class="workspace-publish"><span v-if="publishState === 'draft'" class="workspace-mode">Unpublished</span><span v-else-if="publishState !== 'published'" class="workspace-mode">{{ publishState[0].toUpperCase() + publishState.slice(1) }}</span><button v-if="canTogglePublish" type="button" class="btn" :class="publishState === 'published' ? 'btn-outline-secondary' : 'btn-primary'" :disabled="publishing" @click="togglePublish">{{ publishing ? 'Saving…' : publishState === 'published' ? 'Unpublish' : 'Publish' }}</button></span><span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>

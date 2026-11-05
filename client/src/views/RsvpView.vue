@@ -14,6 +14,7 @@ import { isGroup } from '../utils/groups.js'
 import { isEventFull } from '../utils/onlineEvents.js'
 import {
   getEvent,
+  releaseDueEventVenues,
   getUser,
   getMyRsvps,
   createRsvp,
@@ -84,6 +85,23 @@ watch(eventId, async (id) => {
   }
 }, { immediate: true })
 onBeforeUnmount(() => { loadRequest++ })
+
+// A hidden venue appears at its reveal time without a reload: release it (the database job runs
+// only once a minute), then read the event again. Only for reveals within the next day.
+let revealTimer
+watch(() => [event.value?.id, event.value?.venuePending, event.value?.venueRevealAt], ([id, pending, revealAt]) => {
+  clearTimeout(revealTimer)
+  const wait = Date.parse(revealAt) - Date.now()
+  if (!id || !pending || !(wait < 864e5)) return
+  revealTimer = setTimeout(async () => {
+    try {
+      await releaseDueEventVenues()
+      const latest = await getEvent(id)
+      if (id === eventId.value) applyPublicEvent(latest)
+    } catch { /* the page keeps showing the reveal time; a reload or the next visit shows the venue */ }
+  }, Math.max(wait, 0) + 1500)
+})
+onBeforeUnmount(() => clearTimeout(revealTimer))
 
 // Public-feed refresh updates shared event details without resetting RSVP drafts.
 function applyPublicEvent(latest) {
@@ -232,16 +250,19 @@ async function submitRsvp() {
     <!-- Public context and updates come first in both DOM and mobile reading order. -->
     <div class="col-lg-8 order-1 event-public-details">
       <EventSummary v-if="event" :event="event" heading-tag="h1">
+        <!-- Online events: one card in the "Where" spot, green with the link once this viewer can open it -->
+        <template #online-venue>
+          <OnlineEventLink :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />
+        </template>
         <VenueMap v-if="!event.isOnline && event.venue?.lat" :lat="event.venue.lat" :lng="event.venue.lng" class="my-3" />
-        <OnlineEventLink v-if="event.isOnline" :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />
         <!-- Places and spots left are already in the facts above; the waitlist size is the extra detail -->
         <p v-if="isFull" class="waitlist-note">
           Full · {{ event.waitlistCount }} on the waitlist
         </p>
       </EventSummary>
       <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
-      <!-- Go together groups meet at the venue, so online events have none -->
-      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline" :event-id="eventId" />
+      <!-- Go together groups meet at the venue: none for online events, or while the venue is hidden -->
+      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline && !event.venueRevealAt" :event-id="eventId" />
       <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
       <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>

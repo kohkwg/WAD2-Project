@@ -42,6 +42,13 @@ function cancelSwitch() { confirming.value = false; emit('cancel-action') }
     </div>
     <p class="workspace-panel text-secondary mb-0">This is an online event, so there is no forecast or backup venue to check. If it moves to a venue, choose Physical in Edit event.</p>
   </section>
+  <!-- No venue yet (to be announced, or hidden until its reveal time): nothing to forecast -->
+  <section v-else-if="event.venuePending" aria-labelledby="weather-heading">
+    <div class="tool-heading">
+      <div><h2 id="weather-heading" tabindex="-1">Weather</h2><p class="tool-description">Weather checks are for events at a venue.</p></div>
+    </div>
+    <p class="workspace-panel text-secondary mb-0">{{ event.venueRevealAt ? 'The venue is hidden until its reveal time, so the forecast and rain plan start once it is revealed.' : 'The venue is still to be announced. Add it in Edit event, and the forecast and rain plan start here.' }}</p>
+  </section>
   <section v-else aria-labelledby="weather-heading">
     <div class="tool-heading">
       <div><h2 id="weather-heading" tabindex="-1">Weather</h2><p class="tool-description">Check conditions and the backup plan before moving your event.</p></div>

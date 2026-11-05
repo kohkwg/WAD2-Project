@@ -46,33 +46,43 @@ const revealed = computed(() => Date.parse(access.value?.revealAt) <= Date.now()
 </script>
 
 <template>
-  <section class="online-link" aria-labelledby="online-link-heading">
+  <!-- Sits in the event summary's "Where" spot: green with the link once this viewer can open it,
+       otherwise the usual yellow "Where · Online" card saying when the link appears -->
+  <section v-if="access?.url" class="online-link is-ready" aria-labelledby="online-link-heading">
     <h2 id="online-link-heading" class="online-link-heading">Online event</h2>
-    <p v-if="loading" class="mb-0" role="status">Checking the online link…</p>
-    <p v-else-if="error" class="text-danger mb-0" role="alert">
+    <a class="btn event-cta online-link-open" :href="access.url" target="_blank" rel="noopener noreferrer">
+      Join online<span class="visually-hidden"> (opens in a new tab)</span>
+    </a>
+    <p class="online-link-url">{{ access.url }}</p>
+    <p v-if="isOrganiser" class="online-link-note mb-0">
+      {{ revealed ? 'Confirmed attendees can open this link now.' : `Confirmed attendees can open it from ${revealLabel}.` }}
+    </p>
+  </section>
+  <div v-else class="online-link">
+    <span class="venue-label">Where</span>
+    <p class="venue-name"><span aria-hidden="true">⌖</span> Online</p>
+    <p v-if="loading" class="online-link-note" role="status">Checking the online link…</p>
+    <p v-else-if="error" class="online-link-note text-danger" role="alert">
       {{ error }}
       <button type="button" class="btn btn-sm btn-outline-danger ms-1" @click="load">Try again</button>
     </p>
-    <template v-else-if="access?.url">
-      <a class="btn event-cta online-link-open" :href="access.url" target="_blank" rel="noopener noreferrer">
-        Join online<span class="visually-hidden"> (opens in a new tab)</span>
-      </a>
-      <p class="online-link-url">{{ access.url }}</p>
-      <p v-if="isOrganiser" class="online-link-note mb-0">
-        {{ revealed ? 'Confirmed attendees can open this link now.' : `Confirmed attendees can open it from ${revealLabel}.` }}
-      </p>
-    </template>
-    <p v-else-if="access?.hasLink" class="online-link-note mb-0" role="status">
-      {{ revealed ? 'The link is available to confirmed attendees.' : `The link appears here on ${revealLabel} for confirmed attendees.` }}
+    <p v-else-if="access?.hasLink" class="online-link-note" role="status">
+      {{ revealed ? 'The link is shared with confirmed attendees.' : `The link appears here on ${revealLabel} for confirmed attendees.` }}
     </p>
-    <p v-else class="online-link-note mb-0">The organiser hasn't added the link yet. It will appear here for confirmed attendees.</p>
-  </section>
+    <p v-else class="online-link-note">The organiser hasn't added the link yet. It will appear here for confirmed attendees.</p>
+  </div>
 </template>
 
 <style scoped>
-.online-link { margin: 1rem 0 0; padding: 1rem; border: 1px solid var(--bookedz-border); border-radius: 14px; background: color-mix(in srgb, var(--bookedz-mint) 18%, var(--bookedz-surface)); }
+/* Same footprint as the summary's venue card so swapping colour doesn't shift the page */
+.online-link { margin-bottom: .9rem; padding: .85rem 1rem; border-radius: 15px; background: color-mix(in srgb, var(--bookedz-yellow) 20%, var(--bookedz-surface)); }
+.online-link.is-ready { padding: 1rem; border: 1px solid var(--bookedz-border); background: color-mix(in srgb, var(--bookedz-mint) 18%, var(--bookedz-surface)); }
+.venue-label { color: var(--bookedz-muted); font-size: .8rem; font-weight: 650; }
+.venue-name { margin: .15rem 0 0; color: var(--bookedz-ink); font-weight: 750; }
+.venue-name span { color: var(--bookedz-primary-dark); }
 .online-link-heading { margin: 0 0 .5rem; color: var(--bookedz-ink); font-size: 1rem; font-weight: 700; }
 .online-link-open { min-height: 44px; }
 .online-link-url { margin: .5rem 0 0; color: var(--bookedz-muted); font-size: .85rem; overflow-wrap: anywhere; }
-.online-link-note { margin-top: .5rem; color: var(--bookedz-muted); font-size: .9rem; }
+.online-link-note { margin: .15rem 0 0; color: var(--bookedz-muted); font-size: .9rem; }
+.is-ready .online-link-note { margin-top: .5rem; }
 </style>

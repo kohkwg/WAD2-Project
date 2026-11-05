@@ -12,6 +12,7 @@ import SkeletonList from '../components/ui/SkeletonList.vue'
 import BumpValue from '../components/ui/BumpValue.vue'
 import { toast } from '../composables/useToast'
 import { countdownLabel, isOfficialEvent } from '../utils/groups.js'
+import { isVenueHiddenForGroups } from '../utils/venueReveal.js'
 import { formatEventTime } from '../utils/helpers.js'
 
 // Community is Go together: people start a group for an event ("who wants to come?"),
@@ -63,6 +64,8 @@ async function load() {
     loading.value = false
   }
 }
+// Groups meet at the venue: not for online events, or while the venue is still hidden
+const groupableEvents = computed(() => events.value.filter((e) => !e.isOnline && !isVenueHiddenForGroups(e)))
 
 let refreshTimer
 // Friend requests arrive in real time in live mode; the panel refreshes when this ticks
@@ -304,7 +307,7 @@ function showEventGroups(eventId) {
     </aside>
     </div>
 
-    <StartGroupDialog v-if="composerFor !== null" :events="events" :event-id="composerFor" @close="closeComposer" @created="onCreated" />
+    <StartGroupDialog v-if="composerFor !== null" :events="groupableEvents" :event-id="composerFor" @close="closeComposer" @created="onCreated" />
   </div>
 </template>
 

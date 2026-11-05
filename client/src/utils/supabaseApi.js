@@ -17,6 +17,7 @@ import { supabase } from './supabase.js'
 import { api as recommendationApi } from '../lib/api.js'
 import * as hangouts from './supabaseHangoutsApi.js'
 import { onlineVenue, hideCapacityNumbers } from './onlineEvents.js'
+import { pendingVenue } from './venueReveal.js'
 
 // Network trouble gets a plain message, so people know the action did not go through.
 export function friendlyMessage(error) {
@@ -208,8 +209,13 @@ function toEvent(row, counts, myId) {
     hideCapacity: Boolean(row.hide_capacity),
     // The database stores indoor/outdoor on the venue, not the event
     isOutdoor: row.venue ? !row.venue.is_indoor : false,
-    // Online events have no venue row. If a venue was deleted, show a placeholder instead of breaking every page
-    venue: row.is_online ? onlineVenue() : toVenue(row.using_backup ? row.backup_venue : row.venue) || { name: 'Venue to be confirmed', address: '' },
+    // Online events have no venue row. A physical event without one (to be announced, hidden until
+    // venue_reveal_at, or a deleted venue) shows "Venue to be announced" instead of breaking pages
+    venue: row.is_online ? onlineVenue() : toVenue(row.using_backup ? row.backup_venue : row.venue) || pendingVenue(),
+    venuePending: !row.is_online && !(row.using_backup ? row.backup_venue : row.venue),
+    // Present once migration 20261105150000 is applied; set while a chosen venue is still hidden
+    venueRevealAt: row.venue_reveal_at || null,
+    hiddenVenue: null, // the hidden venue itself, for the event's organisers (getEvent)
     backupVenue: toVenue(row.backup_venue),
     usingBackup: row.using_backup,
     questions: [...row.event_questions]
@@ -281,8 +287,25 @@ export async function getEvent(eventId) {
   const user = await getCurrentUser()
   counted.isOnTeam = user ? Boolean(check(await supabase.rpc('is_event_staff', { p_event_id: eventId }))) : false
   const event = counted.isMine || counted.isOnTeam ? counted : hideCapacityNumbers(counted)
+  // A hidden venue is readable only by the event's organisers (RLS on event_hidden_venues)
+  if (event.venueRevealAt && (event.isMine || event.canManage)) event.hiddenVenue = await hiddenVenueOf(eventId)
   if (event.kind === 'hangout') event.hangout = await hangouts.hangoutDetails(eventId, event.isMine)
   return event
+}
+
+// { venue, backupVenue, isOutdoor } from event_hidden_venues, or null when nothing is hidden or
+// this user isn't one of the event's organisers
+async function hiddenVenueOf(eventId) {
+  const row = check(await supabase.from('event_hidden_venues').select('venue,backup_venue').eq('event_id', eventId).maybeSingle())
+  if (!row) return null
+  const place = (json) => json && { name: json.name, address: json.address || '', postal: json.postal || '', lat: json.lat ?? null, lng: json.lng ?? null }
+  return { venue: place(row.venue), backupVenue: place(row.backup_venue), isOutdoor: Boolean(row.backup_venue) }
+}
+
+// Hidden venues whose time has come become ordinary venues. A job does this every minute; the
+// event page also asks at the reveal time so nobody waits for it. Returns how many were released.
+export async function releaseDueEventVenues() {
+  return check(await supabase.rpc('release_due_event_venues')) || 0
 }
 
 // The online link is in its own table that only the organiser can read; everyone else asks
@@ -360,15 +383,19 @@ export async function createEventWith(client, eventData) {
     hideCapacity: Boolean(eventData.hideCapacity),
     requiresApproval: eventData.requiresApproval,
     isOnline,
-    // Online events have no venue or rain plan; the RPC refuses one that does
-    isOutdoor: isOnline ? false : eventData.isOutdoor,
-    venue: isOnline ? null : venuePayload(eventData.venue),
-    backupVenue: isOnline ? null : venuePayload(eventData.backupVenue),
+    // Online events have no venue or rain plan, and a venue to be announced has no rain plan yet;
+    // the RPC refuses either.
+    isOutdoor: isOnline || !eventData.venue ? false : eventData.isOutdoor,
+    venue: isOnline ? null : venuePayload(eventData.venue) || null,
+    backupVenue: isOnline || !eventData.venue || !eventData.isOutdoor ? null : venuePayload(eventData.backupVenue) || null,
     onlineLink: isOnline && eventData.onlineLink ? { url: eventData.onlineLink.url, revealAt: eventData.onlineLink.revealAt } : null,
     tags: eventData.tags,
     questions: eventData.questions.map(({ text, type, required }) => ({ text, type, required })),
   }
   if (eventData.coverImageUrl) payload.coverImageUrl = eventData.coverImageUrl
+  // Only sent when a chosen venue is hidden, so ordinary events also work with an RPC from before
+  // migration 20261105150000 (it refuses keys it doesn't know)
+  if (!isOnline && eventData.venue && eventData.venueRevealAt) payload.venueRevealAt = eventData.venueRevealAt
   const id = check(
     await client.rpc('create_event_with_details', {
       p_request_id: eventData.requestId,
@@ -421,6 +448,9 @@ export const setHangoutMeetingPoint = hangouts.setHangoutMeetingPoint
 
 const sameVenue = (a, b) => Boolean(a && b) && a.name === b.name && (a.address || '') === (b.address || '')
   && (a.lat ?? null) === (b.lat ?? null) && (a.lng ?? null) === (b.lng ?? null)
+const sameVenueOrNone = (a, b) => (!a && !b) || sameVenue(a, b)
+// The jsonb shape event_hidden_venues accepts (the create_event_with_details venue shape)
+const venueJson = (venue) => venue && ({ name: venue.name, address: venue.address || '', postal: venue.postal || null, lat: venue.lat ?? null, lng: venue.lng ?? null })
 const toQuestionType = (type) => (type === 'yesno' ? 'yes_no' : 'short_text')
 
 async function insertVenueWith(client, venue, isIndoor) {
@@ -523,21 +553,40 @@ export async function updateEventWith(client, { current, myId, rsvpCount }, chan
     hide_capacity: Boolean(changes.hideCapacity),
     is_online: Boolean(changes.isOnline),
   }
+  // A hidden venue waits in event_hidden_venues (organisers only) until its reveal time; while it
+  // exists the event has no public venue (events_hidden_venue_not_public), so it is removed before
+  // a venue goes back on or the event becomes online.
+  const wasHidden = Boolean(current.venueRevealAt)
+  let hiddenToSave = null
   if (changes.isOnline) {
     // Online events keep no venue rows (events_online_has_no_venue); the old rows stay for history
     if (current.usingBackup) throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.')
+    if (wasHidden) check(await client.from('event_hidden_venues').delete().eq('event_id', eventId))
     update.venue_id = null
     update.backup_venue_id = null
   } else {
+    // The venue as the organiser knows it: the hidden one, none yet, or the public one
+    const known = current.hiddenVenue
+      || { venue: current.venuePending || current.isOnline ? null : current.venue, backupVenue: current.backupVenue, isOutdoor: current.isOutdoor }
+    const venue = changes.venue || null
+    const isOutdoor = Boolean(venue) && Boolean(changes.isOutdoor)
+    const backupVenue = isOutdoor ? changes.backupVenue : null
+    const hideUntil = venue ? changes.venueRevealAt || null : null
     // isOutdoor is stored on the venue row, so changing it also needs a new venue row
-    const outdoorChanged = Boolean(current.isOutdoor) !== Boolean(changes.isOutdoor)
-    const mainChanged = current.isOnline || !sameVenue(current.venue, changes.venue) || outdoorChanged
-    const backupChanged = changes.isOutdoor ? !sameVenue(current.backupVenue, changes.backupVenue) : Boolean(current.backupVenue)
-    if (current.usingBackup && (mainChanged || backupChanged)) {
+    const outdoorChanged = Boolean(known.isOutdoor) !== isOutdoor
+    const mainChanged = current.isOnline || wasHidden || !sameVenueOrNone(known.venue, venue) || outdoorChanged
+    const backupChanged = wasHidden || (isOutdoor ? !sameVenue(known.backupVenue, backupVenue) : Boolean(known.backupVenue))
+    if (current.usingBackup && (mainChanged || backupChanged || hideUntil)) {
       throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.')
     }
-    if (mainChanged) update.venue_id = await insertVenueWith(client, changes.venue, !changes.isOutdoor)
-    if (backupChanged) update.backup_venue_id = changes.isOutdoor ? await insertVenueWith(client, changes.backupVenue, true) : null
+    if (hideUntil) {
+      // Saved after the event row; its trigger takes any public venue off the event
+      hiddenToSave = { event_id: eventId, venue: venueJson(venue), backup_venue: venueJson(backupVenue), reveal_at: hideUntil }
+    } else {
+      if (wasHidden) check(await client.from('event_hidden_venues').delete().eq('event_id', eventId))
+      if (mainChanged) update.venue_id = venue ? await insertVenueWith(client, venue, !isOutdoor) : null
+      if (backupChanged || (mainChanged && !venue)) update.backup_venue_id = isOutdoor ? await insertVenueWith(client, backupVenue, true) : null
+    }
   }
 
   // Becoming physical removes the saved link in the database (events_after_online_change)
@@ -545,6 +594,7 @@ export async function updateEventWith(client, { current, myId, rsvpCount }, chan
   if (!rows?.length) throw new Error('You can only edit events you organise.')
 
   try {
+    if (hiddenToSave) check(await client.from('event_hidden_venues').upsert(hiddenToSave, { onConflict: 'event_id' }))
     if (changes.isOnline) await saveOnlineLinkWith(client, eventId, changes.onlineLink)
     await saveEventTagsWith(client, eventId, current.tags || [], changes.tags)
     await saveEventQuestionsWith(client, eventId, current.questions || [], changes.questions)

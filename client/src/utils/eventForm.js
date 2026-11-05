@@ -2,6 +2,7 @@
 // (CreateEventView) and its unit tests. Pure functions, no Vue.
 
 import { onlineLinkErrors } from './onlineEvents.js'
+import { venueRevealErrors } from './venueReveal.js'
 
 // Everything the organiser fills in, across all steps
 export function blankEventForm() {
@@ -16,7 +17,8 @@ export function blankEventForm() {
     hideCapacity: false, // true = participants see only whether it's full
     isOnline: false, // online events have no venue; the link is kept privately
     onlineLink: { url: '', revealAt: '' }, // revealAt is a datetime-local value; '' url = no link yet
-    venue: null, // { name, address, postal, lat, lng } from OneMap
+    venue: null, // { name, address, postal, lat, lng } from OneMap; null = to be announced later
+    venueRevealAt: '', // datetime-local; '' = the venue shows as soon as the event is published
     isOutdoor: false,
     backupVenue: null, // used by Denzel's rain check
     requiresApproval: false,
@@ -54,14 +56,15 @@ export function errorsForStep(f, stepNumber, { now = new Date(), editing = false
   if (stepNumber === 2 && f.isOnline) errors.push(...onlineLinkErrors(f.onlineLink, f.endTime))
 
   if (stepNumber === 2 && !f.isOnline) {
-    if (!f.venue) errors.push('Choose the venue from the address search.')
+    // The venue may be announced later; a rain plan and a hidden venue need one chosen
+    errors.push(...venueRevealErrors(f))
     if (live && f.venue && !hasCoordinates(f.venue)) {
       errors.push('Choose a venue result with map coordinates for live events.')
     }
-    if (f.isOutdoor && !f.backupVenue) {
+    if (f.venue && f.isOutdoor && !f.backupVenue) {
       errors.push('Outdoor events need a backup venue in case of rain.')
     }
-    if (live && f.backupVenue && !hasCoordinates(f.backupVenue)) {
+    if (live && f.venue && f.isOutdoor && f.backupVenue && !hasCoordinates(f.backupVenue)) {
       errors.push('Choose a backup venue result with map coordinates for live events.')
     }
   }
