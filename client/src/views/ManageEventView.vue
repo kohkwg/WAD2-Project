@@ -175,7 +175,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 
 <template>
 <div class="design-baseline">
-  <RouterLink to="/organiser/events" class="workspace-back">← My events</RouterLink>
+  <RouterLink to="/organiser/events" class="workspace-back">← My Events</RouterLink>
   <p v-if="loading" class="my-5 text-center" role="status">Loading event workspace…</p>
   <div v-else-if="loadError" class="alert alert-danger mt-3" role="alert">{{ loadError }} <button type="button" class="btn btn-sm btn-outline-danger" @click="load">Retry event</button></div>
   <div v-else-if="workspace && !isOwner" class="alert alert-danger mt-3" role="alert">Only this event’s organiser can manage its tasks, announcements, budget, and weather plan.</div>

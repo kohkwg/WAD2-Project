@@ -84,7 +84,7 @@ function resetDemo() {
         <li><RouterLink class="side-link" data-label="Community" active-class="active" to="/community"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.community" /></svg><span class="side-label">Community</span></RouterLink></li>
         <template v-if="hasSession">
           <li><RouterLink class="side-link" data-label="My RSVPs" active-class="active" to="/my-rsvps"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg><span class="side-label">My RSVPs</span></RouterLink></li>
-          <li><RouterLink class="side-link" data-label="My events" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg><span class="side-label">My events</span></RouterLink></li>
+          <li><RouterLink class="side-link" data-label="My Events" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg><span class="side-label">My Events</span></RouterLink></li>
         </template>
       </ul>
       <ul class="sidebar-links sidebar-links--secondary">
@@ -120,7 +120,7 @@ function resetDemo() {
     <RouterLink class="bottom-tab" :class="{ active: isOnDiscover }" active-class="" exact-active-class="" to="/discover"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.discover" /></svg>Discover</RouterLink>
     <RouterLink class="bottom-tab" active-class="active" to="/community"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.community" /></svg>Community</RouterLink>
     <RouterLink class="bottom-tab" active-class="active" to="/my-rsvps"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg>My RSVPs</RouterLink>
-    <RouterLink class="bottom-tab" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>My events</RouterLink>
+    <RouterLink class="bottom-tab" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>My Events</RouterLink>
   </nav>
 </template>
 

@@ -55,7 +55,7 @@ const router = createRouter({
     // Invite links: /g/<token> opens the group, private or public
     { path: '/g/:token', component: () => import('../views/GroupView.vue'), meta: { title: 'Group invite' } },
     { path: '/my-rsvps', component: MyRsvpsView, meta: { title: 'My RSVPs' } },
-    { path: '/organiser/events', component: OrganiserEventsView, meta: { title: 'My events' } },
+    { path: '/organiser/events', component: OrganiserEventsView, meta: { title: 'My Events' } },
     { path: '/organiser/events/new', component: () => import('../views/NewEventView.vue'), meta: { title: 'Create event' } },
     { path: '/j/:token', redirect: to => `/g/${to.params.token}` },
     { path: '/organiser/events/:id/rsvps', component: ManageRsvpsView, meta: { title: 'Manage RSVPs' } },
