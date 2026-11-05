@@ -31,15 +31,6 @@ const filter = ref('all')
 const query = ref('')
 const composerFor = ref(null) // null closed; '' open with no event; an event id to preselect
 
-// "How Go together works" starts open on a first visit and remembers when it's closed
-const INTRO_KEY = 'bookedz-go-together-intro'
-const introOpen = ref(true)
-try { introOpen.value = localStorage.getItem(INTRO_KEY) !== 'closed' } catch { /* storage unavailable: keep it open */ }
-function onIntroToggle(event) {
-  introOpen.value = event.target.open
-  try { localStorage.setItem(INTRO_KEY, introOpen.value ? 'open' : 'closed') } catch { /* still toggles without storage */ }
-}
-
 const FILTERS = [
   { key: 'all', label: 'All groups' },
   { key: 'week', label: 'This week' },
@@ -216,10 +207,7 @@ function showEventGroups(eventId) {
           <button type="button" class="btn btn-primary" :disabled="loading" @click="openComposer()">Start a group</button>
         </div>
       </div>
-      <details class="smart-head-intro" :open="introOpen" @toggle="onIntroToggle">
-        <summary>How Go together works</summary>
-        <p class="community-lede">Going to an event? Start a group for it, public or just for friends. Joining someone’s group RSVPs you to the event too.</p>
-      </details>
+      <p class="community-lede">Going to an event? Start a group for it, public or just for friends. Joining someone’s group RSVPs you to the event too.</p>
     </header>
 
     <!-- A group you were in was deleted -->
@@ -335,6 +323,7 @@ function showEventGroups(eventId) {
 }
 .community-eyebrow { margin: 0 0 6px; color: var(--bookedz-muted); font-weight: 600; }
 .community-hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+.smart-head > .community-lede { max-width: none; margin: 0; }
 .community-lede { margin: 8px 0 0; max-width: 46ch; color: var(--bookedz-muted); }
 .community-hero-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .community-hero-actions .btn { min-height: 44px; }
