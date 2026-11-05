@@ -1,7 +1,6 @@
 import { readonly, ref } from 'vue';
 
-// two themes only: light and dark. someone who has never chosen starts in whichever their device
-// uses, and follows it until they pick one (an old saved "system" choice is treated as not chosen).
+// two themes only: light and dark. someone who has never chosen starts in light mode.
 
 const KEY = 'dino-color-theme';
 
@@ -10,8 +9,6 @@ const choices = ['light', 'dark'];
 const preference = ref('light');
 
 const chosen = ref(false); // true once the person (or a saved choice) has picked a theme
-
-const systemDark = ref(false);
 
 export const themePreference = readonly(preference);
 
@@ -36,39 +33,27 @@ export function setTheme(value) {
 }
 
 /**
- * Applies the saved theme or the device theme, then follows device and other-tab changes.
+ * Applies the saved theme or the light default, then follows other-tab changes.
  * Returns a function that stops the listeners.
  */
 export function initTheme() {
-  const media = window.matchMedia('(prefers-color-scheme: dark)');
-  systemDark.value = media.matches;
-  const fromSystem = () => systemDark.value ? 'dark' : 'light';
   try {
     const saved = localStorage.getItem(KEY);
     chosen.value = choices.includes(saved);
-    preference.value = chosen.value ? saved : fromSystem();
+    preference.value = chosen.value ? saved : 'light';
   } catch {
     chosen.value = false;
-    preference.value = fromSystem();
+    preference.value = 'light';
   }
-  const onSystemChange = () => {
-    systemDark.value = media.matches;
-    if (!chosen.value) {
-      preference.value = fromSystem();
-      applyTheme();
-    }
-  };
   const onStorage = event => {
     if (event.key !== KEY && event.key !== null) return;
     chosen.value = choices.includes(event.newValue);
-    preference.value = chosen.value ? event.newValue : fromSystem();
+    preference.value = chosen.value ? event.newValue : 'light';
     applyTheme();
   };
-  media.addEventListener('change', onSystemChange);
   window.addEventListener('storage', onStorage);
   applyTheme();
   return () => {
-    media.removeEventListener('change', onSystemChange);
     window.removeEventListener('storage', onStorage);
   };
 }
