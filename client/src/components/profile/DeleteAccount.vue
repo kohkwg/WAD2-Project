@@ -65,7 +65,7 @@ async function remove() {
           <li>your profile, username and interests</li>
           <li>your RSVPs, saved events and waitlist places</li>
         </ul>
-        <p class="delete-note">If you host events, delete them from My events first. Other people have RSVPs on them, so your account can't be deleted while you still host any.</p>
+        <p class="delete-note">If you host events, delete them from My Events first. Other people have RSVPs on them, so your account can't be deleted while you still host any.</p>
 
         <label for="delete-password" class="form-label">Enter your password to confirm</label>
         <PasswordInput id="delete-password" v-model="password" :class="{ 'is-invalid': passwordMessage }" autocomplete="current-password" :aria-invalid="Boolean(passwordMessage)" aria-describedby="delete-password-msg" />

@@ -8,7 +8,6 @@ import ParticipantRsvpRow from '../components/rsvp/ParticipantRsvpRow.vue'
 import SavedEventCard from '../components/rsvp/SavedEventCard.vue'
 import RsvpEmptyState from '../components/rsvp/RsvpEmptyState.vue'
 import SkeletonList from '../components/ui/SkeletonList.vue'
-import '../assets/design-baseline.css'
 import { toast } from '../composables/useToast'
 import { groupRsvps, eventCalendar, sortSavedEvents } from '../utils/rsvpOverview.js'
 import {

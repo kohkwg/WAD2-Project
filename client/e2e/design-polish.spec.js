@@ -48,7 +48,7 @@ test('live navigation hides personal links until a session arrives', async ({ pa
   await page.goto('/discover')
   const nav = page.getByRole('navigation', { name: 'Main navigation' })
   await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible()
-  for (const name of ['My RSVPs', 'My events', 'Create event', 'Your profile']) {
+  for (const name of ['My RSVPs', 'My Events', 'Create event', 'Your profile']) {
     await expect(nav.getByRole('link', { name, exact: true })).toHaveCount(0)
   }
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('test-auth-change', { detail: { id: 'test-user', email: 'test@example.invalid' } })))
@@ -63,5 +63,5 @@ test('live navigation hides personal links until a session arrives', async ({ pa
   await expect(toggle).toBeFocused()
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('test-auth-change', { detail: null })))
   await toggle.click()
-  await expect(nav.getByRole('link', { name: 'My events', exact: true })).toHaveCount(0)
+  await expect(nav.getByRole('link', { name: 'My Events', exact: true })).toHaveCount(0)
 })

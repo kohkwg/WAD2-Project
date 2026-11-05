@@ -144,7 +144,7 @@ test('Manage RSVPs reloads the event when the mounted route changes IDs', async 
   await expect(page.getByRole('img', { name: /^Capacity: .* of 30$/ })).toBeVisible()
   await page.evaluate(() => document.querySelector('#app').__vue_app__.config.globalProperties.$router.push('/organiser/events/e2/rsvps'))
   await expect(page.getByRole('heading', { name: 'Intro to Vue Workshop' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'My events', exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'My Events', exact: true })).toBeVisible()
 })
 
 test('closed RSVP tab exposes its selected state and controlled panel', async ({ page }) => {

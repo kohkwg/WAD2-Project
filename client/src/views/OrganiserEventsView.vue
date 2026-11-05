@@ -50,7 +50,7 @@ async function loadEvents() {
   now.value = Date.now()
   errorMessage.value = ''
   try {
-    // My events lists official events; Go together groups are managed from Community
+    // My Events lists official events; Go together groups are managed from Community
     const rows = (await getOrganiserEvents()).filter(isOfficialEvent)
     if (mounted && request === requestId) events.value = rows
   } catch (error) {
@@ -125,7 +125,7 @@ async function removeEvent(eventId) {
 
 <template>
   <div class="organiser-events-page">
-    <header class="organiser-heading"><div><p class="organiser-kicker">Your hosting space</p><h1 class="page-title">My events</h1><p>{{ loading ? 'Your gatherings, all in one place.' : `${counts.all} events · ${counts.upcoming} upcoming · ${counts.drafts} drafts` }}</p></div><RouterLink to="/organiser/events/new" class="btn btn-primary">＋ Create event</RouterLink></header>
+    <header class="organiser-heading"><div><p class="organiser-kicker">Your hosting space</p><h1 class="page-title">My Events</h1><p>{{ loading ? 'Your gatherings, all in one place.' : `${counts.all} events · ${counts.upcoming} upcoming · ${counts.drafts} drafts` }}</p></div><RouterLink to="/organiser/events/new" class="btn btn-primary">＋ Create event</RouterLink></header>
     <div v-dismissible v-if="justCreatedId" class="alert alert-success" role="status">Event published. Participants can now find it and RSVP.</div>
     <div v-dismissible v-if="justUpdatedId" class="alert alert-success" role="status">Changes saved. {{ route.query.announced ? 'An announcement about them is now on the event page.' : 'No announcement was posted.' }}</div>
     <div v-dismissible v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success" role="status">{{ statusMessage }}</div>
