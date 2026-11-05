@@ -35,7 +35,7 @@ const dateLabel = computed(() => {
   tomorrow.setDate(tomorrow.getDate() + 1)
   const day = date.toDateString() === today.toDateString() ? 'Today'
     : date.toDateString() === tomorrow.toDateString() ? 'Tomorrow'
-      : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
   return `${day}, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
 })
 const distanceLabel = computed(() => typeof props.event.distance_km === 'number' && Number.isFinite(props.event.distance_km) && props.event.distance_km >= 0

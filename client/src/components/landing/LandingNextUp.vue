@@ -26,7 +26,7 @@ const slides = computed(() => [{ id: 'intro' }, ...events.value])
 const slide = computed(() => slides.value[index.value % slides.value.length])
 const canRotate = computed(() => slides.value.length > 1)
 const playing = computed(() => canRotate.value && !userPaused.value && !held.value && onScreen.value && pageVisible.value)
-const dayTime = new Intl.DateTimeFormat('en-SG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+const dayTime = new Intl.DateTimeFormat('en-SG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 const when = event => dayTime.format(new Date(event.startTime))
 
 const enter = computed(() => reduced.value ? false : { opacity: 0, x: 36, rotate: 5 })

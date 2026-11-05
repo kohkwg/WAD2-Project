@@ -107,11 +107,11 @@ function startsIn(event) {
   if (minutes < 24 * 60) return `Starts in ${Math.round(minutes / 60)} hr`
   return countdownLabel(event.startTime, new Date(now.value))
 }
-// "Thu, 12 Nov · 5:00 – 10:00 pm", short enough for a compact row
+// "Thu, 12 Nov 2026 · 5:00 – 10:00 pm", short enough for a compact row
 function shortTime(event) {
   const start = new Date(event.startTime), end = new Date(event.endTime)
   if (Number.isNaN(start.getTime())) return 'Date to be announced'
-  const day = start.toLocaleDateString('en-SG', { weekday: 'short', day: 'numeric', month: 'short' })
+  const day = start.toLocaleDateString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
   const clock = (date) => date.toLocaleTimeString('en-SG', { hour: 'numeric', minute: '2-digit' })
   return Number.isNaN(end.getTime()) ? `${day} · ${clock(start)}` : `${day} · ${clock(start)} – ${clock(end)}`
 }

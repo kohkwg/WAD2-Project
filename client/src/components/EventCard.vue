@@ -14,7 +14,7 @@ const props = defineProps({
 const emit = defineEmits(['preference'])
 const failedCover = ref('')
 const coverSource = computed(() => props.event?.image_url || props.event?.coverImageUrl || '')
-const timeLabel = computed(() => new Date(props.event.start_time).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))
+const timeLabel = computed(() => new Date(props.event.start_time).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }))
 const description = computed(() => typeof props.event.description === 'string' ? props.event.description.trim() : '')
 const isFull = computed(() => !!props.event.is_full || (props.event.spots_left != null && Number(props.event.spots_left) <= 0))
 // Events are tagged rather than categorised, so fall back to the first tag

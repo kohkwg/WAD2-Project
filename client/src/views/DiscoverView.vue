@@ -257,6 +257,7 @@ function dayLabel(key) {
     timeZone: 'UTC',
     day: 'numeric',
     month: 'short',
+    year: 'numeric',
   })
 }
 
@@ -386,10 +387,8 @@ const dateGroups = computed(() => {
           timeZone: 'Asia/Singapore',
           weekday: 'long',
         }),
-        year:
-          date.getFullYear() !== new Date().getFullYear()
-            ? date.getFullYear()
-            : '',
+        // Always shown, so every day heading says which year it is
+        year: Number(date.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric' })),
         events: [],
       })
     }
@@ -1079,10 +1078,7 @@ onBeforeUnmount(() => {
           >
             <div class="timeline-date">
               <time :datetime="group.date">
-                <span class="date-label">
-                  {{ group.label }}
-                  <template v-if="group.year">, {{ group.year }}</template>
-                </span>
+                <span class="date-label">{{ group.label }}<span v-if="group.year" class="date-year">{{ group.year }}</span></span>
 
                 <span class="weekday">{{ group.weekday }}</span>
               </time>
@@ -1477,6 +1473,13 @@ onBeforeUnmount(() => {
 .weekday {
   margin-top: 2px;
   font-size: 10px;
+  color: var(--bookedz-muted);
+}
+/* The year sits under the day and month, so the narrow date column never breaks it mid-date */
+.date-year {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--bookedz-muted);
 }
 
