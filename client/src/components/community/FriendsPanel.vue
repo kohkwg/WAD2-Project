@@ -1,7 +1,7 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as friends from '../../utils/profileFriends.js'
-// Friends (live mode): find accounts by username, send and answer requests. Shown as a
+// Friends: find accounts by username, send and answer requests. Shown as a
 // small side panel in Community (compact) next to Go together.
 const props = defineProps({ visible: { type: Boolean, default: true }, updates: { type: Number, default: 0 }, compact: Boolean })
 let pendingUpdate = false
@@ -27,7 +27,6 @@ let searchVersion = 0
 onBeforeUnmount(() => { active = false; loadVersion++; searchVersion++ })
 watch(query, () => { searchVersion++; results.value = []; searching.value = false; searched.value = false; searchError.value = '' })
 async function refresh({ silent = false } = {}) {
-  if (!friends.USING_SUPABASE) return
   const version = ++loadVersion
   if (!silent) loading.value = true
   error.value = ''
@@ -92,9 +91,9 @@ const respond = (person, accept) => mutate(person.id, () => friends.respondToReq
 
 <template>
   <section class="friends-panel" :class="{ 'is-compact': compact }" aria-labelledby="friends-title">
-    <header class="friends-heading"><div><h2 id="friends-title">Friends</h2><p class="text-body-secondary mb-0">{{ compact ? 'Add people by username. You’re friends once they accept.' : 'Find other accounts by username. You become friends when they accept.' }}</p></div><button v-if="friends.USING_SUPABASE" class="btn btn-outline-secondary" :class="{ 'btn-sm': compact }" type="button" :disabled="loading || Boolean(busy)" @click="refresh">{{ compact ? 'Refresh' : 'Refresh friends' }}</button></header>
-    <p v-if="!friends.USING_SUPABASE" class="friends-demo">Friends work in the live app once you’re signed in.</p>
-    <template v-else>
+    <header class="friends-heading"><div><h2 id="friends-title">Friends</h2><p class="text-body-secondary mb-0">{{ compact ? 'Add people by username. You’re friends once they accept.' : 'Find other accounts by username. You become friends when they accept.' }}</p></div><button class="btn btn-outline-secondary" :class="{ 'btn-sm': compact }" type="button" :disabled="loading || Boolean(busy)" @click="refresh">{{ compact ? 'Refresh' : 'Refresh friends' }}</button></header>
+    <p v-if="!friends.USING_SUPABASE" class="friends-demo">Demo: sample friends, saved in this browser. Try usernames like dina_r or farah_ali.</p>
+    <div class="friends-body">
       <p v-if="loading" role="status">Loading friends…</p>
       <div v-dismissible v-if="error" class="alert alert-warning" role="alert">{{ error }} <button class="btn btn-outline-secondary" type="button" :disabled="loading || Boolean(busy)" @click="refresh">Retry friends</button></div>
       <p v-dismissible v-if="actionError" class="alert alert-danger" role="alert">{{ actionError }} Try the same action again.</p>
@@ -116,7 +115,7 @@ const respond = (person, accept) => mutate(person.id, () => friends.respondToReq
         </section>
         <section class="friend-section" aria-labelledby="your-friends-title"><h3 id="your-friends-title">Your friends ({{ people.length }})</h3><p v-if="!people.length" class="text-body-secondary">No friends yet. Find someone above and send a request.</p><ul v-else class="friend-list"><li v-for="person in people" :key="person.id"><div><strong>{{ person.displayName || person.username }}</strong><span v-if="person.username" class="d-block text-body-secondary">@{{ person.username }}</span></div><span class="text-body-secondary">Friend</span></li></ul></section>
       </template>
-    </template>
+    </div>
   </section>
 </template>
 
@@ -135,7 +134,7 @@ h3 { font-size: 1.2rem; }
 .btn { min-height: 44px; }
 .alert { overflow-wrap: anywhere; }
 @media (max-width:575px) { .friend-form-row { flex-direction: column; } .friend-list li, .friend-actions { flex-wrap: wrap; } }
-.friends-demo { margin: 0; color: var(--bookedz-muted); font-size: .92rem; }
+.friends-demo { margin: 0 0 .5rem; color: var(--bookedz-muted); font-size: .82rem; }
 /* Side-panel size: tighter spacing, stacked search, smaller headings and buttons */
 .is-compact { padding: 1.1rem; }
 .is-compact .friends-heading { gap: .5rem; margin-bottom: .75rem; }

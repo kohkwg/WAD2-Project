@@ -718,6 +718,13 @@ It covers starting a group, listing, the host's spot, private groups and invite 
 chat, ideas and votes, the host's pick, availability windows and leavers, and deleting the official
 event. `livePlanView.test.js` checks that the live plan is shaped like the demo's.
 
+Go together with friends (demo data version 6: sample friends, friends-only groups, an invite,
+a hosted group with a request, a deleted-group notice). The last test in `go-together.spec.js`
+covers accepting an invite, dismissing a notice, asking to join with a message, approving it,
+changing settings (including the spots check) and deleting the group. `groups-db.check.mjs` has
+four more database checks: friends-only visibility and quick add, invites as approval with join
+messages, host settings, and deleting with notices.
+
 Friends in Community (stubbed friends backend, demo mode):
 
 ```sh

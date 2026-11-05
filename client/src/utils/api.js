@@ -59,8 +59,8 @@ export const getEventOnlineAccess = (eventId) => backend.getEventOnlineAccess(ev
 const groupsBackend = USING_SUPABASE ? supabaseGroupsApi : mockApi
 export const getGroups = () => groupsBackend.getGroups() // public upcoming groups, plus private ones you're in
 export const getGroup = (target) => groupsBackend.getGroup(target) // { id } or { token } from an invite link; includes the plan for members
-export const createGroup = (form) => groupsBackend.createGroup(form) // { eventId, note, capacity, joinMode, visibility }
-export const joinGroup = (target) => groupsBackend.joinGroup(target) // { id, token? }; private groups need the token
+export const createGroup = (form) => groupsBackend.createGroup(form) // { eventId, note, capacity, joinMode, visibility, inviteIds }
+export const joinGroup = (target) => groupsBackend.joinGroup(target) // { id, token?, message? }; friends-only groups need the link, an invite or friendship
 export const getGroupComments = (groupId) => groupsBackend.getGroupComments(groupId)
 export const addGroupComment = (groupId, text) => groupsBackend.addGroupComment(groupId, text)
 export const deleteGroupComment = (commentId) => groupsBackend.deleteGroupComment(commentId)
@@ -69,6 +69,12 @@ export const setGroupAvailability = (groupId, slot, cells) => groupsBackend.setG
 export const voteGroupStop = (groupId, slot, suggestionId, keen) => groupsBackend.voteGroupStop(groupId, slot, suggestionId, keen)
 export const chooseGroupStop = (groupId, slot, suggestionId) => groupsBackend.chooseGroupStop(groupId, slot, suggestionId) // host; suggestionId or null
 export const removeGroupStop = (groupId, slot, suggestionId) => groupsBackend.removeGroupStop(groupId, slot, suggestionId)
+export const getGroupInvites = () => groupsBackend.getGroupInvites() // invites from friends waiting for you
+export const respondGroupInvite = (inviteId, accept) => groupsBackend.respondGroupInvite(inviteId, accept) // accept joins straight away
+export const updateGroupSettings = (groupId, settings) => groupsBackend.updateGroupSettings(groupId, settings) // host; { visibility, joinMode, capacity, note }
+export const deleteGroup = (groupId) => groupsBackend.deleteGroup(groupId) // host; members get a notice
+export const getGroupNotices = () => groupsBackend.getGroupNotices() // "a group you were in was deleted"
+export const dismissGroupNotice = (noticeId) => groupsBackend.dismissGroupNotice(noticeId)
 
 // Food places and deals near a point, from the Express server (/api/food/nearby).
 // Works in both modes; needs the server running.

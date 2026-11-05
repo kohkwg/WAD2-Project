@@ -1188,6 +1188,42 @@ not persist. These are dated observations, not permanent database invariants.
 - Not done: full suites, a production build, live or real-device checks, and committed specs
   for the new menu and navigation (scratch scripts only).
 
+### 5 November — softer dark mode, Discover spacing, "My Events" (`gregory`)
+
+- **Discover:** merging dev kept Vivienne's own Discover ticket pass and dropped Gregory's
+  overlapping light rules; Gregory's part is 14px between rows, 18px between days, and the dark
+  mode below.
+- **Merged dev into `gregory`:** kept dev's dismissible alerts and Event team panel on My Events
+  and Create event, the Delete account panel, the new sidebar wording and both 5 November
+  decisions, with "My Events" throughout (including the Delete account note). Restored the My
+  RSVPs stat-tile styles that dev had dropped, and removed a stray dark-mode fragment that limited
+  the tab pills to dark mode. Vivienne's new event RSVP, sign-in, ticket page and hangout panel
+  dark shadows now use the soft tokens; her Discover dark edges are no longer solid orange.
+  Removed duplicate `design-baseline.css` imports in `DiscoverView.vue` and `MyRsvpsView.vue`.
+- **Dark mode:** four tokens (`--db-dark-hero`, `--db-dark-edge`, `--db-dark-orange`,
+  `--db-dark-teal`) replace the solid orange hero edges and shadows and the 60% teal card shadows
+  on every ticket page: a plain dark hero with a soft orange corner glow, a 75% orange edge and
+  hard shadows at 45–50%. A first pass that blended the colours into the surface looked dull to
+  Vivienne and was replaced. The My RSVPs waitlist offer banner and the My Events date strip no
+  longer use the olive fill; background glows are halved. Fixed the Profile form's dark
+  selector, which never matched.
+- **Label:** "My Events" in the sidebar, phone tab bar, page title, heading and three back links;
+  three e2e specs updated to match.
+- **Sort drop-downs:** My Events and Discover "Sort by" use `appearance: base-select` where the
+  browser supports it: the open list joins the button (same 2px edge and width, soft shadow,
+  chosen option in orange text with a tick) and flips above only when there isn't room below.
+  Other browsers keep the native list. Previewed with injected CSS at 1280/375px in both themes,
+  choosing by mouse and keyboard (8/8). The final run against the saved file was stopped before
+  it finished, so it is unverified.
+- Chromium on an owned demo server (5195; 5173 was in use): `design-polish`,
+  `legacy-review-fixes` and `feature4-public-weather` gave 9 passed, 1 skipped, 3 failed. The
+  three failures pre-date this change (no "Create event" sidebar link, Discover no longer renders
+  `.event-card`, no "Ready to RSVP?" heading); the new "My Events" assertions run and pass before
+  each. Scratch screenshots of Discover, My RSVPs, My Events and Community at 375/575/768/1280px
+  in both themes: no overflow, one `main`, no console errors (repeated after the final dark-mode
+  values and spacing). Keyboard focus outline checked on the Discover chips.
+- Not done: full suites, a production build, live or real-device checks.
+
 ### 5 November — online events, hidden capacity and the Others tag
 
 - **Create Event:** Basics has an "Others" tag and a "Show the capacity to participants"

@@ -89,3 +89,31 @@ test('saved demo data with hangout-shaped groups is upgraded to kind group', asy
   assert.deepEqual(g.group, { visibility: 'public', inviteToken: 'tok', eventId: 'e1' })
   assert.equal(g.hangout, undefined)
 })
+
+test('settingsErrors checks visibility, who can join, spots against members, and the note', async () => {
+  const { settingsErrors } = await import('../groups.js')
+  assert.deepEqual(settingsErrors({ visibility: 'private', joinMode: 'approval', capacity: 4, note: '' }, 3), [])
+  assert.deepEqual(settingsErrors({ visibility: 'x', joinMode: 'auto', capacity: 2, note: 'a'.repeat(201) }, 3).map((e) => e.field), ['visibility', 'joinMode', 'capacity', 'note'])
+  assert.match(settingsErrors({ visibility: 'public', joinMode: 'open', capacity: 2 }, 3)[0].message, /3 people are already in/)
+})
+
+test('countdownLabel says when the event is, in Singapore days', async () => {
+  const { countdownLabel } = await import('../groups.js')
+  const now = new Date('2026-11-05T02:00:00Z') // 10 am in Singapore
+  assert.equal(countdownLabel('2026-11-05T03:00:00Z', now), 'In 1h')
+  assert.equal(countdownLabel('2026-11-05T12:00:00Z', now), 'Today')
+  assert.equal(countdownLabel('2026-11-05T17:00:00Z', now), 'Tomorrow') // 1 am the next day in Singapore
+  assert.equal(countdownLabel('2026-11-09T12:00:00Z', now), 'In 4 days')
+  assert.equal(countdownLabel('2026-11-01T12:00:00Z', now), 'Happening now')
+})
+
+test('demo data version 6 adds friends, friends-only groups, an invite and a host request', async () => {
+  const { createSeedData } = await import('../mockData.js')
+  const db = createSeedData()
+  assert.ok(db.users.find((u) => u.id === 'u2').username)
+  assert.ok(db.friendships.some((f) => f.status === 'accepted' && f.a === 'u1' && f.b === 'u2'))
+  const invite = db.groupInvites.find((i) => i.userId === 'u1')
+  if (invite) assert.equal(db.events.find((e) => e.id === invite.groupId).group.visibility, 'private')
+  const request = db.rsvps.find((r) => r.eventId === 'grp6' && r.status === 'pending')
+  if (request) assert.ok(request.message.length > 0)
+})

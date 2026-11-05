@@ -111,12 +111,12 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 | Capacity | **spots**: "19 spots left", "20 spots in total", "Full" | places, seats, taken |
 | Organiser's list | **Guest list** / **RSVPs** | Attendees list, registrations (in UI text) |
 | Waitlist offer | "A spot opened up", "Confirm my spot" | Claim, accept offer |
-| Going to an event with others | **Go together** (the feature), **group**; **Start a group**, **Join group**, **Ask to join** (host approves), **Leave group**; **Public** / **Private**; **Invite link** | Jio, meetup, squad, hangout |
+| Going to an event with others | **Go together** (the feature), **group**; **Start a group**, **Join group**, **Ask to join** (host approves), **Leave group**; who can see it: **Public** / **Friends only**; who can join: **Anyone can join** / **Host approves**; **Invite link**, **Accept invite**, **Delete group** | Jio, meetup, squad, hangout |
 | People you know | **Friends**; **Add friend**, **Friend requests**, **Find people** (by username) | Contacts, followers, friend groups |
 | A group's plan around the event | **before and after plan**; **when you're free** | hangout, itinerary |
 
-- **Sentence case** for headings, labels, buttons and tags. No all-caps eyebrows or
-  labels.
+- **Sentence case** for headings, labels, buttons and tags, except **My Events**, which is
+  capitalised to match My RSVPs. No all-caps eyebrows or labels.
 - **Dates and times** use the Singapore style everywhere: "Sat, 7 Nov, 10:00 am – 12:00 pm"
   (`formatEventTime`), "7 Nov" for timeline dates, "1 Nov, 1:39 pm" for timestamps.
   Day before month, 12-hour times with lower-case am/pm.
@@ -130,8 +130,12 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 
 - **Event actions** use a ticket-inspired shape with a perforated divider. Labels follow
   [section 3](#3-words). Status indicators are labelled, non-interactive badges with icons.
-- **Chips** are pills, 44px tall, tinted by category; the selected chip turns ink-filled.
-  A scrolling chip row fades at whichever edge has more to show.
+- **Chips** are pills, 44px tall, tinted by category, with a 2px edge; the selected chip turns
+  orange with a small tilt and hard shadow, like the Go together filters. A scrolling chip row
+  fades at whichever edge has more to show.
+- **Sort drop-downs** (My Events, Discover) open as a list attached to the button, the same
+  width and edge, with the chosen option in orange text and a tick. Browsers without
+  customisable selects show their native list.
 - **Discover rows** are compact and equal height: thumbnail ("Show on map"), title,
   "time · spots · venue" on one line (cut off with "…", full text on hover and when
   selected). Clicking a row selects it; the RSVP button and extra details appear only on
@@ -158,7 +162,7 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
   is public. The menu closes on route change or Escape. From 992px a **Collapse sidebar**
   button (a round chevron on the sidebar's right edge, on the divider line, labelled "Collapse" /
   "Expand" on hover or focus) turns it into a 76px icon rail (Discover, Community, My
-  RSVPs, My events, Theme, account); each icon's name shows as a tooltip on hover or
+  RSVPs, My Events, Theme, account); each icon's name shows as a tooltip on hover or
   keyboard focus, and the page widens with it. The choice is saved as `bookedz-sidebar`; until
   someone chooses, it starts collapsed below 1200px and expanded above.
 - **Theme:** Auto (follows the OS) / Light / Dark, saved as `bookedz-color-theme`. The collapsed desktop rail shows one icon button that cycles Auto → Light → Dark.
@@ -214,7 +218,7 @@ signed-in visitors with a save get a **Saved** chip (with a count) at the start 
 ### Community: Go together (`/community`)
 Community is where people find others to go to events with. **Official events live in
 Discover; groups live in Community**, and neither appears in the other's lists (Discover
-and My events exclude groups).
+and My Events exclude groups).
 
 - **A group** is tied to one official event: the host's note, the event card (title, time,
   venue, category tint), who is going (avatars), spots left (2 to 8 including the host) and
@@ -259,8 +263,8 @@ to `/community`). A four-step studio
 whole hour for two hours; moving the start keeps the length, and an end before the start is
 flagged beside the field. Back is hidden on the first step. Tags match the Discover chips.
 
-### My events and Manage RSVPs (organiser)
-My events: date-led cards, search, tabs and sort, skeleton loading, animated grid.
+### My Events and Manage RSVPs (organiser)
+My Events: date-led cards, search, tabs and sort, skeleton loading, animated grid.
 Manage RSVPs: the spots bar (confirmed, offers out, available) with "N left"; tabs carry
 the other counts (no duplicate tiles). With more than one pending RSVP, checkboxes and
 **Approve selected** handle them in bulk. Reject sits apart from Approve and has a
@@ -357,11 +361,22 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **5 Nov 2026:** Discover keeps Vivienne's ticket pass, with more space between rows and days.
+  Dark mode on every ticket page, Discover and the event RSVP, sign-in and ticket pages
+  included, keeps big areas plain and accents clean: a dark hero with a soft orange
+  corner glow, a clean orange edge and hard shadows at 45–50%; the waitlist offer banner and
+  My Events date strip lose their olive fill. "My events" is now **My Events**. The Sort by
+  drop-downs open as an attached list.
 - **4 Nov 2026:** Collapsible sidebar (icon rail with tooltips, remembered). Go together
   pages got more motion and live updates: painted cells pop, the group heatmap and best
   outline ease, slot times and picks fade in, Keen counts and filter counts bump, members
   and chat messages slide in, map pins drop in, and the group page refreshes every 20 seconds
   (chat every 15) and on focus. All of it is off with reduced motion.
+- **5 Nov 2026:** Start a group lists only events you've RSVP'd to; joining a group RSVPs you to
+  the event. Community: "Your events" strip, each event's groups in a sideways carousel, no event teams.
+- **5 Nov 2026:** Groups show "Public / Friends only" and "Anyone can join / Host approves"
+  badges; Community groups sit inside one card per event, with a "Your groups" strip, invites and
+  "group deleted" notices at the top; the group page has a sticky action bar and host settings.
 - **4 Nov 2026:** Community has a small **Friends** side panel (moved from Profile); the Profile
   Groups tab is gone so "group" only means Go together. Go together, group pages and My RSVPs use the
   festival-ticket look from `design-baseline.css` like My events and Create event.

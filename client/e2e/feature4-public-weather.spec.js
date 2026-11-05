@@ -88,11 +88,11 @@ test('public list cards and loading/errors use clear status semantics', async ({
   })
   await page.goto('/organiser/events')
   await expect(page.getByRole('status')).toContainText(/loading your events/i)
-  await expect(page.getByRole('heading', { name: 'My events', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'My Events', exact: true })).toBeVisible()
   const cardHeading = page.getByRole('heading', { name: 'Intro to Vue Workshop', exact: true })
   await expect(cardHeading).toBeVisible()
   expect(await cardHeading.evaluate(node => node.tagName)).toBe('H3')
-  // Redesigned My events cards: one labelled progress bar per event with a capacity, and "N of M confirmed"
+  // Redesigned My Events cards: one labelled progress bar per event with a capacity, and "N of M confirmed"
   await expect(page.getByRole('progressbar', { name: /^Confirmed RSVPs for / })).toHaveCount(3)
   await expect(page.locator('.capacity-copy').first()).toContainText(/of \d+ confirmed/)
 
