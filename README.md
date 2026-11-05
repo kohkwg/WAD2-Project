@@ -79,6 +79,16 @@ terminal:
 ```bash
 pnpm --dir server dev
 ```
+### Accounts and passwords
+
+| email | password |
+| -- | -- |
+| test1@example.com | p@ssw0rd |
+| test2@example.com | p@ssw0rd |
+| yo@yo.yo | yoyoyoyo |
+| mo@mo.mo | momomomo |
+| aishani29@gmail.com | aishani29 |
+
 
 ## Features
 
@@ -165,7 +175,7 @@ HTML report.
 | Create and organise events | `motion-theme`, `organiser-events`, `manage-event-edit`, `manage-event-navigation`, `event-team`, `event-coorganisers` |
 | Tasks, announcements, budget, weather | `feature4`, `feature4-consistency`, `feature4-interactions`, `feature4-public-weather`, `feature4-ux` |
 | Floor plan and programme | `feature6` |
-| Go together and friends | `go-together`, `community-friends`, `community-public` |
+| Community | `go-together`, `community-friends`, `community-public` |
 | Profile, notifications and navigation | `f1-profile-design`, `notifications`, `user-notifications`, `navbar-account`, `sidebar-collapse` |
 | Layout at 375, 575, 768 and 1280px | `design-polish` |
 
@@ -269,18 +279,75 @@ the National Environment Agency via [data.gov.sg](https://data.gov.sg/); nearby 
 
 ## AI use
 
-The team used an AI coding assistant for these parts:
+### Scope of AI assistance
 
-- **Feature 4:** the first version of tasks, announcements, budget and weather, and the live
-  preparation of Feature 4 and the rain venue switch.
-- **Integration:** combining teammates' branches, including the shared API boundary.
-- **Frontend redesign:** the shared visual system, navigation and page redesigns (23 October), with
-  later changes across pages at team members' requests.
-- **Feature 3:** the remaining check-in work, at Huxley's request (23 October).
-- **Go together:** the live-mode database migrations (4 November).
-- **Later features at team members' requests:** among others, Discover search suggestions, online
-  events, hidden venues and notifications (5 November).
-- **Tests and documents:** test cases, spec updates, code comments, the code cleanup and much of the
-  documentation, including this README.
+Our team used AI/LLM assistants for supporting tasks during the development
+of Dino. The project’s problem definition, solution concept, feature
+requirements, application architecture, technology choices, algorithms,
+business rules and core implementation were developed by the team.
 
-Each teammate keeps the authorship of their own code.
+Our use of AI was limited to the following supporting activities:
+
+- **Information search and learning:** assistance with finding technical
+  information and understanding documentation, terminology and error
+  messages. The team evaluated this information and decided how to apply
+  it to the project.
+- **UI/UX inspiration:** exploration of visual references, layouts, themes,
+  colour choices and responsive presentation. The team determined the
+  final designs, user journeys and interaction behaviour.
+- **Boilerplate and illustrative snippets:** assistance with generic
+  starter code and small examples that did not implement the application’s
+  main business logic, backend endpoints or critical frontend interactions.
+- **Debugging explanations:** explanations of coding errors and suggestions
+  for areas to investigate. The team diagnosed the underlying problems,
+  selected solutions and implemented fixes for major implementation issues.
+- **Testing support:** assistance with drafting test cases, sample inputs,
+  mock data and edge-case suggestions. The team determined the expected
+  behaviour, reviewed the assertions, ran the tests and investigated failures.
+- **Documentation:** assistance with drafting, organising and proofreading
+  setup instructions, feature descriptions, code comments and this README,
+  including this AI declaration. The team checked the final wording against
+  the application and its actual use of AI.
+
+### Team-developed features and implementation
+
+The team designed and implemented Dino’s core functionality, including:
+
+| Area | Team contribution |
+| --- | --- |
+| Event discovery and recommendations | Event search and filtering, map-based discovery, saved events, recommendation scoring, ranking, diversity and explanations. |
+| Event creation and management | Event creation and editing workflows, venue selection, online events, RSVP questions, approval settings, capacity and visibility rules. |
+| RSVPs and waitlists | RSVP processing, approval and rejection, capacity handling, waitlist priority scoring, place offers and offer expiry. |
+| Tickets and attendance | QR and barcode ticket workflows, staff scanning, attendee lookup, venue self check-in and attendance tracking. |
+| Go together and community | Public and friends-only groups, invitations, friendships, group chat, and planning food and activities around events. |
+| Event operations | Task management, announcements, budget calculations and warnings, receipt-processing workflows, weather checks and backup-venue switching. |
+| Floor plans and programme | Floor-plan editing behaviour, object placement and manipulation, and event programme management. |
+| Accounts and data integration | Authentication flows, profiles, access control, database structures and policies, backend endpoints, external API integration and image-upload workflows. |
+| Shared application behaviour | Navigation, application state, responsive interactions, accessibility behaviour, themes and notifications. |
+
+For these features, the team independently determined the requirements,
+designed the logic and algorithms, wrote the core implementation, and
+resolved the substantive implementation problems.
+
+Third-party frameworks, libraries and services are credited separately in
+the “Tech stack”, “External APIs” and “Credits and licences” sections. Our
+claim of authorship concerns our application-specific design and code;
+we do not claim authorship of those third-party technologies.
+
+### Parts relying solely on AI/LLM
+
+No core application feature, algorithm, business rule, backend endpoint or
+critical frontend interaction was implemented solely by AI/LLM. No final
+submitted component was accepted solely on the basis of an AI response
+without team review and verification.
+
+AI-generated supporting material, including draft documentation, generic
+boilerplate, test suggestions and sample data, was reviewed and, where
+necessary, revised by the team before inclusion.
+
+### Responsibility
+
+Each team member remains responsible for their contributions and for
+understanding and explaining the submitted work. The team takes
+responsibility for the application’s correctness, the validity of its
+tests, its source acknowledgements and the accuracy of this declaration.
