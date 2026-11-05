@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 // Community is Go together (DESIGN.md, Community): groups are tied to one official event,
 // public or private with an invite link; joining offers an event RSVP; members plan food
-// before and after on the group page. Groups stay out of Discover and My events.
+// before and after on the group page. Groups stay out of Discover and Organise.
 const STORE = 'bookedz-feature2-demo'
 
 test.beforeEach(async ({ page }) => {
@@ -102,7 +102,7 @@ test('only people going can start a group; start a friends-only one and open it 
   await expect(page.getByText('This invite link isn’t valid any more.')).toBeVisible()
 })
 
-test('groups stay out of Discover and My events', async ({ page }) => {
+test('groups stay out of Discover and Organise', async ({ page }) => {
   await page.goto('/discover')
   await expect(page.locator('.discovery-event-row').first()).toBeVisible()
   await expect(page.locator('.discovery-event-row', { hasText: 'Going to' })).toHaveCount(0)

@@ -84,7 +84,7 @@ onUnmounted(() => {
 
 <template>
   <div class="container py-4 ticket-page text-center">
-    <RouterLink to="/my-rsvps" class="small d-block text-start mb-3">&larr; My RSVPs</RouterLink>
+    <RouterLink to="/my-rsvps" class="small d-block text-start mb-3">&larr; Plans</RouterLink>
 
     <div v-if="loading" class="py-5">
       <div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>

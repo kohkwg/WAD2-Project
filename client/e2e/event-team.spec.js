@@ -87,7 +87,7 @@ test('pending database setup leaves other Manage event tools available',async({p
 })
 
 
-test('My events shows only pending invitation notices and removes resolved notices',async({page})=>{
+test('Organise shows only pending invitation notices and removes resolved notices',async({page})=>{
   await fixture(page)
   await page.goto('/organiser/events')
   const panel=page.getByRole('region',{name:'Team invitations',exact:true})
@@ -107,19 +107,19 @@ test('My events shows only pending invitation notices and removes resolved notic
 })
 
 
-test('RSVP conflict links directly to cancellation controls in My RSVPs',async({page})=>{
+test('RSVP conflict links directly to cancellation controls in Plans',async({page})=>{
   await fixture(page)
   await page.goto('/organiser/events')
   await page.evaluate(()=>{window.teamHasRsvp=true})
   const panel=page.getByRole('region',{name:'Team invitations',exact:true})
   await panel.getByRole('button',{name:'Accept team invitation to Team outing',exact:true}).click()
-  const link=panel.getByRole('link',{name:'Go to My RSVPs to cancel',exact:true})
+  const link=panel.getByRole('link',{name:'Go to Plans to cancel',exact:true})
   await expect(link).toHaveAttribute('href','/my-rsvps')
   await expect(panel.getByText('After cancelling, come back and accept this invitation.',{exact:true})).toBeVisible()
   await expect(panel.getByRole('button',{name:'Accept team invitation to Team outing',exact:true})).toBeVisible()
   await link.click()
   await expect(page).toHaveURL(/\/my-rsvps$/)
-  await expect(page.getByRole('heading',{name:'My RSVPs',exact:true})).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Plans',exact:true})).toBeVisible()
 })
 
 

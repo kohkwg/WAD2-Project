@@ -878,7 +878,7 @@ onBeforeUnmount(() => {
               {{
                 search || filters.when || filters.extras.length
                   ? 'None of your saved events match these filters.'
-                  : 'Tap the bookmark on any event to keep it here. Past saves stay in My RSVPs.'
+                  : 'Tap the bookmark on any event to keep it here. Past saves stay in Plans.'
               }}
             </p>
 

@@ -13,11 +13,11 @@ test('mobile navigation closes and focuses the destination main content', async 
   const toggle = page.getByRole('button', { name: 'Toggle navigation' })
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'My RSVPs', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'My RSVPs', exact: true })).toBeVisible()
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Plans', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Plans', exact: true })).toBeVisible()
   await expect(toggle).toHaveAttribute('aria-expanded', 'false')
   await expect(page.getByRole('main')).toBeFocused()
-  await expect(page).toHaveTitle('My RSVPs · Bookedz')
+  await expect(page).toHaveTitle('Plans · Bookedz')
 })
 
 test('shared shell exposes skip navigation and keeps development diagnostics out of product actions', async ({ page }) => {

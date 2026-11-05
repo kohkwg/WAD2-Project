@@ -108,7 +108,7 @@ onMounted(async () => {
 
 <template>
   <div class="container py-4 self-checkin-page">
-    <RouterLink to="/my-rsvps" class="small d-block mb-3">&larr; My RSVPs</RouterLink>
+    <RouterLink to="/my-rsvps" class="small d-block mb-3">&larr; Plans</RouterLink>
     <header class="checkin-heading"><span class="ticket-kicker">At the venue</span><h1 class="h3 mb-1">Check in</h1>
     <p class="text-body-secondary small mb-4">{{ event?.title ?? '' }}</p></header>
 

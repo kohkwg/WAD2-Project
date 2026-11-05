@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { createSeedData } from '../src/utils/mockData.js'
 
-// Saved events are one journey: save on Discover → the toast links to My RSVPs → Saved,
+// Saved events are one journey: save on Discover → the toast links to Plans → Saved,
 // a Saved chip filters Discover, and each saved card leads to an RSVP (docs/decisions.md, 5 November 2026).
 
 // Discover in live mode, with a small in-browser Supabase stand-in: events_with_counts honours
@@ -66,7 +66,7 @@ async function liveDiscover(page) {
 
 const rowTitles = page => page.locator('.discovery-list .row-title')
 
-test('Discover: the Saved chip filters to saved events and saving points to My RSVPs', async ({ page }, testInfo) => {
+test('Discover: the Saved chip filters to saved events and saving points to Plans', async ({ page }, testInfo) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await liveDiscover(page)
@@ -94,8 +94,6 @@ test('Discover: the Saved chip filters to saved events and saving points to My R
 
   // One word for it: Save / Remove from saved
   const save = page.getByRole('button', { name: 'Save Music night', exact: true })
-  await save.hover()
-  await expect(save.locator('.bookmark-tooltip')).toHaveText('Save event')
   await save.click()
   const toast = page.locator('.toast-item').filter({ hasText: 'Saved to your list' })
   await expect(toast).toBeVisible()
@@ -130,7 +128,7 @@ test('Discover: signed-out visitors never see the Saved chip', async ({ page }) 
   await expect(page.getByRole('navigation', { name: 'Event categories' }).getByRole('button', { name: 'All', exact: true })).toHaveAttribute('aria-pressed', 'true')
 })
 
-// My RSVPs runs in demo mode with seeded saves
+// Plans runs in demo mode with seeded saves
 const STORE = 'bookedz-feature2-demo'
 const NOW = Date.parse('2026-11-02T10:00:00Z')
 function savedFixture() {
@@ -149,7 +147,7 @@ function savedFixture() {
   return db
 }
 
-test('My RSVPs: ?tab=saved opens Saved; cards are ordered and lead to the right action', async ({ page }, testInfo) => {
+test('Plans: ?tab=saved opens Saved; cards are ordered and lead to the right action', async ({ page }, testInfo) => {
   await page.clock.install({ time: new Date(NOW) })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.route('**/*.supabase.co/**', route => route.abort())

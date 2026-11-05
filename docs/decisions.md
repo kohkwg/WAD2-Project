@@ -9,6 +9,23 @@ the [README](../README.md#credits-and-licences). Original supplied material stay
 
 ## Decision log, newest first
 
+5 November 2026 — Gregory, Plans and Organise, slim page headers and the Discover bookmark:
+"My RSVPs" is renamed **Plans** and "My Events" **Organise** in the sidebar, phone tab bar, page
+titles, headings, back links and the sentences that name those pages; the URLs stay `/my-rsvps`
+and `/organiser/events`. Organise uses British spelling to match "organiser". This replaces the
+same-day "My Events" exception to sentence case. Organise, Plans and Go together use a slim
+header: a small star, the title and the main button on one row, with the page's own controls in
+the same card (Organise: search, the section tabs carrying the counts, and pending requests;
+Plans: the tabs and Refresh; Go together: a "How Go together works" explainer that is open on a
+first visit and stays folded once closed). Go together's filters stay beside the feed they
+filter. On Discover, Gregory kept Aishani's fixed-size day cards with no RSVP button; an
+expanding card with RSVP and Save was tried and withdrawn. The bookmark's "Save event" tooltip is
+gone; hovering or focusing the bookmark slides out a "Save" / "Saved" pill instead. The soft
+dark-mode tokens, Discover row spacing and attached Sort by drop-down in the earlier 5 November
+entry were dropped by the 13:33 merge of `vivi` into `dev` and are not in the code; restoring
+them is undecided. Denzel (Organise, Manage event), Huxley (check-in, shared UI), Aishani
+(Discover) and Vivienne (shared stylesheet) should look over the changes in their areas.
+
 5 November 2026 — Denzel, sidebar collapsed by default: from 992px (Bootstrap lg, xl and xxl)
 the sidebar starts as the 76px icon rail and expands only when someone uses its toggle. Denzel
 chose to keep remembering that choice per browser, so someone who prefers the full sidebar keeps

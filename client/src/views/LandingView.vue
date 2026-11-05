@@ -118,7 +118,7 @@ function signedIn() {
 
       <RouterLink v-if="offers.length" to="/my-rsvps" class="account-offer attention-once">
         <strong>A spot opened up for {{ offers[0].event.title }}.</strong>
-        <span>Confirm it in My RSVPs before it goes to the next person.</span>
+        <span>Confirm it in Plans before it goes to the next person.</span>
       </RouterLink>
 
       <div class="account-grid">
@@ -149,7 +149,7 @@ function signedIn() {
 
       <nav class="account-links" aria-label="Go to">
         <RouterLink to="/discover" class="btn btn-primary">Discover events</RouterLink>
-        <RouterLink to="/my-rsvps" class="btn btn-outline-secondary">My RSVPs</RouterLink>
+        <RouterLink to="/my-rsvps" class="btn btn-outline-secondary">Plans</RouterLink>
         <RouterLink to="/community" class="btn btn-outline-secondary">Community</RouterLink>
         <button v-if="USING_SUPABASE" type="button" class="btn btn-outline-secondary" :disabled="signingOut" @click="logOut">{{ signingOut ? 'Signing out…' : 'Sign out' }}</button>
       </nav>

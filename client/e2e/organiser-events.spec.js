@@ -70,7 +70,7 @@ test('pending summary filters requests and direct review opens the pending tab',
   await expect(page.getByRole('button', { name: 'Approve Alex Tan' })).toBeVisible()
 })
 
-test('organiser approval, rejection and removal update participant My RSVPs on focus', async ({ page, context }) => {
+test('organiser approval, rejection and removal update participant Plans on focus', async ({ page, context }) => {
   const participant = await context.newPage()
   await setup(participant)
   await participant.goto('/my-rsvps')
@@ -156,7 +156,7 @@ test('delete confirmation preserves safe focus and removes only the chosen demo 
 })
 
 
-test('My events fills the available width and fits more cards on large screens',async({page})=>{
+test('Organise fills the available width and fits more cards on large screens',async({page})=>{
   await page.goto('/organiser/events')
   await page.getByRole('tab',{name:'All 7',exact:true}).click()
   await expect(page.locator('.organiser-event-card')).toHaveCount(7)

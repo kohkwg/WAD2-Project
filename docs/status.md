@@ -38,6 +38,40 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — Plans and Organise, slim headers, Discover bookmark (`gregory`, uncommitted)
+
+- **Brought `dev` in without a commit:** 
+  fast-forwarded to `dev` `2460de7` and the uncommitted work was re-applied on top. Seven files
+  conflicted and were combined: `NavBar.vue` and `DiscoverView.vue` (dev's reformatted files with
+  the new names), `DiscoveryEventRow.vue` and `DiscoveryDayRow.vue` (Aishani's cards),
+  `CommunityView.vue` (dev's Friends sidebar layout with the slim header),
+  `saved-events.spec.js`, and this file (dev's version).
+- **Names:** Plans and Organise in the sidebar and its tooltips, the phone tab bar, router titles,
+  headings, back links (ticket, check-in, create, manage, RSVP list) and the sentences in
+  `RsvpView`, `LandingView`, `DeleteAccount`, `EventTeamPanel`, `OfferBanner` and Discover's Saved
+  empty state. Ten e2e specs updated; loose "Plans" heading checks are now exact, because "All
+  upcoming plans" would also match.
+- **Slim headers** (`.smart-head` in `design-baseline.css`): Organise moves search, the tabs and
+  the pending-requests strip into the header and drops its count line; Plans moves the tabs and
+  Refresh into it; Go together folds its explainer into a remembered `<details>`
+  (`bookedz-go-together-intro`). At 1280px, content starts about 200px higher on Organise and
+  230px on Plans. Also removed a stray `:root[data-theme="dark"]` fragment that made Plans' tab
+  pills dark-mode only.
+- **Discover bookmark:** removed the "Save event" tooltip and its stylesheet rules, which had
+  pushed the button 12px down and left; on desktop cards it now sits centred on the right. Hover
+  or keyboard focus slides out a "Save" / "Saved" pill (no slide with reduced motion; no hover
+  state on touch). The Saved cards on Plans share it.
+- **Checks** on an owned demo server (5195; 5173 was in use): Discover, Plans, Organise, Go
+  together, the landing page and Manage RSVPs at 375 and 1280px in both themes loaded with one
+  `main`, no overflow and no console errors. On Aishani's 144px cards the bookmark measured
+  centred (50px above and below) and the pill stays inside the card in both themes.
+  `saved-events` passed 4/4 before the merge; the e2e run after the merge was stopped and is
+  unverified.
+- **Known:** the selected Discover card reads "MusicView event ›" (no space between the category
+  and the link) in Aishani's card, unchanged here.
+- **Not done:** the soft dark-mode tokens are not restored; full suites, a production build, live
+  and real-device checks.
+
 ### 5 November — navbar cleanup merge repair
 
 Combined Aishani's formatted navbar and comments with dev's collapsed-by-default

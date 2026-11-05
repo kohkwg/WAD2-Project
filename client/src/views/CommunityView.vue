@@ -30,6 +30,15 @@ const filter = ref('all')
 const query = ref('')
 const composerFor = ref(null) // null closed; '' open with no event; an event id to preselect
 
+// "How Go together works" starts open on a first visit and remembers when it's closed
+const INTRO_KEY = 'bookedz-go-together-intro'
+const introOpen = ref(true)
+try { introOpen.value = localStorage.getItem(INTRO_KEY) !== 'closed' } catch { /* storage unavailable: keep it open */ }
+function onIntroToggle(event) {
+  introOpen.value = event.target.open
+  try { localStorage.setItem(INTRO_KEY, introOpen.value ? 'open' : 'closed') } catch { /* still toggles without storage */ }
+}
+
 const FILTERS = [
   { key: 'all', label: 'All groups' },
   { key: 'week', label: 'This week' },
@@ -196,15 +205,18 @@ function showEventGroups(eventId) {
     <!-- Two columns from the top: everything Go together on the left, Friends as a full-height sidebar -->
     <div class="community-shell">
     <div class="community-column">
-    <header class="community-hero">
-      <div class="community-hero-copy">
-        <p class="community-eyebrow">Community</p>
-        <h1 class="page-title m-0">Go together</h1>
+    <!-- One slim header: title and Start a group, with the explainer folded away after the first visit -->
+    <header class="community-hero smart-head">
+      <div class="smart-head-top">
+        <div class="smart-head-title"><span class="smart-head-star" aria-hidden="true">★</span><h1 class="page-title m-0">Go together</h1></div>
+        <div class="community-hero-actions">
+          <button type="button" class="btn btn-primary" :disabled="loading" @click="openComposer()">Start a group</button>
+        </div>
+      </div>
+      <details class="smart-head-intro" :open="introOpen" @toggle="onIntroToggle">
+        <summary>How Go together works</summary>
         <p class="community-lede">Going to an event? Start a group for it, public or just for friends. Joining someone’s group RSVPs you to the event too.</p>
-      </div>
-      <div class="community-hero-actions">
-        <button type="button" class="btn btn-primary" :disabled="loading" @click="openComposer()">Start a group</button>
-      </div>
+      </details>
     </header>
 
     <!-- A group you were in was deleted -->

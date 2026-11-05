@@ -12,6 +12,19 @@ the day their status entry gives.
 
 ## 5 November 2026
 
+On 5 November 2026, at Gregory's request, we renamed "My RSVPs" to **Plans** and "My Events" to
+**Organise** across the navigation, page titles, headings, back links and sentences (URLs
+unchanged), gave Organise, Plans and Go together a slim header that holds each page's own
+controls, and replaced the Discover bookmark's "Save event" tooltip with a "Save" / "Saved" pill
+that slides out on hover or focus, which also re-centres the button. We changed
+`design-baseline.css`, `NavBar.vue`, `router/index.js`, `EventBookmark.vue`,
+`DiscoveryEventRow.vue`, `OrganiserEventsView.vue`, `MyRsvpsView.vue`, `CommunityView.vue`, the
+pages that name or link to those pages (`CreateEventView`, `ManageEventView`, `ManageRsvpsView`,
+`RsvpView`, `LandingView`, `DiscoverView`, `MyTicketView`, `SelfCheckInView`),
+`DeleteAccount.vue`, `EventTeamPanel.vue`, `OfferBanner.vue` and ten e2e specs. Discover's cards
+stay as Aishani built them, and Denzel, Huxley, Aishani and Vivienne keep authorship of their
+files.
+
 On 5 November 2026, at Denzel's request, the sidebar starts as the 76px icon rail at every
 laptop and desktop size (992px and up) and only expands when someone uses its toggle; an
 expand or collapse is remembered per browser. Phones and tablets keep the drawer. The width

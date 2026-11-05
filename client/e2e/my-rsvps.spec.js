@@ -39,7 +39,7 @@ test.beforeEach(async ({ page }) => {
 
 test('RSVP overview separates time/status tabs and keeps offers visible', async ({ page }) => {
   await page.goto('/my-rsvps')
-  await expect(page.getByRole('heading', { name: 'My RSVPs', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Plans', exact: true })).toBeVisible()
   const next = page.getByRole('region', { name: 'Board games together', exact: true })
   await expect(next).toBeVisible()
   await expect(page.locator('#panel-upcoming .rsvp-row')).toHaveCount(3)
@@ -195,9 +195,9 @@ test('offer accept and decline refresh registrations and announce the outcome', 
 })
 
 
-test('My RSVPs fills the available width without overflow in either theme',async({page})=>{
+test('Plans fills the available width without overflow in either theme',async({page})=>{
   await page.goto('/my-rsvps')
-  await expect(page.getByRole('heading',{name:'My RSVPs',exact:true})).toBeVisible()
+  await expect(page.getByRole('heading',{name:'Plans',exact:true})).toBeVisible()
   for(const scheme of ['light','dark']){
     await page.getByLabel('Color theme').selectOption(scheme)
     for(const width of [375,575,768,1280,1920,2560]){

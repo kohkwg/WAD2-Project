@@ -10,9 +10,9 @@ test.beforeEach(async ({ page }) => {
   } }))
 })
 
-test('My RSVPs refreshes offer data on its existing cadence and on focus', async ({ page }) => {
+test('Plans refreshes offer data on its existing cadence and on focus', async ({ page }) => {
   await page.goto('/my-rsvps')
-  await expect(page.getByRole('heading', { name: 'My RSVPs' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Plans', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Refresh RSVPs' })).toBeVisible()
   await page.evaluate(key => {
     const state = JSON.parse(localStorage.getItem(key))
@@ -144,12 +144,12 @@ test('Manage RSVPs reloads the event when the mounted route changes IDs', async 
   await expect(page.getByRole('img', { name: /^Capacity: .* of 30$/ })).toBeVisible()
   await page.evaluate(() => document.querySelector('#app').__vue_app__.config.globalProperties.$router.push('/organiser/events/e2/rsvps'))
   await expect(page.getByRole('heading', { name: 'Intro to Vue Workshop' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'My Events', exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Organise', exact: true })).toBeVisible()
 })
 
 test('closed RSVP tab exposes its selected state and controlled panel', async ({ page }) => {
   await page.goto('/my-rsvps')
-  await expect(page.getByRole('heading', { name: 'My RSVPs' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Plans', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Refresh RSVPs' })).toBeVisible()
   await page.evaluate(key => {
     const state = JSON.parse(localStorage.getItem(key))
@@ -157,7 +157,7 @@ test('closed RSVP tab exposes its selected state and controlled panel', async ({
     localStorage.setItem(key, JSON.stringify(state))
   }, STORE)
   await page.reload()
-  await expect(page.getByRole('heading', { name: 'My RSVPs' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Plans', exact: true })).toBeVisible()
   const tab = page.getByRole('tab', { name: /^Cancelled/ })
   await tab.click()
   await expect(tab).toHaveAttribute('aria-selected', 'true')
