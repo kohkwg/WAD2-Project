@@ -270,9 +270,11 @@ async function submitRsvp() {
         <p v-if="isFull" class="waitlist-note">
           Full · {{ event.waitlistCount }} on the waitlist
         </p>
+        <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
+        <template #below>
+          <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
+        </template>
       </EventSummary>
-      <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
-      <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>
 
     <!-- RSVP actions and private-data states follow the public context. -->
@@ -435,9 +437,11 @@ async function submitRsvp() {
         </button>
       </form>
       </template>
-      <!-- Go together groups sit beside the details, then the updates. Groups meet at the venue: none for online events, or while the venue is hidden -->
-      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline && !event.venueRevealAt" :event-id="eventId" />
-      <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
+      <!-- Announcements sit right under the RSVP, then Go together groups. Groups meet at the venue: none for online events, or while the venue is hidden -->
+      <div class="rsvp-extras">
+        <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
+        <EventGroups v-if="event && !event.isOnTeam && !event.isOnline && !event.venueRevealAt" :event-id="eventId" />
+      </div>
     </div>
   </div>
   </div>
@@ -446,6 +450,8 @@ async function submitRsvp() {
 <style scoped>
 .form-spark svg { width: 28px; height: 28px; }
 .rsvp-action-panel { scroll-margin-top: 110px; }
+.rsvp-extras { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; margin-top: 1.5rem; }
+.rsvp-extras > :deep(*) { margin-top: 0 !important; }
 @media(min-width:992px) { .rsvp-action-panel :deep(.col-md-6) { width: 100%; }.rsvp-action-panel .event-cta { width: 100%; }.rsvp-action-panel .d-flex { flex-wrap: wrap; }.rsvp-action-panel { align-self: start; } }
 .rsvp-intro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: .8rem; }
 .rsvp-jump { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border: 1px solid var(--bookedz-control-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-surface); font-weight: 650; text-decoration: none; transition: background-color var(--bookedz-motion-fast) ease; }

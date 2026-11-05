@@ -471,6 +471,10 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 .public-event-page.public-event-page .rsvp-state--success { border-color: var(--bookedz-ink) !important; box-shadow: 6px 6px 0 var(--bookedz-mango); }
 .public-event-page.public-event-page .event-venue { border: 2px dashed var(--bookedz-control-border); }
 .public-event-page.public-event-page .event-fact { border: 2px solid var(--bookedz-control-border); }
+/* The spots tiles sit on the banner, so they get a solid white face and a clear outline to stay readable */
+.public-event-page.public-event-page .event-hero .event-fact { border: 2px solid var(--bookedz-ink); background: var(--bookedz-surface); box-shadow: 3px 3px 0 var(--bookedz-teal); }
+.public-event-page.public-event-page .event-hero .event-fact small { color: var(--bookedz-ink-soft, var(--bookedz-muted)); }
+:root[data-theme="dark"] .public-event-page.public-event-page .event-hero .event-fact { border-color: var(--bookedz-border); }
 .public-event-page.public-event-page .event-cover { border: 2px solid var(--bookedz-ink); border-radius: 18px; }
 .public-event-page.public-event-page .state-mark { border: 2px solid var(--bookedz-ink); }
 .public-event-page.public-event-page .rsvp-jump { border-width: 2px; font-weight: 700; }
@@ -485,25 +489,43 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 .public-event-page.public-event-page .rsvp-action-panel .rsvp-state > :is(h2, h3) { grid-column: 2; margin: 0; }
 .public-event-page.public-event-page .rsvp-action-panel .rsvp-state > :is(p, a, div):not(.state-mark) { margin-top: 1rem; margin-bottom: 0; }
 .public-event-page.public-event-page .rsvp-action-panel .rsvp-state > :is(p, a, div) + :is(p, a, div) { margin-top: .75rem; }
-/* Wide screens: one grid, so the banner lines up with the RSVP card and the details card with the
-   announcements. Below 992px the columns stack as before (the jump link and pinned bar need real boxes). */
-@media (min-width: 992px) {
-  .public-event-page.public-event-page .participant-rsvp { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); grid-auto-flow: row dense; gap: 22px 28px; margin-left: 0; margin-right: 0; }
-  .public-event-page.public-event-page .participant-rsvp > :is(.event-public-details, .rsvp-action-panel),
+/* Tablets and phones (below 992px), one column in this order: banner, RSVP, announcements (and Go
+   together), then the description / where / photo card, then the programme. The RSVP column stays a
+   real box, so the jump link and the pinned bar can still find it. */
+@media (max-width: 991.98px) {
+  .public-event-page.public-event-page .participant-rsvp { display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 22px; margin-left: 0; margin-right: 0; margin-top: 0 !important; }
+  .public-event-page.public-event-page .participant-rsvp > .event-public-details,
   .public-event-page.public-event-page .participant-rsvp .event-summary,
   .public-event-page.public-event-page .participant-rsvp .event-summary > .card-body { display: contents; }
-  .public-event-page.public-event-page .participant-rsvp .event-hero { grid-column: 1; grid-row: 1; }
-  .public-event-page.public-event-page .participant-rsvp .event-body { grid-column: 1; grid-row: 2 / span 2; margin-top: 0; }
-  .public-event-page.public-event-page .participant-rsvp .event-public-details > :not(.event-summary) { grid-column: 1; }
-  .public-event-page.public-event-page .participant-rsvp .rsvp-action-panel > * { grid-column: 2; margin-top: 0 !important; min-width: 0; }
-  .public-event-page.public-event-page .participant-rsvp .rsvp-action-panel > :first-child { grid-row: 1; }
-  /* The long form runs alongside the banner and the details; short state cards match the banner's height */
-  .public-event-page.public-event-page .participant-rsvp .rsvp-action-panel > .rsvp-form { grid-row: 1 / span 2; }
-  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-form) .event-hero { align-self: start; }
-  /* With the long form showing, the right column is one plain stack, so Go together and the
-     announcements follow the form directly instead of waiting for the details card's rows */
-  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-form) > .rsvp-action-panel { display: flex; flex-direction: column; gap: 22px; grid-column: 2; grid-row: 1 / span 3; align-self: start; min-width: 0; width: 100%; max-width: none; padding: 0; margin: 0; }
-  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-form) .rsvp-action-panel > * { grid-column: auto; grid-row: auto; }
+  .public-event-page.public-event-page .participant-rsvp .event-hero { order: 1; }
+  .public-event-page.public-event-page .participant-rsvp > .rsvp-action-panel { order: 2; padding: 0; margin: 0; width: 100%; }
+  .public-event-page.public-event-page .participant-rsvp .event-rest { order: 3; display: flex; flex-direction: column; gap: 22px; min-width: 0; margin: 0; }
+  .public-event-page.public-event-page .participant-rsvp .event-body { margin-top: 0; }
+  .public-event-page.public-event-page .participant-rsvp .rsvp-extras { margin-top: 22px; }
+}
+
+/* Wide screens: two columns that each flow top to bottom, so nothing waits on the other column
+   (the programme follows the details directly). Below 992px the columns stack as before; the jump
+   link and pinned bar need real boxes there. */
+@media (min-width: 992px) {
+  .public-event-page.public-event-page .participant-rsvp { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 0 28px; align-items: start; margin-left: 0; margin-right: 0; }
+  .public-event-page.public-event-page .participant-rsvp > :is(.event-public-details, .rsvp-action-panel) { display: flex; flex-direction: column; gap: 22px; min-width: 0; width: 100%; max-width: none; padding: 0; margin: 0; }
+  /* The summary's card and body are only wrappers: its banner and details become items of the column */
+  .public-event-page.public-event-page .participant-rsvp .event-summary,
+  .public-event-page.public-event-page .participant-rsvp .event-summary > .card-body { display: contents; }
+  .public-event-page.public-event-page .participant-rsvp .event-body { margin-top: 0; }
+  .public-event-page.public-event-page .participant-rsvp .rsvp-action-panel > * { margin-top: 0 !important; min-width: 0; }
+  .public-event-page.public-event-page .participant-rsvp .event-rest { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+  .public-event-page.public-event-page .participant-rsvp .rsvp-extras { margin-top: 0 !important; }
+
+  /* Once you've RSVP'd (a short card, not the long form), the banner and that card are one row and the
+     same height. Everything after is still two free columns, so nothing waits on the other side. */
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-state) { gap: 22px 28px; }
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-state) > :is(.event-public-details, .rsvp-action-panel) { display: contents; }
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-state) .event-hero { grid-column: 1; grid-row: 1; align-self: stretch; }
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-state) .event-rest { grid-column: 1; grid-row: 2; }
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-state) .rsvp-action-panel > .rsvp-state { grid-column: 2; grid-row: 1; align-self: stretch; align-content: center; }
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-state) .rsvp-extras { grid-column: 2; grid-row: 2; }
 }
 @media (max-width: 767.98px) {
   .public-event-page.public-event-page .event-hero { box-shadow: 4px 4px 0 var(--bookedz-ink); }
