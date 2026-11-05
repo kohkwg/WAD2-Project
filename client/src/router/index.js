@@ -47,6 +47,8 @@ const router = createRouter({
     { path: '/', name: 'home', component: () => import('../views/LandingView.vue'), meta: { title: 'Welcome' } },
     // Signing in happens on the landing page; /login links keep working
     { path: '/login', redirect: to => ({ path: '/', query: to.query }) },
+    // Opened from the password-reset email; public, because the link signs them in itself
+    { path: '/reset-password', component: () => import('../views/ResetPasswordView.vue'), meta: { title: 'Reset password' } },
     { path: '/events', redirect: to => ({ path: '/discover', query: to.query, hash: to.hash }) },
     { path: '/events/:id/rsvp', component: RsvpView, meta: { title: 'Event RSVP' } },
     { path: '/community', component: () => import('../views/CommunityView.vue'), meta: { title: 'Go together' } },
@@ -107,7 +109,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  if (to.path === '/') return true
+  if (to.path === '/' || to.path === '/reset-password') return true
   if (!USING_SUPABASE) return true
   const user = await getCurrentUser()
   // Discovery and event pages stay public, except check-in pages that are marked requiresAuth
