@@ -1,24 +1,37 @@
 <script setup>
-// BOILERPLATE: draws `value` as a CODE128 barcode in an <svg> using JsBarcode.
-// Used for the ticket_code on My Ticket, so a handheld or camera barcode scanner
+// boilerplate: draws `value` as a code128 barcode in an <svg> using jsbarcode.
+// used for the ticket_code on my ticket, so a handheld or camera barcode scanner
 // at the entrance can check people in (staff_check_in accepts ticket codes).
-import { onMounted, ref, watch } from 'vue'
-import JsBarcode from 'jsbarcode'
+import { onMounted, ref, watch } from 'vue';
+import JsBarcode from 'jsbarcode';
 
 const props = defineProps({
-  value: { type: String, required: true },
-  label: { type: String, default: 'Barcode' },
-})
+  value: {
+    type: String,
+    required: true
+  },
+  label: {
+    type: String,
+    default: 'Barcode'
+  }
+});
 
-const svg = ref(null)
+const svg = ref(null);
 
 function draw() {
-  if (!svg.value || !props.value) return
-  JsBarcode(svg.value, props.value, { format: 'CODE128', height: 64, margin: 8, fontSize: 16, displayValue: true })
+  if (!svg.value || !props.value) return;
+  JsBarcode(svg.value, props.value, {
+    format: 'CODE128',
+    height: 64,
+    margin: 8,
+    fontSize: 16,
+    displayValue: true
+  });
 }
 
-onMounted(draw)
-watch(() => props.value, draw)
+onMounted(draw);
+
+watch(() => props.value, draw);
 </script>
 
 <template>

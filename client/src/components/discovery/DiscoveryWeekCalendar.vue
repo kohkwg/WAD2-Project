@@ -1,88 +1,117 @@
 <script setup>
-import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
-// A Monday-to-Sunday glance at the events Discover is showing, in Singapore time.
+import { computed } from 'vue';
+import { RouterLink } from 'vue-router';
+// a monday-to-sunday glance at the events discover is showing, in singapore time.
 // data is recieved from parent component
+
 const props = defineProps({
-  events: { type: Array, default: () => [] },
-  offset: { type: Number, default: 0 },
+  events: {
+    type: Array,
+    default: () => []
+  },
+  offset: {
+    type: Number,
+    default: 0
+  },
   signedIn: Boolean,
-  error: { type: String, default: '' },
-})
-const emit = defineEmits(['select', 'update:offset'])
-const TIMEZONE = 'Asia/Singapore'
+  error: {
+    type: String,
+    default: ''
+  }
+});
 
+const emit = defineEmits(['select', 'update:offset']);
 
-// Get SG time
+const TIMEZONE = 'Asia/Singapore';
+
+// get sg time
+
 function dayKey(date) {
-  return date.toLocaleDateString('en-CA', { timeZone: TIMEZONE })
+  return date.toLocaleDateString('en-CA', {
+    timeZone: TIMEZONE
+  });
 }
+
 function timeOf(event) {
   return new Date(event.start_time).toLocaleTimeString('en-SG', {
     timeZone: TIMEZONE,
     hour: 'numeric',
-    minute: '2-digit',
-  })
+    minute: '2-digit'
+  });
 }
-function categoryOf(event) {
-  return event.category || event.tags?.[0] || 'event'
-}
-const todayKey = computed(() => dayKey(new Date()))
 
-// Find Monday of the selected week.
+function categoryOf(event) {
+  return event.category || event.tags?.[0] || 'event';
+}
+
+const todayKey = computed(() => dayKey(new Date()));
+
+// find monday of the selected week.
+
 const weekStart = computed(() => {
-  const [year, month, day] = todayKey.value.split('-').map(Number)
-  const date = new Date(Date.UTC(year, month - 1, day))
-  const daysSinceMonday = (date.getUTCDay() + 6) % 7
-  date.setUTCDate(date.getUTCDate() - daysSinceMonday + props.offset * 7)
-  return date
-})
+  const [year, month, day] = todayKey.value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const daysSinceMonday = (date.getUTCDay() + 6) % 7;
+  date.setUTCDate(date.getUTCDate() - daysSinceMonday + props.offset * 7);
+  return date;
+});
 
 // get a day's events, sorted by start time.
+
 function eventsOn(key) {
-  return props.events
-    .filter((event) => dayKey(new Date(event.start_time)) === key)
-    .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
+  return props.events.filter(event => dayKey(new Date(event.start_time)) === key).sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
 }
 //create 7 days shown in calendar
+
 const days = computed(() => {
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(weekStart.value)
-    date.setUTCDate(date.getUTCDate() + index)
-    const key = date.toISOString().slice(0, 10)
+  return Array.from({
+    length: 7
+  }, (_, index) => {
+    const date = new Date(weekStart.value);
+    date.setUTCDate(date.getUTCDate() + index);
+    const key = date.toISOString().slice(0, 10);
     return {
       key,
       number: date.getUTCDate(),
       today: key === todayKey.value,
-      weekday: date.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short' }),
-      events: eventsOn(key),
-    }
-  })
-})
+      weekday: date.toLocaleDateString('en-US', {
+        timeZone: 'UTC',
+        weekday: 'short'
+      }),
+      events: eventsOn(key)
+    };
+  });
+});
 
 const weekTotal = computed(() => {
-  return days.value.reduce((sum, day) => sum + day.events.length, 0)
-})
+  return days.value.reduce((sum, day) => sum + day.events.length, 0);
+});
 
 const weekSummary = computed(() => {
   if (!weekTotal.value) {
-    return 'Your week is free'
+    return 'Your week is free';
   }
-  const noun = weekTotal.value === 1 ? 'event' : 'events'
-  return `You're going to ${weekTotal.value} ${noun} this week`
-})
+  const noun = weekTotal.value === 1 ? 'event' : 'events';
+  return `You're going to ${weekTotal.value} ${noun} this week`;
+});
 
 // format the wk's date range
+
 const range = computed(() => {
-  const start = weekStart.value
-  const end = new Date(start)
-  end.setUTCDate(end.getUTCDate() + 6)
-  const dayOf = (date) => date.toLocaleDateString('en-SG', { timeZone: 'UTC', day: 'numeric' })
-  const monthOf = (date) => date.toLocaleDateString('en-SG', { timeZone: 'UTC', month: 'short' })
-  const startPart =
-    monthOf(start) === monthOf(end) ? dayOf(start) : `${dayOf(start)} ${monthOf(start)}`
-  return `${startPart} – ${dayOf(end)} ${monthOf(end)} ${end.getUTCFullYear()}`
-})
+  const start = weekStart.value;
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 6);
+  const dayOf = date => date.toLocaleDateString('en-SG', {
+    timeZone: 'UTC',
+    day: 'numeric'
+  });
+  const monthOf = date => date.toLocaleDateString('en-SG', {
+    timeZone: 'UTC',
+    month: 'short'
+  });
+  const startPart = monthOf(start) === monthOf(end) ? dayOf(start) : `${dayOf(start)} ${monthOf(start)}`;
+  return `${startPart} – ${dayOf(end)} ${monthOf(end)} ${end.getUTCFullYear()}`;
+});
 </script>
 
 <template>
@@ -105,11 +134,13 @@ const range = computed(() => {
           :disabled="offset <= 0"
           @click="emit('update:offset', offset - 1)"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m15 6-6 6 6 6" /></svg>
         </button>
 
         <button type="button" aria-label="Next week" @click="emit('update:offset', offset + 1)">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" /></svg>
         </button>
       </div>
     </header>
@@ -159,7 +190,8 @@ const range = computed(() => {
   box-shadow: 5px 5px 0 var(--bookedz-teal);
 }
 
-/* Header */
+/* header */
+
 .week-head {
   display: flex;
   justify-content: space-between;
@@ -186,7 +218,8 @@ const range = computed(() => {
   font-weight: 700;
 }
 
-/* Previous / next week buttons */
+/* previous / next week buttons */
+
 .week-nav {
   display: flex;
   gap: 8px;
@@ -202,6 +235,7 @@ const range = computed(() => {
   background: var(--bookedz-surface);
   color: var(--bookedz-ink);
 }
+
 .week-nav button:hover:not(:disabled) {
   background: var(--bookedz-hover);
 }
@@ -210,6 +244,7 @@ const range = computed(() => {
   color: var(--bookedz-disabled-ink);
   cursor: not-allowed;
 }
+
 .week-nav svg {
   width: 16px;
   height: 16px;
@@ -220,7 +255,8 @@ const range = computed(() => {
   stroke-linejoin: round;
 }
 
-/* Seven day rows */
+/* seven day rows */
+
 .week-days {
   flex: 0 1 auto;
   min-height: 0;
@@ -280,7 +316,8 @@ const range = computed(() => {
   color: var(--bookedz-muted);
 }
 
-/* Events inside a day */
+/* events inside a day */
+
 .week-events {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
