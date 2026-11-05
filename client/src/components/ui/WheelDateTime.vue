@@ -20,13 +20,16 @@ const props = defineProps({
     default: ''
   },
   clearable: Boolean,
+  // opens the panel as a fixed layer placed from the field's position, for fields inside a scrolling
+  // table or box that would otherwise clip or scroll the panel
+  fixed: Boolean,
   placeholder: {
     type: String,
     default: 'Pick a date and time'
   }
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'close']);
 // the page's class belongs on the wrapper; id and aria-* belong on the button that opens the wheels
 
 const attrs = useAttrs();
@@ -48,6 +51,35 @@ const root = ref(null);
 const trigger = ref(null);
 
 const wheels = ref({});
+
+const panel = ref(null);
+
+const panelStyle = ref({});
+
+// fixed mode: sit under the field (or above it when there is no room below), kept inside the viewport
+
+function placePanel() {
+  if (!props.fixed || !trigger.value || !panel.value) return;
+  const field = trigger.value.getBoundingClientRect();
+  const width = Math.min(380, window.innerWidth - 32);
+  const height = panel.value.offsetHeight;
+  const left = Math.max(16, Math.min(field.left, window.innerWidth - width - 16));
+  let top = field.bottom + 8;
+  if (top + height > window.innerHeight - 16 && field.top - 8 - height > 8) top = field.top - 8 - height;
+  top = Math.max(8, Math.min(top, window.innerHeight - height - 8));
+  panelStyle.value = {
+    top: `${top}px`,
+    left: `${left}px`,
+    width: `${width}px`
+  };
+}
+
+// a fixed panel would drift away from its field, so scrolling or resizing the page closes it
+
+function onPageMove(event) {
+  if (panel.value && event.target instanceof Node && panel.value.contains(event.target)) return;
+  close(false);
+}
 
 // pull the parts out of a "yyyy-mm-ddthh:mm" string; null when it isn't one
 
@@ -238,14 +270,23 @@ async function toggle() {
   open.value = true;
   if (!parts.value) commit(startingPoint()); // an empty field starts on a sensible time
   await nextTick();
+  placePanel();
   syncWheels();
   document.addEventListener('pointerdown', outside, true);
+  if (props.fixed) {
+    window.addEventListener('scroll', onPageMove, true);
+    window.addEventListener('resize', onPageMove);
+  }
 }
 
 function close(refocus = true) {
+  const wasOpen = open.value;
   open.value = false;
   document.removeEventListener('pointerdown', outside, true);
+  window.removeEventListener('scroll', onPageMove, true);
+  window.removeEventListener('resize', onPageMove);
   if (refocus) trigger.value?.focus();
+  if (wasOpen) emit('close');
 }
 
 function outside(event) {
@@ -266,6 +307,8 @@ function clear() {
 
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', outside, true);
+  window.removeEventListener('scroll', onPageMove, true);
+  window.removeEventListener('resize', onPageMove);
   clearTimeout(quietTimer);
 });
 </script>
@@ -296,7 +339,15 @@ onBeforeUnmount(() => {
       <path d="M4 10h16M9 3v4M15 3v4"/></svg>
     </button>
 
-    <div v-if="open" :id="panelId" class="wheel-panel" role="dialog" aria-label="Choose date and time">
+    <div
+      v-if="open"
+      :id="panelId"
+      ref="panel"
+      class="wheel-panel"
+      :class="{ 'wheel-panel--fixed': fixed }"
+      :style="fixed ? panelStyle : undefined"
+      role="dialog"
+      aria-label="Choose date and time">
       <div class="wheel-cols">
         <div v-for="column in columns" :key="column.key" class="wheel-col" :class="`wheel-col--${column.key}`">
           <span class="wheel-label">{{ column.label }}</span>
@@ -367,6 +418,11 @@ onBeforeUnmount(() => {
   border-radius: 18px;
   background: var(--bookedz-surface);
   box-shadow: 5px 5px 0 var(--bookedz-teal);
+}
+
+.wheel-panel--fixed {
+  position: fixed;
+  z-index: 1100;
 }
 
 :global(:root[data-theme="dark"]) .wheel-panel {
