@@ -138,8 +138,10 @@ test('choosing a category clears the box and adds an active filter chip', async 
   // Discover hides the chip row visually (design-baseline.css) and shows the filter as the Filters count,
   // so look for the chip in the DOM and for the checked Music option in the panel
   await expectMusicFilter(page)
-  await expect(cards(page)).toHaveCount(1)
-  await expect(cards(page).first()).toContainText('Acoustic Night')
+  // two demo events have the music tag: Acoustic Night and Campus Green Social
+  await expect(cards(page)).toHaveCount(2)
+  await expect(cards(page).filter({ hasText: 'Acoustic Night' })).toHaveCount(1)
+  await expect(cards(page).filter({ hasText: 'Evening Futsal' })).toHaveCount(0)
   await page.locator('.filter-toggle').click()
   await expect(page.locator('#event-filter-panel').getByRole('checkbox', { name: 'Music' })).toBeChecked()
 })

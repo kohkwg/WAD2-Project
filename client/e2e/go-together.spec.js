@@ -354,7 +354,7 @@ test('organisers see which RSVPs are coming with a group, as an indicator', asyn
     hasText: 'Chen Wei'
   }).first()).toContainText('With Bea Lim’s group');
 });
-test('Friends is a full-height sidebar beside Community on wide screens', async ({
+test('Friends is a sticky sidebar beside Community on wide screens', async ({
   page
 }) => {
   await page.setViewportSize({
@@ -374,13 +374,15 @@ test('Friends is a full-height sidebar beside Community on wide screens', async 
       asideTop: aside.top,
       asideLeft: aside.left,
       heroRight: hero.right,
+      asidePosition: getComputedStyle(document.querySelector('#friends')).position,
       asideHeight: aside.height,
       vh: innerHeight
     };
   });
   expect(Math.abs(box.asideTop - box.heroTop)).toBeLessThan(4); // starts level with the top of the page
   expect(box.asideLeft).toBeGreaterThan(box.heroRight); // beside everything, not below
-  expect(box.asideHeight).toBeGreaterThan(box.vh - 60); // fills the screen's height
+  expect(box.asidePosition).toBe('sticky');
+  expect(box.asideHeight).toBeLessThanOrEqual(box.vh); // takes the height it needs, up to the screen height
   await page.setViewportSize({
     width: 390,
     height: 844

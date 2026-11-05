@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { setColorTheme } from './support/colorTheme.js';
 
-// these checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// these checks expect the expanded sidebar. from 992px the sidebar starts as an icon rail
 // unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
 test.beforeEach(async ({
   page
@@ -105,7 +106,7 @@ test('supplied palette reaches actual surfaces, headings and actions in both the
         height: 950
       });
       await page.goto(path);
-      await page.getByLabel('Color theme').selectOption(theme);
+      await setColorTheme(page, theme);
       await page.setViewportSize({
         width,
         height: 950

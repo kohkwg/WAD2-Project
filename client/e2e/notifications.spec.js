@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { setColorTheme } from './support/colorTheme.js';
 
-// these checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// these checks expect the expanded sidebar. from 992px the sidebar starts as an icon rail
 // unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
 test.beforeEach(async ({
   page
@@ -64,7 +65,7 @@ test('inline notices dismiss by keyboard, retain actions and reappear for change
   });
   const fixture = page.locator('#notice-fixture');
   for (const scheme of ['light', 'dark']) {
-    await page.getByLabel('Color theme').selectOption(scheme);
+    await setColorTheme(page, scheme);
     for (const width of [375, 575, 768, 1280]) {
       await page.setViewportSize({
         width,

@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { setColorTheme } from './support/colorTheme.js';
 import { createSeedData } from '../src/utils/mockData.js';
 
-// these checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// these checks expect the expanded sidebar. from 992px the sidebar starts as an icon rail
 // unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
 test.beforeEach(async ({
   page
@@ -193,7 +194,7 @@ test('offers expire across tabs and all layouts remain usable', async ({
     name: 'Confirm my spot'
   })).toBeVisible();
   for (const theme of ['light', 'dark']) {
-    await page.getByLabel('Color theme').selectOption(theme);
+    await setColorTheme(page, theme);
     for (const width of [375, 575, 768, 1280]) {
       await page.setViewportSize({
         width,
@@ -384,7 +385,7 @@ test('Plans fills the available width without overflow in either theme', async (
     exact: true
   })).toBeVisible();
   for (const scheme of ['light', 'dark']) {
-    await page.getByLabel('Color theme').selectOption(scheme);
+    await setColorTheme(page, scheme);
     for (const width of [375, 575, 768, 1280, 1920, 2560]) {
       await page.setViewportSize({
         width,

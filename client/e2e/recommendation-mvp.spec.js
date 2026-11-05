@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { setColorTheme } from './support/colorTheme.js';
 import { writeFile } from 'node:fs/promises';
 
-// these checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// these checks expect the expanded sidebar. from 992px the sidebar starts as an icon rail
 // unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
 test.beforeEach(async ({
   page
@@ -57,7 +58,7 @@ test.skip('filtered discovery retains compact matching picks and explicitly labe
   }).click();
   await expect(picks.getByText(/not your chance of attending/)).toBeVisible();
   for (const scheme of ['light', 'dark']) {
-    await page.getByLabel('Color theme').selectOption(scheme);
+    await setColorTheme(page, scheme);
     for (const width of [375, 575, 768, 1280]) {
       await page.setViewportSize({
         width,
@@ -276,7 +277,7 @@ test.skip('recommendation MVP displays scores and supports save, dismiss, undo a
     exact: true
   })).toBeVisible();
   for (const scheme of ['light', 'dark']) {
-    await page.getByLabel('Color theme').selectOption(scheme);
+    await setColorTheme(page, scheme);
     for (const width of [375, 575, 768, 1280]) {
       await page.setViewportSize({
         width,

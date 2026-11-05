@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { setColorTheme } from './support/colorTheme.js';
 
-// these checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// these checks expect the expanded sidebar. from 992px the sidebar starts as an icon rail
 // unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
 test.beforeEach(async ({
   page
@@ -11,6 +12,15 @@ test.beforeEach(async ({
     } catch {/* storage blocked */}
   });
 });
+
+// the profile page opens in view mode, and the input boxes show only after this click.
+
+async function openProfileEditor(page) {
+  await page.getByRole('button', {
+    name: 'Edit profile',
+    exact: true
+  }).click();
+}
 
 // replace only profile's data boundary; the shell and routing retain demo mode.
 
@@ -62,16 +72,18 @@ test('profile reflows in both themes and preserves interest drafts through save 
     reducedMotion: 'reduce'
   });
   await page.goto('/profile');
+  await openProfileEditor(page);
   await expect(page.getByLabel('Name', {
     exact: true
   })).toHaveValue('Test Explorer');
   await expect(page.getByLabel('Username', {
     exact: true
   })).toHaveValue('test_explorer');
-  const theme = page.getByLabel('Color theme');
+  // profile holds the only theme control
   for (const scheme of ['light', 'dark']) {
-    await theme.selectOption(scheme);
+    await page.locator(`label[for="theme-${scheme}"]`).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('bookedz-color-theme'))).toBe(scheme);
     for (const width of [375, 575, 768, 1199, 1200, 1280]) {
       await page.setViewportSize({
         width,
@@ -140,7 +152,7 @@ test('profile reflows in both themes and preserves interest drafts through save 
   });
   await username.fill('bad name');
   await page.getByRole('button', {
-    name: 'Save profile',
+    name: 'Save',
     exact: true
   }).click();
   await expect(page.getByText('Use 3–20 letters, numbers or underscores.', {
@@ -151,11 +163,11 @@ test('profile reflows in both themes and preserves interest drafts through save 
     exact: true
   }).fill('Updated Explorer');
   await page.getByRole('button', {
-    name: 'Save profile',
+    name: 'Save',
     exact: true
   }).click();
   await expect(page.getByRole('button', {
-    name: 'Saving profile…'
+    name: 'Saving…'
   })).toBeDisabled();
   await expect(page.getByLabel('Name', {
     exact: true
@@ -166,7 +178,7 @@ test('profile reflows in both themes and preserves interest drafts through save 
     exact: true
   })).toHaveValue('Updated Explorer');
   await page.getByRole('button', {
-    name: 'Save profile',
+    name: 'Save',
     exact: true
   }).click();
   await expect(page.getByText('That username is already taken. Choose another.', {
@@ -175,7 +187,7 @@ test('profile reflows in both themes and preserves interest drafts through save 
   await expect(username).toHaveValue('My_Username');
   await username.fill('My_New_Username');
   await page.getByRole('button', {
-    name: 'Save profile',
+    name: 'Save',
     exact: true
   }).click();
   await expect(page.getByText('Profile saved.', {
@@ -190,7 +202,7 @@ test('profile reflows in both themes and preserves interest drafts through save 
   await expect(page).toHaveURL(/\/discover$/);
   expect(errors).toEqual([]);
 });
-test('discovery view controls and hosting invitation reflow in both themes', async ({
+test('discover reflows in both themes', async ({
   page
 }, testInfo) => {
   const errors = [];
@@ -202,39 +214,20 @@ test('discovery view controls and hosting invitation reflow in both themes', asy
     reducedMotion: 'reduce'
   });
   await page.goto('/discover');
-  await page.getByRole('button', {
-    name: 'Map',
-    exact: true
-  }).click();
+  await expect(page.locator('main article.discovery-event-row').first()).toBeVisible();
   for (const scheme of ['light', 'dark']) {
-    await page.getByLabel('Color theme').selectOption(scheme);
+    await setColorTheme(page, scheme);
     for (const width of [375, 575, 768, 1280]) {
       await page.setViewportSize({
         width,
         height: 900
       });
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      for (const name of ['Map', 'List']) {
-        const rect = await page.getByRole('button', {
-          name,
-          exact: true
-        }).boundingBox();
-        expect(rect.height).toBeGreaterThanOrEqual(44);
-      }
+      await page.screenshot({
+        path: testInfo.outputPath(`discover-${scheme}-${width}.png`)
+      });
     }
   }
-  await page.getByRole('button', {
-    name: 'List',
-    exact: true
-  }).click();
-  await page.locator('.hosting-invitation').scrollIntoViewIfNeeded();
-  await page.screenshot({
-    path: testInfo.outputPath('discovery-hosting-dark.png')
-  });
-  await expect(page.getByRole('link', {
-    name: 'Host an event'
-  })).toBeVisible();
-  expect(await page.locator('.hosting-invitation').evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(35, 31, 28)');
   expect(errors).toEqual([]);
 });
 test('profile stays editable when the live schema has no username column', async ({
@@ -242,6 +235,7 @@ test('profile stays editable when the live schema has no username column', async
 }) => {
   await profileFixture(page, true);
   await page.goto('/profile');
+  await openProfileEditor(page);
   await expect(page.getByLabel('Name', {
     exact: true
   })).toHaveValue('Test Explorer');
@@ -250,7 +244,7 @@ test('profile stays editable when the live schema has no username column', async
   })).toBeDisabled();
   await expect(page.getByText('Username setup is coming soon. You can still edit your other profile details.')).toBeVisible();
   await expect(page.getByRole('button', {
-    name: 'Save profile',
+    name: 'Save',
     exact: true
   })).toBeEnabled();
   await expect(page.getByRole('checkbox', {

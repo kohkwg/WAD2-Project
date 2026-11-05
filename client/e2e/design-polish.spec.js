@@ -76,7 +76,7 @@ test('live navigation hides personal links until a session arrives', async ({
     name: 'Sign in',
     exact: true
   })).toBeVisible();
-  for (const name of ['Plans', 'Organise', 'Create event', 'Your profile']) {
+  for (const name of ['Plans', 'Organise', 'Your profile']) {
     await expect(nav.getByRole('link', {
       name,
       exact: true
@@ -93,11 +93,12 @@ test('live navigation hides personal links until a session arrives', async ({
     exact: true
   })).toBeVisible();
   await expect(nav.getByRole('link', {
-    name: 'Create event',
+    name: 'Organise',
     exact: true
   })).toBeVisible();
+  // below 768px a signed-in visitor has bottom tabs and no menu button
   await page.setViewportSize({
-    width: 375,
+    width: 768,
     height: 800
   });
   const toggle = nav.getByRole('button', {

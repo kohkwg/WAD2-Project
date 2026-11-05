@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// these checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// these checks expect the expanded sidebar. from 992px the sidebar starts as an icon rail
 // unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
 test.beforeEach(async ({
   page
@@ -31,7 +31,7 @@ test('demo account sees its summary, and Bookedz logos return home', async ({
   })).toBeVisible();
   await expect(page.getByText(/Demo mode\./)).toBeVisible();
   await expect(page.getByRole('heading', {
-    name: 'Your next plan'
+    name: 'Your next event'
   })).toBeVisible();
   await expect(page.locator('.hero-map, .discovery-hero')).toHaveCount(0);
   await expect(page.locator('main')).toHaveCount(1);

@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { setColorTheme } from './support/colorTheme.js';
 import { createSeedData } from '../src/utils/mockData.js';
 
-// these checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// these checks expect the expanded sidebar. from 992px the sidebar starts as an icon rail
 // unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
 test.beforeEach(async ({
   page
@@ -89,7 +90,7 @@ test('organiser tabs, search, ordering and state-specific actions persist across
   await expect(page.locator('.organiser-event-card')).toHaveCount(3);
   await expect(card(page, 'Board Games Meetup').getByRole('link', {
     name: 'Review requests'
-  })).toHaveAttribute('href', '/organiser/events/review/rsvps?status=pending');
+  })).toHaveAttribute('href', '/organiser/events/review/manage?tab=rsvps&status=pending');
   await expect(card(page, 'Watercolour Workshop').getByRole('link', {
     name: 'Manage event',
     exact: true
@@ -155,7 +156,7 @@ test('pending summary filters requests and direct review opens the pending tab',
   await card(page, 'Photography Walk').getByRole('link', {
     name: 'Review requests'
   }).click();
-  await expect(page).toHaveURL(/reject\/rsvps\?status=pending$/);
+  await expect(page).toHaveURL(/reject\/manage\?tab=rsvps&status=pending$/);
   await expect(page.getByRole('group', {
     name: 'Filter RSVPs by status'
   }).getByRole('button', {
@@ -266,7 +267,7 @@ test('empty states and mobile layouts remain useful in both themes', async ({
   await page.goto('/organiser/events');
   await expect(page.locator('.organiser-event-card')).toHaveCount(3);
   for (const theme of ['light', 'dark']) {
-    await page.getByLabel('Color theme').selectOption(theme);
+    await setColorTheme(page, theme);
     for (const width of [375, 575, 768, 1280]) {
       await page.setViewportSize({
         width,
@@ -347,7 +348,7 @@ test('Organise fills the available width and fits more cards on large screens', 
   }).click();
   await expect(page.locator('.organiser-event-card')).toHaveCount(7);
   for (const scheme of ['light', 'dark']) {
-    await page.getByLabel('Color theme').selectOption(scheme);
+    await setColorTheme(page, scheme);
     for (const width of [375, 575, 768, 1280, 1600, 1920, 2560]) {
       await page.setViewportSize({
         width,
