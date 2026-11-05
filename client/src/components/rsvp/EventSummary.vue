@@ -55,9 +55,9 @@ const descriptionToShow = computed(() => {
       </header>
 
       <div class="event-body">
-      <div class="event-venue">
-        <span class="venue-label">Where</span>
-        <template v-if="event.isOnline">
+      <slot v-if="event.isOnline" name="online-venue">
+        <div class="event-venue">
+          <span class="venue-label">Where</span>
           <p class="venue-name"><span aria-hidden="true">⌖</span> Online</p>
           <p class="venue-address">The link is shared with confirmed attendees</p>
         </div>
