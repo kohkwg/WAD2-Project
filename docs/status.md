@@ -51,7 +51,11 @@ Community and Organise now leave the same space above their content as Plans: 12
 padding (none at 575px and below) on top of the shell's. Community had 24px, and Organise's
 phone rule had moved to 519px with the change above. Measured from the top bar to the first
 content: 24px at 375 and 575px and 52px at 768, 991 and 1280px on all three pages (Community was
-48 and 64px, Organise 36px at 575px). Not done: e2e specs, light-mode screenshots, full suites, a
+48 and 64px, Organise 36px at 575px).
+
+Organise's tabs now read All, Upcoming, Drafts, Past (All moved to the left); the page still
+opens on Upcoming, and the arrow keys follow the new order (checked at 375, 575 and 1280px; no
+spec relies on the tab positions). Not done: e2e specs, light-mode screenshots, full suites, a
 build.
 
 ### 5 November — Community Filters panel, Groups | Friends switch and smaller cards (Gregory)
