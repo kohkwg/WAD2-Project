@@ -196,13 +196,13 @@ function showEventGroups(eventId) {
 
 <template>
   <div class="container community-page">
-    <!-- Two columns from the top: everything Go together on the left, Friends as a full-height sidebar -->
+    <!-- Two columns from the top: everything group-related on the left, Friends as a full-height sidebar -->
     <div class="community-shell">
     <div class="community-column">
     <!-- One slim header: title and Start a group, with the explainer folded away after the first visit -->
     <header class="community-hero smart-head">
       <div class="smart-head-top">
-        <div class="smart-head-title"><span class="smart-head-star" aria-hidden="true">★</span><h1 class="page-title m-0">Go together</h1></div>
+        <div class="smart-head-title"><span class="smart-head-star" aria-hidden="true">★</span><h1 class="page-title m-0">Community</h1></div>
         <div class="community-hero-actions">
           <button type="button" class="btn btn-primary" :disabled="loading" @click="openComposer()">Start a group</button>
         </div>

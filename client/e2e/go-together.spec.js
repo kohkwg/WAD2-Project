@@ -14,7 +14,7 @@ test('join a group, get the event RSVP prompt, plan lunch and chat', async ({ pa
   // The food server isn't running in this test; the planner still takes typed places
   await page.route('**/api/food/nearby**', (route) => route.fulfill({ json: { deals: [{ id: 'd1', kind: 'deal', title: '1-for-1 lattes', merchant: 'Kopi Corner', priceText: '$4', outlet: { name: 'Kopi Corner', lat: 1.297, lng: 103.851 }, distanceM: 120, validAt: 'valid', source: { name: 'Telegram', url: 'https://t.me/example/1' } }], places: [], status: { places: 'unconfigured', deals: 'ok' } } }))
   await page.goto('/community')
-  await expect(page.getByRole('heading', { level: 1, name: 'Go together' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Community' })).toBeVisible()
   // Groups sit inside their event's card
   const eventCard = page.getByRole('region', { name: 'Intro to Vue Workshop' })
   const card = eventCard.locator('#group-grp2')

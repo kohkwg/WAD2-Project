@@ -40,5 +40,5 @@ test('landing reflows on mobile and Create event and Community both open', async
   await expect(page.getByLabel('Event title',{exact:true})).toBeVisible()
   await page.goto('/organiser/events/new?template=hangout')
   await expect(page).toHaveURL(/\/community$/)
-  await expect(page.getByRole('heading',{level:1,name:'Go together'})).toBeVisible()
+  await expect(page.getByRole('heading',{level:1,name:'Community'})).toBeVisible()
 })

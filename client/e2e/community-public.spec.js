@@ -18,7 +18,7 @@ async function guestFixture(page){
 }
 test('guests browse Community and group details; joining returns to that group after mock login',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));await guestFixture(page);
- await page.goto('/community');await expect(page.getByRole('heading',{level:1,name:'Go together'})).toBeVisible();
+ await page.goto('/community');await expect(page.getByRole('heading',{level:1,name:'Community'})).toBeVisible();
  await expect(page.locator('#group-grp2')).toBeVisible();
  await expect(page.getByText('Find your people',{exact:true})).toBeVisible();
  await page.locator('#group-grp2').getByRole('link',{name:'View group',exact:true}).click();
