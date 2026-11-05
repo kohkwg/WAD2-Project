@@ -777,7 +777,7 @@ export async function expireOffersNow(eventId) {
 /** @typedef {{id:string,eventId:string,title:string,notes:string,status:string,position:number}} Task */
 /** @typedef {{id:string,eventId:string,body:string,kind:'manual'|'venue-switch',createdAt:string,updatedAt:string|null}} Announcement */
 /** plannedCents/actualCents are line totals (unit cost × quantity). */
-/** @typedef {{id:string,eventId:string,name:string,category:string,quantity:number,plannedCents:number,actualCents:number}} BudgetItem */
+/** @typedef {{id:string,eventId:string,name:string,category:string,quantity:number,plannedCents:number,actualCents:number,purchasedAt:(string|null)}} BudgetItem */
 
 function ownedEvent(db, eventId) {
   const event = findEvent(db, eventId)
@@ -956,6 +956,7 @@ export async function saveBudgetItem(eventId, input) {
   const item = {
     id: existing?.id || operationId('expense'), eventId, name: text(input?.name, 'Item name'),
     category: input?.category, quantity: input?.quantity ?? 1, plannedCents: validateCents(input?.plannedCents), actualCents: validateCents(input?.actualCents),
+    purchasedAt: input?.purchasedAt ? new Date(input.purchasedAt).toISOString() : null,
   }
   validateExpenseAmounts(item)
   if (!budgetCategoryOptions(customCategories(db, eventId)).includes(item.category)) throw new Error('Choose a valid budget category.')

@@ -546,7 +546,7 @@ function startTextEdit(kind, item, event) {
     } else {
         const text = group.findOne('.name-text').getClientRect(area)
         frame = { left: text.x - 6, top: text.y - 5, width: Math.max(text.width + 12, 90), height: text.height + 10 }
-        field = 'name'; value = item.name; maxlength = 18; label = 'Person name'
+        field = 'name'; value = item.name; maxlength = 18; label = 'Helper name'
         look = { background: '#ffffff', color: '#111827', fontSize: 14 * scale }
         selectPerson(item)
     }
@@ -711,7 +711,7 @@ function addPerson() {
 
     people.value.push({
         id: personId,
-        name: `Person ${personNumber}`,
+        name: `Helper ${personNumber}`,
         role: 'Helper',
         x: Math.min(position.x, floorBounds.x + floorBounds.width - radius),
         y: Math.min(position.y, floorBounds.y + floorBounds.height - radius - labelHeight),
@@ -801,10 +801,10 @@ function addPerson() {
                                 <span aria-hidden="true">+</span> Add box
                             </button>
                             <button class="btn btn-sm btn-outline-primary" type="button" :disabled="!layoutEditable" @click="addPerson">
-                                <span aria-hidden="true">+</span> Add person
+                                <span aria-hidden="true">+</span> Add helper
                             </button>
                         </template>
-                        <p class="canvas-hint small mb-0">{{ canvasLocked ? 'Layout is locked. Unlock it to edit zones and people.' : 'Double-click a box or person to rename it. Drag to move; drag a box\u2019s handles to resize.' }}</p>
+                        <p class="canvas-hint small mb-0">{{ canvasLocked ? 'Layout is locked. Unlock it to edit zones and helpers.' : 'Double-click a box or helper to rename it. Drag to move; drag a box\u2019s handles to resize.' }}</p>
                         <button v-if="canEdit" class="btn btn-sm lock-toggle ms-auto" type="button"
                             :class="{ 'lock-toggle--locked': canvasLocked }"
                             :aria-pressed="canvasLocked"
@@ -818,7 +818,7 @@ function addPerson() {
                         </button>
                     </div>
                     <div v-if="canEdit" class="canvas-selection" role="group" aria-label="Selected element">
-                        <p v-if="!selectedBox && !selectedPerson" class="selection-empty small mb-0">Select a box or person to change its name, colour or size.</p>
+                        <p v-if="!selectedBox && !selectedPerson" class="selection-empty small mb-0">Select a box or helper to change its name, colour or size.</p>
                         <template v-if="selectedBox">
                             <label class="selection-field">Name
                                 <input v-model="selectedBox.label" class="form-control form-control-sm" maxlength="24" :disabled="!layoutEditable">

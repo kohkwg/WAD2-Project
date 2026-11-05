@@ -22,6 +22,8 @@ const isHost = computed(() => props.group.myStatus === 'host')
 const full = computed(() => props.group.spotsLeft <= 0)
 const people = computed(() => [props.group.host, ...props.group.members])
 const pageLink = computed(() => `/groups/${props.group.id}`)
+import { useMyDino } from '@/lib/myDino'
+const { dinoFor } = useMyDino()
 const initials = (name) => name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()
 const ago = computed(() => {
   const minutes = Math.max(1, Math.round((Date.now() - new Date(props.group.createdAt)) / 60000))
@@ -50,7 +52,7 @@ async function join() {
 <template>
   <article :id="`group-${group.id}`" class="group-card lift-on-hover" :class="{ 'is-highlighted': highlight, 'is-joined': joined || isHost }" :aria-labelledby="`group-title-${group.id}`">
     <header class="group-head">
-      <span class="group-avatar" aria-hidden="true">{{ initials(group.host.name) }}</span>
+      <span class="group-avatar" aria-hidden="true"><img v-if="dinoFor(group.host.id)" class="dino-face" :src="dinoFor(group.host.id)" alt="">{{ dinoFor(group.host.id) ? '' : initials(group.host.name) }}</span>
       <p class="group-who m-0">
         <strong :id="`group-title-${group.id}`">{{ isHost ? 'You' : group.host.name }}</strong>{{ ' ' }}<span class="text-secondary">{{ isHost ? 'are' : 'is' }} looking for people to go with</span>{{ ' ' }}<span class="group-ago text-caption text-secondary">· {{ ago }}</span>
       </p>
@@ -75,7 +77,7 @@ async function join() {
     <div class="group-foot">
       <div class="group-people">
         <span class="group-stack" aria-hidden="true">
-          <span v-for="person in people.slice(0, 5)" :key="person.id" class="group-mini" :title="person.name">{{ initials(person.name) }}</span>
+          <span v-for="person in people.slice(0, 5)" :key="person.id" class="group-mini" :title="person.name"><img v-if="dinoFor(person.id)" class="dino-face" :src="dinoFor(person.id)" alt="">{{ dinoFor(person.id) ? '' : initials(person.name) }}</span>
         </span>
         <span class="text-meta"><strong><BumpValue :value="people.length" /> going</strong> · {{ full ? 'Full' : `${group.spotsLeft} ${group.spotsLeft === 1 ? 'spot' : 'spots'} left` }}</span>
       </div>
@@ -107,6 +109,8 @@ async function join() {
 .group-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .group-who { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .group-avatar,.group-mini { display: inline-grid; place-items: center; flex: none; border-radius: 50%; background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); font-weight: 700; }
+.dino-face { width: 100%; height: 100%; object-fit: contain; }
+.group-avatar,.group-mini { overflow: hidden; }
 .group-avatar { width: 40px; height: 40px; font-size: .9rem; }
 .group-mini { width: 28px; height: 28px; font-size: .7rem; border: 2px solid var(--bookedz-surface); }
 .group-badge { flex: none; padding: 3px 10px; border-radius: 99px; background: var(--bookedz-hover); color: var(--bookedz-muted); font-size: var(--text-caption); font-weight: 700; }

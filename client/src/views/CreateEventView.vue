@@ -609,7 +609,7 @@ async function publish() {
 </script>
 
 <template>
-  <div class="design-baseline create-event-page col-12 mx-auto">
+  <div class="design-baseline create-event-page col-12 mx-auto" :class="{ 'is-embedded': props.embedded }">
     <header class="create-heading">
       <component :is="props.embedded ? 'h2' : 'h1'">{{ isEditing ? 'Edit event' : 'Create an event' }}</component>
       <p>{{ isEditing ? 'Update the details below. Saving changes the live event straight away.' : 'Start with the essentials. You can review everything before it goes live.' }}</p>

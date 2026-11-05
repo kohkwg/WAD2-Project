@@ -51,7 +51,7 @@ watch(() => route.fullPath, () => close(Boolean(nav.value?.contains(document.act
 </template>
 
 <style scoped>
-.event-tool-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; padding: .45rem; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-glass-solid); position: relative; z-index: 5; }
+.event-tool-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; padding: .45rem; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-glass-solid); position: sticky; top: var(--topbar-h, 0px); z-index: 20; }
 .tool-group { position: relative; min-width: 0; }
 .tool-group-trigger { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; min-height: 62px; padding: .65rem .8rem; border: 1px solid transparent; border-radius: .75rem; background: transparent; color: var(--bookedz-muted); text-align: left; }
 .tool-group-trigger strong { display: block; font-size: .95rem; }
