@@ -406,7 +406,8 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 ## 11. Change log
 
 - **5 Nov 2026:** Organise keeps its two-across layout down to 520px; only narrower phones get
-  one column. Community and Organise leave the same space at the top as Plans (Gregory).
+  one column. Community and Organise leave the same space at the top as Plans, and Organise's
+  All tab comes first (Gregory).
 - **5 Nov 2026:** Community's views moved into one Filters panel beside the search. Below 992px a
   Groups | Friends switch replaces the header card, Start a group pops in beside it and the cards
   are smaller; the Friends sidebar now starts at 992px (Gregory).

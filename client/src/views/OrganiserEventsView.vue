@@ -62,6 +62,9 @@ const justUpdatedId = computed(() => route.query.updated);
 const counts = computed(() => organiserEventCounts(events.value, now.value));
 
 const tabs = computed(() => [{
+  id: 'all',
+  label: 'All'
+}, {
   id: 'upcoming',
   label: 'Upcoming'
 }, {
@@ -70,9 +73,6 @@ const tabs = computed(() => [{
 }, {
   id: 'past',
   label: 'Past'
-}, {
-  id: 'all',
-  label: 'All'
 }]);
 
 const pendingEvents = computed(() => events.value.filter(event => organiserEventState(event, now.value) === 'upcoming' && event.pendingCount > 0));

@@ -848,3 +848,5 @@ nearby places from Geoapify (open at the meal time, nearest first), OneMap searc
   there squeeze the action buttons to 35–49px wide.
 - **Top spacing follows Plans:** Community and Organise leave the same space above their first
   content as Plans at every width.
+- **Organise's All tab comes first** (All, Upcoming, Drafts, Past); the page still opens on
+  Upcoming.

@@ -14,7 +14,8 @@ the day their status entry gives.
 
 On 5 November 2026, at Gregory's request, Organise uses its 576px layout from 520px (tabs at
 their own width, two event cards across); below 520px it keeps the one-column phone layout.
-Community and Organise also leave the same space at the top as Plans. We changed
+Community and Organise also leave the same space at the top as Plans, and Organise's All tab
+moved to the left of Upcoming, Drafts and Past. We changed
 `OrganiserEventsView.vue` and `CommunityView.vue`.
 
 On 5 November 2026, at Gregory's request, we reworked Community (Go together) for every screen
