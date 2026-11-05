@@ -151,6 +151,12 @@ places.
 
 ## How to test
 
+- **End-to-end:** 99 Playwright tests in Chromium on demo data, covering the main user journeys
+  from 375px to 1280px.
+- **Unit and route:** 419 Vitest tests (265 client, 154 server) for the business rules, data
+  adapters and API routes.
+- All pass and need no API keys. The commands are below.
+
 Use a POSIX shell such as Git Bash on Windows, from the repository root.
 
 **End-to-end tests** run in Chromium against demo data. They start their own server on port 5173,
