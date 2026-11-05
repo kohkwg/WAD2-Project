@@ -9,6 +9,12 @@ the [README](../README.md#credits-and-licences). Original supplied material stay
 
 ## Decision log, newest first
 
+5 November 2026 — Denzel, Discover search suggestions: suggest event titles, venues, categories
+and keywords (including from descriptions) as people type, worked out in the browser from the
+events Discover already reads, with no new dependency, table or Express route. Typo correction,
+"Did you mean", personalised ranking and logging searches are not included. Discover and its filters
+are Aishani's feature, so Aishani should review this.
+
 5 November 2026 — Gregory, soft dark mode back, clearer dark buttons and Discover cards that
 close: the soft dark tokens (`--db-dark-hero`, `--db-dark-edge`, `--db-dark-orange`,
 `--db-dark-teal`) are restored on every ticket page, Vivienne's event page and dashboard and the

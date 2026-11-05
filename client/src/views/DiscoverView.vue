@@ -12,6 +12,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { USING_SUPABASE, getMyRsvps, JOINED_STATUSES } from '@/utils/api'
 import { observeDiscoverySession } from '@/lib/discoveryState'
+import { buildSuggestionIndex, suggest } from '@/lib/searchSuggestions'
 import { useEvents, useRecommendations } from '@/composables/useEvents'
 import { useDiscoveryMotion } from '@/composables/useDiscoveryMotion'
 import { toast } from '@/composables/useToast'
@@ -138,6 +139,16 @@ const {
   fetchEvents: fetchSavedCount,
 } = useEvents()
 
+// Search suggestions read every event the current filters allow (ignoring the typed text), so
+// a suggestion can't lead to an empty page. Loaded on first focus; typing then needs no requests.
+const {
+  events: suggestionEvents,
+  error: suggestionError,
+  fetchEvents: fetchSuggestionEvents,
+} = useEvents()
+const suggestionsRequested = ref(false)
+const typedSearch = ref('')
+
 const {
   recommended,
   actionPending,
@@ -257,6 +268,11 @@ const nextWeekLabel = computed(() => {
 
 // Build matching queries for the list and map.
 function baseQuery() {
+  return weekWindow(filteredQuery())
+}
+
+// The chosen filters, before limiting a plain desktop browse to one week
+function filteredQuery() {
   const activeFilters = {
     ...filters.value,
     saved: savedSelected.value,
@@ -269,7 +285,7 @@ function baseQuery() {
     now: clock.value,
   }
 
-  return weekWindow(discoveryEventQuery(activeFilters, options))
+  return discoveryEventQuery(activeFilters, options)
 }
 
 const eventQuery = computed(() => {
@@ -284,6 +300,23 @@ const mapQuery = computed(() => {
     ...baseQuery(),
     forMap: true,
   }
+})
+
+// Not limited to one week: typing a search looks across every date, so suggestions must too
+const suggestionQuery = computed(() => {
+  return {
+    ...filteredQuery(),
+    search: '',
+    forMap: true,
+  }
+})
+
+const suggestionIndex = computed(() => buildSuggestionIndex(suggestionEvents.value))
+
+const searchSuggestions = computed(() => {
+  return suggest(suggestionIndex.value, typedSearch.value, {
+    excludeCategories: filters.value.categories,
+  })
 })
 
 const discoveryPicks = computed(() => {
@@ -531,6 +564,23 @@ function openScheduleEvent(event) {
   router.push(`/events/${event.id}/rsvp`)
 }
 
+// Search suggestions
+function loadSuggestions() {
+  // A failed read shows no suggestions and tries again on the next focus
+  if (suggestionsRequested.value && !suggestionError.value) return
+  suggestionsRequested.value = true
+  fetchSuggestionEvents(suggestionQuery.value)
+}
+
+function chooseSuggestion(row) {
+  if (row.kind === 'event') {
+    openScheduleEvent({ id: row.eventId })
+  } else if (row.kind === 'category') {
+    setCategories([...filters.value.categories, row.category])
+  }
+  // Venues and keywords are searches, which the search box has already applied
+}
+
 async function changeListingPreference(payload) {
   if (!loggedIn.value || actionPending.value) {
     return
@@ -706,6 +756,12 @@ watch(eventQuery, (value, previous) => {
   }
 })
 
+watch(suggestionQuery, (value, previous) => {
+  if (suggestionsRequested.value && JSON.stringify(value) !== JSON.stringify(previous)) {
+    fetchSuggestionEvents(value)
+  }
+})
+
 watch(mapQuery, (value, previous) => {
   if (JSON.stringify(value) !== JSON.stringify(previous)) {
     fetchMapEvents(value)
@@ -781,8 +837,12 @@ onBeforeUnmount(() => {
         :loading="loading"
         :error="error"
         show-active
+        :suggestions="searchSuggestions"
         @show="showList"
         @retry="refreshDiscovery"
+        @search-focus="loadSuggestions"
+        @search-input="typedSearch = $event"
+        @suggestion-select="chooseSuggestion"
       />
     </div>
 

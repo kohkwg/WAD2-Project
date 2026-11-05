@@ -12,6 +12,10 @@ the day their status entry gives.
 
 ## 5 November 2026
 
+On 5 November 2026, at Denzel's request, we added search suggestions to Discover
+(`lib/searchSuggestions.js`, with the list in Aishani's `EventFilters.vue` and its wiring in
+`DiscoverView.vue`), and changed the live search so text containing a comma or bracket still matches.
+
 On 5 November 2026, at Gregory's request, we brought back the soft dark mode on every ticket page
 (now including Vivienne's event page and dashboard and the Go together pages) and moved its four
 tokens into `main.css`; made dark-mode outline buttons, dashboard rows and Community tiles easier

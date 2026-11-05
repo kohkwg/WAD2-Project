@@ -99,7 +99,9 @@ export function useEvents() {
 
       // The view has venue_id, but no venue_name. Resolve names separately so
       // this also works when PostgREST cannot infer a relationship on the view.
-      const search = filters.search?.replace(/[,()%"\\]/g, ' ').trim()
+      // These characters would break the PostgREST filter. A wildcard stands in for them, so a
+      // search for "Hall 1, SMU" still finds that text (a space in their place would not).
+      const search = filters.search?.trim().replace(/[,()%"\\]+/g, '%').replace(/^%+|%+$/g, '').trim()
       let matchingVenueIds = []
       if (search) {
         const { data } = await supabase
