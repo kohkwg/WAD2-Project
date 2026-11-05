@@ -45,6 +45,8 @@ const THEME_ICONS = {
 }
 const THEME_CYCLE = { system: { label: 'Auto', next: 'light' }, light: { label: 'Light', next: 'dark' }, dark: { label: 'Dark', next: 'system' } }
 const cycleTheme = () => setTheme(THEME_CYCLE[themePreference.value].next)
+// Says the current theme and what a press does, e.g. "Theme: Auto. Switch to Light"
+const themeCycleLabel = computed(() => { const now = THEME_CYCLE[themePreference.value]; return `Theme: ${now.label}. Switch to ${THEME_CYCLE[now.next].label}` })
 let stopListening = () => {}
 let disposed = false
 let authRevision = 0
@@ -106,10 +108,14 @@ function resetDemo() {
       <ul class="sidebar-links sidebar-links--secondary">
         <li>
           <!-- Collapsed rail only: one button cycling Auto → Light → Dark; the dropdown below covers every other layout -->
-          <button type="button" class="side-link sidebar-theme-cycle" :data-label="`Theme: ${THEME_CYCLE[themePreference].label}`" :aria-label="`Theme: ${THEME_CYCLE[themePreference].label}. Switch to ${THEME_CYCLE[THEME_CYCLE[themePreference].next].label}`" @click="cycleTheme">
+          <button type="button" class="side-link sidebar-theme-cycle" :data-label="`Theme: ${THEME_CYCLE[themePreference].label}`" :aria-label="themeCycleLabel" @click="cycleTheme">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="THEME_ICONS[themePreference]" /></svg>
           </button>
-          <label class="theme-control sidebar-theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="THEME_ICONS[themePreference]"/></svg><span aria-hidden="true">Theme</span><span class="visually-hidden">Color theme</span><select :value="themePreference" name="color-theme" @change="setTheme($event.target.value)"><option value="system">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+          <!-- Expanded: the icon and "Theme" cycle Auto → Light → Dark; the dropdown still picks one directly -->
+          <div class="theme-control sidebar-theme">
+            <button type="button" class="sidebar-theme-toggle" :aria-label="themeCycleLabel" @click="cycleTheme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="THEME_ICONS[themePreference]"/></svg><span>Theme</span></button>
+            <label class="sidebar-theme-select"><span class="visually-hidden">Color theme</span><select :value="themePreference" name="color-theme" @change="setTheme($event.target.value)"><option value="system">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+          </div>
         </li>
       </ul>
       <div v-if="USING_SUPABASE && hasSession" class="sidebar-account">
@@ -172,10 +178,13 @@ function resetDemo() {
 .topbar-brand, .navbar-toggler { display: none; }
 .nav-account { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .theme-control { display: inline-flex; align-items: center; gap: 4px; min-width: 0; margin: 0; color: var(--bookedz-muted); }.theme-control svg { width: 18px; height: 18px; }.theme-control select { min-height: 44px; max-width: 88px; padding: 8px 4px; border: 0; border-radius: 10px; background: transparent; color: inherit; font-size: .8rem; }.theme-control option { background: var(--bookedz-surface); color: var(--bookedz-ink); }
-.sidebar-theme { display: flex; gap: 12px; min-height: 48px; padding: 0 12px 0 16px; font-size: .875rem; }
+.sidebar-theme { display: flex; gap: 4px; min-height: 48px; padding: 0 12px 0 0; font-size: .875rem; }
+/* Icon + "Theme" is one button filling the row up to the dropdown, styled like the links above */
+.sidebar-theme-toggle { display: flex; flex: 1; align-items: center; gap: 12px; min-width: 0; min-height: 48px; padding: 0 8px 0 16px; border: 0; border-radius: 14px; background: transparent; color: inherit; font: inherit; text-align: left; transition: background-color .15s ease, color .15s ease; }
+.sidebar-theme-toggle:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }
 .sidebar-theme svg { flex: 0 0 22px; width: 22px; height: 22px; }
-.sidebar-theme select { margin-left: auto; }
-.sidebar-account :focus-visible, .sidebar-theme select:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
+.sidebar-theme-select { display: flex; align-items: center; margin: 0; }
+.sidebar-account :focus-visible, .sidebar-theme select:focus-visible, .sidebar-theme-toggle:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
 @media(min-width:992px) { .app-topbar--minimal { display: none; } }
 .nav-sign-in, .nav-quiet, .nav-profile { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 9px 15px; border: 0; border-radius: 14px; text-decoration: none; font-size: .875rem; font-weight: 600; white-space: nowrap; }
 .nav-sign-in { background: var(--bookedz-primary); color: var(--bookedz-on-action); }

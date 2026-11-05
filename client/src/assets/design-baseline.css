@@ -265,10 +265,7 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 /* ---- My RSVPs (MyRsvpsView and its cards) ------------------------------------------------------ */
 .my-rsvps-page.my-rsvps-page { position: relative; isolation: isolate; --db-r: 24px; }
 .my-rsvps-page.my-rsvps-page .header-star { color: var(--bookedz-fill); opacity: .45; font-size: clamp(3.5rem, 10vw, 6rem); }
-.my-rsvps-page.my-rsvps-page .plans-summary > div { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 4px 4px 0 var(--bookedz-teal); }
-.my-rsvps-page.my-rsvps-page .plans-summary dd { font-weight: 900; }
-:root[data-theme="dark"] .my-rsvps-page.my-rsvps-page .plans-summary > div { border-color: var(--bookedz-border); box-shadow: 4px 4px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
-/* Tabs become pills, like My events */
+:root[data-theme="dark"] /* Tabs become pills, like My events */
 .my-rsvps-page.my-rsvps-page .rsvp-tabs { gap: 8px; padding: 4px 4px 8px; border-bottom: 0; }
 .my-rsvps-page.my-rsvps-page .rsvp-tabs button { min-height: 44px; padding: 8px 16px; border: 2px solid var(--bookedz-control-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-weight: 700; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp), background-color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .my-rsvps-page.my-rsvps-page .rsvp-tabs button::after { display: none; }
@@ -321,14 +318,14 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 :root[data-theme="dark"] :is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvps-heading, .community-hero) { border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill); }
 
 /* Cards as tickets */
-:is(.my-rsvps-page, .community-page, .public-event-page, .ticket-page, .auth-wrap):is(*, *) :is(.card, .plans-summary > div, .next-event, .saved-event, .rsvp-empty, .jio-card, .community-soon, .auth-card) {
+:is(.my-rsvps-page, .community-page, .public-event-page, .ticket-page, .auth-wrap):is(*, *) :is(.card, .next-event, .saved-event, .rsvp-empty, .jio-card, .community-soon, .auth-card) {
   border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal);
 }
 :is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvp-empty, .community-soon) { border-style: dashed; border-color: var(--bookedz-control-border); box-shadow: none; }
-:root[data-theme="dark"] :is(.my-rsvps-page, .community-page, .public-event-page, .ticket-page, .auth-wrap):is(*, *) :is(.card, .plans-summary > div, .next-event, .saved-event, .jio-card, .auth-card) {
+:root[data-theme="dark"] :is(.my-rsvps-page, .community-page, .public-event-page, .ticket-page, .auth-wrap):is(*, *) :is(.card, .next-event, .saved-event, .jio-card, .auth-card) {
   border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent);
 }
-:is(.my-rsvps-page, .community-page):is(*, *) :is(.event-title, .section-title, .plans-summary dd) { font-family: var(--bookedz-heading); font-weight: 900; }
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.event-title, .section-title) { font-family: var(--bookedz-heading); font-weight: 900; }
 
 /* Tabs and filters become pills */
 .my-rsvps-page:is(*, *) .rsvp-tabs { border-bottom: 0; gap: 8px; padding: 6px 4px 10px; }
