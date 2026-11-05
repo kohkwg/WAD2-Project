@@ -14,7 +14,8 @@ food planner), online events and the signed-out landing page. Recent changes use
 checks only; no full suite or production build has run since the older dated counts below.
 Several browser specs were already failing on `dev` before the 4 and 5 November work (see the
 5 November sidebar entry); they still need fixing. Hosted migrations after 23 October are
-recorded in their own timeline entries. See [design](design/DESIGN.md) for how the app looks
+recorded in their own timeline entries. On 6 November the code was cleaned up, and the documents and some browser
+specs were updated. 74 of the 171 demo browser tests still fail (first timeline entry). See [design](design/DESIGN.md) for how the app looks
 and [contributing](contributing.md) for branch ownership and pull requests.
 
 | Feature / owner | Working functionality | Remaining limits / acceptance |
@@ -37,6 +38,44 @@ venues. Test R2 objects were deleted; the rollback-only third test auth user did
 not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
+
+### 6 November — Code cleanup by area and spec updates (Denzel)
+
+At Denzel's request, we cleaned up the code area by area. We removed unused imports, exports,
+helpers and scoped and global CSS, and we added JSDoc and comments in ASD-STE100. The cleanup
+changed 102 files in `client/src`, and also files in `client/e2e`, `client/tests`, `server` and
+`supabase/functions/venue-switch`. Seven files had no importer and are deleted:
+`DiscoveryHero.vue`, `EventMap.vue`, `MapPreview.vue` and `PickedDeck.vue` in
+`components/discovery`, `FloorPlanImages.vue` in `components/floor-plan`, `DinoPicker.vue` in
+`components/profile` and `lib/routing.js`. `IslandArtwork.vue`, `IslandBoats.vue`,
+`IslandWater.vue` and `NeighbourhoodLabels.vue` remain, but no app file imports them. Discover
+uses `DiscoveryStreetMap.vue`, and no page shows the island illustrations.
+
+Some browser specs were updated, but this work is not complete. The new helper `client/e2e/support/colorTheme.js`
+(`setColorTheme`) replaces the removed "Color theme" dropdown: the theme is Light or Dark, chosen
+on the Profile page, and it follows the device until a choice is saved. Specs also cover the
+`/manage?tab=rsvps&status=` links, the Profile view and edit modes, "Your next event" on the
+dashboard, the missing "Create event" navigation link, the sticky Friends sidebar and the phone
+bottom tabs. The list of changed specs is in the [change history](changelog.md).
+
+The documents were corrected to match the code (README, design guide, asset register, testing
+guide and AGENTS.md). Code committed on 6 November (theme change, footer, profile margins,
+landing and Organise fixes) has no separate entry here; its effect is in the current descriptions.
+
+Evidence: all demo browser specs ran on an owned demo server (port 5199): 89 passed, 74 failed,
+8 skipped. The same specs ran against a scratch copy of `dev` `7a6a2da` without the cleanup (port 5198):
+89 passed, 74 failed, 8 skipped. The same 74 tests failed in both runs, so these runs show no
+regression from the cleanup. This does not prove behaviour is the same in code that no passing test
+reaches. Many failures expect earlier screens (the Discover Map button and `.event-card`, the
+"Plans" heading, "Add person" and "Item name"). Some spec fixtures lack newer exports
+(`changePassword`, `JOINED_STATUSES`, `respondToRequest`). `organiser-events.spec.js:169` ("Confirmed"
+after approval) is not diagnosed. `search-suggestions`, `go-together`, `landing-page`,
+`community-public`, `sidebar-collapse` and `signed-out-sign-in` all pass.
+
+`server/services/hangoutTime.js` imports `client/src/utils/hangoutSlots.js`, which `ef34134` deleted. A
+cleanup worker reports that the hangout time routes return 500 and that 2 of 3 `hangoutsRoute.test.js`
+cases fail; this is not fixed. Not done: live specs, the complete unit and server suites, a production
+build, real-device checks, and the fixes for the 74 failing tests.
 
 ### 5 November — Organise from 520px matches 576px; Plans' top spacing (Gregory)
 

@@ -269,6 +269,14 @@ because it is imported, and accept dev's deletion of the unused SingaporeMap.
 Combine both Supabase adapter imports and both sets of geographic helpers. Leave
 the merge commit and push for Aishani; do not apply incoming SQL to hosted services.
 
+Note, 6 November 2026 (not a new decision): the 3 November entry above is out of date on two
+points. No app file imports `IslandArtwork.vue` now, and the `IslandBoats.vue`, `IslandWater.vue`
+and `NeighbourhoodLabels.vue` files have no importer either. All four files remain in the
+repository. `SingaporeMap.vue` is gone, as that entry said. The landing page is now sign-in and an
+account summary (4 November entry in [DESIGN.md](design/DESIGN.md#11-change-log)), not an island
+map. Denzel asked for the 6 November code cleanup that removed other unused files; see the
+[status](status.md) and [change history](changelog.md).
+
 3 November 2026, subsequent street-map correction — Aishani rejects the illustrated Discover map and explicitly chooses **Map beside timeline**. This supersedes the list-only/map-removal layout decision below: retain the current palette, recommendation strip and event-title navigation, and add a real OneMap street map beside the timeline (stacked on narrow screens). Keep the existing recommendation algorithm. No separate Map navigation entry is needed.
 
 3 November 2026 — Aishani requests removal of the Discover Map feature and the

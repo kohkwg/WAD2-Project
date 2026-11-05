@@ -40,7 +40,7 @@ Never reset a branch that holds unmerged work, and never force-push `dev`.
 [DESIGN.md](design/DESIGN.md) is the single source of truth for colours, fonts, words,
 components, motion and accessibility. In short:
 
-- Use the `--bookedz-*` tokens and check both light and dark themes; keep System/Light/Dark.
+- Use the `--bookedz-*` tokens and check both light and dark themes. The theme has two choices, Light and Dark, and it follows the device until someone saves a choice on Profile.
   For the dark look use the soft tokens in `main.css` (`--db-dark-hero`, `--db-dark-edge`,
   `--db-dark-orange`, `--db-dark-teal`), not solid orange or 60% shadows.
 - In a component's `<style scoped>`, write dark rules as `:root[data-theme="dark"] .card { … }`.

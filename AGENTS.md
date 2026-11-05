@@ -22,7 +22,7 @@ blanket permission for later Git/cloud mutations.
 
 - Keep Vue 3 Composition API, JavaScript templates/ES modules, Vue Router,
   Bootstrap 5 and the established shell/theme. The shell supplies the only `main`.
-  `/` is the public illustrated landing page; Bookedz logos link there. Discover
+  `/` is the public illustrated landing page; the brand logos (the app shows the name Dino) link there. Discover
   remains public in demo/live; `/events` redirects there. Event-detail/RSVP
   URLs remain `/events/:id/rsvp`; protected check-in routes still require auth.
 - Preserve `client/src/utils/api.js`'s async demo/live contracts. Share the guarded
@@ -35,8 +35,9 @@ blanket permission for later Git/cloud mutations.
 - F6 plan/programme writes use actual organiser roles, account-linked placements
   remain team-only, and the current bucket supports public finished images.
   Do not represent public R2 objects as private storage.
-- Express 5/CommonJS handles health, recommendations and signed image uploads;
-  server scripts load `.env`. Supabase migrations and the Edge Function are deployed
+- Express 5/CommonJS handles health, recommendations, plan suggestions, signed image uploads,
+  account deletion, hangout time ranking, OneMap routes and food places; server scripts load
+  `.env`. Supabase migrations and the Edge Function are deployed
   to Bookerz as recorded in docs/status.md; verify hosted history before new SQL work.
 - Use props down/events up, stable IDs, computed display state and guarded async
   route/lifecycle work. Preserve drafts, retry/cancel semantics, keyboard access,

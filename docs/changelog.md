@@ -10,6 +10,39 @@ checkpoint and [decisions](decisions.md) for who decided what. Entries on the sa
 order they were recorded in; a few entries were recorded without a date and are filed under
 the day their status entry gives.
 
+## 6 November 2026
+
+On 6 November 2026, at Denzel's request, we cleaned up the code area by area. We removed unused
+imports, exports, helpers and scoped and global CSS. We added JSDoc and short comments, written in
+ASD-STE100 Simplified Technical English. The cleanup touched files in `client/src`, `client/e2e`,
+`client/tests`, `server` and `supabase/functions/venue-switch`. We deleted seven files that no
+file imported: `components/discovery/DiscoveryHero.vue`, `EventMap.vue`, `MapPreview.vue` and
+`PickedDeck.vue`, `components/floor-plan/FloorPlanImages.vue`,
+`components/profile/DinoPicker.vue` and `lib/routing.js`. `IslandArtwork.vue`,
+`IslandBoats.vue`, `IslandWater.vue` and `NeighbourhoodLabels.vue` stay in the repository, but
+no app file imports them now.
+
+On 6 November 2026, at Denzel's request, we updated part of the browser specs to match the current app. 74 tests still fail (see the status timeline).
+We added `client/e2e/support/colorTheme.js` (`setColorTheme`), because the "Color theme"
+dropdown and its Auto option no longer exist: the theme is Light or Dark, set on the Profile page,
+and it follows the device until a choice is saved. We also updated specs for the
+`/manage?tab=rsvps&status=` links, the Profile view and edit modes, "Your next event" on the
+dashboard, the missing "Create event" navigation link, the sticky Friends sidebar (as tall as its
+content), and the bottom tabs that replace the menu button below 768px when signed in. We changed
+`community-friends`, `design-polish`, `discover-browse`, `discovery-list-palette`,
+`event-team`, `f1-profile-design`, `filter-panel`, `go-together`, `landing-page`,
+`manage-event-navigation`, `motion-theme`, `my-rsvps`, `navbar-account`, `notifications`,
+`organiser-events`, `recommendation-mvp` and `search-suggestions` (all `.spec.js` files).
+
+On 6 November 2026, at Denzel's request, we made the documents match the code. We rewrote the
+README's overview (the Bookedz and Dino names, environment variable names, the page list, the
+test commands and the library credits) and removed the Python food pipeline from its setup list.
+The same pass corrected the theme, navigation and landing text in the design guide, the asset
+register, the contributing guide and the testing guide. It also added a dated note to the
+decisions. We changed `README.md`, `AGENTS.md`, `docs/README.md`, `docs/contributing.md`,
+`docs/testing.md`, `docs/decisions.md`, `docs/status.md`, `docs/changelog.md`,
+`docs/design/DESIGN.md` and `docs/design/assets.md`.
+
 ## 5 November 2026
 
 On 5 November 2026, at Gregory's request, Organise uses its 576px layout from 520px (tabs at

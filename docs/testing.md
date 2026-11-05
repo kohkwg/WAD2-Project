@@ -1,5 +1,48 @@
 # Testing and local operation
 
+## Current commands and UI facts (6 November 2026)
+
+This section is the current guide. The dated sections below are history. Some name specs, tests
+or screens that no longer exist (see "Removed or renamed" below). Run browser specs against a demo
+server that you own.
+
+Commands (POSIX shell, from the repository root):
+
+```sh
+pnpm --dir client test:unit                      # Node tests in src/utils/__tests__
+node --test client/tests/*.test.mjs              # Node tests for Discover, RSVP and recommendations
+node --test server/tests/*.test.js               # server unit and route tests
+npm --prefix server run check                    # interest and tag-diversity checks
+pnpm --dir client test:e2e e2e/<name>.spec.js    # demo-mode browser specs
+pnpm --dir client test:e2e:live                  # hosted project; see "Live browser tests"
+```
+
+`test:e2e` uses `client/playwright.config.js`. It starts Vite on `127.0.0.1:5173` with
+`VITE_USE_MOCK=true` and `VITE_FEATURE4_TEST_SEED=true`, and it reuses a server already on that
+port. A live-mode server on 5173 makes the demo specs fail at sign-in, so use a free port with a
+temporary config. Neither package has a lint script. Full suites and production builds need an
+explicit request.
+
+What the specs expect from the current UI:
+
+- **Theme:** there are two themes, Light and Dark. The theme follows the device until someone
+  saves a choice. The only control is the Theme fieldset on the Profile page. There is no
+  "Color theme" dropdown and no Auto option. Specs call `setColorTheme(page, 'light' | 'dark')`
+  from `client/e2e/support/colorTheme.js`. It saves `bookedz-color-theme` in local storage and
+  sends the storage event that `src/lib/theme.js` listens for.
+- **Navigation:** the main navigation has Home, Discover and Community, plus Plans and Organise
+  for signed-in users. It has no "Create event" link. Below 768px, signed-in users see bottom tabs instead of the menu button.
+- **Pages:** the home page shows "Your next event". Profile has view and edit modes. Guest-list
+  links look like `/organiser/events/:id/manage?tab=rsvps&status=`. The Friends sidebar in
+  Community is as tall as its content and sticks while the page scrolls.
+
+Removed or renamed (history only, do not run): `server/tests/foodDeals.test.js` (now
+`foodPlaces.test.js`), `client/src/utils/__tests__/onTheDay.test.js` and
+`hangoutSlots.test.js` (not in the repository), and `e2e/profile-friends.spec.js`. The island
+components (`IslandArtwork.vue`, `IslandBoats.vue`, `IslandWater.vue`,
+`NeighbourhoodLabels.vue`) have no importer, so the island and water-motion checks below no
+longer apply to a visible page.
+
 5 November search-suggestions checkpoint: `node --test client/tests/search-suggestions.test.mjs` from
 the repo root covers the ranking and keyword rules, and `client/e2e/search-suggestions.spec.js` covers
 the list in demo mode. Run the spec against a fresh demo server, as described below. A hidden browser
@@ -675,9 +718,9 @@ contexts and do not create hosted events.
 
 | Spec | Purpose |
 | --- | --- |
-| `e2e/motion-theme.spec.js` | System theme/default/persistence, filter disclosure and view changes, wizard draft preview/back navigation |
+| `e2e/motion-theme.spec.js` | Theme follows the device until a choice is saved, and a saved choice persists; category choices disclose; wizard draft preview and back navigation |
 | `e2e/workspace-design.spec.js` | Public detail/action priority, My RSVPs, all four event tools, actual capacity totals; desktop/mobile and dark mode |
-| `e2e/immersive-discovery.spec.js` | Hero asset loading, map preview/pause/focus, reduced motion and directory filtering |
+| `e2e/immersive-discovery.spec.js` | Street-map Discover workspace; landing reflow on mobile; Create event and Community open |
 | `e2e/design-polish.spec.js` | 375/575/768/1280px layout, pending search and Navbar-only auth-session fixture |
 | `e2e/feature4.spec.js` | Select exact-budget, weather-failure or RSVP-submission case when that UI changes |
 | `e2e/feature4-interactions.spec.js` | Select task focus/keyboard or destructive-confirmation case when affected |
@@ -702,8 +745,9 @@ add dependencies just to repeat source checks.
 
 A missing component/asset on Windows is a file-transfer issue before it is a
 browser-cache issue. Check both project copies for
-`client/src/components/discovery/IslandArtwork.vue` and
-`client/src/assets/illustrations/singapore-animated-plate.webp`. Confirm that Vite
+`client/src/components/discovery/DiscoveryStreetMap.vue` and
+`client/src/assets/brand/dino-mark.png`. (The 24 October diagnosis used `IslandArtwork.vue` and
+`singapore-animated-plate.webp`; both files still exist but no page uses them.) Confirm that Vite
 runs from the intended `client` folder; forwarded Linux and local Windows ports
 serve different working copies.
 

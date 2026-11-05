@@ -167,14 +167,14 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 - **Navigation:** sidebar on desktop, a floating frosted top bar where needed, a bottom tab
   bar on phones for signed-in and demo users. Personal links follow the session; Discover
   is public. The menu closes on route change or Escape. Below 992px the sidebar is a drawer
-  opened from ☰ (phones also have the bottom tab bar). From 992px (Bootstrap lg, xl and xxl) it
-  **starts as a 76px icon rail** (Discover, Community, Plans, Organise, Theme, account);
+  opened from ☰. Below 768px, signed-in and demo users get the bottom tab bar instead of the ☰ button. From 992px (Bootstrap lg, xl and xxl) it
+  **starts as a 76px icon rail** (Home, Discover, Community, Plans, Organise, account);
   each icon's name shows as a tooltip on hover or keyboard focus. The **Expand sidebar** button
   (a round chevron on the sidebar's right edge, on the divider line, labelled "Expand" /
   "Collapse" on hover or focus) opens the full 240px sidebar, which pushes the page over rather
   than covering it. The choice is saved as `bookedz-sidebar` and remembered on reload; there is
   no expand on hover.
-- **Theme:** Auto (follows the OS) / Light / Dark, saved as `bookedz-color-theme`. The collapsed desktop rail shows one icon button that cycles Auto → Light → Dark.
+- **Theme:** Light / Dark, saved as `bookedz-color-theme`. Until a choice is saved, the theme follows the device. The only control is the Theme fieldset on the Profile page (live mode); the shell has no theme button, and a saved "system" value from an older version counts as no choice.
   Bootstrap's `data-bs-theme`, native controls, map tiles and the browser colour follow it.
 - **Breakpoints:** phones below 768px (Bootstrap md), tablets 768 to 991px, desktop 992px
   and up. Check 375, 575, 768 and 1280px with no sideways scrolling.
@@ -188,7 +188,7 @@ The front door, with no island map. **Signed-out visitors** see the sign-in / cr
 form (with a "Browse events without signing in" link to Discover); `/login` links open this
 page and keep `?redirect=` so sign-in returns to where they were going. **Signed-in people**
 see an account summary: greeting and name, email, counts (going, all upcoming RSVPs, saved),
-a waitlist offer if one is open, their next confirmed plan, their interests, and links to
+a waitlist offer if one is open, their next confirmed plan (headed **Your next event**), their interests, and links to
 Discover, Plans and Community (plus Sign out in the live app). The demo account always
 sees the summary, with a note that it is a sample account stored in this browser.
 
@@ -249,7 +249,7 @@ signed-in visitors with a save get a **Saved** chip (with a count) at the start 
 Community is where people find others to go to events with. **Official events live in
 Discover; groups live in Community**, and neither appears in the other's lists (Discover
 and Organise exclude groups). From 992px the slim header holds the title and **Start a group**,
-with **Friends** as a sidebar on the right. Below 992px a **Groups | Friends** switch shows one
+with **Friends** as a sidebar on the right. The sidebar is as tall as its content, stays in view while the page scrolls and scrolls inside itself when it is taller than the window. Below 992px a **Groups | Friends** switch shows one
 side at a time (Groups first) instead of the header card, and Start a group appears beside it on
 the Groups side. Cards there are smaller, with an event's groups two across from 576px.
 
@@ -405,6 +405,10 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **6 Nov 2026:** This guide now matches the code: Light and Dark themes only (set on Profile,
+  following the device until saved), the phone bottom tabs replacing the ☰ button, a sticky
+  Friends sidebar and "Your next event" on the home summary. Unused components were removed in a
+  code cleanup (Denzel).
 - **5 Nov 2026:** Organise keeps its two-across layout down to 520px; only narrower phones get
   one column. Community and Organise leave the same space at the top as Plans, and Organise's
   All tab comes first (Gregory).

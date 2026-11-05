@@ -2,20 +2,28 @@
 
 | Asset | Source / licence | Use |
 | --- | --- | --- |
-| `client/src/assets/illustrations/singapore-anchored-boats-plate.webp` | Built-in image editing edit, exact prompt below | Current shared background, 1448×1086, 569,838 bytes; detailed fixed boats |
-| `client/src/assets/illustrations/singapore-living-water-plate.webp` | Built-in image editing cleanup of the selected expanded island; exact prompt below | Current shared background, 1448×1086, 532,074 bytes; sailing cargo ship removed for animation |
-| `IslandWater.vue`, `IslandBoats.vue` | Team-authored Vue/SVG/CSS | Four sailing routes, wakes, ten local currents/glints and shoreline motion |
-| `client/src/assets/brand/bookedz-mark.svg` | Original vector | Brand mark / favicon |
-| `client/src/assets/map/singapore.json` | Natural Earth, public domain | Previous terrain reference; no longer rendered in discovery |
+| `client/src/assets/illustrations/singapore-anchored-boats-plate.webp` | Built-in image editing edit, exact prompt below | Latest island background, 1448×1086, 569,838 bytes; detailed fixed boats. Only `IslandArtwork.vue` imports it (see the 6 November status below) |
+| `client/src/assets/illustrations/singapore-living-water-plate.webp` | Built-in image editing cleanup of the selected expanded island; exact prompt below | Earlier island background, 1448×1086, 532,074 bytes; sailing cargo ship removed for animation. No file imports it |
+| `IslandWater.vue`, `IslandBoats.vue` | Team-authored Vue/SVG/CSS | Wakes, local currents/glints and shoreline motion. Only `IslandArtwork.vue` imports them |
+| `client/src/assets/brand/bookedz-mark.svg` | Original vector | Earlier brand mark. No file imports it now; the logo uses `dino-mark.png` and `dino-donut-o.png`, and the favicon is `dino-favicon.png` (see the README's image credit) |
+| `client/src/assets/map/singapore.json` | Natural Earth, public domain | Previous terrain reference; no file imports it now |
 | `client/src/assets/fonts/bricolage-grotesque.ttf` | Google Fonts / Mathieu Triay, SIL OFL; adjacent OFL.txt | Self-hosted variable heading font |
 | `client/src/assets/fonts/dm-sans.ttf` | Google Fonts, SIL OFL; adjacent DM-Sans-OFL.txt | Body/navigation/forms |
-| `client/src/assets/illustrations/singapore-animated-plate.webp` | User-supplied replacement; an image generation tool edit, prompt below | Previous shared island background, 298,354 bytes |
-| `client/src/assets/illustrations/singapore-expanded-plate.webp` | Built-in image editing expansion and cleanup of the user's selected illustration, prompts below | Current shared animated island and neighbourhood thumbnails, 1448×1086, 649,926 bytes |
-| `NeighbourhoodLabels.vue` | Team-authored Vue/SVG/HTML | Compact 10px labels with 44px targets, click/keyboard zoom and collision suppression |
-| `IslandArtwork.vue` | Team-authored SVG/CSS | Independent wheel, boats, birds and occasional plane |
-| `SingaporeMap.vue` interactive layer | Vue/SVG implementation | Dynamic markers, clusters, pan/zoom and previews over the cleaned illustration |
+| `client/src/assets/illustrations/singapore-animated-plate.webp` | User-supplied replacement; an image generation tool edit, prompt below | Previous island background, 298,354 bytes. No file imports it |
+| `client/src/assets/illustrations/singapore-expanded-plate.webp` | Built-in image editing expansion and cleanup of the user's selected illustration, prompts below | Earlier animated island and neighbourhood thumbnails, 1448×1086, 649,926 bytes. No file imports it |
+| `NeighbourhoodLabels.vue` | Team-authored Vue/SVG/HTML | Compact 10px labels with 44px targets, click/keyboard zoom and collision suppression. No file imports it now |
+| `IslandArtwork.vue` | Team-authored SVG/CSS | Independent wheel, boats, birds and occasional plane. No file imports it now |
+| `SingaporeMap.vue` interactive layer | Vue/SVG implementation | Removed from the repository. Discover now uses `DiscoveryStreetMap.vue` (Leaflet with OneMap tiles) |
 | `component-gallery.html` | Original HTML/CSS | Standalone design-system review artifact |
 | `previews/` | Browser captures of isolated demo fixtures | Desktop/mobile implementation evidence, not real current events |
+
+**Status on 6 November 2026.** No page shows the island illustrations now. The landing page and
+Discover do not use them. `IslandArtwork.vue` is the only file that imports
+`singapore-anchored-boats-plate.webp`, `IslandWater.vue` and `IslandBoats.vue`, and no file imports
+`IslandArtwork.vue`. The files stay in the repository as a record. The 6 November code cleanup
+deleted `DiscoveryHero.vue`, `EventMap.vue` and `MapPreview.vue`; `SingaporeMap.vue` and
+`projectIllustratedVenue()` were already gone. The sections below describe the artwork as it was
+when it was made, not what the app shows today. The sources and prompts stay valid.
 
 Natural Earth source:
 https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_10m_admin_0_countries.geojson
@@ -140,8 +148,8 @@ No third-party font or map-tile request is needed to render discovery.
   https://github.com/google/fonts/tree/main/ofl/dmsans
 - `EventArtwork.vue` contains original category-specific SVG scenes for music,
   sport, food, arts, city/career, nature/community and a general festival fallback.
-- The earlier `DiscoveryHero.vue` added independent SVG cloud and boat accents,
-  since replaced by the shared `IslandArtwork.vue` layers. These
+- The earlier `DiscoveryHero.vue` (deleted on 6 November) added independent SVG cloud and
+  boat accents, since replaced by the shared `IslandArtwork.vue` layers. These
   are decorative, not event or transport data. Static baked MRT/trees were not
   misrepresented as separately moving layers.
 - Current screenshots: `previews/immersive-desktop.png` and
@@ -235,3 +243,7 @@ reduced-motion handling. They are decorative transport, not live positions.
 
 Other preview filenames preserve earlier checkpoints. All captures use isolated
 demo data; they do not establish current live attendance or full browser coverage.
+
+The captures `immersive-*`, `interactive-illustration-*` and `discovery-dark.png` show the earlier
+island Discover and landing pages, as the table above says. The app no longer shows those pages,
+so these files are history.

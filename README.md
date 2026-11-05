@@ -1,9 +1,13 @@
 # Bookedz
 
-Bookedz (shown in the app as **Dino**) is a web app for finding things to do in Singapore, going
-with friends, and running small events. Participants discover events, RSVP, join waitlists and
-check in with a ticket; organisers create events, manage RSVPs and run the day from one
-workspace.
+Bookedz is a web app for finding things to do in Singapore, going with friends, and running
+small events. Participants discover events, RSVP, join waitlists and check in with a ticket.
+Organisers create events, manage RSVPs and run the day from one workspace.
+
+**Name:** the repository, the documents, the CSS tokens (`--bookedz-*`) and the storage keys
+(`bookedz-*`) use **Bookedz**. The app itself shows **Dino**: the page title, the logo word and
+the names of the brand links. This README says Bookedz for the project and Dino for what users
+see.
 
 SMU IS216 Web Application Development II, group project (G2).
 
@@ -11,6 +15,8 @@ SMU IS216 Web Application Development II, group project (G2).
 
 **For participants**
 
+- **Home:** a landing page with sign-in for visitors. After sign-in it shows an account summary
+  with your next event, waitlist offers and saved events.
 - **Discover:** search, category shortcuts and filters beside a OneMap street map of real event
   venues, with personalised "picked for you" reasons and saved events. Public: no account needed
   to browse.
@@ -21,8 +27,8 @@ SMU IS216 Web Application Development II, group project (G2).
   venue QR self check-in with live updates.
 - **Go together:** start a public or friends-only group for an event, invite friends by link,
   chat, and plan food before and after the event from nearby places that are open then.
-- **Profile and friends:** interests (which shape recommendations) and a dino avatar in
-  Profile; friends are found by username in Community.
+- **Profile and friends:** interests (which shape recommendations), a dino avatar and the theme
+  choice in Profile; friends are found by username in Community.
 
 **For organisers**
 
@@ -33,8 +39,9 @@ SMU IS216 Web Application Development II, group project (G2).
   cents with receipt scanning and a 90% warning, NEA weather with a one-way switch to the backup
   venue, a co-organiser team, a floor-plan editor and the programme.
 
-**Everywhere:** light, dark and system themes; layouts from phone to desktop; keyboard access;
-and reduced-motion support.
+**Everywhere:** light and dark themes (the theme follows the device until you choose one on the
+Profile page); layouts from phone to desktop, with bottom tabs on phones when signed in; keyboard
+access; and reduced-motion support.
 
 ## Team
 
@@ -52,13 +59,14 @@ and reduced-motion support.
 - **Frontend** (`client/`): Vue 3 (Composition API, JavaScript), Vue Router, Bootstrap 5, Vite.
 - **Data and auth:** Supabase (PostgreSQL with row-level security, Auth, Realtime, an Edge
   Function), used directly from the browser with the signed-in user's permissions.
-- **API** (`server/`): Express 5 for recommendations, signed image uploads to Cloudflare R2, the
-  OneMap routing proxy and food near events.
+- **API** (`server/`): Express 5 (CommonJS) for recommendations, plan suggestions, signed image
+  uploads to Cloudflare R2, account deletion, group-time ranking for hangouts, the OneMap routing
+  proxy and food near events.
 - **Tests:** Node's test runner and Playwright.
 
 ## Getting started
 
-You need **Node 22** and **pnpm**. Python 3.13 is only needed for the optional food pipeline.
+You need **Node 22** and **pnpm**.
 
 ```sh
 pnpm --dir client install --frozen-lockfile --ignore-scripts
@@ -83,17 +91,28 @@ pnpm --dir server dev
   privately. Only the publishable Supabase key belongs in the client; secret keys stay in
   `server/.env`.
 
-Optional server keys: OneMap (live travel routes) and Geoapify (food places near events). Without
-them those features fall back to labelled estimates, or to searching and typing places.
+Environment variable names (the values stay private):
+
+| File | Names |
+| --- | --- |
+| `client/.env` | `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_R2_PUBLIC_URL`; optional `VITE_API_URL`, `VITE_USE_MOCK` |
+| `server/.env` | `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`; optional `PORT`, `ONEMAP_EMAIL`, `ONEMAP_PASSWORD`, `GEOAPIFY_API_KEY`, `GEOAPIFY_DAILY_LIMIT` |
+
+The OneMap keys give live travel routes. The Geoapify keys give food places near events. Without
+them, those features show labelled estimates or let you search and type places.
 
 ## Testing
 
 ```sh
-cd client && NODE_ENV=test node --test src/utils/__tests__/*.test.js
-VITE_USE_MOCK=true pnpm exec playwright test e2e/landing-page.spec.js
+pnpm --dir client test:unit
+pnpm --dir client test:e2e e2e/landing-page.spec.js
+node --test server/tests/*.test.js
 ```
 
-The commands use a POSIX shell (macOS, Linux or Git Bash on Windows).
+`test:e2e` starts its own demo server on `127.0.0.1:5173` (it reuses a server already on that
+port, so stop a live-mode server first). Other scripts: `pnpm --dir client test:e2e:live` (needs
+the hosted project) and `npm --prefix server run check`. Neither package has a lint script. The
+commands use a POSIX shell (macOS, Linux or Git Bash on Windows).
 
 Browser tests should run against a demo server you own. [docs/testing.md](docs/testing.md) has
 every command, the live-mode tests, database checks and known limits; [docs/status.md](docs/status.md)
@@ -102,13 +121,33 @@ records what has been verified and when.
 ## Project structure
 
 ```text
-client/      Vue app: src/views (pages), src/components, src/utils (demo and live data adapters),
-             e2e (Playwright), e2e-live (tests against the hosted project)
-server/      Express API: routes, services, tests and isolated database checks
-supabase/    SQL migrations, the venue-switch Edge Function and SQL tests
-docs/        Project documentation (below)
+client/      Vue app: src/views (pages), src/components, src/router, src/utils (demo and live
+             data adapters), src/lib, e2e (Playwright), e2e-live (tests against the hosted
+             project), tests (Node tests)
+server/      Express API: routes, services, lib, tests, checks (isolated database checks)
+             and scripts
+supabase/    SQL migrations, sample-event seed, the venue-switch Edge Function and SQL tests
+docs/        Project documentation (below), SQL drafts (docs/sql) and test fixtures (docs/testing)
 AGENTS.md    Rules for AI coding agents working in this repository
 ```
+
+### Pages
+
+| Route | Page | Sign-in needed in live mode |
+| --- | --- | --- |
+| `/` | Home: sign-in, or the account summary | No |
+| `/discover` | Discover (`/events` redirects here) | No |
+| `/events/:id/rsvp` | Event details and RSVP | No |
+| `/community`, `/groups/:id` | Go together: groups and friends | No |
+| `/g/:token` | Group invite link (`/j/:token` redirects here) | Yes |
+| `/reset-password` | Password reset from the email link | No |
+| `/profile` | Profile: interests, dino, theme | Yes |
+| `/my-rsvps` | Plans: your RSVPs, saved and past events | Yes |
+| `/organiser/events`, `/organiser/events/new` | Organise: your events, create an event | Yes |
+| `/organiser/events/:id/manage` | Manage event: RSVPs, edit, team, announcements, tasks, budget, floor plan, programme, weather, check-in | Yes |
+| `/organiser/events/:eventId/floor-plan` | Floor-plan editor (live mode only) | Yes |
+| `/events/:eventId/ticket`, `/events/:eventId/check-in` | Your ticket; venue self check-in | Yes |
+| `/organiser/events/:eventId/check-in`, `/venue-qr`, `/attendance` | Staff check-in station, venue QR, attendance | Yes |
 
 ## Documentation
 
@@ -135,7 +174,7 @@ AGENTS.md    Rules for AI coding agents working in this repository
 | [axios](https://github.com/axios/axios) | Calls to the Express API | MIT |
 | [Leaflet](https://github.com/Leaflet/Leaflet) | Maps | BSD-2-Clause |
 | [GSAP](https://gsap.com/) with ScrollTrigger, SplitText and DrawSVG | Entrances, scroll reveals, landing headline | [GSAP Standard License](https://gsap.com/standard-license/) |
-| [Motion for Vue](https://motion.dev/docs/vue) (`motion-v`) | Springs, map previews, landing card | MIT |
+| [Motion for Vue](https://motion.dev/docs/vue) (`motion-v`) | Springs on the landing page and its event card | MIT |
 | [Lenis](https://github.com/darkroomengineering/lenis) | Smooth scrolling on desktop | MIT |
 | [SortableJS](https://github.com/SortableJS/Sortable) | Task board drag and drop | MIT |
 | [Konva](https://konvajs.org/) and [vue-konva](https://github.com/konvajs/vue-konva) | Floor-plan editor | MIT |
@@ -144,7 +183,9 @@ AGENTS.md    Rules for AI coding agents working in this repository
 | [JsBarcode](https://github.com/lindell/JsBarcode) | Ticket barcodes | MIT |
 | [Papa Parse](https://github.com/mholt/PapaParse) | Attendance CSV import and export | MIT |
 | [Tesseract.js](https://github.com/naptha/tesseract.js) | Receipt scanning in the budget | Apache-2.0 |
+| [Vite](https://vite.dev/), [@vitejs/plugin-vue](https://github.com/vitejs/vite-plugin-vue) and [vite-plugin-vue-devtools](https://github.com/vuejs/devtools) | Dev server and build | MIT |
 | [Express](https://expressjs.com/) and [cors](https://github.com/expressjs/cors) | API server | MIT |
+| [nodemon](https://github.com/remy/nodemon) | API restart on change in development | MIT |
 | [AWS SDK for JavaScript](https://github.com/aws/aws-sdk-js-v3) | Signed uploads to Cloudflare R2 | Apache-2.0 |
 | [Playwright](https://github.com/microsoft/playwright) | Browser tests | Apache-2.0 |
 
@@ -156,11 +197,12 @@ AGENTS.md    Rules for AI coding agents working in this repository
 **Maps and data:** map tiles, address search and routes from [OneMap](https://www.onemap.gov.sg/)
 © OneMap contributors | Singapore Land Authority, attributed on every map; weather forecasts from
 the National Environment Agency via [data.gov.sg](https://data.gov.sg/); nearby places from
-[Geoapify](https://www.geoapify.com/); coastline data from
-[Natural Earth](https://www.naturalearthdata.com/) (public domain).
+[Geoapify](https://www.geoapify.com/). The repository also keeps a coastline file from
+[Natural Earth](https://www.naturalearthdata.com/) (public domain); no page draws it now.
 
-**Images:** the Singapore illustrations, brand marks and their edits are recorded with their
-sources and prompts in the [asset register](docs/design/assets.md). The dino character art in
+**Images:** the Singapore island illustrations and their edits are recorded with their sources
+and prompts in the [asset register](docs/design/assets.md). The repository keeps them, but no page
+shows them now. The dino character art in
 `client/src/assets/dinos/` and `client/src/assets/brand/` was added by Vivienne; its source is
 not yet recorded in the asset register.
 

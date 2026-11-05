@@ -11,4 +11,4 @@
 - [Recommendation design](recommendation-design.md): V1 scoring and schema mapping
 - [Agent rules](../AGENTS.md)
 
-Supplied resources stay unchanged and local under `resources/` (not in normal clones).
+Supplied resources stay unchanged and local under `docs/resources/` (not in normal clones).
