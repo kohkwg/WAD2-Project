@@ -235,3 +235,6 @@ __pycache__/
 *.pfx
 *.tsbuildinfo
 server/.cache/
+
+# pnpm writes this placeholder when it skips a dependency's build script
+/client/pnpm-workspace.yaml
