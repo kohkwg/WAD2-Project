@@ -53,12 +53,16 @@ test('join a group, get the event RSVP prompt, plan lunch and chat', async ({
   await expect(card).toContainText('You’re waiting for the organiser to approve your RSVP');
   await expect(page.getByText(/You joined the group and RSVP’d to Intro to Vue Workshop/)).toBeVisible();
   // now going to intro to vue, alex can start a group for it: it's in your events
-  await page.getByRole('tab', {
-    name: /Your events & groups/
+  // the views sit in one filters panel beside the search bar
+  await page.getByRole('button', {
+    name: /^Filters/
   }).click();
-  await expect(page.getByRole('tabpanel')).toContainText('Intro to Vue Workshop');
-  await page.getByRole('tab', {
-    name: /All groups/
+  await page.getByRole('button', {
+    name: /^Your events & groups/
+  }).click();
+  await expect(page.locator('.community-yours')).toContainText('Intro to Vue Workshop');
+  await page.getByRole('button', {
+    name: 'Show all groups'
   }).click();
   // event teams are not in community
   await expect(page.getByRole('heading', {
@@ -167,10 +171,13 @@ test('only people going can start a group; start a friends-only one and open it 
   })).toHaveCount(0);
   // the dropdown only lists events alex has rsvpd to
   await page.goto('/community');
-  await page.getByRole('tab', {
-    name: /Your events & groups/
+  await page.getByRole('button', {
+    name: /^Filters/
   }).click();
-  await expect(page.getByRole('tabpanel')).toContainText('Career Fair Prep Talk');
+  await page.getByRole('button', {
+    name: /^Your events & groups/
+  }).click();
+  await expect(page.locator('.community-yours')).toContainText('Career Fair Prep Talk');
   await page.getByRole('button', {
     name: 'Start a group'
   }).first().click();

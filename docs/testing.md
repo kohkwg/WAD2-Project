@@ -1087,3 +1087,17 @@ on in the next 7 days" and works on narrow screens too.
 Checked in demo mode on 5 November at 1440px and 375px: first load covers 5–11 November, Show more
 adds 12–18 November and offers 19–25. Discover e2e: the same 12 failures as before (all already
 failing on dev).
+
+## Community Filters panel and phone layout (5 November)
+
+```sh
+VITE_USE_MOCK=true pnpm --dir client exec playwright test e2e/go-together.spec.js e2e/community-friends.spec.js e2e/community-public.spec.js
+```
+
+Community's views are now buttons in a Filters panel, not tabs, so `go-together.spec.js` opens
+**Filters** and then picks **Your events & groups** (and **Show all groups** to go back). Results
+on 5 November, before merging the latest `dev`: 5/6, 1/4 and 0/2 (not yet re-run after it). The
+failures were already failing before (the Friends sidebar height, the removed "Color theme"
+select, the guest tests and the incoming friend request).
+Demo mode is always signed in, so signed-out layouts were checked by setting CommunityView's
+`signedIn` to false in the test browser. Below 992px, check both sides of the Groups | Friends switch.

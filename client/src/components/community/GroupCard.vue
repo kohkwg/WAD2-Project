@@ -429,6 +429,46 @@ async function join() {
   font-size: .9rem;
 }
 
+/* phones and tablets (md and below): the group card inside an event card gets tighter too. its
+   footer shows who's going on one line, then the buttons side by side at equal widths (one column
+   per button, so each keeps its normal height) */
+@media (max-width: 991.98px) {
+  .group-card.is-compact {
+    gap: 8px;
+    padding: 12px;
+  }
+  .group-card.is-compact .group-foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1.5px dashed var(--bookedz-control-border);
+  }
+  .group-card.is-compact .group-actions {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .group-card.is-compact .group-actions .btn {
+    width: 100%;
+  }
+  .group-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: .8rem;
+  }
+  .group-mini {
+    width: 24px;
+    height: 24px;
+    font-size: .62rem;
+  }
+  .group-note {
+    font-size: .92rem;
+    line-height: 1.45;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .group-card.is-highlighted {
     animation: none;

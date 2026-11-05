@@ -38,6 +38,54 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — Organise from 520px matches 576px; Plans' top spacing (Gregory)
+
+`OrganiserEventsView.vue`'s phone rules now start below 520px instead of at 575px, so 520–575px
+get the 576px layout: tabs at their own width and two cards across. Checked on the owned demo
+server (5195) in dark mode with six events: 575px matches 576px (265px cards, 85px buttons), 520px
+has 237px cards and 72px buttons, and 519, 430 and 375px keep the one-column layout. No overflow,
+clipped text or page errors at any of them. At 375px the All tab already sat on its own row
+before this change.
+
+Community and Organise now leave the same space above their content as Plans: 12px of page
+padding (none at 575px and below) on top of the shell's. Community had 24px, and Organise's
+phone rule had moved to 519px with the change above. Measured from the top bar to the first
+content: 24px at 375 and 575px and 52px at 768, 991 and 1280px on all three pages (Community was
+48 and 64px, Organise 36px at 575px). Not done: e2e specs, light-mode screenshots, full suites, a
+build.
+
+### 5 November — Community Filters panel, Groups | Friends switch and smaller cards (Gregory)
+
+- **Filters:** the view chips became one Filters panel beside the search bar. Choosing a
+  view closes it and returns focus to Filters, and Escape or a click outside also closes it. The
+  views are buttons with `aria-pressed` instead of tabs, "Your events & groups" now follows the
+  search too, and the old chip rules left `design-baseline.css`.
+- **Below 992px:** a Groups | Friends switch (Groups first; `/community#friends` opens Friends),
+  no header card (a visually hidden h1 keeps one heading), and Start a group pops in on the
+  Groups side. Event and group cards are tighter (smaller art, titles and avatars; 3–4px
+  shadows), an event's groups sit two across from 576px, and each group card's buttons share
+  the row at equal widths.
+- **From 992px:** the header card and the Friends sidebar on the right, `min(340px, 34%)` wide
+  (it used to start at 1100px).
+- **Found while checking:** the buttons' `repeat(auto-fit, minmax(0, 1fr))` grid sized their
+  height as if each column were 0px wide (59–80px buttons). One column per button fixed it, and
+  group cards no longer stretch to the tallest in the row: 249px → 209–230px at 575px.
+- **Checks before bringing in the latest `dev`** on the owned demo server (5195), both themes, at
+  375, 575, 768, 900, 991, 992 and 1280px: one `main`, one h1, no overflow and no console errors,
+  and the switch, Start a group and the Filters panel (choose, badge, Escape, outside click, focus
+  return) all pass. Signed out (the flag flipped in the test browser) showed All groups and This
+  week, plus the "Find your people" panel. E2E: `go-together.spec.js` 5/6,
+  `community-friends.spec.js` 1/4 and `community-public.spec.js` 0/2. All of these were failing
+  before: the Friends sidebar height, the removed "Color theme" select, guest tests (demo mode is
+  always signed in) and the incoming-request test, which fails the same way with the committed
+  `CommunityView.vue`.
+- **Merged onto `dev` `de85c4a`:** the changes were carried onto Vivienne's reformatted files
+  (`61a29c8`), keeping her removal of This week (signed-out visitors now get All groups only) and
+  aprilfool256's slower refresh. A token comparison with the pre-merge copy shows no other
+  differences. The checks above have not been re-run on the merged code yet.
+- **Not done:** re-running the checks after the merge, full suites, a production build, live and
+  real-device checks.
+
 ### 5 November — `dev` restored after a revert
 
 `0c70f40` reverted the merge `02114fe` and removed seven commits of team work from `dev` (search

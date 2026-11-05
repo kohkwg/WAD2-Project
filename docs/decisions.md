@@ -825,3 +825,26 @@ Feature 4; the database is Timothy's area). The user answered these choices:
 The Telegram and deal-site pipeline wasn't going to be run or deployed, and it only ever located
 a handful of deals, so Huxley decided to take deals out entirely. Go together's food planner uses
 nearby places from Geoapify (open at the meal time, nearest first), OneMap search and typed names.
+
+## 5 November 2026 — Community filters and the phone and tablet layout (Gregory)
+
+- **One Filters panel** at the right of the search bar, as on Discover, holds the views (All
+  groups, I'm going, Hosting, Your events & groups). A "1" badge and a "Showing … · Show all
+  groups" line say when a view other than All groups is chosen. This week was removed on `dev`
+  by Vivienne's commit `61a29c8`, so signed-out visitors get All groups only; the Filters button
+  stays for them, since nobody has asked to hide it.
+- **Below 992px (md and below) one layout, resized to fit:** a Groups | Friends switch with
+  Groups on the left and shown first, no Community header card, and Start a group appearing
+  beside the switch only on the Groups side.
+- **From 992px** the wide layout: the header card, with Friends as a sidebar on the right
+  (992–1099px now match 1100px and up).
+- **Smaller cards** on md and below, an event's groups two across from 576px, and each group
+  card's buttons at equal widths. Each group card is only as tall as its own content; matching
+  the tallest card in the row left an empty gap beside a taller one.
+- **Tried and dropped the same day (not in the code):** Organise showing All first with "Show
+  more" on phones and tablets, and smaller Discover cards on phones.
+- **Organise from 520px matches 576px** (later the same evening): tabs at their own width and
+  two event cards across. Below 520px it keeps the one-column phone layout, because two cards
+  there squeeze the action buttons to 35–49px wide.
+- **Top spacing follows Plans:** Community and Organise leave the same space above their first
+  content as Plans at every width.

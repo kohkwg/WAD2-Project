@@ -48,6 +48,9 @@ components, motion and accessibility. In short:
   `:global(:root[data-theme="dark"]) .card` styles the page root instead of the card. Don't end
   such a rule with `:is(…)` either (Vue then scopes `:root`); list the selectors instead. To make
   a rule truly global, wrap the whole selector: `:global(:root[data-theme="dark"] .card)`.
+- For buttons that share a row at equal widths, use `grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr)`. `repeat(auto-fit, minmax(0, 1fr))` sizes the row as if
+  each column were 0px wide, so every word of a label adds a line of height.
 - Show the event, time, venue and what the person can do before decoration. Use real RSVP,
   capacity and budget values, never invented numbers.
 - Motion uses the installed GSAP, Motion for Vue, Lenis and CSS. It responds to the person,

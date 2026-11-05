@@ -248,8 +248,10 @@ signed-in visitors with a save get a **Saved** chip (with a count) at the start 
 ### Community: Go together (`/community`)
 Community is where people find others to go to events with. **Official events live in
 Discover; groups live in Community**, and neither appears in the other's lists (Discover
-and Organise exclude groups). The slim header holds the title and **Start a group**; "How Go
-together works" is open on a first visit and stays folded once closed.
+and Organise exclude groups). From 992px the slim header holds the title and **Start a group**,
+with **Friends** as a sidebar on the right. Below 992px a **Groups | Friends** switch shows one
+side at a time (Groups first) instead of the header card, and Start a group appears beside it on
+the Groups side. Cards there are smaller, with an event's groups two across from 576px.
 
 - **A group** is tied to one official event: the host's note, the event card (title, time,
   venue, category tint), who is going (avatars), spots left (2 to 8 including the host) and
@@ -257,8 +259,10 @@ together works" is open on a first visit and stays folded once closed.
 - **Public or private.** Public groups are listed in Community and on the event page. Private
   groups only open with their invite link (and stay visible to their members). Both have an
   invite link (`/g/<token>`), shown only to members, with Copy link and the phone share sheet.
-- **Feed:** soonest first, with filter chips (All groups, This week, I'm going, Hosting) and a
-  search over events, hosts and notes. It refreshes every 30 seconds and on focus. Cards show
+- **Feed:** soonest first, with a search over events, hosts and notes and, at its right, one
+  **Filters** panel (All groups, I'm going, Hosting, Your events & groups; signed-out visitors get
+  All groups). It refreshes every 2 minutes while the tab is visible, and on coming back to the
+  tab (at most once a minute). Cards show
   Join group and Open group; everything else is on the group page.
 - **Start a group:** a dialog to pick an upcoming event, add a note, choose spots, who can join
   and Public or Private. Event pages link to it with the event already chosen
@@ -401,6 +405,11 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **5 Nov 2026:** Organise keeps its two-across layout down to 520px; only narrower phones get
+  one column. Community and Organise leave the same space at the top as Plans (Gregory).
+- **5 Nov 2026:** Community's views moved into one Filters panel beside the search. Below 992px a
+  Groups | Friends switch replaces the header card, Start a group pops in beside it and the cards
+  are smaller; the Friends sidebar now starts at 992px (Gregory).
 - **5 Nov 2026:** The soft dark mode is back on every ticket page and its four tokens live in
   `main.css`; dark outline buttons, rows and tiles have bright edges and a warm hover; an open
   Discover card closes on a second click, a click outside or Escape (Gregory).
