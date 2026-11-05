@@ -110,7 +110,8 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 .account-page.account-page :root[data-theme="dark"] .account-page.account-page :is(.profile-form) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
 :root[data-theme="dark"] .account-page.account-page .delete-account { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
 .account-page.account-page :is(.profile-section legend) { font-family: var(--bookedz-heading); font-weight: 900; }
-.account-page.account-page :is(.profile-section, .profile-actions) { border-color: var(--bookedz-control-border); border-style: dashed; }
+.account-page.account-page .profile-section { border-color: var(--bookedz-control-border); border-style: dashed; }
+.account-page.account-page .profile-actions { border: 0; }
 .account-page.account-page .profile-interests { border: 0; }
 
 /* Inputs and buttons */
@@ -415,3 +416,7 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 }
 .design-baseline.design-baseline.is-embedded .create-heading p { max-width: 44rem; margin: .35rem 0 0; color: var(--bookedz-muted); font-weight: 400; }
 :root[data-theme="dark"] .design-baseline.design-baseline.is-embedded .create-heading { border: 0; border-bottom: 1px solid var(--bookedz-border); background: none; box-shadow: none; }
+
+/* My events and My RSVPs use the whole content width, like Profile and Community */
+.organiser-events-page.organiser-events-page.organiser-events-page,
+.my-rsvps-page.my-rsvps-page.my-rsvps-page { max-width: none; width: 100%; margin-inline: 0; }

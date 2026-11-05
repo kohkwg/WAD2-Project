@@ -10,6 +10,7 @@ import { passwordErrors } from '@/lib/passwordRules'
 import PasswordInput from '@/components/ui/PasswordInput.vue'
 import { usernameAvailable as checkUsernameFree } from '@/lib/usernameAvailability'
 import DeleteAccount from '@/components/profile/DeleteAccount.vue'
+import DinoPicker from '@/components/profile/DinoPicker.vue'
 
 defineProps({ embedded: { type: Boolean, default: false } })
 
@@ -35,6 +36,10 @@ let usernameTimer
 const passwordBusy = ref(false)
 let snapshot = null
 const selected = ref([])          // interest names the user ticks
+// The chosen mascot lives in the account's metadata, so no database change is needed.
+const dino = ref('')
+const dinoSaving = ref(false)
+const dinoError = ref('')
 
 const loading = ref(true)
 const saving = ref(false)
@@ -56,6 +61,21 @@ watch(username, handle => {
     usernameState.value = free === true ? 'available' : free === false ? 'taken' : 'idle'
   }, 450)
 })
+async function chooseDino(id) {
+  const previous = dino.value
+  dino.value = id
+  dinoSaving.value = true
+  dinoError.value = ''
+  try {
+    const { error: dinoFailure } = await supabase.auth.updateUser({ data: { dino: id } })
+    if (dinoFailure) throw dinoFailure
+  } catch (failure) {
+    dino.value = previous
+    dinoError.value = failure.message || 'Could not save your dino.'
+  } finally {
+    dinoSaving.value = false
+  }
+}
 async function loadProfile() {
   loading.value = true
   error.value = ''
@@ -86,6 +106,7 @@ async function loadProfile() {
     userId.value = auth.user.id
     email.value = auth.user.email || ''
     displayName.value = data.display_name || ''
+    dino.value = auth.user.user_metadata?.dino || ''
     username.value = data.username || ''
     // The username picked on Create account travels in the account's metadata. If it could not be
     // saved at that moment (email confirmation, or a slow first sign-in), claim it now.
@@ -249,13 +270,16 @@ async function save() {
         <p v-dismissible v-if="dinoError" class="text-danger mt-2 mb-0" role="alert">{{ dinoError }}</p>
       </section>
 
+      <div class="profile-summary" :class="{ 'is-viewing': !editing }">
       <div class="profile-top">
         <span class="profile-avatar" aria-hidden="true">{{ initial() }}</span>
         <div class="profile-id">
           <h2 class="profile-name">{{ displayName || 'No name yet' }}</h2>
-          <p v-if="usernameAvailable" class="profile-handle">{{ username ? `@${username}` : 'No username yet' }}</p>
-          <p class="profile-email">{{ email }}</p>
-          <p class="profile-postal">Postal code: {{ postalCode || 'not set' }}</p>
+          <template v-if="!editing">
+            <p v-if="usernameAvailable" class="profile-handle">{{ username ? `@${username}` : 'No username yet' }}</p>
+            <p class="profile-email">{{ email }}</p>
+            <p class="profile-postal">Postal code: {{ postalCode || 'not set' }}</p>
+          </template>
         </div>
         <button v-if="!editing" type="button" class="btn btn-outline-secondary btn-sm profile-edit" @click="startEdit">Edit profile</button>
       </div>
@@ -319,6 +343,7 @@ async function save() {
           </div>
         </fieldset>
       </template>
+      </div>
 
       <div class="profile-block">
         <div class="profile-password">
@@ -375,6 +400,11 @@ async function save() {
 .profile-title { margin: 0; color: var(--bookedz-ink, #1f2937); }
 .profile-lede { max-width: 48ch; margin: .85rem 0 0; color: var(--bookedz-ink-soft, #636975); line-height: 1.6; }
 .profile-form { padding: clamp(1.1rem, 4vw, 2rem); border: 1px solid var(--bookedz-border); border-radius: var(--bookedz-radius-card); background: var(--bookedz-surface); box-shadow: var(--bookedz-shadow); }
+.profile-summary { display: block; }
+@media (min-width: 992px) {
+  .profile-summary.is-viewing { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 2rem; align-items: start; }
+  .profile-summary.is-viewing > .profile-block { height: 100%; padding: 0 0 0 2rem; border-top: 0; border-left: 1px solid var(--bookedz-border); }
+}
 .profile-top { display: flex; align-items: flex-start; gap: 1rem; padding-bottom: 1.25rem; }
 .profile-avatar { display: grid; place-items: center; flex: none; width: 56px; height: 56px; border-radius: 50%; background: var(--bookedz-orange-soft, var(--bookedz-glass-active)); color: var(--bookedz-ink); font: 700 1.4rem var(--bookedz-heading); }
 .profile-id { flex: 1; min-width: 0; }

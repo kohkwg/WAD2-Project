@@ -228,13 +228,14 @@ async function toEventsWithCounts(rows) {
   const counts = check(
     await supabase.rpc('event_availability', { p_event_ids: rows.map((row) => row.id) }),
   )
-  return rows.map((row) =>
-    toEvent(
-      row,
-      counts.find((c) => c.event_id === row.id),
-      myId,
-    ),
-  )
+  const memberships = myId ? check(await supabase.from('event_members')
+    .select('event_id,member_role').eq('user_id', myId).in('event_id', rows.map(row => row.id))) : []
+  const roleByEvent = new Map((memberships || []).map(row => [row.event_id, row.member_role]))
+  return rows.map(row => ({
+    ...toEvent(row, counts.find(c => c.event_id === row.id), myId),
+    canManage: row.organiser_id === myId || roleByEvent.get(row.id) === 'organiser',
+    isOnTeam: row.organiser_id === myId || roleByEvent.has(row.id),
+  }))
 }
 
 // answers from the database: [{ question_id, answer }] → the pages use { questionId: answer }
@@ -304,14 +305,18 @@ export async function getAnnouncements(eventId) {
 // Events the signed-in organiser runs
 export async function getOrganiserEvents() {
   const myId = await requireUserId()
-  const rows = check(
-    await supabase
-      .from('events')
-      .select(EVENT_COLUMNS)
-      .eq('organiser_id', myId)
-      .order('starts_at'),
-  )
-  return toEventsWithCounts(rows)
+  const memberships = check(await supabase.from('event_members').select('event_id').eq('user_id', myId).eq('member_role', 'organiser'))
+  const ids = [...new Set((memberships || []).map(row => row.event_id))]
+  const rows = check(await supabase.from('events').select(`${EVENT_COLUMNS},creator:profiles!events_organiser_id_fkey(display_name,username)`)
+    .or(`organiser_id.eq.${myId}${ids.length ? `,id.in.(${ids.join(',')})` : ''}`).order('starts_at'))
+  const creators = await supabase.rpc('event_team_creators', { p_event_ids: rows.map(row => row.id) })
+  // Older databases can still list events with initials until the avatar RPC is applied.
+  if (creators.error && !['PGRST202', '42883'].includes(creators.error.code)) throw new Error(creators.error.message)
+  const creatorByEvent = new Map((creators.data || []).map(row => [row.eventId, row]))
+  const events = await toEventsWithCounts(rows)
+  return events.map((event, index) => ({ ...event, creator: creatorByEvent.get(event.id) || {
+    username: rows[index].creator?.username, displayName: rows[index].creator?.display_name,
+  } }))
 }
 
 // eventData is the Create Event form plus a requestId kept stable for retries.
@@ -457,7 +462,7 @@ async function saveEventQuestionsWith(client, eventId, before, after) {
 // current = getEvent(eventId) as loaded just before saving; rsvpCount = how many RSVPs it has
 export async function updateEventWith(client, { current, myId, rsvpCount }, changes) {
   const eventId = current.id
-  if (current.organiserId !== myId) throw new Error('You can only edit events you organise.')
+  if (current.organiserId !== myId && !current.canManage) throw new Error('You can only edit events you organise.')
   if (current.status !== 'draft' && new Date(current.startTime).getTime() <= Date.now()) {
     throw new Error('This event has already started, so it can no longer be edited.')
   }
@@ -508,7 +513,7 @@ export async function updateEventWith(client, { current, myId, rsvpCount }, chan
 export async function updateEvent(eventId, changes) {
   const myId = await requireUserId()
   const current = await getEvent(eventId)
-  const rsvps = current.organiserId === myId ? await getRsvpsForEvent(eventId) : []
+  const rsvps = current.organiserId === myId || current.canManage ? await getRsvpsForEvent(eventId) : []
   await updateEventWith(supabase, { current, myId, rsvpCount: rsvps.length }, changes)
   return getEvent(eventId)
 }
@@ -517,7 +522,7 @@ export async function updateEvent(eventId, changes) {
 export async function setEventPublished(eventId, published) {
   const myId = await requireUserId()
   const current = await getEvent(eventId)
-  if (current.organiserId !== myId) throw new Error('You can only publish or unpublish events you organise.')
+  if (current.organiserId !== myId && !current.canManage) throw new Error('You can only publish or unpublish events you organise.')
   if (!['draft', 'published'].includes(current.status)) throw new Error(`A ${current.status} event can't be published or unpublished.`)
   const rows = check(await supabase.from('events').update({ status: published ? 'published' : 'draft' }).eq('id', eventId).select('id'))
   if (!rows?.length) throw new Error('You can only publish or unpublish events you organise.')
@@ -526,9 +531,11 @@ export async function setEventPublished(eventId, published) {
 
 // Deleting the event also deletes its RSVPs, questions and tags (on delete cascade in the database)
 export async function deleteEvent(eventId) {
+  const event = await getEvent(eventId)
+  if (!event.isMine && !event.canManage) throw new Error('Only event organisers can delete this event.')
   const rows = check(await supabase.from('events').delete().eq('id', eventId).select('id'))
-  // The database hides events you don't organise, so "nothing deleted" means you weren't allowed
-  if (rows.length === 0) throw new Error('You can only delete events you organise.')
+  // RLS enforces organiser access for direct SDK requests too.
+  if (rows.length === 0) throw new Error('Only event organisers can delete this event.')
 }
 
 

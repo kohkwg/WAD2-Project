@@ -2,15 +2,15 @@ import { test, expect } from '@playwright/test'
 async function fixture(page, unavailable = false) {
   await page.route(/\/src\/utils\/eventTeam\.js(?:\?.*)?$/, route => route.fulfill({ contentType:'text/javascript', body: `
     export const USING_SUPABASE = true;
-    export const teamRoleLabel = role=>role==='organiser'?'Co-organiser':'Helper';
+    export const teamRoleLabel = ()=> 'Co-organiser';
     const pending=[];
-    const invitations=[{eventId:'invited-1',title:'Team outing',role:'organiser',ownerName:'Owner'},{eventId:'invited-2',title:'Another event',role:'helper',ownerName:'Owner'}];
+    const invitations=[{eventId:'invited-1',title:'Team outing',role:'organiser',ownerName:'Owner'},{eventId:'invited-2',title:'Another event',role:'organiser',ownerName:'Owner'}];
     const teams=[];
     let failed=false;
     export async function getEventTeam() {if(${unavailable})throw new Error('Event team invitations are not available yet. Your other tools are still available.');return structuredClone({isOwner:true,members:[{id:'owner',displayName:'Owner',username:'owner',role:'organiser',isOwner:true}],pending});}
     export async function searchTeamPeople(_id,query) {return query.startsWith('ali')?[{id:'alice',displayName:'Alice',username:'alice'}]:[];}
     export async function inviteTeamMember(_id,id,role) {
-      window.invitedTeamRole=role;
+      window.invitedTeamRole='organiser'; role='organiser';
       if(!failed){failed=true;throw new Error('Connection failed. Please retry.');}
       if(!pending.some(p=>p.id===id))pending.push({id,displayName:'Alice',username:'alice',role});
     }
@@ -29,12 +29,11 @@ test('owner invites a co-organiser from General with retry and retained choices'
   await nav.getByRole('link',{name:'Event team',exact:true}).click()
   await expect(page.getByRole('heading',{name:'Event team',exact:true})).toBeVisible()
   await page.getByLabel('Find by username',{exact:true}).fill('alice')
-  await page.getByLabel('Invite as',{exact:true}).selectOption('organiser')
   await page.getByRole('button',{name:'Find people',exact:true}).click()
   const invite=page.getByRole('button',{name:'Invite @alice',exact:true})
   await invite.click()
   await expect(page.getByRole('alert')).toContainText('Connection failed')
-  await expect(page.getByLabel('Invite as',{exact:true})).toHaveValue('organiser')
+  await expect(page.getByLabel('Invite as',{exact:true})).toHaveCount(0)
   await invite.click()
   await expect(page.getByRole('status')).toHaveText('Invitation sent to @alice.')
   await expect(invite).toBeDisabled()
@@ -65,7 +64,7 @@ test('recipient accepts and declines in Community and gets role-appropriate link
   await panel.getByRole('button',{name:'Accept team invitation to Team outing',exact:true}).click()
   await expect(panel.getByRole('status')).toHaveText('You joined the team for Team outing.')
   await expect(panel.getByRole('status')).toBeFocused()
-  await expect(panel.getByRole('status').getByRole('link',{name:'Team outing',exact:true})).toHaveAttribute('href','/organiser/events/invited-1/rsvps')
+  await expect(panel.getByRole('status').getByRole('link',{name:'Team outing',exact:true})).toHaveAttribute('href','/organiser/events/invited-1/manage?tab=tasks')
   await expect(panel.getByRole('link',{name:'Check-in station',exact:true})).toHaveAttribute('href','/organiser/events/invited-1/check-in')
   await expect(panel.getByRole('link',{name:'Manage RSVPs',exact:true})).toBeVisible()
   await expect(panel.getByRole('link',{name:'Floor plan',exact:true})).toBeVisible()
@@ -84,17 +83,18 @@ test('pending database setup leaves other Manage event tools available',async({p
 })
 
 
-test('My events shows compact team invitations and accepted role tools',async({page})=>{
+test('My events shows only pending invitation notices and removes resolved notices',async({page})=>{
   await fixture(page)
   await page.goto('/organiser/events')
   const panel=page.getByRole('region',{name:'Team invitations',exact:true})
-  await expect(panel.getByRole('heading',{name:'Team invitations (2)',exact:true})).toBeVisible()
+  await expect(panel.getByRole('heading')).toHaveCount(0)
+  await expect(panel.getByRole('button',{name:/Accept team invitation/})).toHaveCount(2)
   await panel.getByRole('button',{name:'Accept team invitation to Team outing',exact:true}).click()
-  await expect(panel.getByRole('heading',{name:'Team invitations (1)',exact:true})).toBeVisible()
-  await expect(panel.getByRole('link',{name:'Floor plan',exact:true})).toBeVisible()
+  await expect(panel.getByRole('button',{name:/Accept team invitation/})).toHaveCount(1)
+  await expect(panel.getByRole('link',{name:'Floor plan',exact:true})).toHaveCount(0)
   await panel.getByRole('button',{name:'Decline team invitation to Another event',exact:true}).click()
-  await expect(panel.getByRole('heading',{name:'Team invitations (0)',exact:true})).toBeVisible()
-  await expect(panel.getByText('No event team invitations.',{exact:true})).toBeVisible()
+  await expect(panel).toHaveCount(0)
+  await expect(page.getByText('No event team invitations.',{exact:true})).toHaveCount(0)
   for(const width of [375,575,768,1280]){
     await page.setViewportSize({width,height:1000})
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
@@ -119,15 +119,15 @@ test('RSVP conflict links directly to cancellation controls in My RSVPs',async({
 })
 
 
-test('accepted helper event names link to the permitted check-in workspace',async({page})=>{
+test('accepted co-organiser event names link to Manage event',async({page})=>{
   await fixture(page)
-  await page.goto('/organiser/events')
-  const panel=page.getByRole('region',{name:'Team invitations',exact:true})
+  await page.goto('/community')
+  const panel=page.getByRole('region',{name:'Your event teams',exact:true})
   await panel.getByRole('button',{name:'Accept team invitation to Another event',exact:true}).click()
   const links=panel.getByRole('link',{name:'Another event',exact:true})
   await expect(links).toHaveCount(2)
-  for(const link of await links.all())await expect(link).toHaveAttribute('href','/organiser/events/invited-2/check-in')
+  for(const link of await links.all())await expect(link).toHaveAttribute('href','/organiser/events/invited-2/manage?tab=tasks')
   await links.first().focus()
   await expect(links.first()).toBeFocused()
-  await expect(panel.getByRole('link',{name:'Manage RSVPs',exact:true})).toHaveCount(0)
+  await expect(panel.getByRole('link',{name:'Manage RSVPs',exact:true})).toBeVisible()
 })

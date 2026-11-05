@@ -284,7 +284,7 @@ async function submitRsvp() {
         <span class="state-mark" aria-hidden="true">✳</span>
         <h2 class="h4">You're on this event's team</h2>
         <p>Organisers and helpers can't RSVP to their own event.</p>
-        <RouterLink v-if="event.isMine" :to="`/organiser/events/${eventId}/rsvps`" class="btn event-cta align-self-start">Manage RSVPs</RouterLink>
+        <RouterLink v-if="event.isMine || event.canManage" :to="`/organiser/events/${eventId}/rsvps`" class="btn event-cta align-self-start">Manage RSVPs</RouterLink>
       </div>
       <form v-else class="card card-body shadow-sm rsvp-form" @submit.prevent="submitRsvp" novalidate>
         <div class="form-heading">

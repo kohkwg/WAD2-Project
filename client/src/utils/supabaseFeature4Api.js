@@ -80,9 +80,9 @@ function ordered(rows) {
 
 /** Factory is exported so the browser adapter can be exercised against a deterministic Supabase client. */
 export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAreas = fetchLiveForecastAreas) {
-  async function requireOwner(eventId) {
+  async function requireOrganiser(eventId) {
     const event = await fetchEvent(eventId)
-    if (!event.isMine) throw new Error('Only the event organiser can manage these operations.')
+    if (!event.isMine && !event.canManage) throw new Error('Only event organisers can manage these operations.')
     return event
   }
 
@@ -116,7 +116,7 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
   }
 
   async function getEventOperations(eventId) {
-    const event = await requireOwner(eventId)
+    const event = await requireOrganiser(eventId)
     const [tasksResult, announcements, budgetResult, settingsResult] = await Promise.all([
       client.from('tasks').select('id,event_id,title,description,status,position').eq('event_id', eventId).order('status').order('position'),
       readPosts(eventId), readBudget(eventId),
@@ -132,7 +132,7 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
   async function getAnnouncements(eventId) { return readPosts(eventId) }
 
   async function createTask(eventId, input) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     const title = nonBlank(input?.title, 'Task title')
     const notes = nonBlank(input?.notes, 'Notes', true)
     const requestId = input?.requestId || globalThis.crypto.randomUUID()
@@ -150,20 +150,20 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
   }
 
   async function updateTask(eventId, taskId, input) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     const row = check(await client.from('tasks').update({ title: nonBlank(input?.title, 'Task title'), description: nonBlank(input?.notes, 'Notes', true) })
       .eq('event_id', eventId).eq('id', taskId).select('id,event_id,title,description,status,position').single())
     return taskDto(row)
   }
 
   async function deleteTask(eventId, taskId) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     const deleted = check(await client.rpc('delete_feature4_task', { p_event_id: eventId, p_task_id: taskId }))
     if (deleted !== 1) throw new Error('Task not found.')
   }
 
   async function saveTaskBoard(eventId, columns) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     if (!columns || Object.keys(columns).length !== TASK_STATUSES.length || !TASK_STATUSES.every((status) => Array.isArray(columns[status]))) {
       throw new Error('The board must contain exactly the three task columns.')
     }
@@ -176,7 +176,7 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
   }
 
   async function createAnnouncement(eventId, body, requestId) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     const content = nonBlank(body, 'Announcement content')
     requestId ||= globalThis.crypto.randomUUID()
     const columns = 'id,event_id,body,is_automatic,created_at,updated_at'
@@ -198,7 +198,7 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
   }
 
   async function updateAnnouncement(eventId, id, body) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     await editablePost(eventId, id)
     const row = check(await client.from('announcements').update({ body: nonBlank(body, 'Announcement content') })
       .eq('event_id', eventId).eq('id', id).select('id,event_id,body,is_automatic,created_at,updated_at').single())
@@ -206,13 +206,13 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
   }
 
   async function deleteAnnouncement(eventId, id) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     await editablePost(eventId, id)
     check(await client.from('announcements').delete().eq('event_id', eventId).eq('id', id).select('id').single())
   }
 
   async function saveBudgetLimit(eventId, limitCents) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     const budgetLimit = limitCents === null ? null : centsToAmount(limitCents, { positive: true })
     const persistedLimit = check(await client.rpc('set_feature4_budget_limit', { p_event_id: eventId, p_limit: budgetLimit }))
     const budget = await readBudget(eventId)
@@ -220,7 +220,7 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
   }
 
   async function saveBudgetItem(eventId, input) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     const category = input?.category
     if (!budgetCategoryOptions(await readCategories(eventId)).includes(category)) throw new Error('Choose a valid budget category.')
     const quantity = validateExpenseAmounts({ quantity: input?.quantity ?? 1, plannedCents: input?.plannedCents, actualCents: input?.actualCents })
@@ -249,25 +249,25 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
   }
 
   async function deleteBudgetItem(eventId, id) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     check(await client.from('budget_items').delete().eq('event_id', eventId).eq('id', id).select('id').single())
   }
 
   async function createBudgetCategory(eventId, name) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     const value = validateCategoryName(name, await readCategories(eventId))
     return check(await client.rpc('add_feature4_budget_category', { p_event_id: eventId, p_name: value }))
   }
 
   /** The RPC moves the category's expenses to Other and removes it in one transaction. */
   async function deleteBudgetCategory(eventId, name) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     const categories = check(await client.rpc('delete_feature4_budget_category', { p_event_id: eventId, p_name: name }))
     return { categories, items: (await readBudget(eventId)).items }
   }
 
   async function setForecastArea(eventId, name) {
-    await requireOwner(eventId)
+    await requireOrganiser(eventId)
     if (typeof name !== 'string' || !name.trim()) throw new Error('Choose an available forecast area.')
     const areaName = name.trim()
     const areas = await fetchAreas()

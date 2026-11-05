@@ -47,7 +47,10 @@ async function readEvent(eventId) {
 
   const row = check(await client.from('events').select(EVENT_COLUMNS).eq('id', eventId).maybeSingle())
   if (!row) throw new Error('Event not found.')
-  if (row.organiser_id !== sessionData.session.user.id) throw new Error('Only the event owner can manage its weather settings.')
+  if (row.organiser_id !== sessionData.session.user.id) {
+    const allowed = check(await client.rpc('is_event_organiser', { p_event_id: eventId }))
+    if (allowed !== true) throw new Error('Only event organisers can manage weather settings.')
+  }
   return eventDto(row)
 }
 

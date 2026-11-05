@@ -11,7 +11,7 @@ async function call(name, params) {
 }
 export const getEventTeam = id => call('event_team_workspace', { p_event_id: id })
 export const searchTeamPeople = (id, query) => call('search_event_team_people', { p_event_id: id, p_query: query.trim().replace(/^@/, '').toLowerCase() })
-export const inviteTeamMember = (id, userId, role) => call('invite_event_team_member', { p_event_id: id, p_user_id: userId, p_role: role })
+export const inviteTeamMember = (id, userId) => call('invite_event_team_member', { p_event_id: id, p_user_id: userId, p_role: 'organiser' })
 export async function getMyEventTeams() {
   if (!supabase) return { invitations: [], teams: [], signedOut: true }
   const { data, error } = await supabase.auth.getSession()
@@ -19,4 +19,4 @@ export async function getMyEventTeams() {
   return data.session ? call('my_event_teams') : { invitations: [], teams: [], signedOut: true }
 }
 export const respondToTeamInvite = (id, accept) => call('respond_event_team_invitation', { p_event_id: id, p_accept: accept })
-export const teamRoleLabel = role => role === 'organiser' ? 'Co-organiser' : 'Helper'
+export const teamRoleLabel = () => 'Co-organiser'
