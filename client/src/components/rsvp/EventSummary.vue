@@ -35,11 +35,16 @@ const descriptionToShow = computed(() => {
 <template>
   <article class="card event-summary">
     <div class="card-body">
-      <div class="event-heading">
-        <component :is="headingTag" class="event-title">{{ event.title || 'Untitled event' }}</component>
-      </div>
-      <p class="event-time"><span class="detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg></span>{{ formatEventTime(event) }}</p>
+      <!-- Title block: a banner on the public event page, plain text elsewhere -->
+      <header class="event-hero">
+        <p v-if="coverCategory" class="event-eyebrow">{{ coverCategory }}</p>
+        <div class="event-heading">
+          <component :is="headingTag" class="event-title">{{ event.title || 'Untitled event' }}</component>
+        </div>
+        <p class="event-time"><span class="detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg></span>{{ formatEventTime(event) }}</p>
+      </header>
 
+      <div class="event-body">
       <div class="event-venue">
         <span class="venue-label">Where</span>
         <template v-if="event.isOnline">
@@ -93,6 +98,7 @@ const descriptionToShow = computed(() => {
       </template>
 
       <slot></slot>
+      </div>
     </div>
   </article>
 </template>
@@ -102,6 +108,7 @@ const descriptionToShow = computed(() => {
 .event-cover { position: relative; display: block; width: 100%; height: clamp(160px, 24vw, 260px); margin: 1.1rem 0; border-radius: 16px; overflow: hidden; background: var(--bookedz-mint); }
 .event-cover img { display: block; width: 100%; height: 100%; object-fit: cover; animation: image-settle 650ms ease both; }
 .event-cover > :deep(.event-artwork) { position: absolute; inset: 0; }
+.event-eyebrow { display: none; }
 .event-tags .badge { text-transform: capitalize; }
 .cover-category { text-transform: capitalize; }
 .cover-category { position: absolute; left: 1rem; bottom: 1rem; max-width: calc(100% - 2rem); padding: .35rem .75rem; border: 1px solid var(--bookedz-glass-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-glass); font-size: .8rem; font-weight: 700; }

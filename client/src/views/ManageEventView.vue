@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../components/ui/BackLink.vue'
 import '../assets/design-baseline.css'
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
@@ -186,7 +187,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 
 <template>
 <div class="design-baseline">
-  <RouterLink to="/organiser/events" class="workspace-back">← My events</RouterLink>
+  <BackLink to="/organiser/events" class="workspace-back">← Back</BackLink>
   <p v-if="loading" class="my-5 text-center" role="status">Loading event workspace…</p>
   <div v-dismissible v-else-if="loadError" class="alert alert-danger mt-3" role="alert">{{ loadError }} <button type="button" class="btn btn-sm btn-outline-danger" @click="load">Retry event</button></div>
   <div v-dismissible v-else-if="workspace && !canManage" class="alert alert-danger mt-3" role="alert">Only this event’s organisers can use these tools.</div>

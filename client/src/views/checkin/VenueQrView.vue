@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../../components/ui/BackLink.vue'
 // Feature 3: the screen staff put at the entrance. Shows a QR participants scan to
 // check themselves in. The QR's secret changes every few minutes so a photo of it
 // posted in a group chat stops working.
@@ -92,7 +93,7 @@ onUnmounted(() => clearInterval(timer))
 
 <template>
   <div class="container py-4 venue-qr-page text-center">
-    <RouterLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block text-start mb-3">&larr; Manage event</RouterLink>
+    <BackLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block text-start mb-3">&larr; Back</BackLink>
 
     <div v-dismissible v-if="error && !secret" class="alert alert-danger" role="alert">{{ error }}</div>
 

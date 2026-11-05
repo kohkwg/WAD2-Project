@@ -272,6 +272,25 @@ watch(
   -webkit-line-clamp: 2;
   line-clamp: 2;
 }
+/* Selected cards grow so the recommendation can be read without clipping. */
+.day-row :deep(.discovery-event-row.is-selected) {
+  height: auto;
+  min-height: 144px;
+}
+.day-row :deep(.is-selected .row-details) {
+  max-height: none;
+  overflow: visible;
+}
+.day-row :deep(.is-selected .row-selected-info) {
+  display: flex;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+}
+.day-row :deep(.row-selected-info > span) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 @media (prefers-reduced-motion: no-preference) {
   .day-track {
     scroll-behavior: smooth;

@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../../components/ui/BackLink.vue'
 // Feature 3: staff check-in station. Scan a participant's personal QR or ticket
 // barcode (from their My Ticket page), type the code, or find them by name/email.
 import { onMounted, ref } from 'vue'
@@ -81,7 +82,7 @@ onMounted(() =>
 
 <template>
   <div class="container py-4 staff-page">
-    <RouterLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
+    <BackLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Back</BackLink>
     <header class="staff-heading d-flex justify-content-between align-items-start gap-2 mb-4">
       <div>
         <h1 class="h4 mb-1">Check-in station</h1>

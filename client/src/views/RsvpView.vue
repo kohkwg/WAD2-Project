@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../components/ui/BackLink.vue'
 import '../assets/design-baseline.css'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
@@ -216,7 +217,7 @@ async function submitRsvp() {
   </div>
   <div v-else ref="pageMotion" class="public-event-page">
   <div class="rsvp-intro">
-    <RouterLink to="/events" class="rsvp-back">&larr; All events</RouterLink>
+    <BackLink to="/events" class="rsvp-back">&larr; Back</BackLink>
     <!-- Tablets only: the RSVP panel sits below the details; phones get the pinned bar instead -->
     <a v-if="!loading && event && !event.isOnTeam" href="#rsvp" class="rsvp-jump d-none d-md-inline-flex d-lg-none" @click.prevent="jumpToRsvp">
       {{ jumpLabel }}<span aria-hidden="true">&nbsp;↓</span>
@@ -239,9 +240,6 @@ async function submitRsvp() {
           Full · {{ event.waitlistCount }} on the waitlist
         </p>
       </EventSummary>
-      <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
-      <!-- Go together groups meet at the venue, so online events have none -->
-      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline" :event-id="eventId" />
       <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
       <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>
@@ -273,7 +271,7 @@ async function submitRsvp() {
         </p>
         <div class="d-flex gap-2">
           <RouterLink to="/my-rsvps" class="btn event-cta">Go to My RSVPs</RouterLink>
-          <RouterLink to="/events" class="btn event-cta event-cta--secondary">Back to events</RouterLink>
+          <BackLink to="/events" class="btn event-cta event-cta--secondary">Back</BackLink>
         </div>
       </div>
 
@@ -377,6 +375,9 @@ async function submitRsvp() {
         </button>
       </form>
       </template>
+      <!-- Go together groups sit beside the details, then the updates. Groups meet at the venue, so online events have none -->
+      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline" :event-id="eventId" />
+      <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
     </div>
   </div>
   </div>
@@ -385,7 +386,7 @@ async function submitRsvp() {
 <style scoped>
 .form-spark svg { width: 28px; height: 28px; }
 .rsvp-action-panel { scroll-margin-top: 110px; }
-@media(min-width:992px) { .rsvp-action-panel :deep(.col-md-6) { width: 100%; }.rsvp-action-panel .event-cta { width: 100%; }.rsvp-action-panel .d-flex { flex-wrap: wrap; }.rsvp-action-panel { position: sticky; top: 110px; } }
+@media(min-width:992px) { .rsvp-action-panel :deep(.col-md-6) { width: 100%; }.rsvp-action-panel .event-cta { width: 100%; }.rsvp-action-panel .d-flex { flex-wrap: wrap; }.rsvp-action-panel { align-self: start; } }
 .rsvp-intro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: .8rem; }
 .rsvp-jump { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border: 1px solid var(--bookedz-control-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-surface); font-weight: 650; text-decoration: none; transition: background-color var(--bookedz-motion-fast) ease; }
 .rsvp-sticky { position: fixed; z-index: 1010; left: 0; right: 0; bottom: var(--bottom-nav-h, 0px); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px max(10px, env(safe-area-inset-bottom)); border-top: 1px solid var(--bookedz-border); background: color-mix(in srgb, var(--bookedz-surface) 96%, transparent); box-shadow: 0 -6px 18px rgba(0,0,0,.08); }

@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../../components/ui/BackLink.vue'
 // Feature 3: participant self check-in by scanning the venue QR.
 // Two ways in:
 //   1. In-app: open this page, the camera scans the venue QR.
@@ -108,7 +109,7 @@ onMounted(async () => {
 
 <template>
   <div class="container py-4 self-checkin-page">
-    <RouterLink to="/my-rsvps" class="small d-block mb-3">&larr; My RSVPs</RouterLink>
+    <BackLink to="/my-rsvps" class="small d-block mb-3">&larr; Back</BackLink>
     <header class="checkin-heading"><span class="ticket-kicker">At the venue</span><h1 class="h3 mb-1">Check in</h1>
     <p class="text-body-secondary small mb-4">{{ event?.title ?? '' }}</p></header>
 

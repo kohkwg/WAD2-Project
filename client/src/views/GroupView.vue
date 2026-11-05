@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../components/ui/BackLink.vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { requireCommunityAccount } from '../utils/communityAccount.js'
@@ -203,7 +204,7 @@ async function removeGroup() {
 
 <template>
   <div class="container group-page">
-    <RouterLink to="/community" class="group-back">&larr; Go together</RouterLink>
+    <BackLink to="/community" class="group-back">&larr; Back</BackLink>
 
     <div v-if="loading" class="group-loading" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Loading the group…</div>
     <div v-dismissible v-else-if="error" class="group-empty" role="alert">

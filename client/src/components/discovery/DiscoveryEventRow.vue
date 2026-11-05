@@ -95,8 +95,8 @@ h3 { margin: 0; font-family: var(--bookedz-body); font-size: 15px; font-weight: 
 /* The clicked row shows its full title and venue */
 .is-selected .row-title-line { flex-wrap: wrap; }
 .is-selected .row-title,.is-selected .row-facts { white-space: normal; overflow-wrap: anywhere; }
-.row-selected-info { display: flex; flex-wrap: wrap; gap: 0 4px; margin: 6px 0 0; font-size: 12px; color: var(--bookedz-primary-dark); }
-.row-view { margin-left: auto; font-weight: 700; color: var(--bookedz-primary-dark); text-decoration: none; }
+.row-selected-info { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 6px 0 0; font-size: 12px; color: var(--bookedz-primary-dark); }
+.row-view { margin-left: auto; padding-inline-start: 8px; font-weight: 700; color: var(--bookedz-primary-dark); text-decoration: none; }
 .row-facts { color: var(--bookedz-muted); }
 .row-venue { margin-top: 1px; }
 .row-reason { color: var(--bookedz-primary-dark); }
