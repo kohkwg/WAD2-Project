@@ -1,83 +1,97 @@
-// Create Event form (Feature 2): the blank form and each step's checks, shared by the wizard
-// (CreateEventView) and its unit tests. Pure functions, no Vue.
+// create event form (feature 2): the blank form and each step's checks, shared by the wizard
+// (createeventview) and its unit tests. pure functions, no vue.
 
-import { onlineLinkErrors } from './onlineEvents.js'
-import { venueRevealErrors } from './venueReveal.js'
+import { onlineLinkErrors } from './onlineEvents.js';
+import { venueRevealErrors } from './venueReveal.js';
 
-// Everything the organiser fills in, across all steps
+// everything the organiser fills in, across all steps
+
 export function blankEventForm() {
   return {
     title: '',
     coverImageUrl: '',
     description: '',
     tags: [],
-    startTime: '', // from <input type="datetime-local">, e.g. "2026-10-20T19:00"
+    startTime: '',
+    // from <input type="datetime-local">, e.g. "2026-10-20t19:00"
     endTime: '',
     capacity: 30,
-    noLimit: false, // true = unlimited spots (saved as no capacity); capacity keeps its number meanwhile
-    hideCapacity: false, // true = participants see only whether it's full
-    isOnline: false, // online events have no venue; the link is kept privately
-    onlineLink: { url: '', revealAt: '' }, // revealAt is a datetime-local value; '' url = no link yet
-    venue: null, // { name, address, postal, lat, lng } from OneMap; null = to be announced later
-    venueRevealAt: '', // datetime-local; '' = the venue shows as soon as the event is published
+    noLimit: false,
+    // true = unlimited spots (saved as no capacity); capacity keeps its number meanwhile
+    hideCapacity: false,
+    // true = participants see only whether it's full
+    isOnline: false,
+    // online events have no venue; the link is kept privately
+    onlineLink: {
+      url: '',
+      revealAt: ''
+    },
+    // revealat is a datetime-local value; '' url = no link yet
+    venue: null,
+    // { name, address, postal, lat, lng } from onemap; null = to be announced later
+    venueRevealAt: '',
+    // datetime-local; '' = the venue shows as soon as the event is published
     isOutdoor: false,
-    backupVenue: null, // used by Denzel's rain check
+    backupVenue: null,
+    // used by denzel's rain check
     requiresApproval: false,
-    questions: [], // [{ id, text, type: see utils/questionTypes.js, required, options? }]
-  }
+    questions: [] // [{ id, text, type: see utils/questiontypes.js, required, options? }]
+  };
 }
 
-// The error messages for one step (1 basics, 2 venue or online link, 3 RSVP questions); [] means it's valid.
-// Edit mode can't go below the people already confirmed or offered a place (minCapacity), and an
-// older event may keep "no limit" ('' capacity). Live events need venues with map coordinates.
-export function errorsForStep(f, stepNumber, { now = new Date(), editing = false, originalCapacity, minCapacity = 1, live = false } = {}) {
-  const errors = []
-  const hasCoordinates = (place) => Number.isFinite(place?.lat) && Number.isFinite(place?.lng)
+// the error messages for one step (1 basics, 2 venue or online link, 3 rsvp questions); [] means it's valid.
+// edit mode can't go below the people already confirmed or offered a place (mincapacity), and an
+// older event may keep "no limit" ('' capacity). live events need venues with map coordinates.
 
+export function errorsForStep(f, stepNumber, {
+  now = new Date(),
+  editing = false,
+  originalCapacity,
+  minCapacity = 1,
+  live = false
+} = {}) {
+  const errors = [];
+  const hasCoordinates = place => Number.isFinite(place?.lat) && Number.isFinite(place?.lng);
   if (stepNumber === 1) {
-    if (f.title.trim() === '') errors.push('Give your event a title.')
+    if (f.title.trim() === '') errors.push('Give your event a title.');
     if (f.startTime === '' || f.endTime === '') {
-      errors.push('Set a start and end time.')
+      errors.push('Set a start and end time.');
     } else if (new Date(f.endTime) <= new Date(f.startTime)) {
-      errors.push('The end time must be after the start time.')
+      errors.push('The end time must be after the start time.');
     } else if (new Date(f.startTime) < now) {
-      errors.push('The start time cannot be in the past.')
+      errors.push('The start time cannot be in the past.');
     }
-    const keepsNoLimit = editing && originalCapacity === '' && f.capacity === ''
+    const keepsNoLimit = editing && originalCapacity === '' && f.capacity === '';
     if (f.noLimit) {
-      // Unlimited: nothing to check, and nobody can be pushed out by it
+      // unlimited: nothing to check, and nobody can be pushed out by it
     } else if (!keepsNoLimit && (!Number.isInteger(f.capacity) || f.capacity < 1)) {
-      errors.push('Capacity must be a whole number, at least 1.')
+      errors.push('Capacity must be a whole number, at least 1.');
     } else if (editing && !keepsNoLimit && f.capacity < minCapacity) {
-      errors.push(`Capacity can't be lower than ${minCapacity}: that many people are already confirmed or offered a place.`)
+      errors.push(`Capacity can't be lower than ${minCapacity}: that many people are already confirmed or offered a place.`);
     }
     if (f.tags.length === 0) {
-      errors.push('Pick at least one tag (used for recommendations and waitlist scoring).')
+      errors.push('Pick at least one tag (used for recommendations and waitlist scoring).');
     }
   }
-
-  if (stepNumber === 2 && f.isOnline) errors.push(...onlineLinkErrors(f.onlineLink, f.endTime))
-
+  if (stepNumber === 2 && f.isOnline) errors.push(...onlineLinkErrors(f.onlineLink, f.endTime));
   if (stepNumber === 2 && !f.isOnline) {
-    // The venue may be announced later; a rain plan and a hidden venue need one chosen
-    errors.push(...venueRevealErrors(f))
+    // the venue may be announced later; a rain plan and a hidden venue need one chosen
+    errors.push(...venueRevealErrors(f));
     if (live && f.venue && !hasCoordinates(f.venue)) {
-      errors.push('Choose a venue result with map coordinates for live events.')
+      errors.push('Choose a venue result with map coordinates for live events.');
     }
     if (f.venue && f.isOutdoor && !f.backupVenue) {
-      errors.push('Outdoor events need a backup venue in case of rain.')
+      errors.push('Outdoor events need a backup venue in case of rain.');
     }
     if (live && f.venue && f.isOutdoor && f.backupVenue && !hasCoordinates(f.backupVenue)) {
-      errors.push('Choose a backup venue result with map coordinates for live events.')
+      errors.push('Choose a backup venue result with map coordinates for live events.');
     }
   }
-
-  if (stepNumber === 3 && f.questions.some((question) => question.text.trim() === '')) {
-    errors.push('Every RSVP question needs some wording.')
+  if (stepNumber === 3 && f.questions.some(question => question.text.trim() === '')) {
+    errors.push('Every RSVP question needs some wording.');
   }
-  if (stepNumber === 3 && f.questions.some((question) => (question.type === 'choice' || question.type === 'multichoice') && (question.options?.length || 0) < 2)) {
-    errors.push('Pick-one and pick-several questions need at least 2 options.')
+  if (stepNumber === 3 && f.questions.some(question => (question.type === 'choice' || question.type === 'multichoice') && (question.options?.length || 0) < 2)) {
+    errors.push('Pick-one and pick-several questions need at least 2 options.');
   }
-
-  return errors
+  return errors;
 }

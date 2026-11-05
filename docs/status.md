@@ -38,6 +38,32 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — Discover search suggestions
+
+Typing two or more characters in the Discover search box now lists up to six suggestions: event
+titles (open the event), categories (apply the filter), venues and keywords (run that search), each
+with its event count. `lib/searchSuggestions.js` builds them in the browser from one read on first
+focus, with the current filters and every date, so typing makes no extra requests and no row leads
+to an empty page. Keywords need to be in a title or in two or more descriptions; two-word phrases
+need two or more events and are dropped when a venue row already covers them. No migration, route
+or dependency. The live search now puts a wildcard in place of `,()%"\`, as a space there stopped
+text like "The Projector, Golden Mile Tower" matching.
+
+Evidence: `search-suggestions.test.mjs` 15/15; `search-suggestions.spec.js` 10/10 on an owned demo
+server (port 5198), including a fix it prompted: an event row clicked within 250ms of typing used to
+stay on Discover. Live and read-only on Bookerz, signed out (5195): suggestions read sensibly on the
+real events and choosing that venue returned its 3 events, matching the row's count. No page errors.
+Demo pane at 575, 768, 1024 and 1280px (the spec covers 375px): no sideways scroll, one `main`. Seen
+in both themes. `event-filters.test.mjs` still fails 4 of 7, the same number recorded on 3 November;
+not compared against an untouched copy this time. Not done: choosing an event or category row in
+live mode, signed-in or filtered live use, screen reader or real-device checks, full suites, a
+build. Aishani has not reviewed this yet.
+
+Follow-up: clicking into the search box drew a boxed outline inside the rounded bar. The focus ring
+now goes around the whole bar. Headless Chromium on an owned demo server (5196), in light or dark at
+375, 575, 768 and 1280px: the ring is on the bar, moves to Clear search on Tab, no sideways scroll,
+no page errors; light and dark screenshots at 1280px checked.
+
 ### 5 November — event navigation merge repair
 
 Resolved seven conflicts after the event-view/navigation commit. The six affected
@@ -84,6 +110,227 @@ commit or push performed in this repair.
   open/close cases pass; each page has only one bare `:root[data-theme="dark"]` rule (the theme
   itself). Dark-mode before/after screenshots were reviewed.
 - **Not done:** e2e specs, full suites, a production build, live and real-device checks.
+
+### 5 November — Repository-wide readability pass
+
+- At the user's request, reviewed 335 first-party source/config/test files: 329 formatted,
+  six Python files already readable. Original working files, including prior uncommitted
+  feature/layout changes, were snapshotted before the batch. Every changed file is compared
+  against that baseline, rather than assuming HEAD contains the user's current work.
+- All 335 passed final equivalence checks: JavaScript/TypeScript syntax trees match excluding
+  source metadata/comments; Python syntax trees match; Vue render code matches with comments
+  disabled; CSS selectors and declaration values match. Vue scripts/templates/styles compile.
+  An initial formatting candidate changed blank lines inside a browser-test fixture string;
+  that candidate was rejected and the string-preserving version passes. Whitespace checks pass.
+- Targeted tests on available Node 26.8.1: 37 client cases passed (event form, waitlist scoring,
+  notification comparisons and weather deadlines), plus 15 server cases (event compatibility
+  and food deals). `feature4WeatherSnapshot.test.js` cannot resolve the extensionless
+  `client/src/lib/supabase` import; the pre-cleanup snapshot fails identically.
+- Browser smoke on an owned demo server (5199): landing, Discover, Create event, Plans,
+  Organise, public RSVP, workspace Tasks/Announcements and Community at 375/575/768/1280px in
+  both themes (72 checks): one main, no horizontal overflow, no page errors. This is not
+  screenshot comparison or exhaustive interaction validation. No full suite, build, live
+  sign-in, database write, dependency change or deployment. SQL migrations and supplied
+  resources remain unchanged. The local review pack is `/tmp/wad2-readability-review/index.md`,
+  with per-file originals/diffs and a combined formatting-only patch.
+
+### 5 November — Tasks, weather and team readability batch
+
+Formatted TaskBoard, WeatherTool and EventTeamPanel. All three script syntax trees match
+excluding source metadata/comments; compiled templates match with comments removed; CSS
+differs only in spacing/comments. Compilation and changed-file whitespace checks pass.
+No browser checks, full suite or build. Combined local review diff:
+`/tmp/wad2-organiser-tools-cleanup.diff`.
+
+### 5 November — Announcement components readability batch
+
+Formatted ConfirmationDialog, AnnouncementFeed and AnnouncementManager. All three script
+syntax trees match excluding source metadata/comments; compiled templates match with
+comments removed; CSS differs only in spacing/comments. Compilation and changed-file
+whitespace checks pass. No browser checks, full suite or build. Combined local review
+diff: `/tmp/wad2-announcement-components-cleanup.diff`.
+
+### 5 November — Shared feedback and navigation readability batch
+
+Formatted BumpValue, BackLink and SkeletonList. All three script syntax trees match excluding
+source metadata/comments; compiled templates match with comments removed; existing CSS differs
+only in whitespace. Compilation and changed-file whitespace checks pass. No browser checks,
+full suite or build. Combined local review diff: `/tmp/wad2-shared-ui-cleanup.diff`.
+
+### 5 November — Organiser controls readability batch
+
+Formatted OrganiserEventCard, EventToolNavigation and ShowHideButton. All three script
+syntax trees match excluding source metadata/comments; compiled templates match with
+comments removed; CSS differs only in spacing/comments. Compilation and changed-file
+whitespace checks pass. No browser checks, full suite or build. Combined local review
+diff: `/tmp/wad2-organiser-controls-cleanup.diff`.
+
+### 5 November — Three-file creation helper readability batch
+
+Formatted AddressSearch, AnnounceChangesDialog and CountUp at the user's request to review
+three files together. All three script syntax trees match excluding source metadata/comments;
+compiled templates match with comments removed; CSS differs only in spacing/comments.
+All three compile and pass changed-file whitespace checks. No browser checks, full suite
+or build. Search debounce, stale-result guards, save/announce retries and reduced-motion
+behaviour are unchanged. Combined local review diff: `/tmp/wad2-three-files-cleanup.diff`.
+
+### 5 November — Creation step indicator readability cleanup
+
+Formatted `StepIndicator.vue`. Script syntax trees match excluding source metadata/comments;
+compiled templates match with comments removed; CSS differs only in whitespace. Script,
+template and styles compile; changed-file whitespace checks pass. No browser checks,
+full suite or build. Navigation and progress behaviour are unchanged.
+
+### 5 November — Online event link readability cleanup
+
+Formatted `OnlineEventLink.vue`. Script structures match after ignoring source metadata,
+comments and the added single-statement braces; compiled templates match with comments removed;
+CSS differs only in spacing/comments. Script, template and styles compile; changed-file
+whitespace checks pass. No browser checks, full suite or build. Access/reveal rules are unchanged.
+
+### 5 November — Plans empty-state readability cleanup
+
+Resumed the page-by-page review with `RsvpEmptyState.vue`. Script syntax trees match
+excluding source metadata/comments; compiled templates are identical; CSS differs only
+in whitespace. Script, template and styles compile; changed-file whitespace checks pass.
+No browser checks, full suite or build. Existing notification/layout and concurrent work
+was left untouched.
+
+### 5 November — Normal-scrolling event sidebar and separate map card
+
+Removed desktop sticky positioning, height restriction and inner scrolling from the public
+RSVP right column. Moved the lazy-loaded map into its own Venue map card after details and
+before groups. Online and pending venues do not show it. RSVP script/template/style compilation
+and changed-file whitespace checks passed. Browser layout not checked in this pass.
+
+### 5 November — Event details and announcements swap
+
+The public RSVP page places the description/venue/cover card in the right column under the RSVP,
+and announcements in the left column under the banner. The programme stays in the left column;
+Go together follows the details on the right. The optional shared-summary target leaves creation
+review placement unchanged. Vue compilation passed; targeted demo Chromium checks cover placement,
+375/575/768/1280px overflow, one main and page errors. No live check, full suite or build.
+
+### 5 November — Account-wide dino update notifications
+
+- The review is paused at the user's request. Shared toasts now sit at the top right, with
+  cheerful/curious/sad existing dino assets, a 44px close button, optional View update link,
+  ten-second default lifetime and reduced-motion support. Explicit undo timeouts remain unchanged.
+  Focus returns to the page if the focused notice disappears.
+- One app-level watcher checks every 15 seconds while visible and on focus, reconnect and
+  demo storage changes. A caller-filtered live registration subscription also requests a fresh
+  read. It compares event/group registration decisions, offers and check-in; public event facts;
+  new/edited announcements for active registrations and hosted events; group settings, members,
+  requests, message counts and before/after plans; group invitations/deletions; friend requests
+  and new connections; event-team invitations/membership; and organiser guest-list counts.
+  Independent source failures keep their prior state. Auth changes invalidate old reads, clear
+  notices and switch history. Browser persistence contains ids, hashed comparison tokens and
+  group flags, not message bodies or personal names. A supplemental own-registration read lets
+  live rejection be detected even if a private group's event row is no longer visible.
+- Evidence: eight focused Node tests pass (host Node 26.8.1, Node 22 unavailable in the current
+  command environment). Both new Playwright cases pass individually on an owned demo server
+  at 5199: top-right placement and reflow at 375/575/768/1280px in both themes, dino load,
+  manual close/automatic ten-second expiry, and background event decisions/new/edited posts.
+  The layout test initially measured before responsive reflow; it now waits for the layout.
+  A separate scratch Chromium scenario also checked group acceptance/rejection and found no
+  page errors. Vue script/template/style compilation, JavaScript syntax and changed-file
+  whitespace checks passed. Light/dark screenshots are local in `/tmp`.
+- Limits: no live signed-in check, full suite, production build or hosted changes. This is an
+  in-app comparison watcher, not a durable notification inbox: the first successful read baselines
+  existing history (outstanding offers/invitations do show), updates between polls may coalesce,
+  and intermediate changes while the app is closed are not guaranteed. Missing rows are not
+  guessed to mean rejection. Source data still obeys the existing demo/live APIs and caller RLS.
+
+### 5 November — Saved event card readability cleanup
+
+Formatted `SavedEventCard.vue`. Script syntax trees match excluding source metadata/comments;
+compiled templates match with comments removed; CSS differs only in whitespace/comments.
+All comments are lowercase; script, template and styles compile; changed-file whitespace
+checks pass. No browser checks, full suite or build. Concurrent changes were left untouched.
+
+### 5 November — Participant registration row readability cleanup
+
+Formatted `ParticipantRsvpRow.vue`. Script syntax trees match excluding source metadata/comments;
+compiled templates are identical; CSS differs only in whitespace. Script, template and styles
+compile; changed-file whitespace checks pass. No browser checks, full suite or build.
+Concurrent floor-plan and workspace changes were left untouched.
+
+### 5 November — Next event card readability cleanup
+
+Formatted `NextEventCard.vue`. Script syntax trees match excluding source metadata/comments;
+compiled templates are identical; CSS differs only in whitespace. Script, template and
+styles compile; changed-file whitespace checks pass. No browser checks, full suite or build.
+Concurrent editor/workspace changes were left untouched.
+
+### 5 November — Waitlist offer banner readability cleanup
+
+Formatted `OfferBanner.vue` and simplified comments. Script syntax trees match excluding
+source metadata/comments; template is identical; CSS differs only in whitespace/comments.
+Script, template and styles compile; changed-file whitespace checks pass. No browser checks,
+full suite or build.
+
+### 5 November — Registration status badge readability cleanup
+
+Formatted `RsvpStatusBadge.vue` and simplified comments. Script syntax trees match excluding
+source metadata/comments; compiled templates are identical; CSS differs only in whitespace.
+All comments are lowercase; script, template and styles compile; changed-file whitespace
+checks pass. No browser checks, full suite or build.
+
+### 5 November — Guest group label readability cleanup
+
+Formatted `GroupChip.vue` and simplified its comments. Script syntax trees match excluding
+source metadata/comments; template and CSS differ only in whitespace. Script, template and
+styles compile; changed-file whitespace checks pass. No browser checks, full suite or build.
+
+### 5 November — Waitlist table readability cleanup
+
+Formatted `WaitlistTable.vue` and simplified comments. Script syntax trees match excluding
+source metadata/comments; template is unchanged except comments; CSS differs only in whitespace.
+All comments are lowercase; script, template and styles compile; changed-file whitespace checks
+pass. No browser checks, full suite or build. Scoring and supporting modules were not edited.
+
+### 5 November — Guest table structure-only cleanup
+
+Formatted `RsvpTable.vue` for readability. Script syntax trees match excluding source
+metadata/comments; template and CSS differ only in spacing/comments. Comments are lowercase;
+script, template and styles compile; changed-file whitespace checks pass. No browser checks,
+full suite or build. Parent and supporting components were not edited in this pass.
+
+### 5 November — Guest list structure-only cleanup
+
+Formatted `ManageRsvpsView.vue` and simplified comments. Against a local pre-edit snapshot:
+script syntax trees match excluding source metadata/comments; template and CSS differ only
+in whitespace/comments. All comments are lowercase; script, template and styles compile;
+the changed Vue file passes whitespace checks. No browser checks, full suite or build.
+Child components, API modules and waitlist rules were not edited.
+
+### 5 November — Manage event readability spacing
+
+Expanded JavaScript, long template attributes and CSS for readability. Script syntax trees
+match the pre-format snapshot excluding source metadata; template and CSS differ only in
+whitespace. Script, template and styles compile; the changed Vue file passes whitespace checks.
+No browser checks, full suite or build.
+
+### 5 November — Manage event structure-only pass
+
+Expanded compressed load/reset and unmount code and simplified comments, following the
+user's page-by-page, unchanged-appearance/behaviour instruction. Compared with a local
+pre-edit snapshot: script syntax trees match excluding comments/source locations, template
+text is identical and CSS is identical excluding comments. Script, template and styles compile.
+Browser checks, full suite and build were not run. Remaining pages and compressed handlers
+have not yet received this structural pass.
+
+### 5 November — Manage event unused-style cleanup
+
+Removed unused workspace quick-link selectors, consolidated Vue imports and lowercased
+comments in `ManageEventView.vue`. Script, template and styles compile; whitespace checks
+pass. No browser checks, full suite or build.
+
+### 5 November — Organise unused-style cleanup
+
+Removed unused kicker, view-memory and obsolete direct-child mobile button rules from
+`OrganiserEventsView.vue`, and lowercased comments. Script, template and styles compile;
+whitespace checks pass. No browser checks, full suite or build.
 
 ### 5 November — Discover map shows location only
 

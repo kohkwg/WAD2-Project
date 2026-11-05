@@ -1,462 +1,566 @@
-// MOCK BACKEND: every function works on placeholder data saved in localStorage,
+// mock backend: every function works on placeholder data saved in localstorage,
 // so the pages can be clicked through with no database at all.
 //
-// supabaseApi.js has the SAME functions returning the SAME shapes, backed by the real
+// supabaseapi.js has the same functions returning the same shapes, backed by the real
 // database. api.js picks one of the two — pages never import this file directly.
-// If you change what a function returns here, change supabaseApi.js to match.
+// if you change what a function returns here, change supabaseapi.js to match.
 
-import { createSeedData, addSampleGroups, GROUP_SEED_VERSION } from './mockData.js'
-import { calculateWaitlistScore } from './waitlistScore.js'
-import { OFFER_HOURS, ACTIVE_STATUSES } from './helpers.js'
-import { isGroup, isOfficialEvent, joinOutcome, groupErrors, settingsErrors, JOIN_MESSAGE_LIMIT, groupEventData, emptyPlan, fitSlots, mealLabel, SLOTS, suggestionFrom, suggestionErrors, availabilityError } from './groups.js'
-import { TASK_STATUSES, FALLBACK_BUDGET_CATEGORY, budgetCategoryOptions, validateCategoryName, validateCents, validateExpenseAmounts, summariseBudget } from './feature4.js'
-import { fetchForecastData, forecastAreas, eventForecast } from './feature4Weather.js'
-import { applyEventDefaults, onlineVenue, onlineAccess, onlineLinkErrors, hideCapacityNumbers, ONLINE_GROUP_ERROR } from './onlineEvents.js'
-import { pendingVenue, isStillHidden, isVenueHiddenForGroups, HIDDEN_VENUE_GROUP_ERROR } from './venueReveal.js'
+import { createSeedData, addSampleGroups, GROUP_SEED_VERSION } from './mockData.js';
+import { calculateWaitlistScore } from './waitlistScore.js';
+import { OFFER_HOURS, ACTIVE_STATUSES } from './helpers.js';
+import { isGroup, isOfficialEvent, joinOutcome, groupErrors, settingsErrors, JOIN_MESSAGE_LIMIT, groupEventData, emptyPlan, fitSlots, mealLabel, SLOTS, suggestionFrom, suggestionErrors, availabilityError } from './groups.js';
+import { TASK_STATUSES, FALLBACK_BUDGET_CATEGORY, budgetCategoryOptions, validateCategoryName, validateCents, validateExpenseAmounts, summariseBudget } from './feature4.js';
+import { fetchForecastData, forecastAreas, eventForecast } from './feature4Weather.js';
+import { applyEventDefaults, onlineVenue, onlineAccess, onlineLinkErrors, hideCapacityNumbers, ONLINE_GROUP_ERROR } from './onlineEvents.js';
+import { pendingVenue, isStillHidden, isVenueHiddenForGroups, HIDDEN_VENUE_GROUP_ERROR } from './venueReveal.js';
 
-// Who is "logged in" for the demo. In Supabase mode this comes from the login session instead.
-// Alex (u1) is the participant and the Demo Club (org1) is the organiser, so one person can
+// who is "logged in" for the demo. in supabase mode this comes from the login session instead.
+// alex (u1) is the participant and the demo club (org1) is the organiser, so one person can
 // click through both sides without switching accounts.
-const CURRENT_USER_ID = 'u1'
-const CURRENT_ORGANISER_ID = 'org1'
+
+const CURRENT_USER_ID = 'u1';
+
+const CURRENT_ORGANISER_ID = 'org1';
 
 // ---------------------------------------------------------------------------
-// Placeholder "database" kept in localStorage
+// placeholder "database" kept in localstorage
 // ---------------------------------------------------------------------------
 
-// Exported so other tabs can tell when the demo data changed (api.watchEventAnnouncements)
-export const STORAGE_KEY = 'bookedz-feature2-demo'
+// exported so other tabs can tell when the demo data changed (api.watcheventannouncements)
+
+export const STORAGE_KEY = 'bookedz-feature2-demo';
 
 function emptyOperations() {
-  return { version: 1, tasks: [], announcements: [], budgets: {}, forecastAreas: {} }
+  return {
+    version: 1,
+    tasks: [],
+    announcements: [],
+    budgets: {},
+    forecastAreas: {}
+  };
 }
 
 function loadDb() {
-  const saved = localStorage.getItem(STORAGE_KEY)
+  const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
-    const db = JSON.parse(saved)
+    const db = JSON.parse(saved);
     if (!db.feature4) {
-      db.feature4 = emptyOperations()
-      saveDb(db)
+      db.feature4 = emptyOperations();
+      saveDb(db);
     }
-    // Demo data saved before Go together groups existed is brought up to date once
-    if (db.groupSeedVersion !== GROUP_SEED_VERSION) { addSampleGroups(db); saveDb(db) }
-    if (withEventOptions(db)) saveDb(db)
-    return db
+    // demo data saved before go together groups existed is brought up to date once
+    if (db.groupSeedVersion !== GROUP_SEED_VERSION) {
+      addSampleGroups(db);
+      saveDb(db);
+    }
+    if (withEventOptions(db)) saveDb(db);
+    return db;
   }
-
-  const fresh = createSeedData()
-  fresh.feature4 = emptyOperations()
-  withEventOptions(fresh)
-  saveDb(fresh)
-  return fresh
+  const fresh = createSeedData();
+  fresh.feature4 = emptyOperations();
+  withEventOptions(fresh);
+  saveDb(fresh);
+  return fresh;
 }
 
-// Every event records whether it is online and whether its capacity is hidden, like the
-// database columns; older demo data is physical with capacity shown. Online links are kept
+// every event records whether it is online and whether its capacity is hidden, like the
+// database columns; older demo data is physical with capacity shown. online links are kept
 // apart from the events (like public.event_online_links), so reading an event never shows one.
-// A venue kept hidden until a set time waits in hiddenVenues (like public.event_hidden_venues);
-// the event itself then has no venue and records venueRevealAt, which is null on every other event.
-// Returns true when anything had to be added.
+// a venue kept hidden until a set time waits in hiddenvenues (like public.event_hidden_venues);
+// the event itself then has no venue and records venuerevealat, which is null on every other event.
+// returns true when anything had to be added.
+
 function withEventOptions(db) {
-  let changed = !Array.isArray(db.onlineLinks)
-  if (changed) db.onlineLinks = []
-  if (!Array.isArray(db.hiddenVenues)) { db.hiddenVenues = []; changed = true }
+  let changed = !Array.isArray(db.onlineLinks);
+  if (changed) db.onlineLinks = [];
+  if (!Array.isArray(db.hiddenVenues)) {
+    db.hiddenVenues = [];
+    changed = true;
+  }
   for (const event of db.events) {
-    if (!('venueRevealAt' in event)) { event.venueRevealAt = null; changed = true }
+    if (!('venueRevealAt' in event)) {
+      event.venueRevealAt = null;
+      changed = true;
+    }
     if (typeof event.isOnline !== 'boolean' || typeof event.hideCapacity !== 'boolean' || 'onlineLink' in event) {
-      delete event.onlineLink
-      applyEventDefaults(event)
-      changed = true
+      delete event.onlineLink;
+      applyEventDefaults(event);
+      changed = true;
     }
   }
-  return changed
+  return changed;
 }
 
 function saveDb(db) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(db))
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
 }
 
 export function resetDemoData() {
-  localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem(STORAGE_KEY);
 }
 
-// Pretend the server takes a moment, so the loading spinners are visible in the demo
+// pretend the server takes a moment, so the loading spinners are visible in the demo
+
 function fakeDelay() {
-  return new Promise((resolve) => setTimeout(resolve, 250))
+  return new Promise(resolve => setTimeout(resolve, 250));
 }
 
 function newId(prefix) {
-  return prefix + Date.now() + Math.floor(Math.random() * 1000)
+  return prefix + Date.now() + Math.floor(Math.random() * 1000);
 }
 
 function findEvent(db, eventId) {
-  const event = db.events.find((e) => e.id === eventId)
-  if (!event) throw new Error('Event not found')
-  return event
+  const event = db.events.find(e => e.id === eventId);
+  if (!event) throw new Error('Event not found');
+  return event;
 }
 
 function findUser(db, userId) {
-  const user = db.users.find((u) => u.id === userId)
-  if (!user) throw new Error('User not found')
-  return user
+  const user = db.users.find(u => u.id === userId);
+  if (!user) throw new Error('User not found');
+  return user;
 }
 
 function findRsvp(db, rsvpId) {
-  const rsvp = db.rsvps.find((r) => r.id === rsvpId)
-  if (!rsvp) throw new Error('RSVP not found')
-  return rsvp
+  const rsvp = db.rsvps.find(r => r.id === rsvpId);
+  if (!rsvp) throw new Error('RSVP not found');
+  return rsvp;
 }
 
 // ---------------------------------------------------------------------------
-// Rules for spots, the waitlist and offers
+// rules for spots, the waitlist and offers
 // ---------------------------------------------------------------------------
 
-// A spot is "taken" by someone confirmed OR someone who has been offered it (they have 24h)
+// a spot is "taken" by someone confirmed or someone who has been offered it (they have 24h)
+
 function spotsTaken(db, eventId) {
-  const held = db.rsvps.filter(
-    (r) => r.eventId === eventId && (r.status === 'confirmed' || r.status === 'offered'),
-  ).length
-  // A group's capacity includes its host, who holds a place without an RSVP
-  return held + (isGroup(db.events.find((e) => e.id === eventId)) ? 1 : 0)
+  const held = db.rsvps.filter(r => r.eventId === eventId && (r.status === 'confirmed' || r.status === 'offered')).length;
+  // a group's capacity includes its host, who holds a place without an rsvp
+  return held + (isGroup(db.events.find(e => e.id === eventId)) ? 1 : 0);
 }
 
-// Adds live numbers to an event: how many confirmed, waiting, spots left, etc.
-// Online events show "Online" as their venue; a physical event with no visible venue shows
-// "Venue to be announced" (venuePending). Hidden capacity stays visible to the event's team only,
-// and a hidden venue to its organiser only (hiddenVenue), like the live RLS.
+// adds live numbers to an event: how many confirmed, waiting, spots left, etc.
+// online events show "online" as their venue; a physical event with no visible venue shows
+// "venue to be announced" (venuepending). hidden capacity stays visible to the event's team only,
+// and a hidden venue to its organiser only (hiddenvenue), like the live rls.
+
 function withCounts(db, event) {
-  const rsvps = db.rsvps.filter((r) => r.eventId === event.id)
-  const count = (status) => rsvps.filter((r) => r.status === status).length
-  const hidden = event.organiserId === CURRENT_ORGANISER_ID ? db.hiddenVenues.find((saved) => saved.eventId === event.id) : null
+  const rsvps = db.rsvps.filter(r => r.eventId === event.id);
+  const count = status => rsvps.filter(r => r.status === status).length;
+  const hidden = event.organiserId === CURRENT_ORGANISER_ID ? db.hiddenVenues.find(saved => saved.eventId === event.id) : null;
   const result = {
     ...event,
     venue: event.isOnline ? onlineVenue() : event.venue || pendingVenue(),
     venuePending: !event.isOnline && !event.venue,
     venueRevealAt: event.venueRevealAt || null,
-    hiddenVenue: hidden ? { venue: hidden.venue, backupVenue: hidden.backupVenue, isOutdoor: Boolean(hidden.backupVenue) } : null,
+    hiddenVenue: hidden ? {
+      venue: hidden.venue,
+      backupVenue: hidden.backupVenue,
+      isOutdoor: Boolean(hidden.backupVenue)
+    } : null,
     isOnTeam: event.organiserId === CURRENT_USER_ID || (db.eventMembers || []).some(member => member.eventId === event.id && member.userId === CURRENT_USER_ID),
-    isMine: event.organiserId === CURRENT_ORGANISER_ID, // can the logged-in person manage it?
+    isMine: event.organiserId === CURRENT_ORGANISER_ID,
+    // can the logged-in person manage it?
     confirmedCount: count('confirmed'),
     offeredCount: count('offered'),
     pendingCount: count('pending'),
     waitlistCount: count('waitlisted'),
-    spotsLeft: event.capacity == null ? null : Math.max(0, event.capacity - spotsTaken(db, event.id)), // null = no limit
-  }
-  return result.isMine || result.isOnTeam ? result : hideCapacityNumbers(result)
+    spotsLeft: event.capacity == null ? null : Math.max(0, event.capacity - spotsTaken(db, event.id)) // null = no limit
+  };
+  return result.isMine || result.isOnTeam ? result : hideCapacityNumbers(result);
 }
 
-// Saves (or clears) an online event's link, kept apart from the event like the live table
+// saves (or clears) an online event's link, kept apart from the event like the live table
+
 function saveOnlineLink(db, eventId, link) {
-  db.onlineLinks = db.onlineLinks.filter((saved) => saved.eventId !== eventId)
-  if (link) db.onlineLinks.push({ eventId, url: link.url, revealAt: link.revealAt, updatedAt: new Date().toISOString() })
+  db.onlineLinks = db.onlineLinks.filter(saved => saved.eventId !== eventId);
+  if (link) db.onlineLinks.push({
+    eventId,
+    url: link.url,
+    revealAt: link.revealAt,
+    updatedAt: new Date().toISOString()
+  });
 }
 
-// Event fields both create and update accept; online events never keep a venue or rain plan,
+// event fields both create and update accept; online events never keep a venue or rain plan,
 // and a venue to be announced has no rain plan yet
+
 function eventFields(eventData) {
-  const isOnline = Boolean(eventData.isOnline)
-  const venue = isOnline ? null : eventData.venue || null
-  if (!isOnline && !venue && (eventData.isOutdoor || eventData.backupVenue)) throw new Error('Choose the venue before adding a rain plan.')
+  const isOnline = Boolean(eventData.isOnline);
+  const venue = isOnline ? null : eventData.venue || null;
+  if (!isOnline && !venue && (eventData.isOutdoor || eventData.backupVenue)) throw new Error('Choose the venue before adding a rain plan.');
   return {
     isOnline,
     hideCapacity: Boolean(eventData.hideCapacity),
     isOutdoor: Boolean(venue) && Boolean(eventData.isOutdoor),
     venue,
-    backupVenue: venue && eventData.isOutdoor ? eventData.backupVenue : null,
-  }
+    backupVenue: venue && eventData.isOutdoor ? eventData.backupVenue : null
+  };
 }
 
-// The hidden venue to save, or null when the venue shows now. Same rules as the database.
+// the hidden venue to save, or null when the venue shows now. same rules as the database.
+
 function checkedHiddenVenue(eventData, fields) {
-  if (!eventData.venueRevealAt) return null
-  if (fields.isOnline) throw new Error('Online events have no venue to hide.')
-  if (!fields.venue) throw new Error('Choose the venue to keep hidden, or leave it to be announced.')
-  const reveal = Date.parse(eventData.venueRevealAt)
-  if (!Number.isFinite(reveal)) throw new Error('The venue reveal time must be a date and time.')
-  if (reveal > Date.parse(eventData.startTime)) throw new Error('The venue has to be revealed before the event starts.')
-  if (!isStillHidden(eventData.venueRevealAt)) return null // already passed: show it now
-  return { venue: fields.venue, backupVenue: fields.backupVenue, revealAt: new Date(reveal).toISOString() }
+  if (!eventData.venueRevealAt) return null;
+  if (fields.isOnline) throw new Error('Online events have no venue to hide.');
+  if (!fields.venue) throw new Error('Choose the venue to keep hidden, or leave it to be announced.');
+  const reveal = Date.parse(eventData.venueRevealAt);
+  if (!Number.isFinite(reveal)) throw new Error('The venue reveal time must be a date and time.');
+  if (reveal > Date.parse(eventData.startTime)) throw new Error('The venue has to be revealed before the event starts.');
+  if (!isStillHidden(eventData.venueRevealAt)) return null; // already passed: show it now
+  return {
+    venue: fields.venue,
+    backupVenue: fields.backupVenue,
+    revealAt: new Date(reveal).toISOString()
+  };
 }
 
 function checkedOnlineLink(eventData) {
-  const link = eventData.onlineLink || null
+  const link = eventData.onlineLink || null;
   if (!eventData.isOnline) {
-    if (link) throw new Error('Only online events can have an online link.')
-    return null
+    if (link) throw new Error('Only online events can have an online link.');
+    return null;
   }
-  if (!link) return null
-  const errors = onlineLinkErrors(link, eventData.endTime)
-  if (errors.length) throw new Error(errors[0])
-  return { url: link.url.trim(), revealAt: new Date(link.revealAt).toISOString() }
+  if (!link) return null;
+  const errors = onlineLinkErrors(link, eventData.endTime);
+  if (errors.length) throw new Error(errors[0]);
+  return {
+    url: link.url.trim(),
+    revealAt: new Date(link.revealAt).toISOString()
+  };
 }
 
-// Same rule as public.event_online_access: the organiser always sees the link; confirmed
+// same rule as public.event_online_access: the organiser always sees the link; confirmed
 // attendees see it once its time has come; everyone else only learns when it appears.
+
 export async function getEventOnlineAccess(eventId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const event = findEvent(db, eventId)
-  const isOrganiser = event.organiserId === CURRENT_ORGANISER_ID
-  const visible = isOrganiser || !event.status || event.status === 'published'
-  if (!visible) throw new Error('Event not found')
-  const rsvp = db.rsvps.find((r) => r.eventId === eventId && r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status))
-  const link = db.onlineLinks.find((saved) => saved.eventId === eventId) || null
-  return onlineAccess({ event, link, isOrganiser, rsvpStatus: rsvp?.status || null })
+  await fakeDelay();
+  const db = loadFreshDb();
+  const event = findEvent(db, eventId);
+  const isOrganiser = event.organiserId === CURRENT_ORGANISER_ID;
+  const visible = isOrganiser || !event.status || event.status === 'published';
+  if (!visible) throw new Error('Event not found');
+  const rsvp = db.rsvps.find(r => r.eventId === eventId && r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status));
+  const link = db.onlineLinks.find(saved => saved.eventId === eventId) || null;
+  return onlineAccess({
+    event,
+    link,
+    isOrganiser,
+    rsvpStatus: rsvp?.status || null
+  });
 }
 
 function isMember(db, organiserId, userId) {
-  return db.members.some((m) => m.organiserId === organiserId && m.userId === userId)
+  return db.members.some(m => m.organiserId === organiserId && m.userId === userId);
 }
 
 function scoreFor(db, rsvp) {
-  const event = findEvent(db, rsvp.eventId)
-  const user = findUser(db, rsvp.userId)
+  const event = findEvent(db, rsvp.eventId);
+  const user = findUser(db, rsvp.userId);
   return calculateWaitlistScore({
     isMember: isMember(db, event.organiserId, user.id),
     userInterests: user.interests,
     eventTags: event.tags,
-    history: db.attendanceHistory.filter((h) => h.userId === user.id),
-  })
+    history: db.attendanceHistory.filter(h => h.userId === user.id)
+  });
 }
 
-// Everyone waiting for this event, best score first.
-// If two people have the same score, whoever RSVP'd earlier goes first.
+// everyone waiting for this event, best score first.
+// if two people have the same score, whoever rsvp'd earlier goes first.
+
 function rankedWaitlist(db, eventId) {
-  return db.rsvps
-    .filter((r) => r.eventId === eventId && r.status === 'waitlisted')
-    .map((r) => ({ rsvp: r, score: scoreFor(db, r).total }))
-    .sort((a, b) => b.score - a.score || new Date(a.rsvp.createdAt) - new Date(b.rsvp.createdAt))
-    .map((item) => item.rsvp)
+  return db.rsvps.filter(r => r.eventId === eventId && r.status === 'waitlisted').map(r => ({
+    rsvp: r,
+    score: scoreFor(db, r).total
+  })).sort((a, b) => b.score - a.score || new Date(a.rsvp.createdAt) - new Date(b.rsvp.createdAt)).map(item => item.rsvp);
 }
 
-// Waitlist promotion: while there are free spots, offer one to the top-ranked person.
-// They get OFFER_HOURS to confirm before it passes to the next person.
-function fillFreeSpots(db, eventId) {
-  const event = findEvent(db, eventId)
-  if (new Date(event.startTime).getTime() <= Date.now()) return
-  let freeSpots = event.capacity == null ? Infinity : event.capacity - spotsTaken(db, eventId)
-  const queue = rankedWaitlist(db, eventId)
+// waitlist promotion: while there are free spots, offer one to the top-ranked person.
+// they get offer_hours to confirm before it passes to the next person.
 
+function fillFreeSpots(db, eventId) {
+  const event = findEvent(db, eventId);
+  if (new Date(event.startTime).getTime() <= Date.now()) return;
+  let freeSpots = event.capacity == null ? Infinity : event.capacity - spotsTaken(db, eventId);
+  const queue = rankedWaitlist(db, eventId);
   while (freeSpots > 0 && queue.length > 0) {
-    const next = queue.shift() // take the first person out of the queue
-    next.status = 'offered'
-    next.offerExpiresAt = new Date(Math.min(Date.now() + OFFER_HOURS * 60 * 60 * 1000, new Date(event.startTime).getTime())).toISOString()
-    freeSpots--
+    const next = queue.shift(); // take the first person out of the queue
+    next.status = 'offered';
+    next.offerExpiresAt = new Date(Math.min(Date.now() + OFFER_HOURS * 60 * 60 * 1000, new Date(event.startTime).getTime())).toISOString();
+    freeSpots--;
   }
 }
 
-// Offer expiry: any offer past its deadline expires, and the spot goes to the next person.
-// In the real app a scheduled job runs this (Timothy sets up the scheduler).
-// Here we run it every time data is read, which has the same effect for the demo.
-function expireOldOffers(db) {
-  const now = new Date()
-  const eventsToRefill = []
+// offer expiry: any offer past its deadline expires, and the spot goes to the next person.
+// in the real app a scheduled job runs this (timothy sets up the scheduler).
+// here we run it every time data is read, which has the same effect for the demo.
 
+function expireOldOffers(db) {
+  const now = new Date();
+  const eventsToRefill = [];
   for (const rsvp of db.rsvps) {
     if (rsvp.status === 'offered' && new Date(rsvp.offerExpiresAt) <= now) {
-      rsvp.status = 'expired'
-      if (!eventsToRefill.includes(rsvp.eventId)) eventsToRefill.push(rsvp.eventId)
+      rsvp.status = 'expired';
+      if (!eventsToRefill.includes(rsvp.eventId)) eventsToRefill.push(rsvp.eventId);
     }
   }
-
-  for (const eventId of eventsToRefill) fillFreeSpots(db, eventId)
+  for (const eventId of eventsToRefill) fillFreeSpots(db, eventId);
 }
 
-// Every read goes through this so expired offers are always cleaned up first
-// Hidden venues whose time has come become ordinary venues (public.release_due_event_venues)
+// every read goes through this so expired offers are always cleaned up first
+// hidden venues whose time has come become ordinary venues (public.release_due_event_venues)
+
 function releaseDueVenues(db, now = Date.now()) {
-  const due = db.hiddenVenues.filter((hidden) => !isStillHidden(hidden.revealAt, now))
+  const due = db.hiddenVenues.filter(hidden => !isStillHidden(hidden.revealAt, now));
   for (const hidden of due) {
-    const event = db.events.find((e) => e.id === hidden.eventId)
-    if (event) Object.assign(event, { venue: hidden.venue, backupVenue: hidden.backupVenue, isOutdoor: Boolean(hidden.backupVenue), venueRevealAt: null })
+    const event = db.events.find(e => e.id === hidden.eventId);
+    if (event) Object.assign(event, {
+      venue: hidden.venue,
+      backupVenue: hidden.backupVenue,
+      isOutdoor: Boolean(hidden.backupVenue),
+      venueRevealAt: null
+    });
   }
-  db.hiddenVenues = db.hiddenVenues.filter((hidden) => !due.includes(hidden))
-  return due.length
+  db.hiddenVenues = db.hiddenVenues.filter(hidden => !due.includes(hidden));
+  return due.length;
 }
 
-// Saves (or clears) an event's hidden venue, keeping venueRevealAt in step like the database
+// saves (or clears) an event's hidden venue, keeping venuerevealat in step like the database
+
 function saveHiddenVenue(db, event, hidden) {
-  db.hiddenVenues = db.hiddenVenues.filter((saved) => saved.eventId !== event.id)
-  event.venueRevealAt = null
-  if (!hidden) return
-  db.hiddenVenues.push({ eventId: event.id, ...hidden, updatedAt: new Date().toISOString() })
-  Object.assign(event, { venue: null, backupVenue: null, isOutdoor: false, venueRevealAt: hidden.revealAt })
+  db.hiddenVenues = db.hiddenVenues.filter(saved => saved.eventId !== event.id);
+  event.venueRevealAt = null;
+  if (!hidden) return;
+  db.hiddenVenues.push({
+    eventId: event.id,
+    ...hidden,
+    updatedAt: new Date().toISOString()
+  });
+  Object.assign(event, {
+    venue: null,
+    backupVenue: null,
+    isOutdoor: false,
+    venueRevealAt: hidden.revealAt
+  });
 }
 
-// The event page calls this at the reveal time (live: the release_due_event_venues RPC)
+// the event page calls this at the reveal time (live: the release_due_event_venues rpc)
+
 export async function releaseDueEventVenues() {
-  const db = loadDb()
-  const released = releaseDueVenues(db)
-  if (released) saveDb(db)
-  return released
+  const db = loadDb();
+  const released = releaseDueVenues(db);
+  if (released) saveDb(db);
+  return released;
 }
 
 function loadFreshDb() {
-  const db = loadDb()
-  releaseDueVenues(db)
-  expireOldOffers(db)
-  saveDb(db)
-  return db
+  const db = loadDb();
+  releaseDueVenues(db);
+  expireOldOffers(db);
+  saveDb(db);
+  return db;
 }
 
 // ---------------------------------------------------------------------------
-// Sign-in (pretend): in mock mode Alex is always logged in
+// sign-in (pretend): in mock mode alex is always logged in
 // ---------------------------------------------------------------------------
 
+
 export async function getCurrentUser() {
-  const db = loadDb()
-  const user = findUser(db, CURRENT_USER_ID)
-  return { id: user.id, email: user.email }
+  const db = loadDb();
+  const user = findUser(db, CURRENT_USER_ID);
+  return {
+    id: user.id,
+    email: user.email
+  };
 }
 
 export async function signIn() {
-  throw new Error('Sign-in needs Supabase. Add your keys to client/.env (see .env.example).')
+  throw new Error('Sign-in needs Supabase. Add your keys to client/.env (see .env.example).');
 }
 
 export async function signUp() {
-  throw new Error('Sign-up needs Supabase. Add your keys to client/.env (see .env.example).')
+  throw new Error('Sign-up needs Supabase. Add your keys to client/.env (see .env.example).');
 }
 
 export async function requestPasswordReset() {
-  throw new Error('Password reset needs Supabase. Add your keys to client/.env (see .env.example).')
+  throw new Error('Password reset needs Supabase. Add your keys to client/.env (see .env.example).');
 }
 
 export async function updatePassword() {
-  throw new Error('Password reset needs Supabase. Add your keys to client/.env (see .env.example).')
+  throw new Error('Password reset needs Supabase. Add your keys to client/.env (see .env.example).');
 }
 
-const needsSupabase = () => { throw new Error('Account settings need Supabase. Add your keys to client/.env (see .env.example).') }
-export async function changeUsername() { needsSupabase() }
-export async function changeEmail() { needsSupabase() }
-export async function changePassword() { needsSupabase() }
-export async function deleteAccount() { needsSupabase() }
+const needsSupabase = () => {
+  throw new Error('Account settings need Supabase. Add your keys to client/.env (see .env.example).');
+};
+
+export async function changeUsername() {
+  needsSupabase();
+}
+
+export async function changeEmail() {
+  needsSupabase();
+}
+
+export async function changePassword() {
+  needsSupabase();
+}
+
+export async function deleteAccount() {
+  needsSupabase();
+}
 
 export async function signOut() {}
 
-// Nothing ever changes who is logged in, so there is nothing to listen for
+// nothing ever changes who is logged in, so there is nothing to listen for
+
 export function onAuthChange() {
-  return () => {}
+  return () => {};
 }
 
 // ---------------------------------------------------------------------------
-// Events
+// events
 // ---------------------------------------------------------------------------
 
+
 export async function getEvents() {
-  await fakeDelay()
-  const db = loadFreshDb()
-  return db.events
-    .filter((event) => !event.status || event.status === 'published')
-    .map((e) => withCounts(db, e))
-    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+  await fakeDelay();
+  const db = loadFreshDb();
+  return db.events.filter(event => !event.status || event.status === 'published').map(e => withCounts(db, e)).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 }
 
 export async function getEvent(eventId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  return withCounts(db, findEvent(db, eventId))
+  await fakeDelay();
+  const db = loadFreshDb();
+  return withCounts(db, findEvent(db, eventId));
 }
 
-// Who hosts an event (the "Hosted by" card): its organiser, then any co-organisers. Public profile
-// fields only, like the live event_hosts function. The demo clubs have no saved handle or bio, so
+// who hosts an event (the "hosted by" card): its organiser, then any co-organisers. public profile
+// fields only, like the live event_hosts function. the demo clubs have no saved handle or bio, so
 // they get fixed ones here.
+
 const DEMO_HOST_PROFILES = {
-  org1: { username: 'bookedz_demo', bio: 'Workshops, socials and study jams around campus.' },
-  org2: { username: 'campus_societies', bio: 'Sports, arts and everything in between.' },
-}
+  org1: {
+    username: 'bookedz_demo',
+    bio: 'Workshops, socials and study jams around campus.'
+  },
+  org2: {
+    username: 'campus_societies',
+    bio: 'Sports, arts and everything in between.'
+  }
+};
+
 export async function getEventHosts(eventId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const event = db.events.find((e) => e.id === eventId)
-  if (!event) return []
-  const ids = [event.organiserId, ...(event.coOrganiserIds || []).filter((id) => id !== event.organiserId)]
-  return ids.map((id) => db.users.find((u) => u.id === id)).filter(Boolean).map((user) => ({
+  await fakeDelay();
+  const db = loadFreshDb();
+  const event = db.events.find(e => e.id === eventId);
+  if (!event) return [];
+  const ids = [event.organiserId, ...(event.coOrganiserIds || []).filter(id => id !== event.organiserId)];
+  return ids.map(id => db.users.find(u => u.id === id)).filter(Boolean).map(user => ({
     id: user.id,
     name: user.name,
     username: user.username || DEMO_HOST_PROFILES[user.id]?.username || null,
     bio: user.bio || DEMO_HOST_PROFILES[user.id]?.bio || null,
     avatarKey: null,
-    role: user.id === event.organiserId ? 'organiser' : 'co-organiser',
-  }))
+    role: user.id === event.organiserId ? 'organiser' : 'co-organiser'
+  }));
 }
 
 export async function setEventPublished(eventId, published) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const event = findEvent(db, eventId)
-  if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('You can only publish or unpublish events you organise.')
-  if (event.status && !['draft', 'published'].includes(event.status)) throw new Error(`A ${event.status} event can't be published or unpublished.`)
-  event.status = published ? 'published' : 'draft'
-  saveDb(db)
-  return withCounts(db, event)
+  await fakeDelay();
+  const db = loadFreshDb();
+  const event = findEvent(db, eventId);
+  if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('You can only publish or unpublish events you organise.');
+  if (event.status && !['draft', 'published'].includes(event.status)) throw new Error(`A ${event.status} event can't be published or unpublished.`);
+  event.status = published ? 'published' : 'draft';
+  saveDb(db);
+  return withCounts(db, event);
 }
 
 export async function deleteEvent(eventId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const event = findEvent(db, eventId)
-  if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('You can only delete events you organise.')
-  db.events = db.events.filter((e) => e.id !== eventId)
-  db.rsvps = db.rsvps.filter((r) => r.eventId !== eventId) // its RSVPs go too
-  db.onlineLinks = db.onlineLinks.filter((link) => link.eventId !== eventId)
-  db.hiddenVenues = db.hiddenVenues.filter((hidden) => hidden.eventId !== eventId)
-  db.feature4.tasks = db.feature4.tasks.filter((task) => task.eventId !== eventId)
-  db.feature4.announcements = db.feature4.announcements.filter((post) => post.eventId !== eventId)
-  delete db.feature4.budgets[eventId]
-  if (db.feature4.budgetCategories) delete db.feature4.budgetCategories[eventId]
-  delete db.feature4.forecastAreas[eventId]
-  saveDb(db)
+  await fakeDelay();
+  const db = loadFreshDb();
+  const event = findEvent(db, eventId);
+  if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('You can only delete events you organise.');
+  db.events = db.events.filter(e => e.id !== eventId);
+  db.rsvps = db.rsvps.filter(r => r.eventId !== eventId); // its rsvps go too
+  db.onlineLinks = db.onlineLinks.filter(link => link.eventId !== eventId);
+  db.hiddenVenues = db.hiddenVenues.filter(hidden => hidden.eventId !== eventId);
+  db.feature4.tasks = db.feature4.tasks.filter(task => task.eventId !== eventId);
+  db.feature4.announcements = db.feature4.announcements.filter(post => post.eventId !== eventId);
+  delete db.feature4.budgets[eventId];
+  if (db.feature4.budgetCategories) delete db.feature4.budgetCategories[eventId];
+  delete db.feature4.forecastAreas[eventId];
+  saveDb(db);
 }
 
-
 // ---------------------------------------------------------------------------
-// Go together (Community): a host starts a group to go to one event with others.
-// Public groups are listed; private ones open only with the invite link (or for members).
+// go together (community): a host starts a group to go to one event with others.
+// public groups are listed; private ones open only with the invite link (or for members).
 // ---------------------------------------------------------------------------
 
-const userName = (db, id) => db.users.find((u) => u.id === id)?.name || 'Someone'
-// The demo has one browser identity: it hosts as the Demo Club and joins as Alex
-const isGroupHost = (group) => group.organiserId === CURRENT_ORGANISER_ID || group.organiserId === CURRENT_USER_ID
-const myGroupRsvp = (db, group) => db.rsvps.find((r) => r.eventId === group.id && r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status))
-const isGroupMember = (db, group) => isGroupHost(group) || myGroupRsvp(db, group)?.status === 'confirmed'
 
-// Friends: the browser identity is Alex (u1); hosting as the Demo Club (org1) counts as Alex
-const asPerson = (id) => (id === CURRENT_ORGANISER_ID ? CURRENT_USER_ID : id)
+const userName = (db, id) => db.users.find(u => u.id === id)?.name || 'Someone';
+// the demo has one browser identity: it hosts as the demo club and joins as alex
+
+const isGroupHost = group => group.organiserId === CURRENT_ORGANISER_ID || group.organiserId === CURRENT_USER_ID;
+
+const myGroupRsvp = (db, group) => db.rsvps.find(r => r.eventId === group.id && r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status));
+
+const isGroupMember = (db, group) => isGroupHost(group) || myGroupRsvp(db, group)?.status === 'confirmed';
+
+// friends: the browser identity is alex (u1); hosting as the demo club (org1) counts as alex
+
+const asPerson = id => id === CURRENT_ORGANISER_ID ? CURRENT_USER_ID : id;
+
 function friendIds(db, userId) {
-  const me = asPerson(userId)
-  return (db.friendships || []).filter((f) => f.status === 'accepted' && (f.a === me || f.b === me)).map((f) => (f.a === me ? f.b : f.a))
+  const me = asPerson(userId);
+  return (db.friendships || []).filter(f => f.status === 'accepted' && (f.a === me || f.b === me)).map(f => f.a === me ? f.b : f.a);
 }
-const areFriends = (db, x, y) => friendIds(db, x).includes(asPerson(y))
-const myInvite = (db, group) => (db.groupInvites || []).find((i) => i.groupId === group.id && i.userId === CURRENT_USER_ID && i.status === 'pending')
-// Public groups are for everyone; friends-only (private) ones for the host's friends, the
+
+const areFriends = (db, x, y) => friendIds(db, x).includes(asPerson(y));
+
+const myInvite = (db, group) => (db.groupInvites || []).find(i => i.groupId === group.id && i.userId === CURRENT_USER_ID && i.status === 'pending');
+// public groups are for everyone; friends-only (private) ones for the host's friends, the
 // group's own people, anyone invited, or anyone holding the invite link
+
 function canSeeGroup(db, group, token) {
-  return group.group.visibility !== 'private' || isGroupMember(db, group) || Boolean(myGroupRsvp(db, group))
-    || Boolean(myInvite(db, group)) || areFriends(db, group.organiserId, CURRENT_USER_ID) || Boolean(token && token === group.group.inviteToken)
+  return group.group.visibility !== 'private' || isGroupMember(db, group) || Boolean(myGroupRsvp(db, group)) || Boolean(myInvite(db, group)) || areFriends(db, group.organiserId, CURRENT_USER_ID) || Boolean(token && token === group.group.inviteToken);
 }
-// Getting into a group RSVPs you to its event too, following the event's own rules
-// (confirmed, waitlisted or pending approval). Nothing happens if you already have an RSVP,
-// or if the event is open-join and full. Returns the event RSVP status, or null.
+// getting into a group rsvps you to its event too, following the event's own rules
+// (confirmed, waitlisted or pending approval). nothing happens if you already have an rsvp,
+// or if the event is open-join and full. returns the event rsvp status, or null.
+
 function ensureEventRsvp(db, group, userId) {
-  const target = db.events.find((e) => e.id === group.group?.eventId)
-  if (!target || target.status !== 'published') return null
-  const existing = db.rsvps.find((r) => r.eventId === target.id && r.userId === userId && ACTIVE_STATUSES.includes(r.status))
-  if (existing) return existing.status
-  const status = joinOutcome(target, spotsTaken(db, target.id))
-  if (status === 'full') return null
-  db.rsvps.push({ id: newId('r'), eventId: target.id, userId, status, answers: {}, viaGroup: group.id, createdAt: new Date().toISOString(), offerExpiresAt: null })
-  return status
+  const target = db.events.find(e => e.id === group.group?.eventId);
+  if (!target || target.status !== 'published') return null;
+  const existing = db.rsvps.find(r => r.eventId === target.id && r.userId === userId && ACTIVE_STATUSES.includes(r.status));
+  if (existing) return existing.status;
+  const status = joinOutcome(target, spotsTaken(db, target.id));
+  if (status === 'full') return null;
+  db.rsvps.push({
+    id: newId('r'),
+    eventId: target.id,
+    userId,
+    status,
+    answers: {},
+    viaGroup: group.id,
+    createdAt: new Date().toISOString(),
+    offerExpiresAt: null
+  });
+  return status;
 }
-const hasEventRsvp = (db, eventId, userId) => db.rsvps.some((r) => r.eventId === eventId && asPerson(r.userId) === asPerson(userId) && ACTIVE_STATUSES.includes(r.status))
+
+const hasEventRsvp = (db, eventId, userId) => db.rsvps.some(r => r.eventId === eventId && asPerson(r.userId) === asPerson(userId) && ACTIVE_STATUSES.includes(r.status));
 
 function groupView(db, group) {
-  const counted = withCounts(db, group)
-  const target = db.events.find((e) => e.id === group.group.eventId)
-  const rsvps = db.rsvps.filter((r) => r.eventId === group.id)
-  const mine = myGroupRsvp(db, group)
-  const myEventRsvp = target && db.rsvps.find((r) => r.eventId === target.id && r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status))
-  const host = isGroupHost(group)
+  const counted = withCounts(db, group);
+  const target = db.events.find(e => e.id === group.group.eventId);
+  const rsvps = db.rsvps.filter(r => r.eventId === group.id);
+  const mine = myGroupRsvp(db, group);
+  const myEventRsvp = target && db.rsvps.find(r => r.eventId === target.id && r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status));
+  const host = isGroupHost(group);
   return {
     id: group.id,
     note: group.description || '',
@@ -464,403 +568,585 @@ function groupView(db, group) {
     spotsLeft: counted.spotsLeft,
     joinMode: group.joinMode || 'open',
     visibility: group.group.visibility === 'private' ? 'private' : 'public',
-    // Only people already in the group see the invite link
+    // only people already in the group see the invite link
     inviteToken: host || mine?.status === 'confirmed' ? group.group.inviteToken : null,
     createdAt: group.createdAt,
     startTime: group.startTime,
     endTime: group.endTime,
-    host: { id: group.organiserId, name: userName(db, group.organiserId) },
-    members: rsvps.filter((r) => r.status === 'confirmed').map((r) => ({ id: r.userId, name: userName(db, r.userId) })),
-    pendingCount: rsvps.filter((r) => r.status === 'pending').length,
+    host: {
+      id: group.organiserId,
+      name: userName(db, group.organiserId)
+    },
+    members: rsvps.filter(r => r.status === 'confirmed').map(r => ({
+      id: r.userId,
+      name: userName(db, r.userId)
+    })),
+    pendingCount: rsvps.filter(r => r.status === 'pending').length,
     myStatus: host ? 'host' : mine?.status || null,
     myRsvpId: mine?.id || null,
     myEventStatus: myEventRsvp?.status || null,
-    commentCount: (db.groupComments || []).filter((c) => c.groupId === group.id).length,
-    event: target ? { ...withCounts(db, target), category: target.tags?.[0] || '' } : null,
+    commentCount: (db.groupComments || []).filter(c => c.groupId === group.id).length,
+    event: target ? {
+      ...withCounts(db, target),
+      category: target.tags?.[0] || ''
+    } : null,
     hostIsFriend: !host && areFriends(db, group.organiserId, CURRENT_USER_ID),
-    // Join requests waiting for the host, with the message each person wrote
-    requests: host ? rsvps.filter((r) => r.status === 'pending').map((r) => ({ rsvpId: r.id, userId: r.userId, name: userName(db, r.userId), message: r.message || '', createdAt: r.createdAt })) : [],
-    myInvite: (() => { const i = myInvite(db, group); return i ? { id: i.id, from: { id: i.invitedBy, name: userName(db, i.invitedBy) } } : null })(),
-  }
+    // join requests waiting for the host, with the message each person wrote
+    requests: host ? rsvps.filter(r => r.status === 'pending').map(r => ({
+      rsvpId: r.id,
+      userId: r.userId,
+      name: userName(db, r.userId),
+      message: r.message || '',
+      createdAt: r.createdAt
+    })) : [],
+    myInvite: (() => {
+      const i = myInvite(db, group);
+      return i ? {
+        id: i.id,
+        from: {
+          id: i.invitedBy,
+          name: userName(db, i.invitedBy)
+        }
+      } : null;
+    })()
+  };
 }
 
-// Who acts for the demo's one browser identity in this group
-const groupActor = (group) => (isGroupHost(group) ? group.organiserId : CURRENT_USER_ID)
+// who acts for the demo's one browser identity in this group
+
+const groupActor = group => isGroupHost(group) ? group.organiserId : CURRENT_USER_ID;
 
 function planView(db, group) {
-  const plan = group.plan || emptyPlan()
-  const memberIds = [group.organiserId, ...db.rsvps.filter((r) => r.eventId === group.id && r.status === 'confirmed').map((r) => r.userId)]
-  const fitted = fitSlots(group, plan.availability || {}, memberIds)
-  const actor = groupActor(group)
-  const person = (id) => ({ id, name: userName(db, id), me: id === actor })
-  const out = {}
+  const plan = group.plan || emptyPlan();
+  const memberIds = [group.organiserId, ...db.rsvps.filter(r => r.eventId === group.id && r.status === 'confirmed').map(r => r.userId)];
+  const fitted = fitSlots(group, plan.availability || {}, memberIds);
+  const actor = groupActor(group);
+  const person = id => ({
+    id,
+    name: userName(db, id),
+    me: id === actor
+  });
+  const out = {};
   for (const slot of SLOTS) {
-    const { suggestions = [], chosenId = null } = plan[slot] || {}
-    const f = fitted[slot]
-    const mine = plan.availability?.[actor]?.[slot]
+    const {
+      suggestions = [],
+      chosenId = null
+    } = plan[slot] || {};
+    const f = fitted[slot];
+    const mine = plan.availability?.[actor]?.[slot];
     out[slot] = {
       start: f.start,
       end: f.end,
       fitted: f.fitted,
       label: mealLabel(f.start),
-      cells: f.cells.map((c) => ({ start: c.start, free: c.free.map(person) })),
+      cells: f.cells.map(c => ({
+        start: c.start,
+        free: c.free.map(person)
+      })),
       memberCount: memberIds.length,
       coming: f.coming.map(person),
       cant: f.cant.map(person),
       noReply: f.noReply.map(person),
-      myCells: Array.isArray(mine) ? mine : null, // null until you've marked anything
+      myCells: Array.isArray(mine) ? mine : null,
+      // null until you've marked anything
       chosenId,
-      suggestions: suggestions
-        .map((s) => ({ ...s, suggestedByName: userName(db, s.suggestedBy), mine: s.suggestedBy === actor, votes: s.votes.length, myVote: s.votes.includes(CURRENT_USER_ID) }))
-        .sort((a, b) => (b.id === chosenId) - (a.id === chosenId) || b.votes - a.votes),
-    }
+      suggestions: suggestions.map(s => ({
+        ...s,
+        suggestedByName: userName(db, s.suggestedBy),
+        mine: s.suggestedBy === actor,
+        votes: s.votes.length,
+        myVote: s.votes.includes(CURRENT_USER_ID)
+      })).sort((a, b) => (b.id === chosenId) - (a.id === chosenId) || b.votes - a.votes)
+    };
   }
-  return out
+  return out;
 }
 
 function findGroup(db, groupId) {
-  const group = db.events.find((e) => e.id === groupId && isGroup(e))
-  if (!group || group.status !== 'published') throw new Error('This group isn’t available any more.')
-  return group
+  const group = db.events.find(e => e.id === groupId && isGroup(e));
+  if (!group || group.status !== 'published') throw new Error('This group isn’t available any more.');
+  return group;
 }
+
 function requireGroupMember(db, groupId) {
-  const group = findGroup(db, groupId)
-  if (!isGroupMember(db, group)) throw new Error('Join the group to plan with everyone.')
-  return group
+  const group = findGroup(db, groupId);
+  if (!isGroupMember(db, group)) throw new Error('Join the group to plan with everyone.');
+  return group;
 }
 
-// Public upcoming groups, plus private groups you host or belong to; soonest first
+// public upcoming groups, plus private groups you host or belong to; soonest first
+
 export async function getGroups() {
-  await fakeDelay()
-  const db = loadFreshDb()
-  return db.events
-    .filter((e) => isGroup(e) && e.status === 'published' && new Date(e.endTime) > new Date())
-    .filter((e) => canSeeGroup(db, e))
-    .map((e) => groupView(db, e))
-    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+  await fakeDelay();
+  const db = loadFreshDb();
+  return db.events.filter(e => isGroup(e) && e.status === 'published' && new Date(e.endTime) > new Date()).filter(e => canSeeGroup(db, e)).map(e => groupView(db, e)).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 }
 
-// One group with its plan. A private group needs its invite token unless you're already in it.
-export async function getGroup({ id, token } = {}) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const group = token
-    ? db.events.find((e) => isGroup(e) && e.group.inviteToken === token && e.status === 'published')
-    : db.events.find((e) => isGroup(e) && e.id === id && e.status === 'published')
-  if (!group) throw new Error(token ? 'This invite link isn’t valid any more. Ask the host for a new one.' : 'This group isn’t available any more.')
-  if (!canSeeGroup(db, group, token)) throw new Error('This group is for the host’s friends. Ask them for the invite link.')
-  const view = groupView(db, group)
-  return { ...view, plan: isGroupMember(db, group) ? planView(db, group) : null, viaInvite: Boolean(token) }
-}
+// one group with its plan. a private group needs its invite token unless you're already in it.
 
-export async function createGroup({ eventId, note = '', capacity = 4, joinMode = 'open', visibility = 'public', inviteIds = [] }) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const official = db.events.filter(isOfficialEvent)
-  const errors = groupErrors({ eventId, note, capacity, visibility }, official)
-  if (errors.length) throw new Error(errors[0].message)
-  const target = official.find((e) => e.id === eventId)
-  if (!hasEventRsvp(db, eventId, CURRENT_USER_ID)) throw new Error('RSVP to this event first, then start a group for it.')
-  if (target.isOnline) throw new Error(ONLINE_GROUP_ERROR)
-  if (isVenueHiddenForGroups(target)) throw new Error(HIDDEN_VENUE_GROUP_ERROR)
-  const group = { ...groupEventData(target, { note, capacity, joinMode, visibility }), id: newId('g'), organiserId: CURRENT_ORGANISER_ID, status: 'published', createdAt: new Date().toISOString() }
-  db.events.push(group)
-  // Quick add: invite the friends ticked in the form
-  db.groupInvites = db.groupInvites || []
-  for (const userId of new Set(inviteIds)) {
-    if (!areFriends(db, CURRENT_USER_ID, userId)) continue
-    db.groupInvites.push({ id: newId('inv'), groupId: group.id, userId, invitedBy: CURRENT_USER_ID, status: 'pending', createdAt: new Date().toISOString() })
-  }
-  saveDb(db)
-  return groupView(db, group)
-}
-
-// Join a group, with an optional message for the host. Friends-only groups need the link,
-// an invite or friendship with the host; an invite counts as the host's approval.
-export async function joinGroup({ id, token, message = '' }) {
-  const db = loadFreshDb()
-  const group = findGroup(db, id)
-  if (!canSeeGroup(db, group, token)) throw new Error('This group is for the host’s friends. Ask them for the invite link.')
-  const note = String(message || '').trim()
-  if (note.length > JOIN_MESSAGE_LIMIT) throw new Error(`Keep your message to ${JOIN_MESSAGE_LIMIT} characters or fewer.`)
-  const invite = myInvite(db, group)
-  if (invite) return respondGroupInvite(invite.id, true)
-  const user = await getUser()
-  const rsvp = await createRsvp({ eventId: id, name: user.name, email: user.email, answers: {} })
-  const fresh = loadDb()
-  const row = fresh.rsvps.find((r) => r.id === rsvp.id)
-  if (row && note) { row.message = note; rsvp.message = note }
-  if (rsvp.status === 'confirmed') rsvp.eventRsvpStatus = ensureEventRsvp(fresh, findGroup(fresh, id), CURRENT_USER_ID)
-  saveDb(fresh)
-  return rsvp
-}
-
-// Invites from friends waiting for you, newest first
-export async function getGroupInvites() {
-  await fakeDelay()
-  const db = loadFreshDb()
-  return (db.groupInvites || [])
-    .filter((i) => i.userId === CURRENT_USER_ID && i.status === 'pending')
-    .map((i) => ({ invite: i, group: db.events.find((e) => e.id === i.groupId && isGroup(e) && e.status === 'published') }))
-    .filter(({ group }) => group && new Date(group.endTime) > new Date())
-    .map(({ invite, group }) => ({ id: invite.id, from: { id: invite.invitedBy, name: userName(db, invite.invitedBy) }, createdAt: invite.createdAt, group: groupView(db, group) }))
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-}
-
-// Accept (join straight away, if there's a spot) or decline an invite
-export async function respondGroupInvite(inviteId, accept) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const invite = (db.groupInvites || []).find((i) => i.id === inviteId && i.userId === CURRENT_USER_ID)
-  if (!invite || invite.status !== 'pending') throw new Error('This invite isn’t open any more.')
-  const group = findGroup(db, invite.groupId)
-  if (!accept) { invite.status = 'declined'; saveDb(db); return null }
-  let rsvp = myGroupRsvp(db, group)
-  if (!rsvp || rsvp.status !== 'confirmed') {
-    if (spotsTaken(db, group.id) >= group.capacity) throw new Error('This group is full now. Ask the host to add a spot.')
-    if (rsvp) rsvp.status = 'confirmed'
-    else {
-      rsvp = { id: newId('r'), eventId: group.id, userId: CURRENT_USER_ID, status: 'confirmed', answers: {}, createdAt: new Date().toISOString(), offerExpiresAt: null }
-      db.rsvps.push(rsvp)
-    }
-  }
-  invite.status = 'accepted'
-  rsvp.eventRsvpStatus = ensureEventRsvp(db, group, CURRENT_USER_ID)
-  saveDb(db)
-  return rsvp
-}
-
-// The host changes who can see or join the group, its spots or its note
-export async function updateGroupSettings(groupId, { visibility, joinMode, capacity, note = '' }) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const group = findGroup(db, groupId)
-  if (!isGroupHost(group)) throw new Error('Only the host can change the group.')
-  const members = 1 + db.rsvps.filter((r) => r.eventId === groupId && ['confirmed', 'offered'].includes(r.status)).length
-  const errors = settingsErrors({ visibility, joinMode, capacity, note }, members)
-  if (errors.length) throw new Error(errors[0].message)
-  group.group.visibility = visibility
-  group.joinMode = joinMode
-  group.requiresApproval = joinMode === 'approval'
-  group.capacity = Number(capacity)
-  group.description = String(note).trim()
-  saveDb(db)
-  return groupView(db, group)
-}
-
-// The host deletes the group; its people (members, requests, invites) get a notice
-export async function deleteGroup(groupId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const group = findGroup(db, groupId)
-  if (!isGroupHost(group)) throw new Error('Only the host can delete the group.')
-  const target = db.events.find((e) => e.id === group.group.eventId)
-  const told = new Set([
-    ...db.rsvps.filter((r) => r.eventId === groupId && ACTIVE_STATUSES.includes(r.status)).map((r) => r.userId),
-    ...(db.groupInvites || []).filter((i) => i.groupId === groupId && i.status === 'pending').map((i) => i.userId),
-  ])
-  told.delete(group.organiserId)
-  db.groupNotices = db.groupNotices || []
-  for (const userId of told) db.groupNotices.push({ id: newId('notice'), userId, hostName: userName(db, group.organiserId), eventTitle: target?.title || 'an event', deletedAt: new Date().toISOString(), seen: false })
-  db.events = db.events.filter((e) => e.id !== groupId)
-  db.rsvps = db.rsvps.filter((r) => r.eventId !== groupId)
-  db.groupComments = (db.groupComments || []).filter((c) => c.groupId !== groupId)
-  db.groupInvites = (db.groupInvites || []).filter((i) => i.groupId !== groupId)
-  saveDb(db)
-}
-
-// "A group you were in was deleted" notices, until dismissed
-export async function getGroupNotices() {
-  await fakeDelay()
-  const db = loadFreshDb()
-  return (db.groupNotices || []).filter((n) => n.userId === CURRENT_USER_ID && !n.seen).sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt))
-}
-export async function dismissGroupNotice(noticeId) {
-  const db = loadDb()
-  const notice = (db.groupNotices || []).find((n) => n.id === noticeId && n.userId === CURRENT_USER_ID)
-  if (notice) { notice.seen = true; saveDb(db) }
-}
-
-// For an event's organiser: which of its RSVPs are going with a Go together group (an
-// indicator on the RSVP list). One row per person in a group; the host counts too.
-export async function getEventGroupMembers(eventId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const rows = []
-  for (const group of db.events.filter((e) => isGroup(e) && e.status === 'published' && e.group.eventId === eventId)) {
-    const people = [group.organiserId, ...db.rsvps.filter((r) => r.eventId === group.id && r.status === 'confirmed').map((r) => r.userId)]
-    for (const id of people) {
-      rows.push({ userId: asPerson(id), groupId: group.id, hostName: group.group.visibility === 'private' ? null : userName(db, group.organiserId), groupSize: people.length, isHost: id === group.organiserId })
-    }
-  }
-  return rows
-}
-
-// ---------- Friends (demo) ----------
-const personOf = (db, id) => { const u = db.users.find((x) => x.id === id); return { id, username: u?.username || '', displayName: u?.name || '' } }
-export async function getFriends() {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const mine = (db.friendships || []).filter((f) => f.a === CURRENT_USER_ID || f.b === CURRENT_USER_ID)
-  const other = (f) => personOf(db, f.a === CURRENT_USER_ID ? f.b : f.a)
+export async function getGroup({
+  id,
+  token
+} = {}) {
+  await fakeDelay();
+  const db = loadFreshDb();
+  const group = token ? db.events.find(e => isGroup(e) && e.group.inviteToken === token && e.status === 'published') : db.events.find(e => isGroup(e) && e.id === id && e.status === 'published');
+  if (!group) throw new Error(token ? 'This invite link isn’t valid any more. Ask the host for a new one.' : 'This group isn’t available any more.');
+  if (!canSeeGroup(db, group, token)) throw new Error('This group is for the host’s friends. Ask them for the invite link.');
+  const view = groupView(db, group);
   return {
-    friends: mine.filter((f) => f.status === 'accepted').map(other),
-    incoming: mine.filter((f) => f.status === 'pending' && f.requester !== CURRENT_USER_ID).map(other),
-    outgoing: mine.filter((f) => f.status === 'pending' && f.requester === CURRENT_USER_ID).map(other),
+    ...view,
+    plan: isGroupMember(db, group) ? planView(db, group) : null,
+    viaInvite: Boolean(token)
+  };
+}
+
+export async function createGroup({
+  eventId,
+  note = '',
+  capacity = 4,
+  joinMode = 'open',
+  visibility = 'public',
+  inviteIds = []
+}) {
+  await fakeDelay();
+  const db = loadFreshDb();
+  const official = db.events.filter(isOfficialEvent);
+  const errors = groupErrors({
+    eventId,
+    note,
+    capacity,
+    visibility
+  }, official);
+  if (errors.length) throw new Error(errors[0].message);
+  const target = official.find(e => e.id === eventId);
+  if (!hasEventRsvp(db, eventId, CURRENT_USER_ID)) throw new Error('RSVP to this event first, then start a group for it.');
+  if (target.isOnline) throw new Error(ONLINE_GROUP_ERROR);
+  if (isVenueHiddenForGroups(target)) throw new Error(HIDDEN_VENUE_GROUP_ERROR);
+  const group = {
+    ...groupEventData(target, {
+      note,
+      capacity,
+      joinMode,
+      visibility
+    }),
+    id: newId('g'),
+    organiserId: CURRENT_ORGANISER_ID,
+    status: 'published',
+    createdAt: new Date().toISOString()
+  };
+  db.events.push(group);
+  // quick add: invite the friends ticked in the form
+  db.groupInvites = db.groupInvites || [];
+  for (const userId of new Set(inviteIds)) {
+    if (!areFriends(db, CURRENT_USER_ID, userId)) continue;
+    db.groupInvites.push({
+      id: newId('inv'),
+      groupId: group.id,
+      userId,
+      invitedBy: CURRENT_USER_ID,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
+  }
+  saveDb(db);
+  return groupView(db, group);
+}
+
+// join a group, with an optional message for the host. friends-only groups need the link,
+// an invite or friendship with the host; an invite counts as the host's approval.
+
+export async function joinGroup({
+  id,
+  token,
+  message = ''
+}) {
+  const db = loadFreshDb();
+  const group = findGroup(db, id);
+  if (!canSeeGroup(db, group, token)) throw new Error('This group is for the host’s friends. Ask them for the invite link.');
+  const note = String(message || '').trim();
+  if (note.length > JOIN_MESSAGE_LIMIT) throw new Error(`Keep your message to ${JOIN_MESSAGE_LIMIT} characters or fewer.`);
+  const invite = myInvite(db, group);
+  if (invite) return respondGroupInvite(invite.id, true);
+  const user = await getUser();
+  const rsvp = await createRsvp({
+    eventId: id,
+    name: user.name,
+    email: user.email,
+    answers: {}
+  });
+  const fresh = loadDb();
+  const row = fresh.rsvps.find(r => r.id === rsvp.id);
+  if (row && note) {
+    row.message = note;
+    rsvp.message = note;
+  }
+  if (rsvp.status === 'confirmed') rsvp.eventRsvpStatus = ensureEventRsvp(fresh, findGroup(fresh, id), CURRENT_USER_ID);
+  saveDb(fresh);
+  return rsvp;
+}
+
+// invites from friends waiting for you, newest first
+
+export async function getGroupInvites() {
+  await fakeDelay();
+  const db = loadFreshDb();
+  return (db.groupInvites || []).filter(i => i.userId === CURRENT_USER_ID && i.status === 'pending').map(i => ({
+    invite: i,
+    group: db.events.find(e => e.id === i.groupId && isGroup(e) && e.status === 'published')
+  })).filter(({
+    group
+  }) => group && new Date(group.endTime) > new Date()).map(({
+    invite,
+    group
+  }) => ({
+    id: invite.id,
+    from: {
+      id: invite.invitedBy,
+      name: userName(db, invite.invitedBy)
+    },
+    createdAt: invite.createdAt,
+    group: groupView(db, group)
+  })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+// accept (join straight away, if there's a spot) or decline an invite
+
+export async function respondGroupInvite(inviteId, accept) {
+  await fakeDelay();
+  const db = loadFreshDb();
+  const invite = (db.groupInvites || []).find(i => i.id === inviteId && i.userId === CURRENT_USER_ID);
+  if (!invite || invite.status !== 'pending') throw new Error('This invite isn’t open any more.');
+  const group = findGroup(db, invite.groupId);
+  if (!accept) {
+    invite.status = 'declined';
+    saveDb(db);
+    return null;
+  }
+  let rsvp = myGroupRsvp(db, group);
+  if (!rsvp || rsvp.status !== 'confirmed') {
+    if (spotsTaken(db, group.id) >= group.capacity) throw new Error('This group is full now. Ask the host to add a spot.');
+    if (rsvp) rsvp.status = 'confirmed';else {
+      rsvp = {
+        id: newId('r'),
+        eventId: group.id,
+        userId: CURRENT_USER_ID,
+        status: 'confirmed',
+        answers: {},
+        createdAt: new Date().toISOString(),
+        offerExpiresAt: null
+      };
+      db.rsvps.push(rsvp);
+    }
+  }
+  invite.status = 'accepted';
+  rsvp.eventRsvpStatus = ensureEventRsvp(db, group, CURRENT_USER_ID);
+  saveDb(db);
+  return rsvp;
+}
+
+// the host changes who can see or join the group, its spots or its note
+
+export async function updateGroupSettings(groupId, {
+  visibility,
+  joinMode,
+  capacity,
+  note = ''
+}) {
+  await fakeDelay();
+  const db = loadFreshDb();
+  const group = findGroup(db, groupId);
+  if (!isGroupHost(group)) throw new Error('Only the host can change the group.');
+  const members = 1 + db.rsvps.filter(r => r.eventId === groupId && ['confirmed', 'offered'].includes(r.status)).length;
+  const errors = settingsErrors({
+    visibility,
+    joinMode,
+    capacity,
+    note
+  }, members);
+  if (errors.length) throw new Error(errors[0].message);
+  group.group.visibility = visibility;
+  group.joinMode = joinMode;
+  group.requiresApproval = joinMode === 'approval';
+  group.capacity = Number(capacity);
+  group.description = String(note).trim();
+  saveDb(db);
+  return groupView(db, group);
+}
+
+// the host deletes the group; its people (members, requests, invites) get a notice
+
+export async function deleteGroup(groupId) {
+  await fakeDelay();
+  const db = loadFreshDb();
+  const group = findGroup(db, groupId);
+  if (!isGroupHost(group)) throw new Error('Only the host can delete the group.');
+  const target = db.events.find(e => e.id === group.group.eventId);
+  const told = new Set([...db.rsvps.filter(r => r.eventId === groupId && ACTIVE_STATUSES.includes(r.status)).map(r => r.userId), ...(db.groupInvites || []).filter(i => i.groupId === groupId && i.status === 'pending').map(i => i.userId)]);
+  told.delete(group.organiserId);
+  db.groupNotices = db.groupNotices || [];
+  for (const userId of told) db.groupNotices.push({
+    id: newId('notice'),
+    userId,
+    hostName: userName(db, group.organiserId),
+    eventTitle: target?.title || 'an event',
+    deletedAt: new Date().toISOString(),
+    seen: false
+  });
+  db.events = db.events.filter(e => e.id !== groupId);
+  db.rsvps = db.rsvps.filter(r => r.eventId !== groupId);
+  db.groupComments = (db.groupComments || []).filter(c => c.groupId !== groupId);
+  db.groupInvites = (db.groupInvites || []).filter(i => i.groupId !== groupId);
+  saveDb(db);
+}
+
+// "a group you were in was deleted" notices, until dismissed
+
+export async function getGroupNotices() {
+  await fakeDelay();
+  const db = loadFreshDb();
+  return (db.groupNotices || []).filter(n => n.userId === CURRENT_USER_ID && !n.seen).sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+}
+
+export async function dismissGroupNotice(noticeId) {
+  const db = loadDb();
+  const notice = (db.groupNotices || []).find(n => n.id === noticeId && n.userId === CURRENT_USER_ID);
+  if (notice) {
+    notice.seen = true;
+    saveDb(db);
   }
 }
+
+// for an event's organiser: which of its rsvps are going with a go together group (an
+// indicator on the rsvp list). one row per person in a group; the host counts too.
+
+export async function getEventGroupMembers(eventId) {
+  await fakeDelay();
+  const db = loadFreshDb();
+  const rows = [];
+  for (const group of db.events.filter(e => isGroup(e) && e.status === 'published' && e.group.eventId === eventId)) {
+    const people = [group.organiserId, ...db.rsvps.filter(r => r.eventId === group.id && r.status === 'confirmed').map(r => r.userId)];
+    for (const id of people) {
+      rows.push({
+        userId: asPerson(id),
+        groupId: group.id,
+        hostName: group.group.visibility === 'private' ? null : userName(db, group.organiserId),
+        groupSize: people.length,
+        isHost: id === group.organiserId
+      });
+    }
+  }
+  return rows;
+}
+
+// ---------- friends (demo) ----------
+
+const personOf = (db, id) => {
+  const u = db.users.find(x => x.id === id);
+  return {
+    id,
+    username: u?.username || '',
+    displayName: u?.name || ''
+  };
+};
+
+export async function getFriends() {
+  await fakeDelay();
+  const db = loadFreshDb();
+  const mine = (db.friendships || []).filter(f => f.a === CURRENT_USER_ID || f.b === CURRENT_USER_ID);
+  const other = f => personOf(db, f.a === CURRENT_USER_ID ? f.b : f.a);
+  return {
+    friends: mine.filter(f => f.status === 'accepted').map(other),
+    incoming: mine.filter(f => f.status === 'pending' && f.requester !== CURRENT_USER_ID).map(other),
+    outgoing: mine.filter(f => f.status === 'pending' && f.requester === CURRENT_USER_ID).map(other)
+  };
+}
+
 export async function searchFriends(query) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const q = String(query || '').trim().replace(/^@/, '').toLowerCase()
-  const pair = (id) => (db.friendships || []).find((f) => (f.a === CURRENT_USER_ID && f.b === id) || (f.b === CURRENT_USER_ID && f.a === id))
-  return db.users
-    .filter((u) => u.id !== CURRENT_USER_ID && u.username && u.username.startsWith(q))
-    .map((u) => {
-      const f = pair(u.id)
-      const relationship = f?.status === 'accepted' ? 'friends' : f?.status === 'pending' ? (f.requester === CURRENT_USER_ID ? 'outgoing' : 'incoming') : 'none'
-      return { ...personOf(db, u.id), relationship }
-    })
+  await fakeDelay();
+  const db = loadFreshDb();
+  const q = String(query || '').trim().replace(/^@/, '').toLowerCase();
+  const pair = id => (db.friendships || []).find(f => f.a === CURRENT_USER_ID && f.b === id || f.b === CURRENT_USER_ID && f.a === id);
+  return db.users.filter(u => u.id !== CURRENT_USER_ID && u.username && u.username.startsWith(q)).map(u => {
+    const f = pair(u.id);
+    const relationship = f?.status === 'accepted' ? 'friends' : f?.status === 'pending' ? f.requester === CURRENT_USER_ID ? 'outgoing' : 'incoming' : 'none';
+    return {
+      ...personOf(db, u.id),
+      relationship
+    };
+  });
 }
+
 export async function sendFriendRequest(userId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  db.friendships = db.friendships || []
-  const f = db.friendships.find((x) => (x.a === CURRENT_USER_ID && x.b === userId) || (x.b === CURRENT_USER_ID && x.a === userId))
-  if (f?.status === 'accepted') return
-  if (f?.status === 'pending' && f.requester !== CURRENT_USER_ID) throw new Error('This person already sent you a request. Accept it under Friend requests.')
-  if (f) { f.status = 'pending'; f.requester = CURRENT_USER_ID } else db.friendships.push({ a: CURRENT_USER_ID, b: userId, requester: CURRENT_USER_ID, status: 'pending', createdAt: new Date().toISOString() })
-  saveDb(db)
+  await fakeDelay();
+  const db = loadFreshDb();
+  db.friendships = db.friendships || [];
+  const f = db.friendships.find(x => x.a === CURRENT_USER_ID && x.b === userId || x.b === CURRENT_USER_ID && x.a === userId);
+  if (f?.status === 'accepted') return;
+  if (f?.status === 'pending' && f.requester !== CURRENT_USER_ID) throw new Error('This person already sent you a request. Accept it under Friend requests.');
+  if (f) {
+    f.status = 'pending';
+    f.requester = CURRENT_USER_ID;
+  } else db.friendships.push({
+    a: CURRENT_USER_ID,
+    b: userId,
+    requester: CURRENT_USER_ID,
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  });
+  saveDb(db);
 }
+
 export async function respondFriendRequest(userId, accept) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const f = (db.friendships || []).find((x) => ((x.a === CURRENT_USER_ID && x.b === userId) || (x.b === CURRENT_USER_ID && x.a === userId)) && x.status === 'pending' && x.requester === userId)
-  if (!f) throw new Error('No incoming request found.')
-  f.status = accept ? 'accepted' : 'declined'
-  saveDb(db)
+  await fakeDelay();
+  const db = loadFreshDb();
+  const f = (db.friendships || []).find(x => (x.a === CURRENT_USER_ID && x.b === userId || x.b === CURRENT_USER_ID && x.a === userId) && x.status === 'pending' && x.requester === userId);
+  if (!f) throw new Error('No incoming request found.');
+  f.status = accept ? 'accepted' : 'declined';
+  saveDb(db);
 }
 
 export async function getGroupComments(groupId) {
-  await fakeDelay()
-  const db = loadDb()
-  return (db.groupComments || [])
-    .filter((c) => c.groupId === groupId)
-    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-    .map((c) => ({ ...c, name: userName(db, c.userId), mine: c.userId === CURRENT_USER_ID }))
+  await fakeDelay();
+  const db = loadDb();
+  return (db.groupComments || []).filter(c => c.groupId === groupId).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map(c => ({
+    ...c,
+    name: userName(db, c.userId),
+    mine: c.userId === CURRENT_USER_ID
+  }));
 }
 
 export async function addGroupComment(groupId, text) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const clean = String(text || '').trim()
-  if (!clean) throw new Error('Write something first.')
-  if (clean.length > 280) throw new Error('Keep messages to 280 characters or fewer.')
-  requireGroupMember(db, groupId)
-  db.groupComments = db.groupComments || []
-  const comment = { id: newId('c'), groupId, userId: CURRENT_USER_ID, text: clean, createdAt: new Date().toISOString() }
-  db.groupComments.push(comment)
-  saveDb(db)
-  return comment
+  await fakeDelay();
+  const db = loadFreshDb();
+  const clean = String(text || '').trim();
+  if (!clean) throw new Error('Write something first.');
+  if (clean.length > 280) throw new Error('Keep messages to 280 characters or fewer.');
+  requireGroupMember(db, groupId);
+  db.groupComments = db.groupComments || [];
+  const comment = {
+    id: newId('c'),
+    groupId,
+    userId: CURRENT_USER_ID,
+    text: clean,
+    createdAt: new Date().toISOString()
+  };
+  db.groupComments.push(comment);
+  saveDb(db);
+  return comment;
 }
 
 export async function deleteGroupComment(commentId) {
-  await fakeDelay()
-  const db = loadDb()
-  db.groupComments = (db.groupComments || []).filter((c) => !(c.id === commentId && c.userId === CURRENT_USER_ID))
-  saveDb(db)
+  await fakeDelay();
+  const db = loadDb();
+  db.groupComments = (db.groupComments || []).filter(c => !(c.id === commentId && c.userId === CURRENT_USER_ID));
+  saveDb(db);
 }
 
-// Suggest a place or deal for before or after the event (members only)
+// suggest a place for before or after the event (members only)
+
 export async function suggestGroupStop(groupId, slot, item) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const group = requireGroupMember(db, groupId)
-  group.plan = group.plan || emptyPlan()
-  const suggestion = suggestionFrom(item)
-  const problem = suggestionErrors(group.plan, slot, suggestion)
-  if (problem) throw new Error(problem)
-  const actor = groupActor(group)
-  group.plan[slot].suggestions.push({ ...suggestion, id: newId('s'), suggestedBy: actor, votes: [CURRENT_USER_ID], createdAt: new Date().toISOString() })
-  saveDb(db)
-  return planView(db, group)
+  await fakeDelay();
+  const db = loadFreshDb();
+  const group = requireGroupMember(db, groupId);
+  group.plan = group.plan || emptyPlan();
+  const suggestion = suggestionFrom(item);
+  const problem = suggestionErrors(group.plan, slot, suggestion);
+  if (problem) throw new Error(problem);
+  const actor = groupActor(group);
+  group.plan[slot].suggestions.push({
+    ...suggestion,
+    id: newId('s'),
+    suggestedBy: actor,
+    votes: [CURRENT_USER_ID],
+    createdAt: new Date().toISOString()
+  });
+  saveDb(db);
+  return planView(db, group);
 }
 
-// Save the 15-minute cells you're free for one side of the event ([] means none of them)
+// save the 15-minute cells you're free for one side of the event ([] means none of them)
+
 export async function setGroupAvailability(groupId, slot, cells) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const group = requireGroupMember(db, groupId)
-  group.plan = group.plan || emptyPlan()
-  group.plan.availability = group.plan.availability || {}
-  const actor = groupActor(group)
-  const problem = availabilityError(group, slot, cells)
-  if (problem) throw new Error(problem)
-  group.plan.availability[actor] = { ...(group.plan.availability[actor] || {}), [slot]: [...new Set(cells)].sort() }
-  saveDb(db)
-  return planView(db, group)
+  await fakeDelay();
+  const db = loadFreshDb();
+  const group = requireGroupMember(db, groupId);
+  group.plan = group.plan || emptyPlan();
+  group.plan.availability = group.plan.availability || {};
+  const actor = groupActor(group);
+  const problem = availabilityError(group, slot, cells);
+  if (problem) throw new Error(problem);
+  group.plan.availability[actor] = {
+    ...(group.plan.availability[actor] || {}),
+    [slot]: [...new Set(cells)].sort()
+  };
+  saveDb(db);
+  return planView(db, group);
 }
 
-// Mark or unmark a suggestion as one you're keen on
+// mark or unmark a suggestion as one you're keen on
+
 export async function voteGroupStop(groupId, slot, suggestionId, keen) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const group = requireGroupMember(db, groupId)
-  const suggestion = group.plan?.[slot]?.suggestions.find((s) => s.id === suggestionId)
-  if (!suggestion) throw new Error('That idea was removed.')
-  suggestion.votes = suggestion.votes.filter((id) => id !== CURRENT_USER_ID)
-  if (keen) suggestion.votes.push(CURRENT_USER_ID)
-  saveDb(db)
-  return planView(db, group)
+  await fakeDelay();
+  const db = loadFreshDb();
+  const group = requireGroupMember(db, groupId);
+  const suggestion = group.plan?.[slot]?.suggestions.find(s => s.id === suggestionId);
+  if (!suggestion) throw new Error('That idea was removed.');
+  suggestion.votes = suggestion.votes.filter(id => id !== CURRENT_USER_ID);
+  if (keen) suggestion.votes.push(CURRENT_USER_ID);
+  saveDb(db);
+  return planView(db, group);
 }
 
-// The host picks one suggestion for a slot (or clears it with null)
+// the host picks one suggestion for a slot (or clears it with null)
+
 export async function chooseGroupStop(groupId, slot, suggestionId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const group = requireGroupMember(db, groupId)
-  if (!isGroupHost(group)) throw new Error('Only the host picks the plan.')
-  if (suggestionId && !group.plan?.[slot]?.suggestions.some((s) => s.id === suggestionId)) throw new Error('That idea was removed.')
-  group.plan[slot].chosenId = suggestionId || null
-  saveDb(db)
-  return planView(db, group)
+  await fakeDelay();
+  const db = loadFreshDb();
+  const group = requireGroupMember(db, groupId);
+  if (!isGroupHost(group)) throw new Error('Only the host picks the plan.');
+  if (suggestionId && !group.plan?.[slot]?.suggestions.some(s => s.id === suggestionId)) throw new Error('That idea was removed.');
+  group.plan[slot].chosenId = suggestionId || null;
+  saveDb(db);
+  return planView(db, group);
 }
 
-// Remove your own suggestion (the host can remove any)
+// remove your own suggestion (the host can remove any)
+
 export async function removeGroupStop(groupId, slot, suggestionId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const group = requireGroupMember(db, groupId)
-  const list = group.plan?.[slot]?.suggestions || []
-  const target = list.find((s) => s.id === suggestionId)
-  if (!target) return planView(db, group)
-  if (!isGroupHost(group) && target.suggestedBy !== CURRENT_USER_ID) throw new Error('You can only remove your own ideas.')
-  group.plan[slot].suggestions = list.filter((s) => s.id !== suggestionId)
-  if (group.plan[slot].chosenId === suggestionId) group.plan[slot].chosenId = null
-  saveDb(db)
-  return planView(db, group)
+  await fakeDelay();
+  const db = loadFreshDb();
+  const group = requireGroupMember(db, groupId);
+  const list = group.plan?.[slot]?.suggestions || [];
+  const target = list.find(s => s.id === suggestionId);
+  if (!target) return planView(db, group);
+  if (!isGroupHost(group) && target.suggestedBy !== CURRENT_USER_ID) throw new Error('You can only remove your own ideas.');
+  group.plan[slot].suggestions = list.filter(s => s.id !== suggestionId);
+  if (group.plan[slot].chosenId === suggestionId) group.plan[slot].chosenId = null;
+  saveDb(db);
+  return planView(db, group);
 }
 
-// Events the logged-in organiser runs
+// events the logged-in organiser runs
+
 export async function getOrganiserEvents() {
-  await fakeDelay()
-  const db = loadFreshDb()
-  return db.events
-    .filter((e) => e.organiserId === CURRENT_ORGANISER_ID)
-    .map((e) => withCounts(db, e))
-    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+  await fakeDelay();
+  const db = loadFreshDb();
+  return db.events.filter(e => e.organiserId === CURRENT_ORGANISER_ID).map(e => withCounts(db, e)).sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 }
 
 export async function createEvent(eventData) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const link = checkedOnlineLink(eventData)
-  const fields = eventFields(eventData)
-  const hidden = checkedHiddenVenue(eventData, fields)
-  // The link and a hidden venue are stored apart from the event; the live retry id isn't stored
-  const details = { ...eventData }
-  delete details.onlineLink
-  delete details.requestId
+  await fakeDelay();
+  const db = loadFreshDb();
+  const link = checkedOnlineLink(eventData);
+  const fields = eventFields(eventData);
+  const hidden = checkedHiddenVenue(eventData, fields);
+  // the link and a hidden venue are stored apart from the event; the live retry id isn't stored
+  const details = {
+    ...eventData
+  };
+  delete details.onlineLink;
+  delete details.requestId;
   const event = {
     ...details,
     ...fields,
@@ -868,58 +1154,60 @@ export async function createEvent(eventData) {
     id: newId('e'),
     organiserId: CURRENT_ORGANISER_ID,
     status: 'published',
-    createdAt: new Date().toISOString(),
-  }
-  db.events.push(event)
-  saveOnlineLink(db, event.id, link)
-  saveHiddenVenue(db, event, hidden)
-  saveDb(db)
-  return { ...event }
+    createdAt: new Date().toISOString()
+  };
+  db.events.push(event);
+  saveOnlineLink(db, event.id, link);
+  saveHiddenVenue(db, event, hidden);
+  saveDb(db);
+  return {
+    ...event
+  };
 }
 
-// The organiser edits a published event (Create Event in edit mode).
-// Same rules as supabaseApi.updateEvent; raising capacity offers the new places to the waitlist.
-export async function updateEvent(eventId, changes) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const event = findEvent(db, eventId)
-  if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('You can only edit events you organise.')
-  if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) {
-    throw new Error('This event has already started, so it can no longer be edited.')
-  }
-  if (new Date(changes.endTime) <= new Date(changes.startTime)) throw new Error('The end time must be after the start time.')
-  if (new Date(changes.startTime).getTime() <= Date.now()) throw new Error('The start time cannot be in the past.')
+// the organiser edits a published event (create event in edit mode).
+// same rules as supabaseapi.updateevent; raising capacity offers the new places to the waitlist.
 
-  const taken = spotsTaken(db, eventId)
+export async function updateEvent(eventId, changes) {
+  await fakeDelay();
+  const db = loadFreshDb();
+  const event = findEvent(db, eventId);
+  if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('You can only edit events you organise.');
+  if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) {
+    throw new Error('This event has already started, so it can no longer be edited.');
+  }
+  if (new Date(changes.endTime) <= new Date(changes.startTime)) throw new Error('The end time must be after the start time.');
+  if (new Date(changes.startTime).getTime() <= Date.now()) throw new Error('The start time cannot be in the past.');
+  const taken = spotsTaken(db, eventId);
   if (changes.capacity != null && changes.capacity < taken) {
-    throw new Error(`Capacity can't be lower than ${taken}: that many people are already confirmed or offered a place.`)
+    throw new Error(`Capacity can't be lower than ${taken}: that many people are already confirmed or offered a place.`);
   }
-  const fields = eventFields(changes)
-  const link = checkedOnlineLink(changes)
-  const hidden = checkedHiddenVenue(changes, fields)
-  // Compare with the venue as the organiser knows it, hidden or not
-  const saved = db.hiddenVenues.find((entry) => entry.eventId === eventId)
-  const current = saved ? { venue: saved.venue, backupVenue: saved.backupVenue, isOutdoor: Boolean(saved.backupVenue) } : event
-  const venueKey = (venue) => JSON.stringify(venue ? [venue.name, venue.address || '', venue.lat ?? null, venue.lng ?? null] : null)
-  const venuesChanged = venueKey(current.venue) !== venueKey(fields.venue)
-    || event.isOnline !== fields.isOnline
-    || Boolean(current.isOutdoor) !== fields.isOutdoor
-    || venueKey(current.backupVenue) !== venueKey(fields.backupVenue)
-    || (saved?.revealAt || null) !== (hidden?.revealAt || null)
+  const fields = eventFields(changes);
+  const link = checkedOnlineLink(changes);
+  const hidden = checkedHiddenVenue(changes, fields);
+  // compare with the venue as the organiser knows it, hidden or not
+  const saved = db.hiddenVenues.find(entry => entry.eventId === eventId);
+  const current = saved ? {
+    venue: saved.venue,
+    backupVenue: saved.backupVenue,
+    isOutdoor: Boolean(saved.backupVenue)
+  } : event;
+  const venueKey = venue => JSON.stringify(venue ? [venue.name, venue.address || '', venue.lat ?? null, venue.lng ?? null] : null);
+  const venuesChanged = venueKey(current.venue) !== venueKey(fields.venue) || event.isOnline !== fields.isOnline || Boolean(current.isOutdoor) !== fields.isOutdoor || venueKey(current.backupVenue) !== venueKey(fields.backupVenue) || (saved?.revealAt || null) !== (hidden?.revealAt || null);
   if (event.usingBackup && venuesChanged) {
-    throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.')
+    throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.');
   }
-  // Removing a question (or changing its answer type) would lose answers people already gave
-  if (db.rsvps.some((rsvp) => rsvp.eventId === eventId)) {
+  // removing a question (or changing its answer type) would lose answers people already gave
+  if (db.rsvps.some(rsvp => rsvp.eventId === eventId)) {
     for (const old of event.questions || []) {
-      const kept = changes.questions.find((question) => question.id === old.id)
-      if (!kept) throw new Error('Questions can’t be removed after people have RSVP’d, because their answers would be lost.')
-      if (kept.type !== old.type) throw new Error('A question’s answer type can’t change after people have RSVP’d.')
+      const kept = changes.questions.find(question => question.id === old.id);
+      if (!kept) throw new Error('Questions can’t be removed after people have RSVP’d, because their answers would be lost.');
+      if (kept.type !== old.type) throw new Error('A question’s answer type can’t change after people have RSVP’d.');
     }
   }
 
-  // Going from a limit to no limit also opens places for the waitlist
-  const raisedCapacity = event.capacity != null && (changes.capacity == null || changes.capacity > event.capacity)
+  // going from a limit to no limit also opens places for the waitlist
+  const raisedCapacity = event.capacity != null && (changes.capacity == null || changes.capacity > event.capacity);
   Object.assign(event, {
     title: changes.title,
     description: changes.description,
@@ -930,78 +1218,96 @@ export async function updateEvent(eventId, changes) {
     capacity: changes.capacity,
     requiresApproval: changes.requiresApproval,
     ...fields,
-    questions: changes.questions.map(({ id, text, type, required, options }) => ({ id, text, type, required, ...(options?.length ? { options } : {}) })),
-    updatedAt: new Date().toISOString(),
-  })
-  saveOnlineLink(db, eventId, link) // a physical event (or a cleared link) keeps no link
-  saveHiddenVenue(db, event, hidden) // a venue shown now (or none) keeps nothing hidden
-  if (raisedCapacity) fillFreeSpots(db, eventId) // new places go to the waitlist first, like the database trigger
-  saveDb(db)
-  return withCounts(db, event)
+    questions: changes.questions.map(({
+      id,
+      text,
+      type,
+      required,
+      options
+    }) => ({
+      id,
+      text,
+      type,
+      required,
+      ...(options?.length ? {
+        options
+      } : {})
+    })),
+    updatedAt: new Date().toISOString()
+  });
+  saveOnlineLink(db, eventId, link); // a physical event (or a cleared link) keeps no link
+  saveHiddenVenue(db, event, hidden); // a venue shown now (or none) keeps nothing hidden
+  if (raisedCapacity) fillFreeSpots(db, eventId); // new places go to the waitlist first, like the database trigger
+  saveDb(db);
+  return withCounts(db, event);
 }
 
 // ---------------------------------------------------------------------------
-// Users
+// users
 // ---------------------------------------------------------------------------
 
-// The logged-in participant's profile: { id, name, email, interests }
+// the logged-in participant's profile: { id, name, email, interests }
+
 export async function getUser() {
-  await fakeDelay()
-  const db = loadDb()
-  return findUser(db, CURRENT_USER_ID)
+  await fakeDelay();
+  const db = loadDb();
+  return findUser(db, CURRENT_USER_ID);
 }
 
 // ---------------------------------------------------------------------------
-// RSVPs — participant side
+// rsvps — participant side
 // ---------------------------------------------------------------------------
 
-// The logged-in participant's RSVPs, each with its event attached
+// the logged-in participant's rsvps, each with its event attached
+
 export async function getMyRsvps() {
-  await fakeDelay()
-  const db = loadFreshDb()
-  return db.rsvps
-    .filter((r) => r.userId === CURRENT_USER_ID)
-    .map((r) => ({ ...r, event: withCounts(db, findEvent(db, r.eventId)) }))
-    .sort((a, b) => new Date(a.event.startTime) - new Date(b.event.startTime))
+  await fakeDelay();
+  const db = loadFreshDb();
+  return db.rsvps.filter(r => r.userId === CURRENT_USER_ID).map(r => ({
+    ...r,
+    event: withCounts(db, findEvent(db, r.eventId))
+  })).sort((a, b) => new Date(a.event.startTime) - new Date(b.event.startTime));
 }
 
 export async function getSavedEvents() {
-  await fakeDelay()
-  const db = loadFreshDb()
-  return (db.eventPreferences || [])
-    .filter(row => row.userId === CURRENT_USER_ID && row.saveActive === true)
-    .map(row => {
-      const event = db.events.find(event => event.id === row.eventId)
-      return event ? { ...withCounts(db, event), saved: true, savedAt: row.savedAt } : null
-    }).filter(Boolean)
-    .sort((a, b) => Date.parse(b.savedAt) - Date.parse(a.savedAt) || a.id.localeCompare(b.id))
+  await fakeDelay();
+  const db = loadFreshDb();
+  return (db.eventPreferences || []).filter(row => row.userId === CURRENT_USER_ID && row.saveActive === true).map(row => {
+    const event = db.events.find(event => event.id === row.eventId);
+    return event ? {
+      ...withCounts(db, event),
+      saved: true,
+      savedAt: row.savedAt
+    } : null;
+  }).filter(Boolean).sort((a, b) => Date.parse(b.savedAt) - Date.parse(a.savedAt) || a.id.localeCompare(b.id));
 }
 
 export async function unsaveEvent(eventId) {
-  await fakeDelay()
-  const db = loadDb()
-  const preference = (db.eventPreferences || []).find(row => row.userId === CURRENT_USER_ID && row.eventId === eventId)
-  if (preference) preference.saveActive = false
-  saveDb(db)
+  await fakeDelay();
+  const db = loadDb();
+  const preference = (db.eventPreferences || []).find(row => row.userId === CURRENT_USER_ID && row.eventId === eventId);
+  if (preference) preference.saveActive = false;
+  saveDb(db);
 }
 
-export async function createRsvp({ eventId, name, email, answers }) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const event = findEvent(db, eventId)
-  const userId = CURRENT_USER_ID
-  if (withCounts(db, event).isOnTeam) throw new Error("Organisers and helpers can't RSVP to their own event")
+export async function createRsvp({
+  eventId,
+  name,
+  email,
+  answers
+}) {
+  await fakeDelay();
+  const db = loadFreshDb();
+  const event = findEvent(db, eventId);
+  const userId = CURRENT_USER_ID;
+  if (withCounts(db, event).isOnTeam) throw new Error("Organisers and helpers can't RSVP to their own event");
+  const alreadyIn = db.rsvps.some(r => r.eventId === eventId && r.userId === userId && ACTIVE_STATUSES.includes(r.status));
+  if (alreadyIn) throw new Error('You already have an RSVP for this event.');
 
-  const alreadyIn = db.rsvps.some(
-    (r) => r.eventId === eventId && r.userId === userId && ACTIVE_STATUSES.includes(r.status),
-  )
-  if (alreadyIn) throw new Error('You already have an RSVP for this event.')
-
-  // Approval → pending. Open joins are confirmed while places last and refused when full;
-  // auto-confirm RSVPs fall back to the waitlist.
-  const status = joinOutcome(event, spotsTaken(db, eventId))
-  if (status === 'full') throw new Error('This event is full, so it isn’t taking new joins.')
-
+  // approval → pending. open joins are confirmed while places last and refused when full;
+  // auto-confirm rsvps fall back to the waitlist.
+  const status = joinOutcome(event, spotsTaken(db, eventId));
+  if (status === 'full') throw new Error('This event is full, so it isn’t taking new joins.');
   const rsvp = {
     id: newId('r'),
     eventId,
@@ -1011,451 +1317,551 @@ export async function createRsvp({ eventId, name, email, answers }) {
     answers,
     status,
     createdAt: new Date().toISOString(),
-    offerExpiresAt: null,
-  }
-  db.rsvps.push(rsvp)
-  saveDb(db)
-  return rsvp
+    offerExpiresAt: null
+  };
+  db.rsvps.push(rsvp);
+  saveDb(db);
+  return rsvp;
 }
 
 export async function cancelRsvp(rsvpId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const rsvp = findRsvp(db, rsvpId)
-  if (rsvp.userId !== CURRENT_USER_ID) throw new Error('You can only cancel your own RSVP.')
-  if (rsvp.checkedInAt || (db.checkIns || []).some(row => row.registrationId === rsvp.id)) throw new Error("You have already checked in, so this RSVP can't be cancelled")
-  if (!ACTIVE_STATUSES.includes(rsvp.status)) throw new Error('This RSVP is already closed.')
+  await fakeDelay();
+  const db = loadFreshDb();
+  const rsvp = findRsvp(db, rsvpId);
+  if (rsvp.userId !== CURRENT_USER_ID) throw new Error('You can only cancel your own RSVP.');
+  if (rsvp.checkedInAt || (db.checkIns || []).some(row => row.registrationId === rsvp.id)) throw new Error("You have already checked in, so this RSVP can't be cancelled");
+  if (!ACTIVE_STATUSES.includes(rsvp.status)) throw new Error('This RSVP is already closed.');
+  const wasHoldingSpot = rsvp.status === 'confirmed' || rsvp.status === 'offered';
+  rsvp.status = 'cancelled';
+  rsvp.offerExpiresAt = null;
+  // todo: if this is close to the event start, record a late cancellation in attendancehistory
 
-  const wasHoldingSpot = rsvp.status === 'confirmed' || rsvp.status === 'offered'
-  rsvp.status = 'cancelled'
-  rsvp.offerExpiresAt = null
-  // TODO: if this is close to the event start, record a late cancellation in attendanceHistory
-
-  if (wasHoldingSpot) fillFreeSpots(db, rsvp.eventId) // a spot opened up → offer it to the waitlist
-  saveDb(db)
-  return rsvp
+  if (wasHoldingSpot) fillFreeSpots(db, rsvp.eventId); // a spot opened up → offer it to the waitlist
+  saveDb(db);
+  return rsvp;
 }
 
 // accept = true → take the spot; accept = false → pass it to the next person
-export async function respondToOffer(rsvpId, accept) {
-  await fakeDelay()
-  const db = loadFreshDb() // expires old offers first, so a late "yes" is refused
-  const rsvp = findRsvp(db, rsvpId)
-  if (rsvp.status !== 'offered') throw new Error('This offer has expired or was already answered.')
 
-  rsvp.offerExpiresAt = null
+export async function respondToOffer(rsvpId, accept) {
+  await fakeDelay();
+  const db = loadFreshDb(); // expires old offers first, so a late "yes" is refused
+  const rsvp = findRsvp(db, rsvpId);
+  if (rsvp.status !== 'offered') throw new Error('This offer has expired or was already answered.');
+  rsvp.offerExpiresAt = null;
   if (accept) {
-    rsvp.status = 'confirmed'
+    rsvp.status = 'confirmed';
   } else {
-    rsvp.status = 'declined'
-    fillFreeSpots(db, rsvp.eventId)
+    rsvp.status = 'declined';
+    fillFreeSpots(db, rsvp.eventId);
   }
-  saveDb(db)
-  return rsvp
+  saveDb(db);
+  return rsvp;
 }
 
 // ---------------------------------------------------------------------------
-// RSVPs — organiser side
+// rsvps — organiser side
 // ---------------------------------------------------------------------------
 
-// Every RSVP for one event, with the person's details, member flag, score and waitlist rank
-export async function getRsvpsForEvent(eventId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const event = findEvent(db, eventId)
-  const ranked = rankedWaitlist(db, eventId)
+// every rsvp for one event, with the person's details, member flag, score and waitlist rank
 
-  return db.rsvps
-    .filter((r) => r.eventId === eventId)
-    .map((r) => {
-      const user = findUser(db, r.userId)
-      return {
-        ...r,
-        user: { id: user.id, name: r.name || user.name, email: r.email || user.email },
-        isMember: isMember(db, event.organiserId, r.userId),
-        score: scoreFor(db, r),
-        rank: r.status === 'waitlisted' ? ranked.indexOf(r) + 1 : null,
-      }
-    })
+export async function getRsvpsForEvent(eventId) {
+  await fakeDelay();
+  const db = loadFreshDb();
+  const event = findEvent(db, eventId);
+  const ranked = rankedWaitlist(db, eventId);
+  return db.rsvps.filter(r => r.eventId === eventId).map(r => {
+    const user = findUser(db, r.userId);
+    return {
+      ...r,
+      user: {
+        id: user.id,
+        name: r.name || user.name,
+        email: r.email || user.email
+      },
+      isMember: isMember(db, event.organiserId, r.userId),
+      score: scoreFor(db, r),
+      rank: r.status === 'waitlisted' ? ranked.indexOf(r) + 1 : null
+    };
+  });
 }
 
 export async function approveRsvp(rsvpId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const rsvp = findRsvp(db, rsvpId)
-  if (rsvp.status !== 'pending') throw new Error('Only pending RSVPs can be approved.')
-
-  const event = findEvent(db, rsvp.eventId)
-  rsvp.status = event.capacity == null || spotsTaken(db, event.id) < event.capacity ? 'confirmed' : 'waitlisted'
-  // Approved into a group: RSVP them to the event too
-  if (isGroup(event) && rsvp.status === 'confirmed') ensureEventRsvp(db, event, rsvp.userId)
-  saveDb(db)
-  return rsvp
+  await fakeDelay();
+  const db = loadFreshDb();
+  const rsvp = findRsvp(db, rsvpId);
+  if (rsvp.status !== 'pending') throw new Error('Only pending RSVPs can be approved.');
+  const event = findEvent(db, rsvp.eventId);
+  rsvp.status = event.capacity == null || spotsTaken(db, event.id) < event.capacity ? 'confirmed' : 'waitlisted';
+  // approved into a group: rsvp them to the event too
+  if (isGroup(event) && rsvp.status === 'confirmed') ensureEventRsvp(db, event, rsvp.userId);
+  saveDb(db);
+  return rsvp;
 }
 
 export async function rejectRsvp(rsvpId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const rsvp = findRsvp(db, rsvpId)
-  if (rsvp.status !== 'pending') throw new Error('Only pending RSVPs can be rejected.')
-
-  rsvp.status = 'rejected'
-  saveDb(db)
-  return rsvp
+  await fakeDelay();
+  const db = loadFreshDb();
+  const rsvp = findRsvp(db, rsvpId);
+  if (rsvp.status !== 'pending') throw new Error('Only pending RSVPs can be rejected.');
+  rsvp.status = 'rejected';
+  saveDb(db);
+  return rsvp;
 }
 
-// Organiser takes someone off the event after accepting them (or off the waitlist / an offer).
-// Status 'rejected', not 'cancelled': cancelling counts as a late cancel against the person,
+// organiser takes someone off the event after accepting them (or off the waitlist / an offer).
+// status 'rejected', not 'cancelled': cancelling counts as a late cancel against the person,
 // but here it was the organiser's decision, so their show-up rate shouldn't suffer.
+
 export async function removeRsvp(rsvpId) {
-  await fakeDelay()
-  const db = loadFreshDb()
-  const rsvp = findRsvp(db, rsvpId)
+  await fakeDelay();
+  const db = loadFreshDb();
+  const rsvp = findRsvp(db, rsvpId);
   if (findEvent(db, rsvp.eventId).organiserId !== CURRENT_ORGANISER_ID) {
-    throw new Error('You can only remove attendees from your own event.')
+    throw new Error('You can only remove attendees from your own event.');
   }
   if (!['confirmed', 'offered', 'waitlisted'].includes(rsvp.status)) {
-    throw new Error('Only confirmed, offered or waitlisted RSVPs can be removed.')
+    throw new Error('Only confirmed, offered or waitlisted RSVPs can be removed.');
   }
-
-  const wasHoldingSpot = rsvp.status === 'confirmed' || rsvp.status === 'offered'
-  rsvp.status = 'rejected'
-  rsvp.offerExpiresAt = null
-
-  if (wasHoldingSpot) fillFreeSpots(db, rsvp.eventId) // the freed spot goes to the waitlist
-  saveDb(db)
-  return rsvp
+  const wasHoldingSpot = rsvp.status === 'confirmed' || rsvp.status === 'offered';
+  rsvp.status = 'rejected';
+  rsvp.offerExpiresAt = null;
+  if (wasHoldingSpot) fillFreeSpots(db, rsvp.eventId); // the freed spot goes to the waitlist
+  saveDb(db);
+  return rsvp;
 }
 
 export async function setMember(organiserId, userId, makeMember) {
-  await fakeDelay()
-  const db = loadDb()
-  db.members = db.members.filter((m) => !(m.organiserId === organiserId && m.userId === userId))
-  if (makeMember) db.members.push({ organiserId, userId })
-  saveDb(db)
+  await fakeDelay();
+  const db = loadDb();
+  db.members = db.members.filter(m => !(m.organiserId === organiserId && m.userId === userId));
+  if (makeMember) db.members.push({
+    organiserId,
+    userId
+  });
+  saveDb(db);
 }
 
-// DEMO ONLY: pretend 24 hours have passed for this event's offers, to show expiry + promotion
+// demo only: pretend 24 hours have passed for this event's offers, to show expiry + promotion
+
 export async function expireOffersNow(eventId) {
-  await fakeDelay()
-  const db = loadDb()
+  await fakeDelay();
+  const db = loadDb();
   for (const rsvp of db.rsvps) {
     if (rsvp.eventId === eventId && rsvp.status === 'offered') {
-      rsvp.offerExpiresAt = new Date(Date.now() - 1000).toISOString()
+      rsvp.offerExpiresAt = new Date(Date.now() - 1000).toISOString();
     }
   }
-  expireOldOffers(db)
-  saveDb(db)
+  expireOldOffers(db);
+  saveDb(db);
 }
 
-
-// Feature 4 demo operations retained for offline review.
-// Feature 4 — DEMO ONLY asynchronous organiser operations.
-// Local ownership checks model the intended interface; localStorage is not auth.
-// Supabase is intentionally not activated until shared auth/RLS contracts exist.
+// feature 4 demo operations retained for offline review.
+// feature 4 — demo only asynchronous organiser operations.
+// local ownership checks model the intended interface; localstorage is not auth.
+// supabase is intentionally not activated until shared auth/rls contracts exist.
 // ---------------------------------------------------------------------------
 
-/** @typedef {{id:string,eventId:string,title:string,notes:string,status:string,position:number}} Task */
-/** @typedef {{id:string,eventId:string,body:string,kind:'manual'|'venue-switch',createdAt:string,updatedAt:string|null}} Announcement */
-/** plannedCents/actualCents are line totals (unit cost × quantity). */
-/** @typedef {{id:string,eventId:string,name:string,category:string,quantity:number,plannedCents:number,actualCents:number,purchasedAt:(string|null)}} BudgetItem */
+/** @typedef {{id:string,eventid:string,title:string,notes:string,status:string,position:number}} task */
+/** @typedef {{id:string,eventid:string,body:string,kind:'manual'|'venue-switch',createdat:string,updatedat:string|null}} announcement */
+/** plannedcents/actualcents are line totals (unit cost × quantity). */
+/** @typedef {{id:string,eventid:string,name:string,category:string,quantity:number,plannedcents:number,actualcents:number,purchasedat:(string|null)}} budgetitem */
+
 
 function ownedEvent(db, eventId) {
-  const event = findEvent(db, eventId)
-  if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('Only the event owner can manage these organiser tools.')
-  return event
+  const event = findEvent(db, eventId);
+  if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('Only the event owner can manage these organiser tools.');
+  return event;
 }
 
-function text(value, label, { optional = false } = {}) {
-  if (optional && value == null) return ''
-  if (typeof value !== 'string' || (!optional && !value.trim())) throw new Error(`${label} is required.`)
-  return value.trim()
+function text(value, label, {
+  optional = false
+} = {}) {
+  if (optional && value == null) return '';
+  if (typeof value !== 'string' || !optional && !value.trim()) throw new Error(`${label} is required.`);
+  return value.trim();
 }
 
 function operationId(prefix) {
-  return `${prefix}-${crypto.randomUUID()}`
+  return `${prefix}-${crypto.randomUUID()}`;
 }
 
 function eventRecord(records, eventId, id, label) {
-  const record = records.find((entry) => entry.eventId === eventId && entry.id === id)
-  if (!record) throw new Error(`${label} not found for this event.`)
-  return record
+  const record = records.find(entry => entry.eventId === eventId && entry.id === id);
+  if (!record) throw new Error(`${label} not found for this event.`);
+  return record;
 }
 
 function orderedTasks(db, eventId) {
-  return db.feature4.tasks.filter((task) => task.eventId === eventId).sort((a, b) =>
-    TASK_STATUSES.indexOf(a.status) - TASK_STATUSES.indexOf(b.status) || a.position - b.position)
+  return db.feature4.tasks.filter(task => task.eventId === eventId).sort((a, b) => TASK_STATUSES.indexOf(a.status) - TASK_STATUSES.indexOf(b.status) || a.position - b.position);
 }
 
 function reindexTasks(db, eventId) {
   for (const status of TASK_STATUSES) {
-    orderedTasks(db, eventId).filter((task) => task.status === status).forEach((task, index) => { task.position = index })
+    orderedTasks(db, eventId).filter(task => task.status === status).forEach((task, index) => {
+      task.position = index;
+    });
   }
 }
 
-function announcementDto({ id, eventId, body, kind, createdAt, updatedAt }) {
-  return { id, eventId, body, kind, createdAt, updatedAt }
+function announcementDto({
+  id,
+  eventId,
+  body,
+  kind,
+  createdAt,
+  updatedAt
+}) {
+  return {
+    id,
+    eventId,
+    body,
+    kind,
+    createdAt,
+    updatedAt
+  };
 }
 
 function publicAnnouncements(db, eventId) {
-  return db.feature4.announcements.filter((post) => post.eventId === eventId)
-    .map(announcementDto).reverse().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+  return db.feature4.announcements.filter(post => post.eventId === eventId).map(announcementDto).reverse().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
 function eventBudget(db, eventId) {
-  return Object.hasOwn(db.feature4.budgets, eventId) ? db.feature4.budgets[eventId] : { limitCents: null, items: [] }
+  return Object.hasOwn(db.feature4.budgets, eventId) ? db.feature4.budgets[eventId] : {
+    limitCents: null,
+    items: []
+  };
 }
 
-// Older saved demo data has no budgetCategories key or expense quantities.
+// older saved demo data has no budgetcategories key or expense quantities.
+
 function customCategories(db, eventId) {
-  return db.feature4.budgetCategories?.[eventId] ?? []
+  return db.feature4.budgetCategories?.[eventId] ?? [];
 }
 
 function budgetDto(budget) {
-  return { ...budget, items: budget.items.map((item) => ({ ...item, quantity: item.quantity ?? 1 })) }
-}
-
-/** Private event workspace: { event, tasks, announcements, budget, budgetCategories, forecastAreaOverride }. */
-export async function getEventOperations(eventId) {
-  const db = loadDb()
-  const event = ownedEvent(db, eventId)
   return {
-    event: withCounts(db, event), tasks: orderedTasks(db, eventId), announcements: publicAnnouncements(db, eventId),
-    budget: budgetDto(eventBudget(db, eventId)), budgetCategories: [...customCategories(db, eventId)], forecastAreaOverride: db.feature4.forecastAreas[eventId] || null,
-  }
+    ...budget,
+    items: budget.items.map(item => ({
+      ...item,
+      quantity: item.quantity ?? 1
+    }))
+  };
 }
 
-/** @returns {Promise<Task>} */
+/** private event workspace: { event, tasks, announcements, budget, budgetcategories, forecastareaoverride }. */
+
+export async function getEventOperations(eventId) {
+  const db = loadDb();
+  const event = ownedEvent(db, eventId);
+  return {
+    event: withCounts(db, event),
+    tasks: orderedTasks(db, eventId),
+    announcements: publicAnnouncements(db, eventId),
+    budget: budgetDto(eventBudget(db, eventId)),
+    budgetCategories: [...customCategories(db, eventId)],
+    forecastAreaOverride: db.feature4.forecastAreas[eventId] || null
+  };
+}
+
+/** @returns {promise<task>} */
+
 export async function createTask(eventId, input) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
+  const db = loadDb();
+  ownedEvent(db, eventId);
   const task = {
-    id: operationId('task'), eventId, title: text(input?.title, 'Task title'), notes: text(input?.notes, 'Notes', { optional: true }),
-    status: 'todo', position: orderedTasks(db, eventId).filter((task) => task.status === 'todo').length,
-  }
-  db.feature4.tasks.push(task)
-  saveDb(db)
-  return task
+    id: operationId('task'),
+    eventId,
+    title: text(input?.title, 'Task title'),
+    notes: text(input?.notes, 'Notes', {
+      optional: true
+    }),
+    status: 'todo',
+    position: orderedTasks(db, eventId).filter(task => task.status === 'todo').length
+  };
+  db.feature4.tasks.push(task);
+  saveDb(db);
+  return task;
 }
 
 export async function updateTask(eventId, taskId, input) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  const task = eventRecord(db.feature4.tasks, eventId, taskId, 'Task')
-  const title = text(input?.title, 'Task title')
-  const notes = text(input?.notes, 'Notes', { optional: true })
-  Object.assign(task, { title, notes })
-  saveDb(db)
-  return task
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  const task = eventRecord(db.feature4.tasks, eventId, taskId, 'Task');
+  const title = text(input?.title, 'Task title');
+  const notes = text(input?.notes, 'Notes', {
+    optional: true
+  });
+  Object.assign(task, {
+    title,
+    notes
+  });
+  saveDb(db);
+  return task;
 }
 
 export async function deleteTask(eventId, taskId) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  const task = eventRecord(db.feature4.tasks, eventId, taskId, 'Task')
-  db.feature4.tasks.splice(db.feature4.tasks.indexOf(task), 1)
-  reindexTasks(db, eventId)
-  saveDb(db)
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  const task = eventRecord(db.feature4.tasks, eventId, taskId, 'Task');
+  db.feature4.tasks.splice(db.feature4.tasks.indexOf(task), 1);
+  reindexTasks(db, eventId);
+  saveDb(db);
 }
 
-/** Validate and persist every task's status/order together in a single write. */
+/** validate and persist every task's status/order together in a single write. */
+
 export async function saveTaskBoard(eventId, columns) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  if (!columns || Object.keys(columns).length !== TASK_STATUSES.length || !TASK_STATUSES.every((status) => Array.isArray(columns[status]))) {
-    throw new Error('The board must contain exactly the three task columns.')
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  if (!columns || Object.keys(columns).length !== TASK_STATUSES.length || !TASK_STATUSES.every(status => Array.isArray(columns[status]))) {
+    throw new Error('The board must contain exactly the three task columns.');
   }
-  const tasks = orderedTasks(db, eventId)
-  const ids = TASK_STATUSES.flatMap((status) => columns[status])
-  if (ids.length !== tasks.length || new Set(ids).size !== tasks.length || ids.some((id) => !tasks.some((task) => task.id === id))) {
-    throw new Error('The board must contain every event task exactly once.')
+  const tasks = orderedTasks(db, eventId);
+  const ids = TASK_STATUSES.flatMap(status => columns[status]);
+  if (ids.length !== tasks.length || new Set(ids).size !== tasks.length || ids.some(id => !tasks.some(task => task.id === id))) {
+    throw new Error('The board must contain every event task exactly once.');
   }
   for (const status of TASK_STATUSES) {
-    columns[status].forEach((id, position) => Object.assign(tasks.find((task) => task.id === id), { status, position }))
+    columns[status].forEach((id, position) => Object.assign(tasks.find(task => task.id === id), {
+      status,
+      position
+    }));
   }
-  saveDb(db)
-  return orderedTasks(db, eventId)
+  saveDb(db);
+  return orderedTasks(db, eventId);
 }
 
-/** Public DTOs deliberately exclude all private workspace fields. */
+/** public dtos deliberately exclude all private workspace fields. */
+
 export async function getAnnouncements(eventId) {
-  const db = loadDb()
-  findEvent(db, eventId)
-  return publicAnnouncements(db, eventId)
+  const db = loadDb();
+  findEvent(db, eventId);
+  return publicAnnouncements(db, eventId);
 }
 
 export async function createAnnouncement(eventId, body) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  const post = { id: operationId('post'), eventId, body: text(body, 'Announcement content'), kind: 'manual', createdAt: new Date(Date.now()).toISOString(), updatedAt: null }
-  db.feature4.announcements.push(post)
-  saveDb(db)
-  return announcementDto(post)
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  const post = {
+    id: operationId('post'),
+    eventId,
+    body: text(body, 'Announcement content'),
+    kind: 'manual',
+    createdAt: new Date(Date.now()).toISOString(),
+    updatedAt: null
+  };
+  db.feature4.announcements.push(post);
+  saveDb(db);
+  return announcementDto(post);
 }
 
 function editableAnnouncement(db, eventId, id) {
-  const post = eventRecord(db.feature4.announcements, eventId, id, 'Announcement')
-  if (post.kind !== 'manual') throw new Error('Automatic venue-switch history is immutable.')
-  return post
+  const post = eventRecord(db.feature4.announcements, eventId, id, 'Announcement');
+  if (post.kind !== 'manual') throw new Error('Automatic venue-switch history is immutable.');
+  return post;
 }
 
 export async function updateAnnouncement(eventId, id, body) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  const post = editableAnnouncement(db, eventId, id)
-  post.body = text(body, 'Announcement content')
-  post.updatedAt = new Date(Date.now()).toISOString()
-  saveDb(db)
-  return announcementDto(post)
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  const post = editableAnnouncement(db, eventId, id);
+  post.body = text(body, 'Announcement content');
+  post.updatedAt = new Date(Date.now()).toISOString();
+  saveDb(db);
+  return announcementDto(post);
 }
 
 export async function deleteAnnouncement(eventId, id) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  const post = editableAnnouncement(db, eventId, id)
-  db.feature4.announcements.splice(db.feature4.announcements.indexOf(post), 1)
-  saveDb(db)
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  const post = editableAnnouncement(db, eventId, id);
+  db.feature4.announcements.splice(db.feature4.announcements.indexOf(post), 1);
+  saveDb(db);
 }
 
 export async function saveBudgetLimit(eventId, limitCents) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  if (limitCents !== null) validateCents(limitCents, { positive: true })
-  const budget = eventBudget(db, eventId)
-  budget.limitCents = limitCents
-  db.feature4.budgets[eventId] = budget
-  saveDb(db)
-  return budget
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  if (limitCents !== null) validateCents(limitCents, {
+    positive: true
+  });
+  const budget = eventBudget(db, eventId);
+  budget.limitCents = limitCents;
+  db.feature4.budgets[eventId] = budget;
+  saveDb(db);
+  return budget;
 }
 
-/** @returns {Promise<BudgetItem>} */
+/** @returns {promise<budgetitem>} */
+
 export async function saveBudgetItem(eventId, input) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  const budget = eventBudget(db, eventId)
-  const existing = input?.id ? eventRecord(budget.items, eventId, input.id, 'Budget item') : null
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  const budget = eventBudget(db, eventId);
+  const existing = input?.id ? eventRecord(budget.items, eventId, input.id, 'Budget item') : null;
   const item = {
-    id: existing?.id || operationId('expense'), eventId, name: text(input?.name, 'Item name'),
-    category: input?.category, quantity: input?.quantity ?? 1, plannedCents: validateCents(input?.plannedCents), actualCents: validateCents(input?.actualCents),
-    purchasedAt: input?.purchasedAt ? new Date(input.purchasedAt).toISOString() : null,
-  }
-  validateExpenseAmounts(item)
-  if (!budgetCategoryOptions(customCategories(db, eventId)).includes(item.category)) throw new Error('Choose a valid budget category.')
-  const items = [...budget.items.filter((entry) => entry.id !== item.id), item]
-  // Reject totals that cannot be represented as exact integer cents.
-  summariseBudget({ ...budget, items })
-  budget.items = existing ? budget.items.map((entry) => entry.id === item.id ? item : entry) : items
-  db.feature4.budgets[eventId] = budget
-  saveDb(db)
-  return item
+    id: existing?.id || operationId('expense'),
+    eventId,
+    name: text(input?.name, 'Item name'),
+    category: input?.category,
+    quantity: input?.quantity ?? 1,
+    plannedCents: validateCents(input?.plannedCents),
+    actualCents: validateCents(input?.actualCents),
+    purchasedAt: input?.purchasedAt ? new Date(input.purchasedAt).toISOString() : null
+  };
+  validateExpenseAmounts(item);
+  if (!budgetCategoryOptions(customCategories(db, eventId)).includes(item.category)) throw new Error('Choose a valid budget category.');
+  const items = [...budget.items.filter(entry => entry.id !== item.id), item];
+  // reject totals that cannot be represented as exact integer cents.
+  summariseBudget({
+    ...budget,
+    items
+  });
+  budget.items = existing ? budget.items.map(entry => entry.id === item.id ? item : entry) : items;
+  db.feature4.budgets[eventId] = budget;
+  saveDb(db);
+  return item;
 }
 
 export async function deleteBudgetItem(eventId, id) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  const budget = eventBudget(db, eventId)
-  const item = eventRecord(budget.items, eventId, id, 'Budget item')
-  budget.items.splice(budget.items.indexOf(item), 1)
-  db.feature4.budgets[eventId] = budget
-  saveDb(db)
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  const budget = eventBudget(db, eventId);
+  const item = eventRecord(budget.items, eventId, id, 'Budget item');
+  budget.items.splice(budget.items.indexOf(item), 1);
+  db.feature4.budgets[eventId] = budget;
+  saveDb(db);
 }
 
-/** @returns {Promise<string[]>} the event's custom categories after adding one. */
+/** @returns {promise<string[]>} the event's custom categories after adding one. */
+
 export async function createBudgetCategory(eventId, name) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  const categories = [...customCategories(db, eventId), validateCategoryName(name, customCategories(db, eventId))]
-  db.feature4.budgetCategories = { ...db.feature4.budgetCategories, [eventId]: categories }
-  saveDb(db)
-  return [...categories]
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  const categories = [...customCategories(db, eventId), validateCategoryName(name, customCategories(db, eventId))];
+  db.feature4.budgetCategories = {
+    ...db.feature4.budgetCategories,
+    [eventId]: categories
+  };
+  saveDb(db);
+  return [...categories];
 }
 
-/** Remove a custom category and move its expenses to the fallback category in the same write. */
+/** remove a custom category and move its expenses to the fallback category in the same write. */
+
 export async function deleteBudgetCategory(eventId, name) {
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  const existing = customCategories(db, eventId)
-  if (!existing.includes(name)) throw new Error('Only custom categories can be deleted.')
-  const categories = existing.filter((entry) => entry !== name)
-  const budget = eventBudget(db, eventId)
-  budget.items = budget.items.map((item) => item.category === name ? { ...item, category: FALLBACK_BUDGET_CATEGORY } : item)
-  db.feature4.budgets[eventId] = budget
-  db.feature4.budgetCategories = { ...db.feature4.budgetCategories, [eventId]: categories }
-  saveDb(db)
-  return { categories: [...categories], items: budgetDto(budget).items }
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  const existing = customCategories(db, eventId);
+  if (!existing.includes(name)) throw new Error('Only custom categories can be deleted.');
+  const categories = existing.filter(entry => entry !== name);
+  const budget = eventBudget(db, eventId);
+  budget.items = budget.items.map(item => item.category === name ? {
+    ...item,
+    category: FALLBACK_BUDGET_CATEGORY
+  } : item);
+  db.feature4.budgets[eventId] = budget;
+  db.feature4.budgetCategories = {
+    ...db.feature4.budgetCategories,
+    [eventId]: categories
+  };
+  saveDb(db);
+  return {
+    categories: [...categories],
+    items: budgetDto(budget).items
+  };
 }
 
 export async function getForecastAreas() {
-  const areas = forecastAreas(await fetchForecastData())
-  if (!areas.length) throw new Error('Weather forecast areas are unavailable. Refresh to retry.')
-  return areas
+  const areas = forecastAreas(await fetchForecastData());
+  if (!areas.length) throw new Error('Weather forecast areas are unavailable. Refresh to retry.');
+  return areas;
 }
 
-/** One guarded weather response snapshot for the organiser weather view. */
+/** one guarded weather response snapshot for the organiser weather view. */
+
 export async function getEventWeather(eventId) {
-  ownedEvent(loadDb(), eventId)
-  const data = await fetchForecastData()
-  const db = loadDb()
-  const event = ownedEvent(db, eventId)
-  const areas = forecastAreas(data)
+  ownedEvent(loadDb(), eventId);
+  const data = await fetchForecastData();
+  const db = loadDb();
+  const event = ownedEvent(db, eventId);
+  const areas = forecastAreas(data);
   return {
     forecast: eventForecast(data, event, db.feature4.forecastAreas[eventId] || null),
-    areas,
-  }
+    areas
+  };
 }
 
 export async function setForecastArea(eventId, name) {
-  ownedEvent(loadDb(), eventId)
-  const areas = await getForecastAreas()
-  if (!areas.some((area) => area.name === name)) throw new Error('Choose an available forecast area.')
-  // Reload after HTTP to preserve any operations saved while it was in flight.
-  const db = loadDb()
-  ownedEvent(db, eventId)
-  db.feature4.forecastAreas[eventId] = name
-  saveDb(db)
-  return name
+  ownedEvent(loadDb(), eventId);
+  const areas = await getForecastAreas();
+  if (!areas.some(area => area.name === name)) throw new Error('Choose an available forecast area.');
+  // reload after http to preserve any operations saved while it was in flight.
+  const db = loadDb();
+  ownedEvent(db, eventId);
+  db.feature4.forecastAreas[eventId] = name;
+  saveDb(db);
+  return name;
 }
 
 export async function getEventForecast(eventId) {
-  ownedEvent(loadDb(), eventId)
-  const data = await fetchForecastData()
-  const db = loadDb()
-  return eventForecast(data, ownedEvent(db, eventId), db.feature4.forecastAreas[eventId] || null)
+  ownedEvent(loadDb(), eventId);
+  const data = await fetchForecastData();
+  const db = loadDb();
+  return eventForecast(data, ownedEvent(db, eventId), db.feature4.forecastAreas[eventId] || null);
 }
 
 function persistedSwitch(db, event) {
-  if (!event.usingBackup) return null
-  const post = db.feature4.announcements.find((entry) => entry.eventId === event.id
-    && entry.kind === 'venue-switch' && entry.id === event.venueSwitchAnnouncementId)
-  if (!post) throw new Error('The backup venue is active, but its announcement could not be reconciled. Refresh the event.')
-  return { event: withCounts(db, event), announcement: announcementDto(post) }
+  if (!event.usingBackup) return null;
+  const post = db.feature4.announcements.find(entry => entry.eventId === event.id && entry.kind === 'venue-switch' && entry.id === event.venueSwitchAnnouncementId);
+  if (!post) throw new Error('The backup venue is active, but its announcement could not be reconciled. Refresh the event.');
+  return {
+    event: withCounts(db, event),
+    announcement: announcementDto(post)
+  };
 }
 
-/** One-way demo transaction: effective venue + exactly one automatic public post. */
+/** one-way demo transaction: effective venue + exactly one automatic public post. */
+
 export async function confirmBackupVenueSwitch(eventId) {
-  const before = loadDb()
-  const previous = persistedSwitch(before, ownedEvent(before, eventId))
-  // Repeated requests reconcile persisted success even if weather is now offline.
-  if (previous) return previous
-  const data = await fetchForecastData()
-  // Nothing asynchronous may occur between this reload and the single save below.
-  const db = loadDb()
-  const event = ownedEvent(db, eventId)
-  const concurrent = persistedSwitch(db, event)
-  if (concurrent) return concurrent
-  const forecast = eventForecast(data, event, db.feature4.forecastAreas[eventId] || null)
-  if (!forecast.canSwitch) throw new Error(forecast.reason)
-  const at = new Date(Date.now()).toISOString()
-  const originalVenue = { ...event.venue }
+  const before = loadDb();
+  const previous = persistedSwitch(before, ownedEvent(before, eventId));
+  // repeated requests reconcile persisted success even if weather is now offline.
+  if (previous) return previous;
+  const data = await fetchForecastData();
+  // nothing asynchronous may occur between this reload and the single save below.
+  const db = loadDb();
+  const event = ownedEvent(db, eventId);
+  const concurrent = persistedSwitch(db, event);
+  if (concurrent) return concurrent;
+  const forecast = eventForecast(data, event, db.feature4.forecastAreas[eventId] || null);
+  if (!forecast.canSwitch) throw new Error(forecast.reason);
+  const at = new Date(Date.now()).toISOString();
+  const originalVenue = {
+    ...event.venue
+  };
   const post = {
-    id: operationId('venue-switch'), eventId, kind: 'venue-switch', createdAt: at, updatedAt: null,
-    body: `Venue changed from ${originalVenue.name} to ${event.backupVenue.name}, ${event.backupVenue.address}. Confirmed at ${at} because ${forecast.forecast} is forecast for ${forecast.area}.`,
-  }
+    id: operationId('venue-switch'),
+    eventId,
+    kind: 'venue-switch',
+    createdAt: at,
+    updatedAt: null,
+    body: `Venue changed from ${originalVenue.name} to ${event.backupVenue.name}, ${event.backupVenue.address}. Confirmed at ${at} because ${forecast.forecast} is forecast for ${forecast.area}.`
+  };
   Object.assign(event, {
-    originalVenue, venue: { ...event.backupVenue }, usingBackup: true,
-    venueSwitchedAt: at, venueSwitchAnnouncementId: post.id,
-  })
-  db.feature4.announcements.push(post)
-  saveDb(db)
-  return { event: withCounts(db, event), announcement: announcementDto(post) }
+    originalVenue,
+    venue: {
+      ...event.backupVenue
+    },
+    usingBackup: true,
+    venueSwitchedAt: at,
+    venueSwitchAnnouncementId: post.id
+  });
+  db.feature4.announcements.push(post);
+  saveDb(db);
+  return {
+    event: withCounts(db, event),
+    announcement: announcementDto(post)
+  };
 }

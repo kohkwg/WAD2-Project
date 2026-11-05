@@ -9,6 +9,12 @@ the [README](../README.md#credits-and-licences). Original supplied material stay
 
 ## Decision log, newest first
 
+5 November 2026 — Denzel, Discover search suggestions: suggest event titles, venues, categories
+and keywords (including from descriptions) as people type, worked out in the browser from the
+events Discover already reads, with no new dependency, table or Express route. Typo correction,
+"Did you mean", personalised ranking and logging searches are not included. Discover and its filters
+are Aishani's feature, so Aishani should review this.
+
 5 November 2026 — Gregory, soft dark mode back, clearer dark buttons and Discover cards that
 close: the soft dark tokens (`--db-dark-hero`, `--db-dark-edge`, `--db-dark-orange`,
 `--db-dark-teal`) are restored on every ticket page, Vivienne's event page and dashboard and the
@@ -20,6 +26,25 @@ orange on hover; a dashboard card's buttons sit at its bottom. On Discover, clic
 again closes it, as do a click outside the cards and map and Escape inside it (focus returns to
 the thumbnail);
 
+5 November 2026 — the user expands the readability cleanup from three-file batches to
+all remaining first-party code and asks for the files to review afterwards. Preserve
+appearance and behaviour, use readable spacing and simple lowercase comment prose, retain
+tool directives/attribution/code references, and keep all pre-existing work. This covers
+local source formatting, not dependency updates, SQL changes, Git publishing or deployment.
+
+5 November 2026 — the user pauses the code review and requests account-wide in-app
+notifications for relevant event/group updates, especially announcements and accepted or
+rejected requests. Reuse the existing toast presentation at the top right, add existing
+dino artwork with an emotion matching the update, a close button and roughly ten seconds
+before automatic dismissal. Existing explicit undo durations remain tied to their undo
+windows. This authorises the shared notification UI change; it does not authorise hosted
+schema changes or turn the app into an email/browser-push service.
+
+5 November 2026 — the user, structure-only cleanup: use the supplied OneDrive exercise
+examples as a reference for readable Vue/JavaScript structure. Work one page at a time
+for user review. Preserve all current appearance and behaviour; comments must be simple
+and lowercase. Exercise instructions are reference material, not authority to change
+the app's stack or functionality.
 
 5 November 2026 — Denzel, Discover map shows location only: choosing an event (its card or its
 pin) no longer opens a pop-up card on the map. The map highlights the pin and zooms to the
@@ -789,3 +814,9 @@ Feature 4; the database is Timothy's area). The user answered these choices:
 - **Consistent data (user's instruction):** every existing event becomes physical with
   capacity shown; demo data is upgraded to the same shape, and the demo keeps links apart
   from events, as the database does.
+
+## 5 November: no food deals in Go together (Huxley)
+
+The Telegram and deal-site pipeline wasn't going to be run or deployed, and it only ever located
+a handful of deals, so Huxley decided to take deals out entirely. Go together's food planner uses
+nearby places from Geoapify (open at the meal time, nearest first), OneMap search and typed names.

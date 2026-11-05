@@ -1,51 +1,71 @@
 <script setup>
-import '../assets/design-baseline.css'
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
-import { supabase } from '../lib/supabase'
-import { USING_SUPABASE, updatePassword } from '../utils/api.js'
-import { passwordErrors } from '../lib/passwordRules.js'
-import PasswordInput from '../components/ui/PasswordInput.vue'
+import '../assets/design-baseline.css';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { RouterLink, useRouter } from 'vue-router';
+import { supabase } from '../lib/supabase';
+import { USING_SUPABASE, updatePassword } from '../utils/api.js';
+import { passwordErrors } from '../lib/passwordRules.js';
+import PasswordInput from '../components/ui/PasswordInput.vue';
 
-// The link in the reset email brings people here already signed in (a temporary recovery
-// session, which supabase-js reads from the link). Without that session there is nothing
+// the link in the reset email brings people here already signed in (a temporary recovery
+// session, which supabase-js reads from the link). without that session there is nothing
 // to reset, so we say the link is invalid or expired instead of showing a form.
-const router = useRouter()
-const status = ref('checking') // 'checking' | 'ready' | 'invalid' | 'done'
-const password = ref('')
-const loading = ref(false)
-const triedSubmit = ref(false)
-const errorMessage = ref('')
-const errors = computed(() => passwordErrors(password.value))
-let stopListening
-let giveUp
+
+const router = useRouter();
+
+const status = ref('checking'); // 'checking' | 'ready' | 'invalid' | 'done'
+
+const password = ref('');
+
+const loading = ref(false);
+
+const triedSubmit = ref(false);
+
+const errorMessage = ref('');
+
+const errors = computed(() => passwordErrors(password.value));
+
+let stopListening;
+
+let giveUp;
 
 onMounted(async () => {
-  if (!USING_SUPABASE) { status.value = 'invalid'; return }
+  if (!USING_SUPABASE) {
+    status.value = 'invalid';
+    return;
+  }
   const listener = supabase.auth.onAuthStateChange((event, session) => {
-    if (session && (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN')) status.value = 'ready'
-  })
-  stopListening = () => listener.data.subscription.unsubscribe()
-  const { data } = await supabase.auth.getSession()
-  if (data.session) status.value = 'ready'
-  // The link can take a moment to be turned into a session.
-  else giveUp = setTimeout(() => { if (status.value === 'checking') status.value = 'invalid' }, 3000)
-})
-onBeforeUnmount(() => { stopListening?.(); clearTimeout(giveUp) })
+    if (session && (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN')) status.value = 'ready';
+  });
+  stopListening = () => listener.data.subscription.unsubscribe();
+  const {
+    data
+  } = await supabase.auth.getSession();
+  if (data.session) status.value = 'ready';
+  // the link can take a moment to be turned into a session.
+  else giveUp = setTimeout(() => {
+    if (status.value === 'checking') status.value = 'invalid';
+  }, 3000);
+});
+
+onBeforeUnmount(() => {
+  stopListening?.();
+  clearTimeout(giveUp);
+});
 
 async function submit() {
-  triedSubmit.value = true
-  if (errors.value.length) return
-  loading.value = true
-  errorMessage.value = ''
+  triedSubmit.value = true;
+  if (errors.value.length) return;
+  loading.value = true;
+  errorMessage.value = '';
   try {
-    await updatePassword(password.value)
-    status.value = 'done'
-    setTimeout(() => router.push('/discover'), 1500)
+    await updatePassword(password.value);
+    status.value = 'done';
+    setTimeout(() => router.push('/discover'), 1500);
   } catch (error) {
-    errorMessage.value = error.message
+    errorMessage.value = error.message;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 </script>
@@ -63,7 +83,10 @@ async function submit() {
           <RouterLink to="/" class="auth-link">Request a new link</RouterLink>
         </template>
 
-        <p v-else-if="status === 'done'" class="alert alert-success" role="status">Password updated. Taking you to Discover…</p>
+        <p
+        v-else-if="status === 'done'"
+        class="alert alert-success"
+        role="status">Password updated. Taking you to Discover…</p>
 
         <form v-else novalidate @submit.prevent="submit">
           <div class="mb-3">
@@ -71,7 +94,8 @@ async function submit() {
             <PasswordInput id="new-password" v-model="password" autocomplete="new-password" />
           </div>
           <div v-if="triedSubmit && errors.length" class="alert alert-danger">
-            <ul class="mb-0"><li v-for="error in errors" :key="error">{{ error }}</li></ul>
+            <ul class="mb-0">
+            <li v-for="error in errors" :key="error">{{ error }}</li></ul>
           </div>
           <div v-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
           <button type="submit" class="btn btn-primary w-100" :disabled="loading">
@@ -85,11 +109,43 @@ async function submit() {
 </template>
 
 <style scoped>
-.reset-wrap { display: block; max-width: 460px; }
-.reset-title { margin-bottom: 1.25rem; font-family: var(--bookedz-heading); font-size: 1.75rem; letter-spacing: -.03em; }
-.reset-note { color: var(--bookedz-muted); }
-.auth-link { color: var(--bookedz-primary-dark); font-weight: 600; text-decoration: underline; text-underline-offset: .2em; }
-.auth-card { border: 1px solid var(--bookedz-border, #e9ded3); border-radius: 24px; background: var(--bookedz-surface); box-shadow: var(--bookedz-shadow); }
-:deep(.form-control) { min-height: 46px; border-radius: 12px; }
-:deep(.btn-primary) { min-height: 46px; border-radius: 12px; }
+.reset-wrap {
+  display: block;
+  max-width: 460px;
+}
+
+.reset-title {
+  margin-bottom: 1.25rem;
+  font-family: var(--bookedz-heading);
+  font-size: 1.75rem;
+  letter-spacing: -.03em;
+}
+
+.reset-note {
+  color: var(--bookedz-muted);
+}
+
+.auth-link {
+  color: var(--bookedz-primary-dark);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
+.auth-card {
+  border: 1px solid var(--bookedz-border, #e9ded3);
+  border-radius: 24px;
+  background: var(--bookedz-surface);
+  box-shadow: var(--bookedz-shadow);
+}
+
+:deep(.form-control) {
+  min-height: 46px;
+  border-radius: 12px;
+}
+
+:deep(.btn-primary) {
+  min-height: 46px;
+  border-radius: 12px;
+}
 </style>
