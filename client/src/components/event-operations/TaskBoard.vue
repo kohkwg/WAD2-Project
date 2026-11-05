@@ -101,7 +101,7 @@ onBeforeUnmount(() => sortables.forEach(sortable => sortable.destroy()))
       <fieldset :disabled="pending">
         <div class="mb-3"><label for="task-title" class="form-label">Task title</label><input id="task-title" ref="titleInput" v-model="title" class="form-control" required maxlength="200" /></div>
         <div class="mb-3"><label for="task-notes" class="form-label">Task notes <span class="text-secondary">(optional)</span></label><textarea id="task-notes" v-model="notes" class="form-control" rows="2" /></div>
-        <p v-if="validation" class="text-danger" role="alert">{{ validation }}</p>
+        <p v-dismissible v-if="validation" class="text-danger" role="alert">{{ validation }}</p>
         <div class="d-flex flex-wrap gap-2"><button class="btn btn-primary" type="submit">{{ editingId ? 'Save task' : 'Add task' }}</button><button v-if="editingId" class="btn btn-outline-secondary" type="button" @click="clearDraft">Cancel edit</button></div>
       </fieldset>
     </form>

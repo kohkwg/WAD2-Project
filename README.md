@@ -59,8 +59,8 @@ status. Use the timeline for the latest verified checkpoint and remaining limits
 
 ## Change history
 
-On 5 November 2026, at Gregory's request, we gave Discover Vivienne's festival-ticket look in both
-themes, toned down dark mode on every ticket page after her feedback that the colours felt heavy,
+On 5 November 2026, added more space between Discover's rows, toned down
+dark mode on every ticket page (Discover included) after Vivienne's feedback that the colours felt heavy,
 renamed "My events" to "My Events", and restyled the Sort by drop-downs. We changed `design-baseline.css`, `DiscoverView.vue`,
 `NavBar.vue`, the router title, `OrganiserEventsView.vue`, the back links in `CreateEventView.vue`,
 `ManageEventView.vue` and `ManageRsvpsView.vue`, and three e2e specs.

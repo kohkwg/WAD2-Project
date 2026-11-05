@@ -57,7 +57,7 @@ test('Saved shows independent bookmarks and unsave persists through refresh', as
   await expect(page.locator('#panel-saved').getByRole('link', { name: 'Saved coffee meetup', exact: true })).toBeVisible()
   await page.reload()
   await page.getByRole('tab', { name: /^Saved/ }).click()
-  await page.getByRole('button', { name: 'Unsave Saved coffee meetup', exact: true }).click()
+  await page.getByRole('button', { name: 'Remove Saved coffee meetup from saved', exact: true }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Event removed' })).toBeFocused()
   await expect(page.locator('#panel-saved')).toContainText('A little space for future plans.')
   await page.reload()
@@ -133,11 +133,11 @@ test('saved read and unsave failures are retryable without hiding registrations'
   await expect(page.locator('#panel-saved')).not.toContainText('A little space for future plans.')
   await page.evaluate(() => { window.__failSavedRead = false })
   await page.getByRole('button', { name: 'Retry saved events' }).click()
-  await page.getByRole('button', { name: 'Unsave Saved coffee meetup' }).click()
+  await page.getByRole('button', { name: 'Remove Saved coffee meetup from saved' }).click()
   await expect(page.locator('#panel-saved').getByRole('alert')).toContainText('Could not remove saved event')
   await expect(page.locator('#panel-saved .saved-event')).toHaveCount(1)
   await page.evaluate(() => { window.__failUnsave = false })
-  await page.getByRole('button', { name: 'Unsave Saved coffee meetup' }).click()
+  await page.getByRole('button', { name: 'Remove Saved coffee meetup from saved' }).click()
   await expect(page.locator('#panel-saved .saved-event')).toHaveCount(0)
 })
 
@@ -188,4 +188,41 @@ test('offer accept and decline refresh registrations and announce the outcome', 
   await expect(page.getByRole('status').filter({ hasText: 'Offer declined.' })).toBeFocused()
   await page.getByRole('tab', { name: /^Cancelled/ }).click()
   await expect(page.locator('#panel-cancelled')).toContainText('Offer declined')
+})
+
+
+test('My RSVPs fills the available width without overflow in either theme',async({page})=>{
+  await page.goto('/my-rsvps')
+  await expect(page.getByRole('heading',{name:'My RSVPs',exact:true})).toBeVisible()
+  for(const scheme of ['light','dark']){
+    await page.getByLabel('Color theme').selectOption(scheme)
+    for(const width of [375,575,768,1280,1920,2560]){
+      await page.setViewportSize({width,height:1000})
+      await expect.poll(()=>page.locator('main').evaluate(el=>Math.abs(el.getBoundingClientRect().width-(innerWidth-parseFloat(getComputedStyle(document.querySelector('.app-shell')).paddingLeft))))).toBeLessThan(3)
+      const geometry=await page.locator('.my-rsvps-page').evaluate(el=>{
+        const main=el.closest('main'),css=getComputedStyle(main)
+        return {gap:main.clientWidth-parseFloat(css.paddingLeft)-parseFloat(css.paddingRight)-el.getBoundingClientRect().width,overflow:document.documentElement.scrollWidth>innerWidth}
+      })
+      expect(Math.abs(geometry.gap)).toBeLessThan(3)
+      expect(geometry.overflow).toBe(false)
+      await expect(page.locator('main')).toHaveCount(1)
+    }
+  }
+})
+
+
+test('confirmed live-style rows keep cancellation available and explain recorded check-ins',async({page})=>{
+  await overridePageApi(page, `export * from '/src/utils/api.js'; export const USING_SUPABASE = true;`)
+  await page.goto('/my-rsvps')
+  const row=page.locator('.rsvp-row').filter({has:page.getByRole('heading',{name:'Board games together',exact:true})})
+  await expect(row.getByRole('link',{name:'View ticket',exact:true})).toBeVisible()
+  await expect(row.getByRole('button',{name:'Cancel RSVP for Board games together',exact:true})).toBeEnabled()
+  await page.evaluate(key=>{
+    const data=JSON.parse(localStorage.getItem(key));const r=data.rsvps.find(r=>r.id==='r-confirmed')
+    r.checkedInAt=new Date().toISOString();r.attendanceVerified=false
+    localStorage.setItem(key,JSON.stringify(data))
+  },STORE)
+  await page.getByRole('button',{name:'Refresh RSVPs',exact:true}).click()
+  await expect(row.getByRole('button',{name:'Cancel RSVP',exact:true})).toBeDisabled()
+  await expect(row.getByText('Cancellation unavailable: a check-in is recorded for this RSVP.',{exact:true})).toBeVisible()
 })

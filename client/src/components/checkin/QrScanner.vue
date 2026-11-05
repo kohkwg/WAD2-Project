@@ -72,7 +72,7 @@ onBeforeUnmount(async () => {
   <div>
     <div :id="elementId" class="qr-scanner rounded overflow-hidden bg-dark"></div>
     <p v-if="starting" class="text-body-secondary small mt-2 mb-0">Starting camera…</p>
-    <div v-if="error" class="alert alert-warning mt-2 mb-0" role="alert">{{ error }}</div>
+    <div v-dismissible v-if="error" class="alert alert-warning mt-2 mb-0" role="alert">{{ error }}</div>
   </div>
 </template>
 

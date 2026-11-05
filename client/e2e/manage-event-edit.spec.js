@@ -20,7 +20,9 @@ test('event editing lives in Manage event and preserves drafts across tools', as
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     }
   }
+  await nav.getByRole('button', { name: /^Planning/ }).click()
   await nav.getByRole('link', { name: 'Tasks', exact: true }).click()
+  await nav.getByRole('button', { name: /^General/ }).click()
   await nav.getByRole('link', { name: 'Edit event', exact: true }).click()
   await expect(title).toHaveValue('[TEST] Updated event')
   for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Next', exact: true }).click()

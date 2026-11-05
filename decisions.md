@@ -1,12 +1,12 @@
 # Decisions
 
-5 November 2026 — Gregory, festival-ticket look on Discover and a softer dark mode: Discover now
-uses Vivienne's ticket look (2px edges, hard shadows, pill controls, an orange stamped category
-chip) in both themes, as a page-scoped `.discover-page` section in `design-baseline.css`. It has
-no hero card so the map keeps its height, and its rows have a little more space between them. After
+5 November 2026 — Gregory, a softer dark mode, Discover spacing and "My Events": Discover keeps
+Vivienne's own ticket pass from dev; when dev was merged into `gregory`, Gregory's overlapping
+Discover rules were dropped, keeping only a little more space between rows and days. After
 Vivienne said the dark colours felt heavy (and a first pass that blended them into the dark
-surface looked dull), every ticket page's dark mode uses four shared tokens (`--db-dark-hero`,
-`--db-dark-edge`, `--db-dark-orange`, `--db-dark-teal`): big areas stay plain dark with a soft
+surface looked dull), every ticket page's dark mode, including Discover and the event RSVP,
+sign-in and ticket pages, uses four shared tokens (`--db-dark-hero`, `--db-dark-edge`,
+`--db-dark-orange`, `--db-dark-teal`): big areas stay plain dark with a soft
 orange corner glow on the hero, edges are a clean orange, and hard shadows are 45–50% instead of
 solid orange and 60% teal. The My RSVPs waitlist offer banner and the My Events date strip no
 longer use the olive fill. Light mode is unchanged apart from the Discover spacing. "My events" is renamed **My Events** wherever it is shown,
@@ -14,6 +14,22 @@ a deliberate exception to sentence case to match My RSVPs. The Sort by drop-down
 and Discover open as a list attached to the button (chosen over a floating panel) where the
 browser supports customisable selects. Discover is Aishani's page, so she should review the
 change. No backend, data or routing changes.
+
+5 November 2026 — saved events are one journey, adopted after reviewing rendered previews. The
+words are **Save** / **Saved** everywhere: the bookmark reads "Save {event}" / "Remove {event} from
+saved" with the tooltips "Save event" / "Remove from saved". Saving on Discover shows "Saved to your
+list" with a **View saved** button that opens `/my-rsvps?tab=saved`; My RSVPs now opens the tab named
+in `?tab=` and keeps the URL in step (Upcoming drops it). Signed-in visitors with at least one
+upcoming save get a **Saved** chip, with a count, leading Discover's category row. It is a peer of
+All and the category groups (picking one clears the others), stays visible while selected so it can
+be turned off, is kept in the URL as `saved=true`, and filters the list, map and count through the
+events query (`savedOnly`: the caller's own `user_event_preferences` ids under RLS). Signed-out
+visitors never see it. Saved cards lead to an RSVP: one badge (your own RSVP first, then Full or
+5 or fewer spots, then timing in Singapore days), one main action matching `EventCardActions`
+(RSVP, Join waitlist, Review offer, View your RSVP, or View event once ended or cancelled), and the
+filled bookmark removes the save. Upcoming saves come first; ended and cancelled ones are greyed and
+listed last. Discover is Aishani's (F1) and My RSVPs sits with Gregory's RSVP work (F2), so both
+should look this over.
 
 4 November 2026 — Huxley, Community gets Friends; Profile loses its tabs: at the team's request
 Vivienne's Profile **Groups** (friend circles) are removed from the app, because Go together groups

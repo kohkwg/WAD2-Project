@@ -21,8 +21,12 @@ function datePart(event, part) {
     </div>
     <div class="row-actions">
       <RouterLink v-if="ticketsEnabled && !past && !closed && rsvp.status === 'confirmed'" :to="`/events/${rsvp.event.id}/ticket`" class="btn btn-outline-secondary">View ticket</RouterLink>
-      <template v-if="!past && !closed && !rsvp.checkedInAt && rsvp.status !== 'offered'">
-        <template v-if="confirming">
+      <template v-if="!past && !closed && rsvp.status !== 'offered'">
+        <template v-if="rsvp.checkedInAt">
+          <button type="button" class="btn btn-outline-secondary" disabled :aria-describedby="`cancel-blocked-${rsvp.id}`">Cancel RSVP</button>
+          <p :id="`cancel-blocked-${rsvp.id}`" class="row-note">Cancellation unavailable: a check-in is recorded for this RSVP.</p>
+        </template>
+        <template v-else-if="confirming">
           <p>Cancel this RSVP?</p>
           <button type="button" class="btn btn-danger" :disabled="disabled" @click="$emit('cancel', rsvp.id)">{{ busy ? 'Cancelling…' : 'Yes, cancel' }}</button>
           <button :id="`keep-${rsvp.id}`" type="button" class="btn btn-outline-secondary" :disabled="disabled" @click="$emit('keep', rsvp.id)">Keep it</button>

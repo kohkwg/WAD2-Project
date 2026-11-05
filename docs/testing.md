@@ -1,5 +1,15 @@
 # Testing and local operation
 
+5 November saved-events checkpoint: `client/src/utils/__tests__/savedEvents.test.js` (badge, action
+and ordering rules) passes with `NODE_ENV=test node --test` from `client/`, and
+`client/e2e/saved-events.spec.js` covers the Saved chip (live Discover with an in-browser Supabase
+stand-in), the "View saved" toast and the Saved cards in demo mode. When a live-mode dev server already
+holds port 5173, Playwright reuses it and demo-mode specs fail at sign-in; run them against a fresh
+demo server instead, e.g. a local config with `baseURL` and `webServer` on port 5174 and
+`VITE_USE_MOCK=true`. On that demo server `discover-browse.spec.js`, `discovery-rsvp-regressions.spec.js`
+and the first `discovery-list-palette.spec.js` case fail on the committed code too: they still expect
+the earlier Discover (Closing soon, the category directory, `.event-card`).
+
 3 November merge-resolution checkpoint: 82 focused Node tests passed across
 `rsvp-overview`, `saved-events`, `organiser-events`, geographic helpers, Hangout
 slots/basics/itinerary/on-the-day helpers and the recommendation pipeline/route/
