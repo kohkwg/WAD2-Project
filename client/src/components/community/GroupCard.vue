@@ -97,7 +97,7 @@ async function join() {
     </div>
     <p v-else-if="(joined || isHost) && group.myEventStatus" class="group-rsvp-done text-meta">You’re {{ group.myEventStatus === 'confirmed' ? 'going to the event' : group.myEventStatus === 'waitlisted' ? 'on the event’s waitlist' : group.myEventStatus === 'pending' ? 'waiting for the organiser to approve your RSVP' : 'holding an offer for the event' }}.</p>
 
-    <p v-if="error" class="group-error" role="alert">{{ error }}</p>
+    <p v-dismissible v-if="error" class="group-error" role="alert">{{ error }}</p>
 
   </article>
 </template>

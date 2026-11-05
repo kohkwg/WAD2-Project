@@ -615,14 +615,14 @@ async function publish() {
       <p>{{ isEditing ? 'Update the details below. Saving changes the live event straight away.' : 'Start with the essentials. You can review everything before it goes live.' }}</p>
     </header>
 
-    <p v-if="editSuccess" class="alert alert-success" role="status">{{ editSuccess }}</p>
+    <p v-dismissible v-if="editSuccess" class="alert alert-success" role="status">{{ editSuccess }}</p>
 
     <!-- Edit mode: still loading the event, or the reason it can't be edited -->
     <div v-if="isEditing && editLoading" class="text-center my-5" role="status">
       <div class="spinner-border text-primary" aria-hidden="true"></div>
       <span class="visually-hidden">Loading the event…</span>
     </div>
-    <div v-else-if="isEditing && editBlocked" class="alert alert-warning" role="alert">
+    <div v-dismissible v-else-if="isEditing && editBlocked" class="alert alert-warning" role="alert">
       {{ editBlocked }} <RouterLink to="/organiser/events">Back to My events</RouterLink>
     </div>
 
@@ -692,7 +692,7 @@ async function publish() {
             <input id="event-cover" type="file" class="form-control" accept="image/jpeg,image/png,image/webp" :disabled="uploadingCover || publishing" aria-describedby="cover-help" @change="chooseCover" />
             <p id="cover-help" class="form-text">Public event image. JPEG, PNG or WebP, up to 10 MiB.</p>
             <p v-if="uploadingCover" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Uploading image…</p>
-            <p v-if="coverError" class="text-danger" role="alert">{{ coverError }}</p>
+            <p v-dismissible v-if="coverError" class="text-danger" role="alert">{{ coverError }}</p>
             <figure v-if="form.coverImageUrl" class="cover-preview">
               <img :src="form.coverImageUrl" alt="Event cover preview" />
               <figcaption>How your cover is cropped on event cards</figcaption>
@@ -723,7 +723,7 @@ async function publish() {
                 :aria-invalid="endBeforeStart || undefined"
                 :aria-describedby="endBeforeStart ? 'end-error' : (showErrors && stepErrors.length ? 'validation-error-list' : undefined)"
               />
-              <p v-if="endBeforeStart" id="end-error" class="small text-danger mt-1 mb-0" role="alert">The event has to end after it starts.</p>
+              <p v-dismissible v-if="endBeforeStart" id="end-error" class="small text-danger mt-1 mb-0" role="alert">The event has to end after it starts.</p>
             </div>
             <div class="col-md-4 mb-3">
               <label for="capacity" class="form-label">Capacity</label>
@@ -773,7 +773,7 @@ async function publish() {
         <!-- ================= STEP 2: VENUE ================= -->
         <div v-else-if="step === 2" aria-labelledby="step-content-heading">
           <h2 id="step-content-heading" class="visually-hidden" tabindex="-1">Venue</h2>
-          <p v-if="venueLocked" class="alert alert-info small">
+          <p v-dismissible v-if="venueLocked" class="alert alert-info small">
             This event has already switched to its rain backup venue, so its venues can't be changed here.
           </p>
           <h3 class="h5 step-subheading">Main venue</h3>
@@ -943,7 +943,7 @@ async function publish() {
               ? 'Check your changes. Saving updates the live event straight away; use Back to change anything.'
               : 'Check everything before publishing. Use Back to change anything; nothing is lost.' }}
           </p>
-          <p v-if="questionNotice" class="question-notice" role="status">{{ questionNotice }}</p>
+          <p v-dismissible v-if="questionNotice" class="question-notice" role="status">{{ questionNotice }}</p>
           <EventSummary :event="form">
             <hr />
             <p class="mb-1">
@@ -985,7 +985,7 @@ async function publish() {
             <button v-if="planOffer || planError || planBusy" type="button" class="btn-close" aria-label="Dismiss suggested plan" @click="dismissPlan"></button>
           </div>
           <p v-if="planBusy" class="mb-0 mt-2" role="status">Looking at similar past events…</p>
-          <div v-else-if="planError" class="alert alert-danger mt-2 mb-0" role="alert">
+          <div v-dismissible v-else-if="planError" class="alert alert-danger mt-2 mb-0" role="alert">
             {{ planError }} <button type="button" class="btn btn-sm btn-outline-danger ms-1" :disabled="!canGenerate" @click="generatePlan">Try again</button>
           </div>
           <template v-else-if="planOffer">
@@ -1026,13 +1026,13 @@ async function publish() {
         </section>
 
         <!-- Errors for the current step -->
-        <div v-if="showErrors && stepErrors.length > 0" class="alert alert-danger mt-4 mb-0" role="alert" aria-labelledby="validation-summary-heading">
+        <div v-dismissible v-if="showErrors && stepErrors.length > 0" class="alert alert-danger mt-4 mb-0" role="alert" aria-labelledby="validation-summary-heading">
           <h3 id="validation-summary-heading" class="h6">Fix these items before continuing</h3>
           <ul id="validation-error-list" class="mb-0">
             <li v-for="error in stepErrors" :key="error">{{ error }}</li>
           </ul>
         </div>
-        <div v-if="errorMessage" class="alert alert-danger mt-4 mb-0" role="alert">{{ errorMessage }}</div>
+        <div v-dismissible v-if="errorMessage" class="alert alert-danger mt-4 mb-0" role="alert">{{ errorMessage }}</div>
       </div>
 
       <!-- Back / Next / Publish -->

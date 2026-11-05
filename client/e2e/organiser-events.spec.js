@@ -150,3 +150,24 @@ test('delete confirmation preserves safe focus and removes only the chosen demo 
   await expect(event).toHaveCount(0)
   await expect(card(page, 'Board Games Meetup')).toBeVisible()
 })
+
+
+test('My events fills the available width and fits more cards on large screens',async({page})=>{
+  await page.goto('/organiser/events')
+  await page.getByRole('tab',{name:'All 7',exact:true}).click()
+  await expect(page.locator('.organiser-event-card')).toHaveCount(7)
+  for(const scheme of ['light','dark']){
+    await page.getByLabel('Color theme').selectOption(scheme)
+    for(const width of [375,575,768,1280,1600,1920,2560]){
+      await page.setViewportSize({width,height:1000})
+      await expect.poll(()=>page.locator('main').evaluate(el=>{
+        const sidebar=parseFloat(getComputedStyle(document.querySelector('.app-shell')).paddingLeft)
+        return Math.abs(el.getBoundingClientRect().width-(innerWidth-sidebar))
+      })).toBeLessThan(3)
+      const geometry=await page.locator('.organiser-grid').evaluate(el=>({columns:getComputedStyle(el).gridTemplateColumns.split(' ').length,overflow:document.documentElement.scrollWidth>innerWidth}))
+      expect(geometry.overflow).toBe(false)
+      if(width>=1920)expect(geometry.columns).toBeGreaterThanOrEqual(4)
+      await expect(page.locator('main')).toHaveCount(1)
+    }
+  }
+})

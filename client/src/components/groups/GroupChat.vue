@@ -67,7 +67,7 @@ async function remove(comment) {
       <button type="submit" class="btn btn-primary" :disabled="!draft.trim() || posting">Send</button>
     </form>
     <p v-else class="text-caption text-secondary m-0">Join the group to chat.</p>
-    <p v-if="error" class="group-chat-error" role="alert">{{ error }}</p>
+    <p v-dismissible v-if="error" class="group-chat-error" role="alert">{{ error }}</p>
   </section>
 </template>
 

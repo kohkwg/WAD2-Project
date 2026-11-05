@@ -150,7 +150,7 @@ function importScanned() {
       </div>
     </div>
 
-    <p v-if="scanError" class="alert alert-warning" role="alert">{{ scanError }}</p>
+    <p v-dismissible v-if="scanError" class="alert alert-warning" role="alert">{{ scanError }}</p>
     <form v-if="scanned.length" class="workspace-panel scan-review" @submit.prevent="importScanned">
       <h3 class="section-heading">Check the receipt</h3>
       <p class="form-text mt-0">Fix any misreads, untick lines you don't want, then add them as expenses.</p>
@@ -174,8 +174,8 @@ function importScanned() {
         <div class="limit-cell"><dt><label for="budget-limit">Budget limit (SGD)</label></dt><dd><input id="budget-limit" v-model="limit" type="text" inputmode="decimal" class="form-control" placeholder="No limit" :disabled="pending" aria-describedby="budget-limit-help" @change="saveLimit" @keydown.enter.prevent="saveLimit" /></dd></div>
       </dl>
       <p id="budget-limit-help" class="visually-hidden">Leave blank to unset. A set limit must be greater than zero.</p>
-      <p v-if="limitError" role="alert" class="text-danger mb-0">{{ limitError }}</p>
-      <div class="alert mb-0" :class="summary.level === 'over' ? 'alert-danger' : ['warning', 'reached'].includes(summary.level) ? 'alert-warning' : 'alert-light border'" role="status">{{ notice }}<span v-if="summary.percentage !== null"> {{ summary.percentage.toFixed(1) }}% used.</span></div>
+      <p v-dismissible v-if="limitError" role="alert" class="text-danger mb-0">{{ limitError }}</p>
+      <div v-dismissible class="alert mb-0" :class="summary.level === 'over' ? 'alert-danger' : ['warning', 'reached'].includes(summary.level) ? 'alert-warning' : 'alert-light border'" role="status">{{ notice }}<span v-if="summary.percentage !== null"> {{ summary.percentage.toFixed(1) }}% used.</span></div>
       <figure v-if="spendBar.segments.length" class="spend-bar">
         <div class="spend-bar-track" :class="{ over: spendBar.limitAt !== null }" role="img" :aria-label="spendBarLabel">
           <span v-for="segment in spendBar.segments" :key="segment.id" class="spend-bar-segment" :style="{ width: segment.width + '%', '--shade': segment.shade + '%' }" :title="segment.name + ': ' + money(segment.cents)"></span>
@@ -200,7 +200,7 @@ function importScanned() {
               <td class="when"><input v-model="row.purchased" type="datetime-local" class="cell" :aria-label="'Purchase date and time for ' + row.name" :disabled="pending" @change="commitRow(row)" @keydown.enter.prevent="commitRow(row)" /></td>
               <td class="act"><button type="button" class="btn btn-sm btn-link text-danger" :disabled="pending" :aria-label="'Delete expense: ' + row.name" @click="deleting = { id: row.id, name: row.name }">Delete</button></td>
             </tr>
-            <tr v-if="rowErrors[row.id]" class="row-error"><td colspan="8" role="alert" class="text-danger">{{ rowErrors[row.id] }}</td></tr>
+            <tr v-if="rowErrors[row.id]" class="row-error"><td v-dismissible colspan="8" role="alert" class="text-danger">{{ rowErrors[row.id] }}</td></tr>
           </template>
           <tr v-if="!rows.length"><td colspan="8" class="text-secondary empty">No expenses yet. Add the first one in the last row, or scan a receipt.</td></tr>
           <tr class="add-row" @keydown.enter.prevent="addDraft">
@@ -215,7 +215,7 @@ function importScanned() {
           </tr>
         </tbody>
       </table>
-      <p v-if="draftError" role="alert" class="text-danger mt-2 mb-0">{{ draftError }}</p>
+      <p v-dismissible v-if="draftError" role="alert" class="text-danger mt-2 mb-0">{{ draftError }}</p>
       <p class="form-text mb-0 mt-2">Press Enter on the last row to add it and keep going. Leave "Actual each" blank until you've spent it.</p>
     </div>
 
@@ -234,7 +234,7 @@ function importScanned() {
         <input id="budget-category-name" v-model="newCategory" class="form-control limit-input" placeholder="New category" :maxlength="MAX_CATEGORY_LENGTH" autocomplete="off" :disabled="pending" />
         <button type="submit" class="btn btn-outline-primary" :disabled="pending">Add category</button>
       </form>
-      <p v-if="categoryError" role="alert" class="text-danger mt-2 mb-0">{{ categoryError }}</p>
+      <p v-dismissible v-if="categoryError" role="alert" class="text-danger mt-2 mb-0">{{ categoryError }}</p>
     </details>
 
     <ConfirmationDialog v-if="deleting" title="Delete expense?" focus-fallback="#budget-limit" :pending="pending" :error="actionError" @cancel="cancelDelete" @confirm="deleteExpense"><p>Delete “{{ deleting.name }}” and remove it from the totals?</p></ConfirmationDialog>

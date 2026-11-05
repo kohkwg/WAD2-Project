@@ -29,7 +29,7 @@ onBeforeUnmount(() => {
     <div class="card-body">
       <h2 id="confirmation-title" class="h5">{{ title }}</h2>
       <slot />
-      <p v-if="error" class="text-danger" role="alert">{{ error }}</p>
+      <p v-dismissible v-if="error" class="text-danger" role="alert">{{ error }}</p>
       <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
         <button class="btn btn-outline-secondary" type="button" :disabled="pending" autofocus @click="cancel">Cancel</button>
         <button class="btn" :class="'btn-' + confirmVariant" type="button" :disabled="pending || confirmDisabled" @click="emit('confirm')">{{ pending ? pendingLabel : confirmLabel }}</button>

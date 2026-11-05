@@ -142,3 +142,26 @@ test('incoming requests and remote acceptance update without losing the search',
   await expect(panel(page).getByRole('heading',{name:'Your friends (1)',exact:true})).toBeVisible()
   await expect(input).toHaveValue('car')
 })
+
+
+test('Community fills the available width and keeps its responsive Friends panel',async({page})=>{
+  await fixture(page)
+  await page.emulateMedia({reducedMotion:'reduce'})
+  await page.goto('/community')
+  await expect(page.getByRole('heading',{name:'Go together',exact:true})).toBeVisible()
+  for(const scheme of ['light','dark']){
+    await page.getByLabel('Color theme').selectOption(scheme)
+    for(const width of [375,575,768,1280,1920,2560]){
+      await page.setViewportSize({width,height:1000})
+      await expect.poll(()=>page.locator('main').evaluate(el=>Math.abs(el.getBoundingClientRect().width-(innerWidth-parseFloat(getComputedStyle(document.querySelector('.app-shell')).paddingLeft))))).toBeLessThan(3)
+      const layout=await page.locator('.community-page').evaluate(el=>{
+        const main=el.closest('main'),css=getComputedStyle(main)
+        return { gap:main.clientWidth-parseFloat(css.paddingLeft)-parseFloat(css.paddingRight)-el.getBoundingClientRect().width, overflow:document.documentElement.scrollWidth>innerWidth, feed:el.querySelector('.community-main').getBoundingClientRect().x, friends:el.querySelector('.community-aside').getBoundingClientRect().x }
+      })
+      expect(Math.abs(layout.gap)).toBeLessThan(3)
+      expect(layout.overflow).toBe(false)
+      if(width>=1200)expect(layout.friends).toBeGreaterThan(layout.feed)
+      await expect(page.locator('main')).toHaveCount(1)
+    }
+  }
+})

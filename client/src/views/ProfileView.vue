@@ -148,14 +148,14 @@ async function save() {
     </div>
 
     <form v-else-if="userId" class="profile-form" :aria-busy="saving" @submit.prevent="save">
-      <div v-if="success" class="alert alert-success" role="status">{{ success }}</div>
-      <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
+      <div v-dismissible v-if="success" class="alert alert-success" role="status">{{ success }}</div>
+      <div v-dismissible v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
 
       <section class="profile-section" aria-labelledby="dino-heading">
         <h2 id="dino-heading" class="profile-section-title">Pick your dino</h2>
         <p class="profile-help">Your mascot shows next to your name. Change it any time.</p>
         <DinoPicker :model-value="dino" :disabled="dinoSaving" @update:model-value="chooseDino" />
-        <p v-if="dinoError" class="text-danger mt-2 mb-0" role="alert">{{ dinoError }}</p>
+        <p v-dismissible v-if="dinoError" class="text-danger mt-2 mb-0" role="alert">{{ dinoError }}</p>
       </section>
 
       <fieldset class="profile-section" :disabled="saving" aria-describedby="profile-details-help">
@@ -178,7 +178,7 @@ async function save() {
           </div>
           <div v-if="usernameAvailable" id="username-help" class="form-text">Choose a unique username for people to find you by. Use 3–20 letters, numbers or underscores</div>
           <div v-else id="username-help" class="form-text">Username setup is coming soon. You can still edit your other profile details.</div>
-          <p v-if="usernameError" id="username-error" class="text-danger mb-0" role="alert">{{ usernameError }}</p>
+          <p v-dismissible v-if="usernameError" id="username-error" class="text-danger mb-0" role="alert">{{ usernameError }}</p>
         </div>
 
         <div class="col-12 col-xl-4">
@@ -213,7 +213,7 @@ async function save() {
       </div>
     </form>
 
-    <div v-else class="profile-unavailable alert alert-warning" :role="USING_SUPABASE ? 'alert' : 'status'">
+    <div v-dismissible v-else class="profile-unavailable alert alert-warning" :role="USING_SUPABASE ? 'alert' : 'status'">
       <p>{{ error }}</p>
       <button v-if="USING_SUPABASE" type="button" class="btn btn-outline-secondary" @click="loadProfile">Retry profile</button>
       <RouterLink v-else to="/discover" class="btn btn-outline-secondary">Explore demo events</RouterLink>

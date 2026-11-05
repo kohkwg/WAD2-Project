@@ -118,7 +118,7 @@ function resetDemo() {
       <div v-if="USING_SUPABASE && hasSession" class="sidebar-account">
         <RouterLink to="/profile" class="nav-profile" aria-label="Your profile"><span class="nav-avatar" aria-hidden="true"><img v-if="userDino" class="nav-avatar-dino" :src="userDino.src" alt="">{{ userDino ? '' : accountName.charAt(0).toUpperCase() }}</span><span class="sidebar-profile-copy"><strong>Profile</strong><span class="nav-account-name">{{ accountName }}</span></span></RouterLink>
         <button class="nav-quiet sidebar-sign-out" type="button" :disabled="signingOut" :data-label="signingOut ? 'Signing out…' : 'Sign out'" @click="logOut"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.signOut" /></svg><span class="side-label">{{ signingOut ? 'Signing out…' : 'Sign out' }}</span></button>
-        <p v-if="authError" class="nav-auth-error" role="alert">{{ authError }}</p>
+        <p v-dismissible v-if="authError" class="nav-auth-error" role="alert">{{ authError }}</p>
       </div>
       <!-- Demo mode has no profile page, but still says whose data is on screen. -->
       <div v-else-if="!USING_SUPABASE && user" class="sidebar-account">

@@ -124,14 +124,14 @@ async function submit() {
           </div>
 
           <!-- Validation errors only appear after the first submit attempt (triedSubmit) -->
-          <div v-if="triedSubmit && formErrors.length > 0" class="alert alert-danger">
+          <div v-dismissible v-if="triedSubmit && formErrors.length > 0" class="alert alert-danger">
             <ul class="mb-0">
               <li v-for="error in formErrors" :key="error">{{ error }}</li>
             </ul>
           </div>
-          <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div v-dismissible v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
           <!-- Shown after sign-up: tells them to check their email for the confirmation link -->
-          <div v-if="infoMessage" class="alert alert-success">{{ infoMessage }}</div>
+          <div v-dismissible v-if="infoMessage" class="alert alert-success">{{ infoMessage }}</div>
 
           <!-- Disabled while loading; label changes with the mode -->
           <button type="submit" class="btn btn-primary w-100" :disabled="loading">

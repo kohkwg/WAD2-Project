@@ -94,7 +94,7 @@ onUnmounted(() => clearInterval(timer))
   <div class="container py-4 venue-qr-page text-center">
     <RouterLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block text-start mb-3">&larr; Manage event</RouterLink>
 
-    <div v-if="error && !secret" class="alert alert-danger" role="alert">{{ error }}</div>
+    <div v-dismissible v-if="error && !secret" class="alert alert-danger" role="alert">{{ error }}</div>
 
     <template v-else-if="secret">
       <span class="ticket-kicker">Entrance display</span><h1 class="h3 mb-1">{{ event?.title }}</h1>
@@ -118,7 +118,7 @@ onUnmounted(() => clearInterval(timer))
         </div>
       </div>
 
-      <div v-if="error" class="alert alert-warning mt-3 small">Couldn't refresh the code: {{ error }}</div>
+      <div v-dismissible v-if="error" class="alert alert-warning mt-3 small">Couldn't refresh the code: {{ error }}</div>
       <p class="small text-body-secondary mt-3">
         No phone? Staff can scan your ticket at the check-in desk.
       </p>

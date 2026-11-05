@@ -102,7 +102,7 @@ function signedIn() {
         <strong>Demo mode.</strong> You’re signed in as the sample account {{ name }}. Everything is stored in this browser only;
         use <em>Reset demo data</em> in the top bar to start over.
       </p>
-      <p v-if="loadError" class="alert alert-warning">Some of your details couldn’t load: {{ loadError }}</p>
+      <p v-dismissible v-if="loadError" class="alert alert-warning">Some of your details couldn’t load: {{ loadError }}</p>
 
       <dl class="account-stats stagger-in">
         <div><dt>Going</dt><dd><CountUp :value="going.length" /></dd></div>

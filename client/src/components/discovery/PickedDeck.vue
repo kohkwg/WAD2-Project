@@ -103,7 +103,7 @@ function key(event) {
     </div>
 
     <div v-if="loading" class="deck-message" role="status">Finding your picks…</div>
-    <div v-else-if="error" class="deck-message" role="status">{{ error }} <button type="button" class="deck-link" @click="emit('retry')">Try again</button></div>
+    <div v-dismissible v-else-if="error" class="deck-message" role="status">{{ error }} <button type="button" class="deck-link" @click="emit('retry')">Try again</button></div>
     <div v-else-if="!events.length" class="deck-message">
       No picks yet. <RouterLink v-if="personalized" to="/profile">Add your interests</RouterLink><template v-else>Check back for upcoming events</template>.
     </div>

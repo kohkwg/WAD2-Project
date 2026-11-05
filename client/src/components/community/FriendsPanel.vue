@@ -96,16 +96,16 @@ const respond = (person, accept) => mutate(person.id, () => friends.respondToReq
     <p v-if="!friends.USING_SUPABASE" class="friends-demo">Friends work in the live app once you’re signed in.</p>
     <template v-else>
       <p v-if="loading" role="status">Loading friends…</p>
-      <div v-if="error" class="alert alert-warning" role="alert">{{ error }} <button class="btn btn-outline-secondary" type="button" :disabled="loading || Boolean(busy)" @click="refresh">Retry friends</button></div>
-      <p v-if="actionError" class="alert alert-danger" role="alert">{{ actionError }} Try the same action again.</p>
-      <p v-if="message" ref="feedback" class="alert alert-success" role="status" tabindex="-1">{{ message }}</p>
+      <div v-dismissible v-if="error" class="alert alert-warning" role="alert">{{ error }} <button class="btn btn-outline-secondary" type="button" :disabled="loading || Boolean(busy)" @click="refresh">Retry friends</button></div>
+      <p v-dismissible v-if="actionError" class="alert alert-danger" role="alert">{{ actionError }} Try the same action again.</p>
+      <p v-dismissible v-if="message" ref="feedback" class="alert alert-success" role="status" tabindex="-1">{{ message }}</p>
       <template v-if="loaded">
         <form class="friend-section" @submit.prevent="search">
           <h3>Find people</h3>
           <label class="form-label" for="friend-search">Username</label>
           <p id="friend-search-hint" class="form-text">Enter at least 3 characters from the start of their username.</p>
           <div class="friend-form-row"><input id="friend-search" v-model="query" class="form-control" maxlength="21" autocomplete="off" autocapitalize="none" :spellcheck="false" aria-describedby="friend-search-hint" :disabled="Boolean(busy)"><button class="btn btn-primary" type="submit" :disabled="searching || Boolean(busy)">{{ searching ? 'Searching…' : 'Find people' }}</button></div>
-          <p v-if="searchError" class="text-danger mt-2" role="alert">{{ searchError }}</p>
+          <p v-dismissible v-if="searchError" class="text-danger mt-2" role="alert">{{ searchError }}</p>
           <p v-if="searched && !results.length" class="text-body-secondary mt-2" role="status">No usernames found. Check the spelling or ask them to set a username in Profile.</p>
           <ul v-if="results.length" class="friend-list mt-3"><li v-for="person in results" :key="person.id"><div><strong>{{ person.displayName || person.username }}</strong><span class="d-block text-body-secondary">@{{ person.username }}</span></div><button class="btn btn-outline-primary" type="button" :disabled="Boolean(busy) || relationship(person) !== 'none'" :aria-label="`${stateLabel(person)} @${person.username}`" @click="send(person)">{{ stateLabel(person) }}</button></li></ul>
         </form>
