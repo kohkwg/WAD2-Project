@@ -9,6 +9,44 @@ the [README](../README.md#credits-and-licences). Original supplied material stay
 
 ## Decision log, newest first
 
+5 November 2026 — Denzel, Discover map shows location only: choosing an event (its card or its
+pin) no longer opens a pop-up card on the map. The map highlights the pin and zooms to the
+event's general area (street level), and the event's **View event** and **RSVP** buttons move
+inside its card in the list. Phones, where the Map view hides the list, show the chosen card
+under the map. This replaces the map preview card (and its cluster list) on Discover.
+
+5 November 2026 — Gregory, Plans and Organise, slim page headers and the Discover bookmark:
+"My RSVPs" is renamed **Plans** and "My Events" **Organise** in the sidebar, phone tab bar, page
+titles, headings, back links and the sentences that name those pages; the URLs stay `/my-rsvps`
+and `/organiser/events`. Organise uses British spelling to match "organiser". This replaces the
+same-day "My Events" exception to sentence case. Organise, Plans and Go together use a slim
+header: a small star, the title and the main button on one row, with the page's own controls in
+the same card (Organise: search, the section tabs carrying the counts, and pending requests;
+Plans: the tabs and Refresh; Go together: a "How Go together works" explainer that is open on a
+first visit and stays folded once closed). Go together's filters stay beside the feed they
+filter. On Discover, Gregory withdrew his own expanding card (RSVP and Save) in favour of
+Aishani's day cards; Denzel's entry above then put View event and RSVP in the chosen card. The
+bookmark's "Save event" tooltip is
+gone; hovering or focusing the bookmark slides out a "Save" / "Saved" pill instead. The soft
+dark-mode tokens, Discover row spacing and attached Sort by drop-down in the earlier 5 November
+entry were dropped by the 13:33 merge of `vivi` into `dev` and are not in the code; restoring
+them is undecided. Denzel (Organise, Manage event), Huxley (check-in, shared UI), Aishani
+(Discover) and Vivienne (shared stylesheet) should look over the changes in their areas.
+
+5 November 2026 — the user, venue to be announced or revealed later: organisers no longer have to
+choose a venue to create a physical event. Left blank, the event shows "Venue to be announced" and
+the venue can be added later in Manage event → Edit event; the rain plan is set up once there is a
+venue. A chosen venue can instead be kept hidden until a set date and time, no later than the
+start (suggested: a day before). Before then nobody but the event's organisers sees the name,
+address or map, only "Venue revealed on …"; afterwards it is an ordinary venue for everyone (the
+user chose "everyone", not confirmed attendees only). Announcements of edits never name a hidden
+venue. Go together waits while a venue is hidden; events with no venue at all keep allowing
+groups as before, because older hosted events and the group checks rely on that. Live mode needs
+migration `20261105150000_venue_to_be_announced.sql`: the hidden venue waits in an
+organisers-only table, because `venues` is publicly readable, and a once-a-minute job (also called
+by the event page at the reveal time) turns it into ordinary venue rows. Applied to Bookerz on
+5 November at the user's request ("i want to migrate to the db"), after a dry run.
+
 5 November 2026 — Denzel, sidebar collapsed by default: from 992px (Bootstrap lg, xl and xxl)
 the sidebar starts as the 76px icon rail and expands only when someone uses its toggle. Denzel
 chose to keep remembering that choice per browser, so someone who prefers the full sidebar keeps

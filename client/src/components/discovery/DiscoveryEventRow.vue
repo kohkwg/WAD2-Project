@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import EventArtwork from '../EventArtwork.vue'
 import EventBookmark from '../EventBookmark.vue'
+import EventCardActions from '../EventCardActions.vue'
 
 const props = defineProps({
   event: { type: Object, required: true },
@@ -67,12 +68,16 @@ function selectFromRow(clickEvent) {
       <!-- Time and spots on one line; the venue, often long, gets its own line below -->
       <p class="row-facts" :title="factsText"><time :datetime="event.start_time">{{ time }}</time><template v-if="places"> · {{ places }}</template></p>
       <p class="row-facts row-venue" :title="venue">{{ venue }}</p>
-      <p v-if="selected" class="row-selected-info reveal-down"><span v-if="selectedNote">{{ selectedNote }}</span><RouterLink :to="`/events/${event.id}/rsvp`" class="row-view">View event ›</RouterLink></p>
-      <p v-else-if="statusNote" class="row-going" :class="`row-going--${status}`">{{ statusNote }}</p>
-      <p v-else-if="match" class="row-reason">{{ match }}</p>
+      <p v-if="!selected && statusNote" class="row-going" :class="`row-going--${status}`">{{ statusNote }}</p>
+      <p v-else-if="!selected && match" class="row-reason">{{ match }}</p>
     </div>
     <div class="row-actions">
       <EventBookmark v-if="bookmarkEnabled" :saved="Boolean(event.saved)" :pending="preferencePending" :event-title="event.title" @toggle="emit('preference', {event, action: event.saved ? 'unsave' : 'save'})" />
+    </div>
+    <!-- The clicked card opens up with its next steps; the map only shows where it is -->
+    <div v-if="selected" class="row-selected reveal-down">
+      <p v-if="selectedNote" class="row-selected-note">{{ selectedNote }}</p>
+      <EventCardActions :event="event" />
     </div>
   </article>
 </template>
@@ -95,8 +100,10 @@ h3 { margin: 0; font-family: var(--bookedz-body); font-size: 15px; font-weight: 
 /* The clicked row shows its full title and venue */
 .is-selected .row-title-line { flex-wrap: wrap; }
 .is-selected .row-title,.is-selected .row-facts { white-space: normal; overflow-wrap: anywhere; }
-.row-selected-info { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 6px 0 0; font-size: 12px; color: var(--bookedz-primary-dark); }
-.row-view { margin-left: auto; padding-inline-start: 8px; font-weight: 700; color: var(--bookedz-primary-dark); text-decoration: none; }
+.row-selected { grid-column: 1 / -1; display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--bookedz-border); cursor: auto; }
+.row-selected-note { margin: 0; color: var(--bookedz-primary-dark); font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.row-selected :deep(.card-actions) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.row-selected :deep(.card-action),.row-selected :deep(.registration-status) { justify-content: center; min-height: 44px; border-radius: 10px; }
 .row-facts { color: var(--bookedz-muted); }
 .row-venue { margin-top: 1px; }
 .row-reason { color: var(--bookedz-primary-dark); }
@@ -106,7 +113,7 @@ h3 { margin: 0; font-family: var(--bookedz-body); font-size: 15px; font-weight: 
 .row-actions { display: flex; align-items: center; gap: 4px; }
 .row-actions :deep(.card-action--view) { display: none; }
 .row-actions :deep(.card-action--rsvp),.row-actions :deep(.registration-status) { max-width: 108px; padding: 8px 10px; min-height: 44px; font-size: 12px; }
-.row-actions :deep(.event-bookmark) { position: static; flex-shrink: 0; }
+.row-actions :deep(.event-bookmark) { position: relative; inset: auto; flex-shrink: 0; }
 @media(max-width:1199px) and (min-width:992px) { .discovery-event-row { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }.row-cover { width: 48px; height: 56px; }.row-actions { grid-column: 2; justify-content: flex-end; } }
 @media(max-width:575px) { .discovery-event-row { grid-template-columns: 48px minmax(0,1fr); gap: 8px; }.row-cover { width: 48px; height: 56px; }.row-actions { grid-column: 2; justify-content: flex-end; } }
 @media(pointer:coarse) { .row-title { min-height: 44px; } .row-details { min-height: 84px; } }

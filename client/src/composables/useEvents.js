@@ -4,8 +4,10 @@ import { api } from '@/lib/api'
 import { USING_SUPABASE, getEvents } from '@/utils/api'
 import { demoDiscoveryEvents } from '@/lib/discoveryState'
 
-// Same label as ONLINE_VENUE_NAME in utils/onlineEvents.js (kept inline: tests load this file's source)
+// Same labels as ONLINE_VENUE_NAME in utils/onlineEvents.js and VENUE_TBA_NAME in utils/venueReveal.js
+// (kept inline: tests load this file's source)
 const ONLINE_VENUE_NAME = 'Online'
+const VENUE_TBA_NAME = 'Venue to be announced'
 
 const PAGE_SIZE = 12
 
@@ -59,7 +61,7 @@ async function withEventDetails(rows, includeAttendees = true) {
   const venueDetails = new Map((venues.data || []).map(v => [v.id, v]))
   const statuses = new Map((registrations.data || []).map(r => [r.event_id, r.status]))
   return rows.map(e => ({
-    ...e, saved: savedIds.has(e.id), venue_name: venueDetails.get(activeVenueId(e))?.name || e.venue_name || (e.is_online ? ONLINE_VENUE_NAME : ''),
+    ...e, saved: savedIds.has(e.id), venue_name: venueDetails.get(activeVenueId(e))?.name || e.venue_name || (e.is_online ? ONLINE_VENUE_NAME : activeVenueId(e) ? '' : VENUE_TBA_NAME),
     venue_address: venueDetails.get(activeVenueId(e))?.address || e.venue_address || '',
     lat: venueDetails.get(activeVenueId(e))?.latitude ?? (e.using_backup ? null : e.lat),
     lng: venueDetails.get(activeVenueId(e))?.longitude ?? (e.using_backup ? null : e.lng),

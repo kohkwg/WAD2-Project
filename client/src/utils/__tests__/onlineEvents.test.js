@@ -41,8 +41,8 @@ test('an online event needs no venue; a link needs a time before the event ends'
   expect(errorsForStep(link('zoom.us/j/1', '2026-11-10T18:45'), 2, { now })[0]).toContain('https://')
   expect(errorsForStep(link('https://zoom.us/j/1', ''), 2, { now })).toContain('Choose when the online link appears to confirmed attendees.')
   expect(errorsForStep(link('https://zoom.us/j/1', '2026-11-10T21:30'), 2, { now })).toContain('The online link has to appear before the event ends.')
-  // A physical event still needs its venue
-  expect(errorsForStep(valid(), 2, { now })).toContain('Choose the venue from the address search.')
+  // A physical event may leave its venue to be announced (5 November, venueReveal.js)
+  expect(errorsForStep(valid(), 2, { now })).toEqual([])
   expect(onlineLinkErrors({ url: '  ', revealAt: '' }, '2026-11-10T21:00')).toEqual([])
 })
 

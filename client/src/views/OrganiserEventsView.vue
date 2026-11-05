@@ -50,7 +50,7 @@ async function loadEvents() {
   now.value = Date.now()
   errorMessage.value = ''
   try {
-    // My Events lists official events; Go together groups are managed from Community
+    // Organise lists official events; Go together groups are managed from Community
     const rows = (await getOrganiserEvents()).filter(isOfficialEvent)
     if (mounted && request === requestId) events.value = rows
   } catch (error) {
@@ -132,7 +132,15 @@ async function removeEvent(eventId) {
 
 <template>
   <div class="organiser-events-page">
-    <header class="organiser-heading"><div><p class="organiser-kicker">Your hosting space</p><h1 class="page-title">My Events</h1><p>{{ loading ? 'Your gatherings, all in one place.' : `${counts.all} events · ${counts.upcoming} upcoming · ${counts.drafts} drafts` }}</p></div><RouterLink to="/organiser/events/new" class="btn btn-primary">＋ Create event</RouterLink></header>
+    <!-- One slim header: title and Create, then search and the section tabs (which carry the counts), then pending requests when there are any -->
+    <header class="organiser-heading smart-head">
+      <div class="smart-head-top"><div class="smart-head-title"><span class="smart-head-star" aria-hidden="true">★</span><h1 class="page-title">Organise</h1></div><RouterLink to="/organiser/events/new" class="btn btn-primary">＋ Create event</RouterLink></div>
+      <div class="events-controls">
+        <label class="event-search"><span class="visually-hidden">Search your events</span><input v-model="search" type="search" placeholder="Search your events" /></label>
+        <div class="event-tabs" role="tablist" aria-label="Organiser event sections"><button v-for="(tab, index) in tabs" :id="`organiser-tab-${tab.id}`" :key="tab.id" role="tab" type="button" :aria-selected="activeTab === tab.id" aria-controls="organiser-events-panel" :tabindex="activeTab === tab.id ? 0 : -1" @click="selectTab(tab.id)" @keydown="moveTab($event, index)">{{ tab.label }} <span v-if="!loading">{{ counts[tab.id] }}</span></button></div>
+      </div>
+      <aside v-if="!loading && pendingCount > 0" class="pending-summary" aria-label="Pending RSVP requests"><p><span aria-hidden="true">!</span><strong>{{ pendingCount }}</strong> {{ pendingCount === 1 ? 'RSVP is' : 'RSVPs are' }} waiting for your approval across {{ pendingEvents.length }} {{ pendingEvents.length === 1 ? 'event' : 'events' }}.</p><button type="button" class="btn btn-primary" @click="reviewAll">Review all requests</button></aside>
+    </header>
     <div v-dismissible v-if="justCreatedId" class="alert alert-success" role="status">Event published. Participants can now find it and RSVP.</div>
     <div v-dismissible v-if="justUpdatedId" class="alert alert-success" role="status">Changes saved. {{ route.query.announced ? 'An announcement about them is now on the event page.' : 'No announcement was posted.' }}</div>
     <div v-dismissible v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success" role="status">{{ statusMessage }}</div>
@@ -140,11 +148,6 @@ async function removeEvent(eventId) {
     <EventTeamPanel class="mb-4" compact @responded="teamResponded" />
     <SkeletonList v-if="loading" variant="card" :count="3" label="Loading your events…" />
     <template v-else>
-      <aside v-if="pendingCount > 0" class="pending-summary" aria-label="Pending RSVP requests"><p><span aria-hidden="true">!</span><strong>{{ pendingCount }}</strong> {{ pendingCount === 1 ? 'RSVP is' : 'RSVPs are' }} waiting for your approval across {{ pendingEvents.length }} {{ pendingEvents.length === 1 ? 'event' : 'events' }}.</p><button type="button" class="btn btn-primary" @click="reviewAll">Review all requests</button></aside>
-      <div class="events-controls">
-        <label class="event-search"><span class="visually-hidden">Search your events</span><input v-model="search" type="search" placeholder="Search your events" /></label>
-        <div class="event-tabs" role="tablist" aria-label="Organiser event sections"><button v-for="(tab, index) in tabs" :id="`organiser-tab-${tab.id}`" :key="tab.id" role="tab" type="button" :aria-selected="activeTab === tab.id" aria-controls="organiser-events-panel" :tabindex="activeTab === tab.id ? 0 : -1" @click="selectTab(tab.id)" @keydown="moveTab($event, index)">{{ tab.label }} <span>{{ counts[tab.id] }}</span></button></div>
-      </div>
       <div v-if="pendingOnly" class="request-filter">Showing events with pending requests. <button type="button" @click="pendingOnly = false">Show all {{ activeTab }} events</button></div>
       <section id="organiser-events-panel" :key="activeTab" role="tabpanel" :aria-labelledby="`organiser-tab-${activeTab}`" tabindex="0">
         <h2 ref="resultsHeading" tabindex="-1" class="events-section-title section-title">{{ sectionTitle }} <span>{{ visibleEvents.length }} {{ visibleEvents.length === 1 ? 'event' : 'events' }}</span></h2>

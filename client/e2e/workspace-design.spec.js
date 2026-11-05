@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/two-hr-forecast*', route => route.abort())
 })
 
-test('public layout prioritises event facts and My RSVPs stays responsive', async ({ page }, testInfo) => {
+test('public layout prioritises event facts and Plans stays responsive', async ({ page }, testInfo) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   for (const width of [1280, 375]) {

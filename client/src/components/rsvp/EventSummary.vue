@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, useId, watch } from 'vue'
 import { formatEventTime, formatAddress } from '../../utils/helpers.js'
+import { isStillHidden, venuePendingText } from '../../utils/venueReveal.js'
 import EventArtwork from '../EventArtwork.vue'
 import BumpValue from '../ui/BumpValue.vue'
 
@@ -23,6 +24,15 @@ watch(() => props.event?.id, () => { showFullDescription.value = false })
 const SHORT_LENGTH = 160
 // Participants of a hidden-capacity event get no numbers (capacity null), only whether it's full
 const hiddenAndFull = computed(() => Boolean(props.event?.hideCapacity) && props.event?.capacity == null && props.event?.spotsLeft === 0)
+
+// A venue hidden from participants, as its organisers see it: on the event page (hiddenVenue)
+// or in Create Event's review (the form's venue with a reveal time still to come)
+const hiddenFromPublic = computed(() => {
+  const event = props.event
+  if (event?.hiddenVenue?.venue) return { venue: event.hiddenVenue.venue, when: venuePendingText(event).replace('Venue revealed on ', '') }
+  if (!event?.venuePending && event?.venue && isStillHidden(event.venueRevealAt)) return { venue: event.venue, when: venuePendingText(event).replace('Venue revealed on ', '') }
+  return null
+})
 
 const isLong = computed(() => (props.event.description || '').length > SHORT_LENGTH)
 const descriptionToShow = computed(() => {
@@ -50,10 +60,22 @@ const descriptionToShow = computed(() => {
         <template v-if="event.isOnline">
           <p class="venue-name"><span aria-hidden="true">⌖</span> Online</p>
           <p class="venue-address">The link is shared with confirmed attendees</p>
+        </div>
+      </slot>
+      <div v-else class="event-venue">
+        <span class="venue-label">Where</span>
+        <template v-if="hiddenFromPublic">
+          <p class="venue-name"><span aria-hidden="true">⌖</span> {{ hiddenFromPublic.venue.name }}</p>
+          <p class="venue-address">{{ formatAddress(hiddenFromPublic.venue.address) }}</p>
+          <p class="venue-hidden-note">Hidden from participants until {{ hiddenFromPublic.when }}. They see only when it will be revealed.</p>
+        </template>
+        <template v-else-if="event.venuePending || !event.venue">
+          <p class="venue-name"><span aria-hidden="true">⌖</span> {{ venuePendingText(event) }}</p>
+          <p class="venue-address">{{ event.venueRevealAt ? 'The name and address appear here then.' : 'The organiser will add it here.' }}</p>
         </template>
         <template v-else>
-          <p class="venue-name"><span aria-hidden="true">⌖</span> {{ event.venue ? event.venue.name : 'not set yet' }}</p>
-          <p v-if="event.venue" class="venue-address">{{ formatAddress(event.venue.address) }}</p>
+          <p class="venue-name"><span aria-hidden="true">⌖</span> {{ event.venue.name }}</p>
+          <p class="venue-address">{{ formatAddress(event.venue.address) }}</p>
         </template>
       </div>
 
@@ -124,6 +146,7 @@ const descriptionToShow = computed(() => {
 .venue-name { margin: .15rem 0 0; color: var(--bookedz-ink); font-weight: 750; }
 .venue-name span { color: var(--bookedz-primary-dark); }
 .venue-address { margin: .15rem 0 0; color: var(--bookedz-muted); font-size: .9rem; }
+.venue-hidden-note { margin: .35rem 0 0; color: var(--bookedz-ink-soft); font-size: .85rem; font-weight: 600; }
 .event-facts { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0 0 .9rem; }
 .event-fact { display: flex; align-items: center; gap: .55rem; min-width: 112px; padding: .55rem .7rem; border: 1px solid var(--bookedz-border); border-radius: 13px; }
 .fact-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; color: var(--bookedz-forest); background: var(--bookedz-mint); font-size: 1.15rem; }

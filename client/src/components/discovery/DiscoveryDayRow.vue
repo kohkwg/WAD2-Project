@@ -1,8 +1,8 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import DiscoveryEventRow from './DiscoveryEventRow.vue'
-// Show each day's events in a scrollable row.
-// "See more" expands them into a grid.
+// Show the first two events of each day.
+// "See more" reveals the rest.
 const props = defineProps({
   group: { type: Object, required: true },
   recommendationById: { type: Object, required: true },
@@ -12,7 +12,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['select', 'preference'])
 const expanded = ref(false)
-const rowRoot = ref(null)
+const PREVIEW_COUNT = 2
 const ariaLabel = computed(() => {
   return `${props.group.label}, ${props.group.weekday} ${props.group.year}`
 })
@@ -23,6 +23,9 @@ const dateLabel = computed(() => {
 const countLabel = computed(() => {
   const count = props.group.events.length
   return `${count} ${count === 1 ? 'event' : 'events'}`
+})
+const visibleEvents = computed(() => {
+  return expanded.value ? props.group.events : props.group.events.slice(0, PREVIEW_COUNT)
 })
 // Arrow when closed, cross when open.
 const moreIconPath = computed(() => {
@@ -37,30 +40,14 @@ function onSelect(...args) {
 function onPreference(payload) {
   emit('preference', payload)
 }
-// Scroll to the selected event's card.
-function scrollToCard(id) {
-  const card = rowRoot.value?.querySelector(`[data-event-id="${id}"]`)
-
-  if (!card) {
-    return
-  }
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  card.scrollIntoView({
-    behavior: reduceMotion ? 'auto' : 'smooth',
-    block: 'nearest',
-    inline: 'nearest',
-  })
-}
-
+// Open the day when the selected event is one of the hidden ones.
 watch(
   () => props.selectedEventId,
-  async (id) => {
-    const inThisDay = props.group.events.some((event) => event.id === id)
-    if (id == null || !inThisDay) {
-      return
+  (id) => {
+    const index = props.group.events.findIndex((event) => event.id === id)
+    if (index >= PREVIEW_COUNT) {
+      expanded.value = true
     }
-    await nextTick()
-    scrollToCard(id)
   },
 )
 </script>
@@ -68,7 +55,6 @@ watch(
 
 <template>
   <section
-    ref="rowRoot"
     class="day-row"
     :class="{ 'is-expanded': expanded }"
     :aria-label="ariaLabel"
@@ -82,7 +68,7 @@ watch(
       <span class="day-line" aria-hidden="true"></span>
       <span class="day-count">{{ countLabel }}</span>
       <button
-        v-if="expanded || group.events.length > 2"
+        v-if="expanded || group.events.length > PREVIEW_COUNT"
         type="button"
         class="day-more"
         :aria-expanded="expanded"
@@ -96,12 +82,10 @@ watch(
     </header>
 
 
-    <!-- Same cards either way: a sideways track, or a grid once expanded -->
-    <div :class="expanded ? 'day-grid' : 'day-track'">
+    <div class="day-grid">
       <DiscoveryEventRow
-        v-for="event in group.events"
+        v-for="event in visibleEvents"
         :key="event.id"
-        :class="{ 'day-card': !expanded }"
         :event="event"
         :recommendation="recommendationById.get(event.id)"
         :selected="selectedEventId === event.id"
@@ -191,32 +175,14 @@ watch(
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-/* Sideways track and expanded grid share the same bleed */
-.day-track,
-.day-grid {
-  padding: 10px 14px 16px 12px;
-  margin: -10px -14px -16px -12px;
-}
-.day-track {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  scroll-padding-inline: 12px;
-  scrollbar-width: none;
-}
-.day-track::-webkit-scrollbar {
-  display: none;
-}
-.day-card {
-  flex: 0 0 calc(50% - 6px);
-  min-width: 250px;
-  scroll-snap-align: start;
-}
+/* Bleed so a hovered card's shadow isn't clipped */
 .day-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 12px;
+  padding: 10px 14px 16px 12px;
+  margin: -10px -14px -16px -12px;
 }
 /* "See more" opens every event of the day as one raised card */
 .is-expanded {
@@ -234,6 +200,11 @@ watch(
   gap: 12px;
   height: 144px;
   box-sizing: border-box;
+}
+/* The selected card grows to show its View event and RSVP buttons */
+.day-row :deep(.discovery-event-row.is-selected) {
+  height: auto;
+  min-height: 144px;
 }
 .day-row :deep(.row-cover) {
   width: 66px;
@@ -255,8 +226,7 @@ watch(
 .day-row :deep(.row-title),
 .day-row :deep(.row-facts),
 .day-row :deep(.row-reason),
-.day-row :deep(.row-going),
-.day-row :deep(.row-selected-info) {
+.day-row :deep(.row-going) {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;

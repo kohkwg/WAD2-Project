@@ -280,9 +280,6 @@ async function cancel(rsvpId) {
       <div v-if="offers.length" class="offers-first stagger-in">
         <OfferBanner v-for="rsvp in offers" :key="rsvp.id" :rsvp="rsvp" :now="now" :busy="busyId !== null" @confirm="confirmOffer" @decline="declineOffer" />
       </div>
-      <div class="rsvp-tabs" role="tablist" aria-label="Your events">
-        <button v-for="(tab, index) in tabs" :id="`tab-${tab.id}`" :key="tab.id" role="tab" type="button" :aria-selected="activeTab === tab.id" :aria-controls="`panel-${tab.id}`" :tabindex="activeTab === tab.id ? 0 : -1" @click="activeTab = tab.id" @keydown="moveTab($event, index)">{{ tab.label }} <span>{{ tab.count }}</span></button>
-      </div>
       <section v-for="tab in tabs" v-show="activeTab === tab.id" :id="`panel-${tab.id}`" :key="tab.id" role="tabpanel" :aria-labelledby="`tab-${tab.id}`" tabindex="0" class="rsvp-panel stagger-in">
         <template v-if="tab.id === 'saved'">
           <div v-if="savedError" class="alert alert-danger" role="alert">{{ savedError }} <button type="button" class="btn btn-outline-secondary" :disabled="busyId !== null" @click="refreshRsvps">Retry saved events</button></div>

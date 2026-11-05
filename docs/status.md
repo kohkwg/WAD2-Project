@@ -38,6 +38,61 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — Discover map shows location only
+
+Choosing an event no longer opens a pop-up on the map. The pin is highlighted (orange halo,
+other pins at 55% opacity), the map centres on it at street level, and View event and RSVP (or
+the RSVP status) sit inside the chosen card, which grows to fit them; on phones the card also
+shows under the map. A cluster zooms in until its pins separate. Escape on the map clears the
+choice, and a polite live region announces the event shown.
+
+Evidence, headless Chromium on an owned demo server (5196): at 1280 and 1100px a clicked card
+shows View event and Join waitlist, the map has no pop-up or tooltip, the selected pin is
+centred (within 1px) with others dimmed, Escape clears it, and clicking a pin selects its card;
+at 375 and 768px the Map view shows the chosen card under the map with View event and RSVP, with
+no sideways scroll; no page errors. In the four specs whose map steps changed, the updated
+steps pass where they run (`discover-browse` pin-to-card case, `immersive-discovery`,
+`discovery-list-palette` up to its retired "All categories" heading); the other twelve failing
+cases stop earlier or later at retired features (desktop Map button, category directory,
+`.map-surface`, the theme drop-down), so the `redesign.spec.js` map step is not exercised. No
+full suite, build, commit or push.
+
+### 5 November — Plans and Organise, slim headers, Discover bookmark (`gregory`)
+
+- **Brought `dev` in without a commit:** 
+  fast-forwarded to `dev` `2460de7` and the uncommitted work was re-applied on top. Seven files
+  conflicted and were combined: `NavBar.vue` and `DiscoverView.vue` (dev's reformatted files with
+  the new names), `DiscoveryEventRow.vue` and `DiscoveryDayRow.vue` (Aishani's cards),
+  `CommunityView.vue` (dev's Friends sidebar layout with the slim header),
+  `saved-events.spec.js`, and this file (dev's version). A second merge then brought in `dev`
+  `92ebaf8`: Vivienne's `AccountDashboard.vue` and Manage event's embedded guest list, with the
+  new names, and her ★ in the Plans header. A third brought in Denzel's Discover map change
+  (`bfefd6e`); only the docs clashed, and both entries are kept.
+- **Names:** Plans and Organise in the sidebar and its tooltips, the phone tab bar, router titles,
+  headings, back links (ticket, check-in, create, manage, RSVP list) and the sentences in
+  `RsvpView`, `LandingView`, `DeleteAccount`, `EventTeamPanel`, `OfferBanner` and Discover's Saved
+  empty state. Ten e2e specs updated; loose "Plans" heading checks are now exact, because "All
+  upcoming plans" would also match.
+- **Slim headers** (`.smart-head` in `design-baseline.css`): Organise moves search, the tabs and
+  the pending-requests strip into the header and drops its count line; Plans moves the tabs and
+  Refresh into it; Go together folds its explainer into a remembered `<details>`
+  (`bookedz-go-together-intro`). At 1280px, content starts about 200px higher on Organise and
+  230px on Plans. Also removed a stray `:root[data-theme="dark"]` fragment that made Plans' tab
+  pills dark-mode only.
+- **Discover bookmark:** removed the "Save event" tooltip and its stylesheet rules, which had
+  pushed the button 12px down and left; on desktop cards it now sits centred on the right. Hover
+  or keyboard focus slides out a "Save" / "Saved" pill (no slide with reduced motion; no hover
+  state on touch). The Saved cards on Plans share it.
+- **Checks** on an owned demo server (5195; 5173 was in use): Discover, Plans, Organise, Go
+  together, the landing page and Manage RSVPs at 375 and 1280px in both themes loaded with one
+  `main`, no overflow and no console errors. After Denzel's change the bookmark still measures
+  centred on the 144px cards (50px above and below); in the chosen card (184px) it sits top-right
+  beside the title, above View event and RSVP. The pill stays inside the card in both themes.
+  `saved-events` passed 4/4 before the merge; the e2e run after the merge was stopped and is
+  unverified.
+- **Not done:** the soft dark-mode tokens are not restored; full suites, a production build, live
+  and real-device checks.
+
 ### 5 November — navbar cleanup merge repair
 
 Combined Aishani's formatted navbar and comments with dev's collapsed-by-default
@@ -113,6 +168,76 @@ the four `saved-events.spec.js` cases and all eight `my-rsvps.spec.js` cases pas
 server; screenshots checked in both themes at 375 and 1280px. The live Saved chip query was exercised
 only through a mocked Supabase client, not against Bookerz. No commit, push or hosted changes.
 
+### 5 November — venue to be announced, or hidden until a set time
+
+- **Create Event / Edit event:** the Venue step's venue is optional ("optional for now"). With no
+  venue the event shows "Venue to be announced"; the outdoor switch and backup venue appear once a
+  venue is chosen. A chosen venue can be kept hidden with "Keep the venue hidden until a set time"
+  and a "Reveal the venue on" time (suggested a day before the start, moved with the start, no
+  later than it; a time already passed shows the venue straight away). Review and preview say which.
+- **Event page:** participants see "Venue revealed on …" (or "Venue to be announced"), no map,
+  directions, weather or Go together; an open page asks for the release at the reveal time and
+  shows the venue without a reload. The organiser sees the hidden venue with "Hidden from
+  participants until …", also in the workspace overview; the Weather tab explains why there is no
+  forecast yet. Edit announcements never name a hidden venue ("The venue will be revealed on …",
+  then "Venue revealed: <name>").
+- **Data:** `utils/venueReveal.js` holds the shared rules. Both backends return `venuePending`,
+  `venueRevealAt` and, for the event's organisers, `hiddenVenue`. Demo: events keep `venueRevealAt`
+  (null on older data, upgraded on load) and hidden venues live in `hiddenVenues`, released when
+  data loads. Live: migration `20261105150000_venue_to_be_announced.sql` adds
+  `events.venue_reveal_at`, the organisers-only `event_hidden_venues` table with its checks and
+  guards, `release_due_event_venues()` (cron every minute, callable by the app),
+  `create_event_with_details` with an optional venue and `venueRevealAt`, `create_group`
+  refusing hidden venues (the hosted 20261105074842 definition plus that check), and
+  `events_with_counts` with `venue_reveal_at`.
+- **Applied to Bookerz** at the user's request: `migration list` and a dry run first (only
+  `20261105150000` pending; teammates' `20261105074842` and `20261105080535` were already hosted and
+  are now in the repo after fast-forwarding local `dev` to origin/dev with the user's approval,
+  uncommitted work stashed and reapplied, docs conflicts resolved by hand), then `db push`. Hosted
+  history now matches local. Read-only check with the publishable key: `events_with_counts` returns
+  `venue_reveal_at` (96 public events, none hidden, 14 with no venue); `events.venue_reveal_at` is
+  readable; `event_hidden_venues` refuses the public (401, 42501); `release_due_event_venues()`
+  answers 0. The cron job itself wasn't inspected (scheduled by the migration, which ran cleanly).
+  `venueRevealAt` is only sent when a venue is hidden, so the client also works with older RPCs.
+- **Re-added guards:** a teammate merge had dropped the online guards in `CommunityView.vue` and
+  `ManageEventView.vue`; they are back (Start a group leaves out online and hidden-venue events;
+  the workspace skips the weather refresh and address when there is no place).
+- **Checks:** `hidden-venues-db.check.mjs` 16/16 (PGlite, every migration); `online-events-db`
+  8/8 after updating it for the RSVP-first group rule, `groups-db` 15/15 and `community-public-db`
+  4/4. Unit tests: `venueReveal`, `eventForm`, `onlineEvents` and `announcementUpdates` 35/35;
+  `supabaseApi` and `feature4` 27/27 with the temporary loader; organiser-events, Discover and
+  RSVP-overview node tests 28/28 (organiser-events now loads the pure helper modules from their
+  files). `discover-workspace.test.mjs` fails to load `@/lib/eventGroups` from `EventArtwork.vue`
+  under plain Node; untouched by this change. A scratch demo Playwright run (port 5191) passed
+  28/28: create with no venue, hide e1's outdoor venue, refusal after the start with focus, edit
+  reload, organiser and participant views, the reveal at its time without a reload, showing it
+  again, announcement wording, 375px, one `main`, no console errors. The online-card (9/9) and
+  announcement (20/20) runs still pass.
+- Not done: a live `[TEST]` run (needs the migration and a human sign-in), full suites, a build.
+
+### 5 November — announcements refresh for every viewer
+
+- The public feed on the event page (`AnnouncementFeed.vue`) now updates by itself when the
+  organiser posts, edits or deletes. `utils/announcementUpdates.js` (via
+  `api.watchEventAnnouncements`) listens to Supabase Realtime for that event's announcements
+  as a signal only, then re-reads through the usual RLS read; a 20-second poll and tab
+  focus/online/visibility cover dropped connections and deletions. Demo mode reacts to
+  another tab saving the demo data. No migration: `announcements` was already in the
+  `supabase_realtime` publication.
+- Background checks are quiet (no loading text; a failed check keeps the posts shown). New
+  posts get a "New" badge, an "N new" count and a polite screen-reader message; motion is
+  off with reduced motion. Refresh announcements still works.
+- Both the public feed and the organiser's list sort by latest activity (edited or posted).
+  An edit moves the post to the top with a "Recently edited" badge and highlight and an
+  "N edited" count; the "N new"/"N edited" counts sit left of the heading, and posts have
+  even padding so the highlight frames the text.
+- Checks: `announcementUpdates.test.js` 6/6; `feature4.test.js` 18/18 with the temporary
+  loader. A scratch two-tab Playwright run in demo mode passed 20/20: post, edit and delete
+  in Manage event appeared on the other tab's event page in about 0.2 s; badge position,
+  padding, order, edit highlight and screen-reader text; no overflow at 375px; no console errors.
+- Not done: a live Realtime check on Bookerz with signed-in and signed-out viewers (if
+  Realtime doesn't deliver, the poll still updates within 20 s), full suites, a build.
+
 ### 5 November — online events, hidden capacity and the Others tag
 
 - **Create Event:** Basics has an "Others" tag and a "Show the capacity to participants"
@@ -126,6 +251,11 @@ only through a mocked Supabase client, not against Bookerz. No commit, push or h
   panel asks again at that time); others see when it appears. No map, directions or Go
   together for online events. Hidden capacity shows only "Full · waitlist open" to
   participants; "Join waitlist" no longer appears when spots are unknown.
+  Follow-up: the event page shows one card in the "Where" spot (an `online-venue` slot in
+  `EventSummary.vue`). It is yellow "Where · Online" with the link's timing until the viewer
+  can open the link, then the green Online event card with Join online replaces it. Create
+  Event's review keeps the yellow card. A scratch demo check passed 9/9 (not RSVPed, confirmed
+  before and after the reveal, physical event unchanged, 375px, no console errors).
 - **Data:** `utils/onlineEvents.js` holds the shared rules. The demo stores `isOnline` and
   `hideCapacity` on every event (older demo data upgraded on load) and keeps links in
   `onlineLinks`, apart from events. Live: migration `20261105120000_online_events_hidden_capacity`

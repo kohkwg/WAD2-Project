@@ -15,6 +15,7 @@ import { isGroup } from '../utils/groups.js'
 import { isEventFull } from '../utils/onlineEvents.js'
 import {
   getEvent,
+  releaseDueEventVenues,
   getUser,
   getMyRsvps,
   createRsvp,
@@ -86,6 +87,23 @@ watch(eventId, async (id) => {
 }, { immediate: true })
 onBeforeUnmount(() => { loadRequest++ })
 
+// A hidden venue appears at its reveal time without a reload: release it (the database job runs
+// only once a minute), then read the event again. Only for reveals within the next day.
+let revealTimer
+watch(() => [event.value?.id, event.value?.venuePending, event.value?.venueRevealAt], ([id, pending, revealAt]) => {
+  clearTimeout(revealTimer)
+  const wait = Date.parse(revealAt) - Date.now()
+  if (!id || !pending || !(wait < 864e5)) return
+  revealTimer = setTimeout(async () => {
+    try {
+      await releaseDueEventVenues()
+      const latest = await getEvent(id)
+      if (id === eventId.value) applyPublicEvent(latest)
+    } catch { /* the page keeps showing the reveal time; a reload or the next visit shows the venue */ }
+  }, Math.max(wait, 0) + 1500)
+})
+onBeforeUnmount(() => clearTimeout(revealTimer))
+
 // Public-feed refresh updates shared event details without resetting RSVP drafts.
 function applyPublicEvent(latest) {
   if (latest.id !== eventId.value || event.value?.id !== latest.id) return
@@ -129,7 +147,7 @@ const submitLabel = computed(() => event.value.requiresApproval ? 'Request a spo
 // Tell them what will happen BEFORE they press the button
 const whatHappensNext = computed(() => {
   if (event.value.requiresApproval)
-    return 'The organiser reviews each RSVP. You will see the result in My RSVPs.'
+    return 'The organiser reviews each RSVP. You will see the result in Plans.'
   if (event.value.spotsLeft > 0) {
     return `${event.value.spotsLeft} spot${event.value.spotsLeft === 1 ? '' : 's'} left, so you will be confirmed straight away.`
   }
@@ -233,13 +251,19 @@ async function submitRsvp() {
     <!-- Public context and updates come first in both DOM and mobile reading order. -->
     <div class="col-lg-8 order-1 event-public-details">
       <EventSummary v-if="event" :event="event" heading-tag="h1">
+        <!-- Online events: one card in the "Where" spot, green with the link once this viewer can open it -->
+        <template #online-venue>
+          <OnlineEventLink :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />
+        </template>
         <VenueMap v-if="!event.isOnline && event.venue?.lat" :lat="event.venue.lat" :lng="event.venue.lng" class="my-3" />
-        <OnlineEventLink v-if="event.isOnline" :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />
         <!-- Places and spots left are already in the facts above; the waitlist size is the extra detail -->
         <p v-if="isFull" class="waitlist-note">
           Full · {{ event.waitlistCount }} on the waitlist
         </p>
       </EventSummary>
+      <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
+      <!-- Go together groups meet at the venue: none for online events, or while the venue is hidden -->
+      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline && !event.venueRevealAt" :event-id="eventId" />
       <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
       <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>
@@ -266,12 +290,12 @@ async function submitRsvp() {
         <p v-if="result.status === 'confirmed'">See you there. We've saved your spot.</p>
         <p v-else-if="result.status === 'pending'">The organiser will review your RSVP soon.</p>
         <p v-else>
-          You're on the waitlist. If a spot opens up you'll see a banner on My RSVPs and have 24
+          You're on the waitlist. If a spot opens up you'll see a banner on Plans and have 24
           hours to confirm.
         </p>
         <div class="d-flex gap-2">
-          <RouterLink to="/my-rsvps" class="btn event-cta">Go to My RSVPs</RouterLink>
-          <BackLink to="/events" class="btn event-cta event-cta--secondary">Back</BackLink>
+          <RouterLink to="/my-rsvps" class="btn event-cta">Go to Plans</RouterLink>
+          <RouterLink to="/events" class="btn event-cta event-cta--secondary">Back to events</RouterLink>
         </div>
       </div>
 
@@ -281,7 +305,7 @@ async function submitRsvp() {
         <h2 class="h4">You already RSVP'd</h2>
         <p>Status: <RsvpStatusBadge :status="existingRsvp.status" /></p>
         <RouterLink to="/my-rsvps" class="btn event-cta align-self-start"
-          >Manage in My RSVPs</RouterLink
+          >Manage in Plans</RouterLink
         >
       </div>
 

@@ -57,7 +57,7 @@ export function demoDiscoveryEvents(events, filters = {}, now = new Date()) {
     spots_left: event.spotsLeft, venue_name: event.venue?.name,
     venue_address: event.venue?.address, attendees: [],
     // The same columns as events_with_counts
-    is_online: Boolean(event.isOnline), hide_capacity: Boolean(event.hideCapacity),
+    is_online: Boolean(event.isOnline), hide_capacity: Boolean(event.hideCapacity), venue_reveal_at: event.venueRevealAt || null,
   })).filter(event => new Date(event.start_time) >= startOfToday(now))
     // Discover lists official events only; Go together groups live in Community
     .filter(isOfficialEvent)

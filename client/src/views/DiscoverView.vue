@@ -290,6 +290,15 @@ const prominentEventIds = computed(() => {
   return discoveryPicks.value.map((event) => event.id)
 })
 
+// On phones the list is hidden while the map shows, so the chosen pin's card (with its View
+// event and RSVP buttons) sits under the map; the map itself only shows where the event is.
+const selectedMapEvent = computed(() => {
+  if (selectedEventId.value == null) return null
+  return events.value.find((event) => event.id === selectedEventId.value)
+    || mappedPageEvents.value.find((event) => event.id === selectedEventId.value)
+    || null
+})
+
 const mappedPageEvents = computed(() => {
   const rows =
     mapEvents.value.length || mapLoading.value
@@ -878,7 +887,7 @@ onBeforeUnmount(() => {
               {{
                 search || filters.when || filters.extras.length
                   ? 'None of your saved events match these filters.'
-                  : 'Tap the bookmark on any event to keep it here. Past saves stay in My RSVPs.'
+                  : 'Tap the bookmark on any event to keep it here. Past saves stay in Plans.'
               }}
             </p>
 
@@ -1047,6 +1056,18 @@ onBeforeUnmount(() => {
           :error="error"
           @select="selectedEventId = $event"
           @retry="refreshDiscovery"
+        />
+
+        <DiscoveryEventRow
+          v-if="smallScreen && selectedMapEvent"
+          class="map-selected-card"
+          :event="selectedMapEvent"
+          :recommendation="recommendationById.get(selectedMapEvent.id)"
+          selected
+          :bookmark-enabled="loggedIn"
+          :preference-pending="actionPending"
+          @select="selectMapEvent($event, { scroll: false })"
+          @preference="changeListingPreference"
         />
 
         <DiscoveryWeekCalendar
@@ -1466,6 +1487,10 @@ onBeforeUnmount(() => {
   .discovery-map-column {
     position: relative;
     top: auto;
+  }
+
+  .map-selected-card {
+    margin-top: 12px;
   }
 
   .discovery-workspace[data-pane='list'] .discovery-map-column,

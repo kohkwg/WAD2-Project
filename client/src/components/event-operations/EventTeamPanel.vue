@@ -73,7 +73,7 @@ const respond = (invite, accept) => mutate(() => api.respondToTeamInvite(invite.
       <p v-if="loading && !compact" role="status">Loading event team…</p>
       <div v-dismissible v-if="error" class="alert alert-warning" role="alert">{{ error }} <button type="button" class="btn btn-outline-secondary" :disabled="busy || loading" @click="load()">Retry team</button></div>
       <p v-dismissible v-if="actionError" class="alert alert-danger" role="alert">{{ actionError }}
-        <template v-if="needsRsvpCancellation"><RouterLink to="/my-rsvps" class="btn btn-outline-danger ms-2">Go to My RSVPs to cancel</RouterLink><span class="d-block mt-2">After cancelling, come back and accept this invitation.</span></template>
+        <template v-if="needsRsvpCancellation"><RouterLink to="/my-rsvps" class="btn btn-outline-danger ms-2">Go to Plans to cancel</RouterLink><span class="d-block mt-2">After cancelling, come back and accept this invitation.</span></template>
         <template v-else> Your choices are kept; try again.</template>
       </p>
       <p v-dismissible v-if="success" ref="feedback" tabindex="-1" class="alert alert-success" role="status"><template v-if="joinedTeam">You joined the team for <RouterLink class="team-event-link" :to="teamToolsPath(joinedTeam)">{{ joinedTeam.title }}</RouterLink>.</template><template v-else>{{ success }}</template></p>
