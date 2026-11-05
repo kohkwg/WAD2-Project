@@ -1038,7 +1038,7 @@ onBeforeUnmount(() => {
   }
   .profile-summary.is-viewing > .profile-block {
     height: 100%;
-    padding: 0 9rem 0 2rem;
+    padding: 0 9rem 1.25rem 2rem;
     /* room on the right for the edit profile button */
     border-top: 0;
     border-left: 1px solid var(--bookedz-border);
