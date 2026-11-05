@@ -12,6 +12,8 @@ async function fixture(page, unavailable = false) {
   await page.route('**/__account-fixture.js', route => route.fulfill({ contentType: 'text/javascript', body: `
     export const USING_SUPABASE = true;
     export const geocodePostalCode = async () => ({lat: 1.3, lng: 103.8});
+    export const changeEmail = async () => ({});
+    export const changePassword = async () => ({});
     export const supabase = {
       auth: {getUser: async () => ({data: {user: {id: 'me'}}})},
       from: () => ({select: () => ({eq: () => ({maybeSingle: async () => ({data: {id: 'me', display_name: 'Me', username: 'myself', profile_interests: []}})})})}),
