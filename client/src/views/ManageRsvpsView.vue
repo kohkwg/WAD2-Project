@@ -479,7 +479,6 @@ async function demoExpireOffers() {
           <div v-else class="capacity-title">
             <div>
               <h2>Spots</h2>
-              <p>{{ spotsTaken }} of {{ event.capacity }} taken or offered</p>
             </div>
           <strong>
               <CountUp :value="capacityParts.availableCount" />
@@ -681,6 +680,15 @@ async function demoExpireOffers() {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+/* "Spots" with the number under it; the overview row centres this block against the bar and legend */
+
+.capacity-title {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: .25rem;
 }
 
 .capacity-title h2 {
