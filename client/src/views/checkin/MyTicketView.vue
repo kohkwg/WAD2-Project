@@ -4,13 +4,10 @@ import '../../assets/design-baseline.css';
 // feature 3: personal qr and barcode ticket, with live check-in confirmation.
 import { onMounted, onUnmounted, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
-import { useBackLink } from '../../composables/useBackLink.js';
 import QrCode from '@/components/checkin/QrCode.vue';
 import Barcode from '@/components/checkin/Barcode.vue';
 import { supabase } from '@/utils/supabase';
 import { formatTime, getEvent } from '@/utils/checkin';
-
-const back = useBackLink('/my-rsvps');
 
 const route = useRoute();
 

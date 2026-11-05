@@ -11,7 +11,7 @@
 //                        their programme; their tasks stay private)
 // to use other accounts, override either one (never commit real addresses):
 //   --own-email=...  --community-email=...      or in server/.env:
-//   seed_planner_own_email, seed_planner_community_email
+//   SEED_PLANNER_OWN_EMAIL, SEED_PLANNER_COMMUNITY_EMAIL
 //
 // what it makes (all ended, so they stay out of discover's upcoming list):
 //   - 2 events for the first account: coders assembly, hack night (with tasks)
@@ -44,7 +44,7 @@ const HOUR = 3600000;
 
 const DAY = 86400000;
 
-// programme: [title, startminute, lengthminutes, description]
+// programme: [title, startMinute, lengthMinutes, description]
 
 const EVENTS = [{
   owner: "own",
@@ -247,4 +247,4 @@ if (require.main === module) {
 }
 module.exports = {
   EVENTS
-}; // for tests/planseed.test.js
+}; // for tests/planSeed.test.js

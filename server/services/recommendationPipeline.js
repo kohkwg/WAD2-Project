@@ -22,6 +22,7 @@ const {
   haversineKm
 } = require('./recommendation');
 
+// Returns NaN for text without a time zone, so results do not depend on the host time zone.
 function timeMs(value) {
   if (value instanceof Date) return value.getTime();
   if (typeof value === 'number') return new Date(value).getTime();
@@ -31,6 +32,7 @@ function timeMs(value) {
   return NaN;
 }
 
+// Removes duplicate records by ID. Throws if two records with one ID are different.
 function uniqueRecords(records, idField, label) {
   if (!Array.isArray(records)) {
     throw new TypeError(`${label} must be an array`);
@@ -60,6 +62,7 @@ function validLocation(location) {
   return Number.isFinite(location?.lat) && Number.isFinite(location?.lng) && Math.abs(location.lat) <= 90 && Math.abs(location.lng) <= 180;
 }
 
+// Uses 85% compatibility and 15% distance. Without two valid locations, uses compatibility only.
 function calculateRankingFactors(compatibilityScore, event, userLocation) {
   if (!validLocation(userLocation) || !validLocation(event)) {
     return {
@@ -75,8 +78,11 @@ function calculateRankingFactors(compatibilityScore, event, userLocation) {
   };
 }
 
-// pure pipeline: the route supplies data, location, and current time.
-
+/**
+ * Pure pipeline. The route supplies data, location and current time.
+ * Steps: build preferences, remove ineligible events, score, select a diverse set, fill empty slots.
+ * @returns {{preferences: object, recommendations: object[], diagnostics: object[]}}
+ */
 function buildRecommendationPipeline({
   selectedInterests = [],
   evidenceSnapshots = [],

@@ -16,7 +16,7 @@ async function call(request) {
   return data;
 }
 
-export const LAYOUT_VERSION = 1;
+const LAYOUT_VERSION = 1;
 
 // all floor plans for the event, oldest first for stable plan 1 / plan 2 tabs.
 
@@ -136,6 +136,7 @@ export const saveFloorImage = (eventId, floorPlanId, asset) => call(supabase.fro
   onConflict: 'id'
 }).select().single());
 
+/** Sends a request with the session token to the Express floor-plan image route. */
 export async function floorImageRequest(path, options = {}) {
   const {
     data: {

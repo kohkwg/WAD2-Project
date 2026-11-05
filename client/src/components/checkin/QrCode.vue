@@ -23,7 +23,7 @@ const canvas = ref(null);
 
 async function draw() {
   if (!canvas.value || !props.value) return;
-  // errorcorrectionlevel 'm' still scans if the screen is a bit scratched or glary
+  // Error correction level 'M' lets a scanner read the code on a scratched or bright screen.
   await QRCode.toCanvas(canvas.value, props.value, {
     width: props.size,
     margin: 2,

@@ -5,6 +5,7 @@ export function eventEnded(event, now) {
   return Number.isFinite(end) && end <= now;
 }
 
+/** Sorts RSVPs into upcoming, past and cancelled lists. An expired offer is cancelled. `next` is the first confirmed upcoming RSVP. */
 export function groupRsvps(rows, now) {
   const upcoming = [],
     past = [],
@@ -151,6 +152,7 @@ const escapeIcs = value => String(value || '').replace(/\\/g, '\\\\').replace(/\
 
 const stamp = value => new Date(value).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
+/** Returns the event as iCalendar (.ics) text, or null if its times are not valid. */
 export function eventCalendar(event, now = Date.now()) {
   const start = Date.parse(event.startTime),
     end = Date.parse(event.endTime);

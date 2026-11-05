@@ -95,6 +95,7 @@ async function loadRegistration() {
   }
 }
 
+/** Check the required answers, then send the registration to the database function. */
 async function submitRsvp() {
   if (submitting.value || !questionsReady.value || alreadyRegistered.value || closed.value) return;
   error.value = '';

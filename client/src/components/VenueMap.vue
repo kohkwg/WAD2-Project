@@ -15,7 +15,7 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 //   onemap's search put it.
 // - a venue entered through the "use … anyway" fallback has no coordinates, so the pages
 //   don't show a map for it (v-if="...lat"). that's expected.
-// - have not updated the map to move based on where he places the pin, e.g. if he puts smu then pins suntech it still shows smu, feature was meant for the user to show more exact location.
+// - moving the pin changes only the coordinates. the venue name and address stay the same.
 
 const props = defineProps({
   lat: Number,
@@ -34,8 +34,8 @@ let pin = null;
 let stopTiles = null;
 
 onMounted(() => {
-  // leaflet needs the real <div> on the page, so this has to wait until onmounted
-  // scrollwheelzoom: false → the mouse wheel doesn't zoom the map. that's on purpose, so
+  // leaflet needs the real <div> on the page, so this has to wait until onMounted
+  // scrollWheelZoom: false → the mouse wheel doesn't zoom the map. that's on purpose, so
   // scrolling the page doesn't zoom the map by accident. use the + / − buttons instead.
   map = L.map(mapDiv.value, {
     scrollWheelZoom: false

@@ -115,6 +115,7 @@ export const personFootprint = person => ({
   height: (person.radius || 20) * 2 + 30
 });
 
+/** Searches the bounds, row by row, for a position that does not touch an occupied box. */
 export function findFreeSpot(size, occupied, bounds, {
   step = 20,
   gap = 8

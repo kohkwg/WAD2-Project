@@ -17,7 +17,6 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  highlight: Boolean,
   compact: Boolean
 });
 
@@ -89,7 +88,7 @@ async function join() {
   <article
   :id="`group-${group.id}`"
   class="group-card"
-  :class="{ 'is-highlighted': highlight, 'is-joined': joined || isHost, 'is-compact': compact, 'lift-on-hover': !compact }"
+  :class="{ 'is-joined': joined || isHost, 'is-compact': compact, 'lift-on-hover': !compact }"
   :aria-labelledby="`group-title-${group.id}`">
     <header class="group-head">
       <span class="group-avatar" aria-hidden="true">
@@ -186,10 +185,6 @@ async function join() {
 
 .group-card.is-joined {
   border-color: color-mix(in srgb, var(--bookedz-primary) 45%, var(--bookedz-border));
-}
-
-.group-card.is-highlighted {
-  animation: attention-once 1.2s var(--bookedz-ease) 200ms 1;
 }
 
 .group-head {
@@ -466,12 +461,6 @@ async function join() {
   .group-note {
     font-size: .92rem;
     line-height: 1.45;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .group-card.is-highlighted {
-    animation: none;
   }
 }
 </style>

@@ -29,8 +29,10 @@ const emit = defineEmits(['confirm', 'cancel']);
 
 const dialog = ref(null);
 
+// Focus goes back to the opener when the dialog closes.
 let opener;
 
+// Find the fallback in this section if the opener is not available.
 let owner;
 
 onMounted(() => {

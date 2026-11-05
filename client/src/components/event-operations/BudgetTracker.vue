@@ -40,6 +40,13 @@ const rows = ref([]);
 
 const rowErrors = ref({});
 
+/**
+ * Make an editable row from a saved expense.
+ * Cells show unit costs. The saved item keeps line totals in exact cents.
+ * The `saved` text lets commitRow skip a row that did not change.
+ * @param {object} item The saved expense.
+ * @returns {object} The row for the sheet.
+ */
 function toRow(item) {
   const count = item.quantity ?? 1;
   const planned = formatMoneyInput(item.plannedCents / count);
@@ -105,6 +112,7 @@ function commitRow(row) {
   }
 }
 
+// A cell with invalid text shows the last saved total.
 const rowTotal = row => {
   try {
     return lineTotalCents(parseMoneyToCents(row.actual, {
@@ -184,6 +192,7 @@ function saveLimit() {
 const spendBar = computed(() => {
   const items = props.budget.items.filter(item => item.actualCents > 0).sort((a, b) => a.actualCents - b.actualCents);
   const limitCents = props.budget.limitCents;
+  // Use the larger value as the scale, so the segments stay inside the bar.
   const scaleCents = Math.max(limitCents ?? 0, summary.value.actualCents);
   const segments = items.map((item, index) => ({
     id: item.id,

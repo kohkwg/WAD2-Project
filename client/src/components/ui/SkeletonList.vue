@@ -5,11 +5,11 @@ defineProps({
     type: Number,
     default: 4
   },
+  // row | card
   variant: {
     type: String,
     default: 'row'
   },
-  // row | card
   label: {
     type: String,
     default: 'Loading…'

@@ -4,7 +4,7 @@
 // is stored in public.floor_plans (see utils/floorplan.js). everyone else, and the
 // public event page (read-only prop), sees the saved plan without editing controls.
 import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
-import { RouterLink, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { canEditFloorPlan, getFloorPlans, saveFloorPlan, getPlanMembers, getHelperPlacements, saveHelperPlacement, deleteHelperPlacement, uploadPlanBackground, deleteFloorAsset } from '@/utils/floorPlan';
 import { USING_SUPABASE, getEvent } from '@/utils/api';
 import { clampPosition, backgroundUrl, fitRotated, clampOpacity, clampRotation, clampScale, validateFloorImage, findFreeSpot, personFootprint } from '@/utils/floorPlanModel';
@@ -71,7 +71,7 @@ const canvasLocked = ref(false);
 
 const layoutEditable = computed(() => canEdit.value && !canvasLocked.value);
 
-// plan background image: { assetid, key, name, opacity }, saved in the layout so
+// plan background image: { assetId, key, name, opacity, rotation, scale }, saved in the layout so
 // participants see it too. the picture itself is a file in r2 (public bucket).
 
 const background = ref(null);
@@ -252,6 +252,12 @@ const defaultPlanName = index => `Plan ${index + 1}`;
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
+/**
+ * Make an empty plan that is not saved yet.
+ * @param {number} index Position of the plan in the plan list.
+ * @param {object|null} [event] Event that supplies the default venue address.
+ * @returns {object} A plan with the same shape as a saved plan row.
+ */
 function draftPlan(index, event = currentEvent.value) {
   const name = defaultPlanName(index);
   return {
@@ -273,28 +279,12 @@ function draftPlan(index, event = currentEvent.value) {
   };
 }
 
-function snapshotCurrentPlan() {
-  return {
-    id: planId.value,
-    name: planName.value,
-    width: stageConfig.width,
-    height: stageConfig.height,
-    layout: {
-      version: 1,
-      objects: clone(floorObjects.value),
-      people: clone(people.value),
-      locked: canvasLocked.value,
-      background: background.value ? {
-        ...background.value
-      } : null,
-      venue: {
-        name: planName.value,
-        address: venueDraft.value.address
-      }
-    }
-  };
-}
-
+/**
+ * Put one plan into the editor state. This clears the selection, the messages and the pending file lists.
+ * @param {object|null} plan Plan to show. If null, the function uses an empty draft.
+ * @param {number} index Position of the plan in the plan list.
+ * @param {boolean} [markClean] If true, clear the unsaved flags in the next frame. The change watchers run before that frame.
+ */
 function applyPlan(plan, index, markClean = true) {
   const source = plan || draftPlan(index);
   activePlanIndex.value = index;
@@ -381,6 +371,10 @@ let resizeObserver;
 
 let resizeFrame = 0;
 
+/**
+ * Load the plans, the user role and the team data for the current event.
+ * Each call increases requestGeneration. An older call that finds a different value stops without a change.
+ */
 async function load() {
   const token = ++requestGeneration;
   loading.value = true;
@@ -522,6 +516,10 @@ function moveHelper(id, x, y) {
   }
 }
 
+/**
+ * Save the helper positions one at a time. If one save fails, the earlier saves stay.
+ * The error message tells the organiser to try again.
+ */
 async function saveHelpers() {
   if (!canEdit.value || helperBusy.value) return;
   const token = requestGeneration,
@@ -583,6 +581,10 @@ watch([floorObjects, people, venueDraft, canvasLocked, planName, background], ()
   deep: true
 });
 
+/**
+ * Save the active plan. The snapshot finds edits that the user makes during the save.
+ * These edits stay marked as unsaved.
+ */
 async function save() {
   if (!canEdit.value || saving.value) return;
   const token = requestGeneration;
@@ -624,6 +626,11 @@ async function save() {
 
 const bgInput = ref(null);
 
+/**
+ * Upload the selected file as the plan background.
+ * If the plan changes during the upload, the function deletes the new file.
+ * The function also deletes a previous file that no saved plan uses.
+ */
 async function onBackgroundPicked(event) {
   const file = event.target.files?.[0];
   event.target.value = '';

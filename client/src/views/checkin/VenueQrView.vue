@@ -4,7 +4,7 @@ import BackLink from '../../components/ui/BackLink.vue';
 // check themselves in. the qr's secret changes every few minutes so a photo of it
 // posted in a group chat stops working.
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { RouterLink, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import QrCode from '@/components/checkin/QrCode.vue';
 import { getCheckinSecret, getEvent, rotateCheckinSecret, venueCheckInUrl } from '@/utils/checkin';
 
@@ -101,7 +101,7 @@ onMounted(async () => {
     const [e] = await Promise.all([getEvent(eventId), loadSecret()]);
     event.value = e;
     timer = setInterval(tick, 1000);
-  } catch (e) {
+  } catch {
     // rls hides event_secrets from non-staff, so .single() fails for them
     error.value = 'Only organisers and helpers for this event can show the venue QR.';
   }

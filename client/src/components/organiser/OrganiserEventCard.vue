@@ -22,6 +22,7 @@ const creatorDino = computed(() => dinoById(props.event.creator?.dino));
 
 const state = computed(() => organiserEventState(props.event, props.now));
 
+// Organisers can edit a draft, or an upcoming event before it starts.
 const editable = computed(() => state.value === 'drafts' || state.value === 'upcoming' && Date.parse(props.event.startTime) > props.now);
 
 const date = computed(() => new Date(props.event.startTime));

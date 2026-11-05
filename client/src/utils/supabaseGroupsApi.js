@@ -9,6 +9,7 @@ import { livePlanView, suggestionFrom } from './groups.js';
 
 const NOT_READY = 'Go together isn’t set up in the live app yet. Try it in demo mode.';
 
+// Calls a group RPC. A missing database function gives the NOT_READY message.
 async function rpc(name, params) {
   const {
     data,

@@ -60,6 +60,7 @@ function termsIn(text) {
   return terms
 }
 
+/** Makes the search index from the event list: titles, venues, categories and keywords. */
 export function buildSuggestionIndex(events = []) {
   const documents = []
   const titles = new Map()

@@ -1,4 +1,4 @@
-import { computed, readonly, ref } from 'vue';
+import { readonly, ref } from 'vue';
 
 // two themes only: light and dark. someone who has never chosen starts in whichever their device
 // uses, and follows it until they pick one (an old saved "system" choice is treated as not chosen).
@@ -15,8 +15,7 @@ const systemDark = ref(false);
 
 export const themePreference = readonly(preference);
 
-export const resolvedTheme = computed(() => preference.value);
-
+// Sets the theme on the document root for the site CSS and for Bootstrap.
 function applyTheme() {
   const theme = preference.value;
   document.documentElement.dataset.theme = theme;
@@ -25,6 +24,7 @@ function applyTheme() {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1c1917' : '#fff8f1');
 }
 
+/** Saves the theme choice of the person and applies it. The function ignores an unknown value. */
 export function setTheme(value) {
   if (!choices.includes(value)) return;
   preference.value = value;
@@ -35,6 +35,10 @@ export function setTheme(value) {
   applyTheme();
 }
 
+/**
+ * Applies the saved theme or the device theme, then follows device and other-tab changes.
+ * Returns a function that stops the listeners.
+ */
 export function initTheme() {
   const media = window.matchMedia('(prefers-color-scheme: dark)');
   systemDark.value = media.matches;

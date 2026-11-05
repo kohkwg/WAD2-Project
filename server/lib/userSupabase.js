@@ -2,10 +2,12 @@ const {
   createClient
 } = require("@supabase/supabase-js");
 
-// a client that acts as the signed-in user, so rls and auth.uid() apply to every
-// query (project info h2). the service-role client in ./supabase is only used to
-// verify the token in requireauth.
-
+/**
+ * Creates a client that acts as the signed-in user, so RLS and auth.uid() apply to every query.
+ * Without a token, the client acts as the anonymous role.
+ * Use ./supabase only for work that needs the service-role key.
+ * @param {string} [accessToken] Supabase access token from requireAuth.
+ */
 function supabaseForUser(accessToken) {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
     ...(accessToken ? {

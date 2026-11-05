@@ -1,6 +1,7 @@
 import { supabase } from './supabase.js';
 export { USING_SUPABASE } from './api.js';
 
+// Calls a team RPC. A missing database function gives a clear message, because a migration can be absent.
 async function call(name, params) {
   if (!supabase) throw new Error('Sign in in live mode to use event teams.');
   const {
@@ -29,6 +30,7 @@ export const inviteTeamMember = (id, userId) => call('invite_event_team_member',
   p_role: 'organiser'
 });
 
+/** Returns the invitations and teams of the user. A signed-out user gets empty lists and no RPC call. */
 export async function getMyEventTeams() {
   if (!supabase) return {
     invitations: [],

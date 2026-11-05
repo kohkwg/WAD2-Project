@@ -14,11 +14,13 @@ const RATE_LIMIT = 120;
 
 const WINDOW_MS = 60 * 1000;
 
+// Creates the router. Tests supply routing and now.
 function createRouteRouter({
   routing = createOneMapRouting(),
   now = Date.now
 } = {}) {
   const router = express.Router();
+  // In-memory request times for each IP address. The oldest address goes when the map is full.
   const hits = new Map();
   router.get("/", async (req, res) => {
     const ip = req.ip || "unknown";

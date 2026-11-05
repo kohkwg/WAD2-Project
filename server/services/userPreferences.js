@@ -1,6 +1,7 @@
 // expects valid interest slugs and canonical evidence. duplicate event records
 // must agree; conflicting versions must be resolved before calling this function.
 
+// Each selected interest gets 10 points. Each event divides its contribution equally between its interests.
 function buildUserPreferences(selectedInterests, eventEvidence) {
   const explicitPreferences = {};
   const learnedPreferences = {};

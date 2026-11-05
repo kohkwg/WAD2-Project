@@ -5,7 +5,7 @@ import L from 'leaflet';
 
 const tileUrl = style => `https://www.onemap.gov.sg/maps/tiles/${style}/{z}/{x}/{y}.png`;
 
-export const ONEMAP_ATTRIBUTION = '<img src="https://www.onemap.gov.sg/web-assets/images/logo/om_logo.png" style="height:16px;width:16px;vertical-align:-3px" alt=""> ' + '<a href="https://www.onemap.gov.sg/" target="_blank" rel="noopener">OneMap</a> © contributors | ' + '<a href="https://www.sla.gov.sg/" target="_blank" rel="noopener">Singapore Land Authority</a>';
+const ONEMAP_ATTRIBUTION = '<img src="https://www.onemap.gov.sg/web-assets/images/logo/om_logo.png" style="height:16px;width:16px;vertical-align:-3px" alt=""> ' + '<a href="https://www.onemap.gov.sg/" target="_blank" rel="noopener">OneMap</a> © contributors | ' + '<a href="https://www.sla.gov.sg/" target="_blank" rel="noopener">Singapore Land Authority</a>';
 
 export const SINGAPORE_MAX_BOUNDS = L.latLngBounds([1.144, 103.535], [1.494, 104.131]);
 

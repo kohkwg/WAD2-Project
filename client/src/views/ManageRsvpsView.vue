@@ -12,12 +12,10 @@ import CountUp from '../components/ui/CountUp.vue';
 import { getEvent, getRsvpsForEvent, getEventGroupMembers, approveRsvp, rejectRsvp, removeRsvp, setMember, expireOffersNow, USING_SUPABASE, CURRENT_ORGANISER_ID, CLOSED_STATUSES } from '../utils/api.js';
 import { formatEventTime, formatShortDateTime } from '../utils/helpers.js';
 
-// hide the extra heading and links when this page is inside the workspace
-
-
 const back = useBackLink('/organiser/events');
 
-const props = defineProps({
+// `embedded` hides the extra heading and links when this page is inside the workspace.
+defineProps({
   embedded: {
     type: Boolean,
     default: false
@@ -71,6 +69,11 @@ let actionRequest = 0;
 
 let routeVersion = 0;
 
+/**
+ * Load the event, the registrations and the group details.
+ * @param {string} [id] Event ID. The function stops if this is not the current event.
+ * @returns {Promise<boolean|undefined>} True if the page shows the data. Other values mean that the read failed or the route changed.
+ */
 async function loadData(id = eventId.value) {
   if (id !== eventId.value) return;
   const request = ++loadRequest;
@@ -278,6 +281,11 @@ function undoReject(rsvpId) {
   hiddenIds.value = next;
 }
 
+/**
+ * Save a rejection after the undo time ends.
+ * If another action is running, the function tries again after 400 ms.
+ * If the save fails, the row shows again.
+ */
 async function commitReject(rsvpId) {
   if (busyId.value) {
     rejectTimers.set(rsvpId, setTimeout(() => {

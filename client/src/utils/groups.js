@@ -13,9 +13,9 @@ export const NOTE_LIMIT = 200;
 
 export const SUGGESTION_NAME_LIMIT = 80;
 
-export const VISIBILITIES = ['public', 'private'];
+const VISIBILITIES = ['public', 'private'];
 
-export const JOIN_MODES = ['open', 'approval']; // anyone can join straight away, or the host approves
+const JOIN_MODES = ['open', 'approval']; // anyone can join straight away, or the host approves
 
 export const JOIN_MESSAGE_LIMIT = 200;
 // labels shown as badges on every group
@@ -126,7 +126,7 @@ export function groupErrors({
 
 // an unguessable invite code for the share link (/g/<token>)
 
-export function inviteToken() {
+function inviteToken() {
   const bytes = new Uint8Array(12);
   globalThis.crypto.getRandomValues(bytes);
   return Array.from(bytes, b => b.toString(36).padStart(2, '0')).join('').slice(0, 16);
@@ -172,9 +172,9 @@ export function groupEventData(target, {
 
 export const SLOTS = ['before', 'after'];
 
-export const GAP_MINUTES = 15; // time to walk over
+const GAP_MINUTES = 15; // time to walk over
 
-export const SLOT_MINUTES = 60;
+const SLOT_MINUTES = 60;
 
 export const emptyPlan = () => ({
   before: {
@@ -194,9 +194,9 @@ export const emptyPlan = () => ({
 
 export const CELL_MINUTES = 15;
 
-export const WINDOW_CELLS = 12; // 3 hours each side
+const WINDOW_CELLS = 12; // 3 hours each side
 
-export const MIN_SLOT_CELLS = 3; // a meal needs at least 45 minutes
+const MIN_SLOT_CELLS = 3; // a meal needs at least 45 minutes
 
 // the cell start times (iso) for one side of the event, earliest first
 

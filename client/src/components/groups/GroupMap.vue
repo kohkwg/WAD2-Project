@@ -8,11 +8,11 @@ import { addOneMapTiles } from '@/lib/onemapTiles';
 // the host's picks (orange). clicking a pin shows its name.
 
 const props = defineProps({
+  // { name, lat, lng }
   venue: {
     type: Object,
     required: true
   },
-  // { name, lat, lng }
   spots: {
     type: Array,
     default: () => []
@@ -34,6 +34,7 @@ const pin = (text, tone) => L.divIcon({
   iconAnchor: [15, 15]
 });
 
+// Leaflet shows popup text as HTML, so escape names from people and other services.
 const escape = text => String(text).replace(/[&<>"']/g, c => ({
   '&': '&amp;',
   '<': '&lt;',

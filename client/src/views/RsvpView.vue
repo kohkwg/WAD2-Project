@@ -4,7 +4,6 @@ import BackLink from '../components/ui/BackLink.vue';
 import '../assets/design-baseline.css';
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { useBackLink } from '../composables/useBackLink.js';
 import { useDiscoveryMotion } from '../composables/useDiscoveryMotion';
 import EventSummary from '../components/rsvp/EventSummary.vue';
 import AnnouncementFeed from '../components/event-operations/AnnouncementFeed.vue';
@@ -22,8 +21,6 @@ import { getEvent, releaseDueEventVenues, getUser, getMyRsvps, createRsvp, getCu
 const FloorPlan = defineAsyncComponent(() => import('../editor.vue'));
 import { eventsOverlap } from '../utils/helpers.js';
 import { toast } from '@/composables/useToast';
-
-const back = useBackLink('/events');
 
 const pageMotion = ref(null);
 
@@ -279,6 +276,7 @@ async function submitRsvp() {
     validationSummary.value?.focus();
     return;
   }
+  // A route change increases loadRequest, so a late reply cannot change the page of a different event.
   const ticket = loadRequest;
   submitting.value = true;
   errorMessage.value = '';

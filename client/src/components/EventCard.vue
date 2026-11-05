@@ -70,9 +70,10 @@ const availabilityLabel = computed(() => {
   if (props.event.spots_left == null) return '';
   const left = Number(props.event.spots_left);
   if (!Number.isFinite(left)) return '';
-  return left <= 0 ? 'Full · Join the waitlist' : `${left} ${left === 1 ? 'spot' : 'spots'} left`;
+  return `${left} ${left === 1 ? 'spot' : 'spots'} left`;
 });
 
+/** Return a usable avatar URL. A stored key becomes a URL under the public storage address. */
 function avatarUrl(attendee) {
   const key = attendee.avatar_url || attendee.avatar_key;
   if (!key) return '';
@@ -410,31 +411,6 @@ function initials(attendee) {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 18px;
-}
-
-.event-actions .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 76px;
-  min-height: 44px;
-  border-radius: 14px 24px 24px 14px;
-  padding: 12px 54px 12px 18px;
-}
-
-.event-actions .btn-primary {
-  --bs-btn-bg: var(--bookedz-primary-dark, #9a3412);
-  --bs-btn-border-color: var(--bookedz-primary-dark, #9a3412);
-  --bs-btn-hover-bg: #9a3412;
-  --bs-btn-hover-border-color: #9a3412;
-}
-
-.event-actions .btn-outline-secondary {
-  --bs-btn-color: #4f5656;
-  --bs-btn-border-color: #bdc3bc;
-  --bs-btn-hover-bg: #ffe4d6;
-  --bs-btn-hover-color: #1f2937;
-  --bs-btn-hover-border-color: #aeb4ad;
 }
 
 @media (max-width: 575px) {

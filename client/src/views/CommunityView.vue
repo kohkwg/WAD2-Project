@@ -185,6 +185,10 @@ onBeforeUnmount(() => {
   stopSocial();
 });
 
+/**
+ * Open the start-a-group form. If sign-in is necessary, the destination URL brings the user back to this form.
+ * @param {string} [eventId] Event to select first. An empty value selects no event.
+ */
 async function openComposer(eventId = '') {
   const destination = router.resolve({
     path: '/community',
@@ -640,12 +644,6 @@ function showEventGroups(eventId) {
   }
 }
 
-.community-eyebrow {
-  margin: 0 0 6px;
-  color: var(--bookedz-muted);
-  font-weight: 600;
-}
-
 .community-hero {
   display: flex;
   flex-wrap: wrap;
@@ -1016,10 +1014,6 @@ function showEventGroups(eventId) {
   overflow-wrap: anywhere;
 }
 
-.community-mine {
-  margin-bottom: 22px;
-}
-
 .community-yours-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
@@ -1058,19 +1052,6 @@ function showEventGroups(eventId) {
 
 .community-attached-link:hover strong {
   text-decoration: underline;
-}
-
-.community-mine-list {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding: 4px 4px 10px;
-  scroll-snap-type: x proximity;
-}
-
-.community-mine-list li {
-  flex: 0 0 min(240px, 78vw);
-  scroll-snap-align: start;
 }
 
 .community-tile {

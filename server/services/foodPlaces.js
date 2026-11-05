@@ -13,6 +13,7 @@ const PLACES_URL = "https://api.geoapify.com/v2/places";
 const FOOD_CATEGORIES = "catering.restaurant,catering.cafe,catering.fast_food,catering.food_court";
 const PLACE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Great-circle distance in whole metres (haversine formula).
 const metres = (a, b) => {
   const rad = x => (x * Math.PI) / 180;
   const dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng);
@@ -25,6 +26,7 @@ const sgDate = ms => new Date(ms + 8 * 60 * 60 * 1000).toISOString().slice(0, 10
 async function readJson(file, fallback) {
   try { return JSON.parse(await readFile(file, "utf8")); } catch { return fallback; }
 }
+// Writes a temporary file, then renames it, so a reader never gets a partial file.
 async function writeJson(file, value) {
   await mkdir(path.dirname(file), { recursive: true });
   const tmp = `${file}.${process.pid}.tmp`;
@@ -32,6 +34,10 @@ async function writeJson(file, value) {
   await rename(tmp, file);
 }
 
+/**
+ * Creates the food place service. Tests supply fetchImpl, env, now and cacheDir.
+ * @returns {{nearby: Function, placesConfigured: Function, quota: Function}}
+ */
 function createFoodPlaces({ fetchImpl = globalThis.fetch, env = process.env, now = Date.now, cacheDir = CACHE_DIR } = {}) {
   const PLACES_FILE = path.join(cacheDir, "food-places.json");
   let places = null; // cell key -> { at, items }

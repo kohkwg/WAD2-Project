@@ -5,7 +5,6 @@ import { createSeedData } from '../src/utils/mockData.js';
 
 let value;
 
-const key = 'bookedz-feature2-demo';
 globalThis.localStorage = {
   getItem: () => value,
   setItem: (_key, data) => {

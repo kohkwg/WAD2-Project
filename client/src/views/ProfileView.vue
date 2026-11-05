@@ -401,7 +401,7 @@ const hasChanges = computed(() => {
   return nameChanged || usernameChanged || postalChanged || interestsChanged;
 });
 
-// "isdirty" becomes true when 1.user is editing profile and they have changed smth without saving
+// isDirty is true when the user edits the profile and has unsaved changes.
 
 const isDirty = computed(() => editing.value && hasChanges.value);
 // ask before the browser tab is closed or refreshed
@@ -592,7 +592,7 @@ async function save() {
   } catch (e) {
     if (!active) return;
 
-    // stay in edit mode so everyth the user typed is still there.
+    // stay in edit mode, so that the form keeps all the text from the user.
     // "username taken" goes under the username box and other errors go in the red banner.
     if (e.code === UNIQUE_VIOLATION) {
       usernameError.value = 'This username is already taken.';
@@ -1276,8 +1276,7 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid var(--bookedz-border);
 }
 
-.profile-section legend,
-.profile-section-title {
+.profile-section legend {
   float: none;
   width: auto;
   margin-bottom: 0.5rem;

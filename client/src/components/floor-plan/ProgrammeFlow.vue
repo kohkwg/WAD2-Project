@@ -54,8 +54,6 @@ const bodyId = useId();
 
 const showBody = computed(() => !props.collapsible || open.value);
 
-const emit = defineEmits(['loaded']);
-
 const items = ref([]),
   error = ref(''),
   loading = ref(false),
@@ -75,6 +73,7 @@ const empty = () => ({
 
 const draft = ref(empty());
 
+// Each load uses a new token. Code ignores a reply that has an old token.
 let generation = 0;
 
 onBeforeUnmount(() => {
@@ -95,10 +94,7 @@ async function load() {
   loading.value = true;
   try {
     const rows = await getProgramme(props.eventId, props.planId);
-    if (token === generation) {
-      items.value = rows;
-      emit('loaded', rows.length);
-    }
+    if (token === generation) items.value = rows;
   } catch (e) {
     if (token === generation) error.value = e.message;
   } finally {

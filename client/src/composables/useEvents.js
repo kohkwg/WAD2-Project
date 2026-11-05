@@ -13,6 +13,7 @@ const VENUE_TBA_NAME = 'Venue to be announced';
 
 const PAGE_SIZE = 12;
 
+/** Reads confirmed attendees, one batch at a time. Returns a map of event ID to attendee profiles. */
 async function confirmedAttendees(eventIds) {
   // read through the user's existing rls permissions. never use a service key
   // here: other participants' registrations may intentionally be private.
@@ -39,6 +40,7 @@ async function confirmedAttendees(eventIds) {
 
 const activeVenueId = event => event.using_backup ? event.backup_venue_id : event.venue_id;
 
+/** Adds venue, attendee, saved and registration data to event rows. A venue or attendee read error does not stop the list. */
 async function withEventDetails(rows, includeAttendees = true) {
   const venueIds = [...new Set(rows.map(activeVenueId).filter(Boolean))];
   const {
@@ -70,6 +72,7 @@ async function withEventDetails(rows, includeAttendees = true) {
   }));
 }
 
+/** Discover list state. Each request makes older requests invalid, so a slow response cannot replace newer rows. */
 export function useEvents() {
   const events = ref([]);
   const total = ref(0);
@@ -216,6 +219,7 @@ export function useEvents() {
   };
 }
 
+/** State and actions for recommended events. A slow response cannot replace newer rows. */
 export function useRecommendations() {
   const recommended = ref([]);
   const loading = ref(false);
@@ -241,7 +245,7 @@ export function useRecommendations() {
       });
       const rows = await withEventDetails(data.events || []);
       if (currentRequest === requestId) recommended.value = rows;
-    } catch (e) {
+    } catch {
       if (currentRequest !== requestId) return;
       recommended.value = [];
       error.value = 'Could not load recommendations.';

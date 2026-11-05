@@ -38,7 +38,7 @@ const props = defineProps({
   suggestions: {
     type: Array,
     default: () => []
-  } // rows from suggest() in lib/searchsuggestions.js
+  } // rows from suggest() in lib/searchSuggestions.js
 });
 
 const emit = defineEmits(['update:modelValue', 'update:search', 'update:sort', 'show', 'retry', 'pick-dates', 'search-focus', 'search-input', 'suggestion-select']);
@@ -67,6 +67,7 @@ watch(search, value => {
   if (value !== props.search) timer = setTimeout(flushSearch, 250);
 });
 
+// Send the typed text to the parent now. This stops the debounce timer.
 function flushSearch() {
   clearTimeout(timer);
   if (search.value !== props.search) emit('update:search', search.value);
@@ -226,6 +227,7 @@ const whenSet = computed(() => Boolean(selected.value.when) && !(selected.value.
 
 const activeCount = computed(() => Number(whenSet.value) + selected.value.extras.length + selected.value.categories.length);
 
+// A selected category can be outside the fixed options. It gets a chip so the user can remove it.
 const activeChips = computed(() => groups.value.flatMap(group => {
   const options = group.key === 'categories' ? [...group.options, ...selected.value.categories.filter(value => !group.options.some(option => option.value === value)).map(value => ({
     value,
@@ -678,42 +680,6 @@ svg {
   font-size: .95rem;
   font-weight: 700;
   color: var(--bookedz-ink);
-}
-
-.filter-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 44px;
-  max-width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--bookedz-border);
-  border-radius: 99px;
-  background: var(--bookedz-canvas);
-  color: var(--bookedz-ink);
-  font-size: .85rem;
-  font-weight: 550;
-}
-
-.filter-chip svg {
-  width: 18px;
-  height: 18px;
-}
-
-.filter-chip:hover {
-  border-color: var(--bookedz-primary-dark);
-}
-
-.filter-chip[aria-pressed="true"] {
-  background: var(--bookedz-primary-dark);
-  border-color: var(--bookedz-primary-dark);
-  color: #fff;
 }
 
 .filter-footer {

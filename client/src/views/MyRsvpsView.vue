@@ -163,6 +163,11 @@ let refreshing = false;
 
 let pendingLoad = null;
 
+/**
+ * Read the registrations and the saved events.
+ * @param {boolean} [allowBusy] Set true after a user action. The function then waits for a running read and reads again.
+ * @throws {Error} If the registration read fails. A saved-events failure only sets savedError.
+ */
 async function loadRsvps(allowBusy = false) {
   if (!mounted || busyId.value && !allowBusy) return;
   if (refreshing) {

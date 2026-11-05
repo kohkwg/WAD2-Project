@@ -16,10 +16,12 @@ onMounted(() => {
   const desktop = matchMedia('(hover: hover) and (pointer: fine)');
   let lenis;
   const modalOpen = () => Boolean(document.querySelector('dialog[open],.modal.show,.offcanvas.show'));
+  // Stop smooth scrolling while a dialog is open, so the page behind the dialog does not move.
   function syncModal() {
     if (!lenis) return;
     if (modalOpen()) lenis.stop();else if (lenis.isStopped) lenis.start();
   }
+  // Start Lenis again when a media setting changes. Reduced motion and touch use native scrolling.
   function configure() {
     lenis?.destroy();
     lenis = null;

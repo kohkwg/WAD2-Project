@@ -17,6 +17,7 @@ watch(() => route.meta.title, title => {
   immediate: true
 });
 
+// Move focus to the main area after each route change. Keyboard and screen-reader users then start at the new page.
 watch(() => route.path, async () => {
   await nextTick();
   main.value?.focus({

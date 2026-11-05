@@ -1,8 +1,11 @@
 const supabase = require("./supabase");
 
-// verifies the supabase access token sent by the vue client:
-//   authorization: bearer <access_token>
-
+/**
+ * Express middleware. Checks the Supabase access token from the Vue client.
+ * Header format: "Authorization: Bearer <access_token>".
+ * Sends 401 if the token is missing or not valid.
+ * Sets req.user and req.accessToken for the next handler.
+ */
 async function requireAuth(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -17,7 +20,7 @@ async function requireAuth(req, res, next) {
     error: "Invalid token"
   });
   req.user = data.user;
-  req.accessToken = token; // routes query as this user (see usersupabase.js)
+  req.accessToken = token; // Routes use this token to query as this user (see userSupabase.js).
   next();
 }
 module.exports = requireAuth;

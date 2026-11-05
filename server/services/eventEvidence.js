@@ -1,4 +1,4 @@
-// pure v1 evidence calculation. not connected to the live recommendation route.
+// Pure evidence calculation. The live route uses it through recommendationPipeline.js and recommendationReason.js.
 
 const DAY_MS = 86_400_000;
 

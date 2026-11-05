@@ -423,6 +423,10 @@ const canGenerate = computed(() => PLANNER_AVAILABLE && form.value.title.trim().
 
 const planStale = computed(() => Boolean(planOffer.value || acceptedPlan.value) && normalizeTitle(form.value.title) !== planForTitle.value);
 
+/**
+ * Request a programme and task suggestion from the server for the current form values.
+ * A new call cancels the previous request. The token blocks a late reply from an old request.
+ */
 async function generatePlan() {
   if (!canGenerate.value) return;
   planController?.abort();
@@ -460,6 +464,10 @@ async function generatePlan() {
   }
 }
 
+/**
+ * Keep the ticked suggestion items as the plan to add after the event is created.
+ * Each task gets a request ID, so that a retry cannot add the same task two times.
+ */
 function usePlan() {
   const offer = planOffer.value;
   if (!offer || eventCreated.value) return;
@@ -753,6 +761,11 @@ async function reviewChanges() {
   showAnnounceDialog.value = true;
 }
 
+/**
+ * Save the event changes, then post the optional announcement.
+ * If only the announcement fails, the next try does not save the event again.
+ * @param {{announce: boolean, title: string, message: string}} choice Values from the announcement dialog.
+ */
 async function saveChanges({
   announce,
   title,
@@ -825,6 +838,11 @@ async function settleVisibility(eventId) {
 
 const afterCreateUrl = eventId => '/organiser/events?created=' + eventId + (publishWhen.value === 'later' ? '&draft=1' : '');
 
+/**
+ * Create the event, then apply the draft choice and the accepted plan.
+ * In live mode, the same form content reuses one request ID, so that a retry cannot create a second event.
+ * After the event exists, a retry only does the steps that remain.
+ */
 async function publish() {
   if (publishing.value || uploadingCover.value) return;
   const invalidStep = [1, 2].find(stepNumber => errorsForStep(form.value, stepNumber, ruleContext()).length > 0);
@@ -2202,10 +2220,6 @@ async function publish() {
   color: var(--bookedz-muted);
   font-size: .85rem;
   font-weight: 500;
-}
-
-.venue-later-note {
-  margin-top: .5rem;
 }
 
 @media (max-width: 399.98px) {

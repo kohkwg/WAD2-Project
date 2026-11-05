@@ -59,7 +59,7 @@ async function post() {
     await load();
     emit('changed');
     await nextTick();
-    // its own statement: a line starting with "(" would otherwise call nexttick()'s result
+    // The ref holds the TransitionGroup component, so use its $el to get the list.
     const listEl = list.value?.$el || list.value;
     listEl?.lastElementChild?.scrollIntoView({
       block: 'nearest'

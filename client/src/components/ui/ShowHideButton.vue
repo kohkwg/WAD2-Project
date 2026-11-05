@@ -8,16 +8,16 @@ const expanded = defineModel({
   default: false
 });
 defineProps({
+  // id of the panel it opens
   controls: {
     type: String,
     required: true
   },
-  // id of the panel it opens
+  // what it shows, e.g. "map"
   label: {
     type: String,
     required: true
   },
-  // what it shows, e.g. "map"
   count: {
     type: Number,
     default: null

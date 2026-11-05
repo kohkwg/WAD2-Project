@@ -41,6 +41,7 @@ function eventDto(row) {
   };
 }
 
+/** Makes the live weather adapter. Tests supply their own client, forecast reader and clock. */
 export function createFeature4WeatherAdapter({
   client = supabase,
   fetchData = fetchForecastData,

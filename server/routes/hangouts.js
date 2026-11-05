@@ -1,7 +1,7 @@
 const express = require("express");
 
 const supabaseForUser = require("../lib/userSupabase");
-// loaded on first request: requireauth creates the server client from .env.
+// Load on the first request. requireAuth creates the server client from .env.
 
 const requireAuth = (req, res, next) => require("../lib/requireAuth")(req, res, next);
 
@@ -16,6 +16,7 @@ const {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Creates the router. Tests replace the options with stubs.
 function createHangoutsRouter({
   auth = requireAuth,
   userClient = supabaseForUser,
@@ -23,6 +24,8 @@ function createHangoutsRouter({
   readRows = readHangoutRows
 } = {}) {
   const router = express.Router();
+  // Returns the hangout rows for a member.
+  // For other callers, sends the error response and returns null.
   async function memberRows(req, res) {
     if (!UUID.test(req.params.id)) {
       res.status(400).json({

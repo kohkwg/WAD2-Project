@@ -1,7 +1,7 @@
 <script setup>
 // feature 3: attendance csv export + import panel (sits under the dashboard).
-// mostly boilerplate wiring. the real logic is in utils/csv.js (tocsv,
-// parseattendancecsv) and in the database functions export_attendance /
+// mostly boilerplate wiring. the real logic is in utils/csv.js (toCsv,
+// parseAttendanceCsv) and in the database functions export_attendance /
 // import_attendance. imported check-ins show up in the arrivals feed on their own,
 // through the dashboard's realtime subscription.
 import { ref } from 'vue';
@@ -30,7 +30,7 @@ const importResult = ref(null); // { matched, unmatched: [...], skipped }
 const fileInput = ref(null);
 
 // column order in the exported file. email + ticket_code + checked_in_at use the
-// same names parseattendancecsv accepts, so an export can be edited and re-imported.
+// same names parseAttendanceCsv accepts, so an export can be edited and re-imported.
 
 const EXPORT_COLUMNS = [{
   key: 'display_name',

@@ -1,3 +1,9 @@
+/**
+ * Returns a score from 0 to 100.
+ * Each matched interest removes part of the remaining mismatch, so more matches increase the score.
+ * @param {object} combinedPreferences Points for each interest slug.
+ * @param {string[]} eventInterests Interest slugs of the event.
+ */
 function calculateCompatibility(combinedPreferences, eventInterests) {
   const uniqueInterests = [...new Set(eventInterests || [])];
   let remainingMismatch = 1;

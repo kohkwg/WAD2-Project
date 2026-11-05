@@ -13,7 +13,7 @@ import { organiserEventState } from '@/utils/organiserEvents';
 import { countdownLabel, isOfficialEvent } from '@/utils/groups';
 import { useMyDino } from '@/lib/myDino';
 
-// the signed-in home. landingview owns the account and passes down what it already loaded;
+// the signed-in home. LandingView owns the account and passes down what it already loaded;
 // everything else (groups, invites, friends, events you run) loads here and fails on its own,
 // so one slow or missing source never blanks the dashboard.
 
@@ -73,6 +73,10 @@ let active = true,
   request = 0,
   timer;
 
+/**
+ * Load the data that the parent does not supply.
+ * Each source can fail alone. A newer request replaces the result of an older request.
+ */
 async function loadExtras() {
   const ticket = ++request;
   extrasLoading.value = true;
@@ -91,6 +95,7 @@ async function loadExtras() {
   extrasLoading.value = false;
 }
 
+// Get new data when the window gets focus again. Do not start a second load.
 function refreshDashboard() {
   if (!active || document.hidden || extrasLoading.value) return;
   now.value = Date.now();
@@ -201,6 +206,7 @@ const busy = ref('');
 
 const personName = person => person.displayName || `@${person.username}`;
 
+// An item with `respond` shows its answer buttons here. An item with `to` links to another page.
 const attention = computed(() => {
   const items = [];
   for (const row of offers.value) {
@@ -275,6 +281,7 @@ const attention = computed(() => {
   return items;
 });
 
+/** Send the answer for one "to do" item. Only one answer can be in progress. */
 async function answer(item, accept) {
   if (busy.value) return;
   busy.value = item.key;
@@ -321,6 +328,7 @@ const nextEvent = computed(() => {
 
 // next 7 days (singapore days): what you're going to and what you run, side by side
 
+// Singapore is UTC+8 and has no daylight saving, so a fixed offset gives the correct day.
 const sgKey = ms => new Date(ms + 8 * 3600e3).toISOString().slice(0, 10);
 
 const clock = iso => new Date(iso).toLocaleTimeString('en-SG', {

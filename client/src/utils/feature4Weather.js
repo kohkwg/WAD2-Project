@@ -9,6 +9,7 @@ const TWO_HOURS = 2 * 60 * 60 * 1000;
 
 const WEATHER_TIMEOUT_MS = 15000;
 
+/** Reads the two-hour forecast. A failure throws an error with a retry message. */
 export async function fetchForecastData() {
   const controller = new AbortController();
   let deadline;
@@ -50,6 +51,7 @@ export function forecastAreas(data) {
   }));
 }
 
+// Returns the great-circle angle in radians (haversine). The caller only compares the results.
 function distance(venue, area) {
   const radians = degrees => degrees * Math.PI / 180;
   const latDifference = radians(area.lat - venue.lat);
@@ -58,11 +60,13 @@ function distance(venue, area) {
   return 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
 }
 
+// Accepts only a full ISO 8601 time with a zone. Date.parse also accepts other forms, which can use local time.
 function timestamp(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/.test(value)) return NaN;
   return Date.parse(value);
 }
 
+// Returns true for rain, false for dry weather and null for an unknown description. Null never permits a venue switch.
 function classifyRain(description) {
   if (/^(?:(?:light|moderate|heavy|passing|thundery|widespread)\s+)*(?:rain|showers)(?:\s+with gusty winds)?$/i.test(description)) return true;
   if (/^(?:fair(?: \((?:day|night)\))?|sunny|partly cloudy(?: \((?:day|night)\))?|cloudy|hazy|slightly hazy|windy|mist|fog)$/i.test(description)) return false;

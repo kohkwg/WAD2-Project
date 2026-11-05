@@ -11,7 +11,7 @@ const props = defineProps({
     type: Number,
     default: 3000
   },
-  // html5-qrcode format names; the staff station adds 'code_128' for ticket barcodes
+  // html5-qrcode format names; the staff station adds 'CODE_128' for ticket barcodes
   formats: {
     type: Array,
     default: () => ['QR_CODE']
@@ -32,7 +32,7 @@ let lastText = '';
 
 let lastAt = 0;
 
-// emits (text, formatname), e.g. ('2c3980b894', 'code_128')
+// Emit (text, formatName), for example ('2c3980b894', 'CODE_128').
 
 function onSuccess(text, result) {
   const now = Date.now();

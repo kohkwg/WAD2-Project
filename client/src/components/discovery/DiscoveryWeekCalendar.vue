@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 // a monday-to-sunday glance at the events discover is showing, in singapore time.
-// data is recieved from parent component
+// The parent component supplies the data.
 
 const props = defineProps({
   events: {
@@ -24,7 +24,7 @@ const emit = defineEmits(['select', 'update:offset']);
 
 const TIMEZONE = 'Asia/Singapore';
 
-// get sg time
+// Return the YYYY-MM-DD key of a date in Singapore time. The en-CA locale gives this format.
 
 function dayKey(date) {
   return date.toLocaleDateString('en-CA', {

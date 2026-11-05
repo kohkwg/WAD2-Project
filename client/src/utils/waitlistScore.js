@@ -17,11 +17,11 @@ export const WEIGHTS = {
 
 // an event this many days ago counts half as much as one today (90 days ago → 0.5, 180 → 0.25)
 
-export const HALF_LIFE_DAYS = 90;
+const HALF_LIFE_DAYS = 90;
 
 // a late cancellation takes away this much of that event's weight (on top of not attending)
 
-export const LATE_CANCEL_PENALTY = 0.5;
+const LATE_CANCEL_PENALTY = 0.5;
 
 // someone with no history yet gets this middle value, so new users aren't punished
 

@@ -11,7 +11,7 @@
 //   - event  "[test] check-in demo", published, started 30 min ago, ends in 6 h,
 //            so check-ins don't get the outside_event_window flag. re-running moves
 //            the times to "now" again.
-// password for every test user: seed_password in .env, or the default below.
+// password for every test user: SEED_PASSWORD in .env, or the default below.
 //
 // uses the secret key (bypasses rls) because only an admin can create confirmed
 // users. the app itself never uses this key.

@@ -21,7 +21,7 @@ export const QUESTION_TYPES = [{
   label: 'Pick several'
 }];
 
-export const OPTION_RANGE = {
+const OPTION_RANGE = {
   min: 2,
   max: 10,
   length: 80

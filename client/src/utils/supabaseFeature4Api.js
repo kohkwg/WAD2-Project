@@ -5,6 +5,7 @@ import { TASK_STATUSES, budgetCategoryOptions, validateCategoryName, validateCen
 
 const MAX_AMOUNT_CENTS = 999_999_999_999;
 
+// Gives a migration message for a missing table or function. Other errors keep their code for mayHaveCommitted.
 function check({
   data,
   error
@@ -20,12 +21,14 @@ function check({
   return data;
 }
 
+// Returns true if the server possibly saved a failed write: a duplicate key, a 5xx status or a lost connection.
 function mayHaveCommitted(error) {
   if (/^[0-9A-Z]{5}$/.test(error?.code || '')) return error.code === '23505';
   if (Number.isFinite(error?.status)) return error.status >= 500;
   return error instanceof TypeError || /failed to fetch|network|timed? ?out|connection (?:lost|closed|reset)|aborted/i.test(error?.message || '');
 }
 
+// Checks a create that failed but possibly saved. Returns the saved row if it matches. Otherwise throws the original error.
 async function reconcileCreate(client, table, id, eventId, matches, columns, error) {
   if (!mayHaveCommitted(error)) throw error;
   try {
@@ -38,6 +41,7 @@ async function reconcileCreate(client, table, id, eventId, matches, columns, err
   throw error;
 }
 
+// Converts a database numeric string to integer cents, with no floating-point arithmetic.
 function amountToCents(value) {
   if (value == null) return 0;
   const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(String(value));
@@ -47,6 +51,7 @@ function amountToCents(value) {
   return Number(cents);
 }
 
+// Converts integer cents to a database numeric string, with no floating-point arithmetic.
 function centsToAmount(cents, {
   positive = false
 } = {}) {
@@ -359,6 +364,7 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
 
 const api = supabase ? createSupabaseFeature4Api(supabase) : null;
 
+// Gives a clear error at call time if Supabase is not configured.
 function live(method) {
   return (...args) => {
     if (!api) throw new Error('Supabase is not configured for live Feature 4 operations.');

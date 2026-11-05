@@ -2,6 +2,11 @@ const {
   calculateEventEvidence
 } = require('./eventEvidence');
 
+/**
+ * Returns the reason text for one recommended event.
+ * General discovery events get a fixed text. Other events use the strongest activity on a shared interest.
+ * Without such activity, the text uses the selected interests.
+ */
 function buildRecommendationReason({
   event,
   selectedInterests = [],

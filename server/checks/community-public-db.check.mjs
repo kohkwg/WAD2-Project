@@ -1,7 +1,7 @@
-// isolated postgresql verification of supabase/migrations/20261104142907_go_together_groups.sql. never reads .env or
+// isolated postgresql verification of docs/sql/community-public-browse-draft.sql. never reads .env or
 // uses a database url. pass the path to a temporary pglite runtime module; no
 // application dependency is added. usage:
-//   node server/checks/groups-db.check.mjs <tmp>/node_modules/@electric-sql/pglite/dist/index.js
+//   node server/checks/community-public-db.check.mjs <tmp>/node_modules/@electric-sql/pglite/dist/index.js
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -64,16 +64,6 @@ async function admin() {
   await db.exec('reset role');
 }
 
-const sgDate = days => new Date(Date.now() + 8 * 3600e3 + days * 864e5).toISOString().slice(0, 10);
-
-const sg = (date, time) => new Date(`${date}T${time}:00+08:00`).toISOString();
-
-const venue = {
-  name: 'Bugis Junction',
-  address: '200 Victoria St',
-  lat: 1.2995,
-  lng: 103.8545
-};
 try {
   await db.exec(`
 create role anon nologin;
@@ -111,12 +101,7 @@ create publication supabase_realtime;
   await asUser(HOST);
   await query('select public.register_for_event($1)', [official.id]);
   await admin();
-  const eventRsvp = async userId => (await query('select status from public.registrations where event_id = $1 and user_id = $2', [official.id, userId]))[0]?.status;
   const create = args => query("select public.create_group($1,$2,$3,$4,$5,'{}'::uuid[]) as id", args).then(r => r[0].id);
-  const view = async (id, token = null) => (await query('select public.group_view($1,$2) as v', [id, token]))[0].v;
-  const list = async () => (await query('select public.group_list() as l'))[0].l;
-  const plan = async id => (await query('select public.group_plan($1) as p', [id]))[0].p;
-  const cell = (base, minutes) => new Date(new Date(base).getTime() + minutes * 60000).toISOString();
   await db.exec(await readFile(root + '/docs/sql/community-public-browse-draft.sql', 'utf8'));
   await asUser(HOST);
   const pub = await create([official.id, '[TEST] Public meetup', 4, 'open', 'public']);

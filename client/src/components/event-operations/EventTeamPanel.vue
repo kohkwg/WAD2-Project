@@ -15,10 +15,6 @@ const props = defineProps({
   visible: {
     type: Boolean,
     default: true
-  },
-  updates: {
-    type: Number,
-    default: 0
   }
 });
 
@@ -82,7 +78,7 @@ watch(() => props.eventId, () => {
   load();
 });
 
-watch(() => [props.visible, props.updates], () => {
+watch(() => props.visible, () => {
   if (canRefresh()) load(true);
 });
 // ignore older responses after switching events or leaving the page
@@ -105,6 +101,7 @@ async function load(silent = false) {
   }
 }
 
+// Refresh after a timer tick, a window focus or a tab change.
 function wake() {
   if (canRefresh()) load(true);
 }
@@ -191,8 +188,7 @@ const respond = (invite, accept) => mutate(() => api.respondToTeamInvite(invite.
     :aria-label="eventId ? 'Event team' : compact ? 'Team invitations' : 'Your event teams'">
     <header v-if="!compact" class="team-heading">
       <div>
-        <h2>{{ eventId ? 'Event team' : compact ? 'Team invitations' : 'Your event teams' }}<span
-            v-if="compact && data && !data.signedOut"> ({{ data.invitations.length }})</span></h2>
+        <h2>{{ eventId ? 'Event team' : 'Your event teams' }}</h2>
         <p class="text-body-secondary mb-0">{{ eventId ? 'Invite co-organisers. They join only after accepting.' :
           'Accept team invitations here, then open your event tools.' }}</p>
       </div>
@@ -363,14 +359,6 @@ const respond = (invite, accept) => mutate(() => api.respondToTeamInvite(invite.
   border: 1px solid var(--bookedz-border);
   border-radius: 1rem;
   background: var(--bookedz-surface);
-}
-
-.event-team--compact .team-heading {
-  margin-bottom: .75rem;
-}
-
-.event-team--compact h2 {
-  font-size: 1.2rem;
 }
 
 .team-event-link {

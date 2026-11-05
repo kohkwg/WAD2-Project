@@ -21,6 +21,7 @@ const errorMessage = ref('');
 
 let timer = null;
 
+// Each new action increases this number. A late response with an older number has no effect.
 let requestId = 0;
 
 // wait until typing pauses for 400 milliseconds before searching

@@ -24,6 +24,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // keep query assembly here: the scoring pipeline stays independent of supabase.
 
+// Reads all rows, one page at a time. buildQuery must return a new query for each page.
 async function readPages(buildQuery) {
   const rows = [];
   for (let offset = 0;;) {
@@ -39,6 +40,7 @@ async function readPages(buildQuery) {
   }
 }
 
+// Logs the full error on the server. Sends the client only a safe message.
 function reportFailure(res, error) {
   console.error('[Recommendation error]', {
     message: error.message,
@@ -47,6 +49,7 @@ function reportFailure(res, error) {
     stack: error.stack
   });
   const code = error.code || error.cause?.code;
+  // These codes show a missing table, column or function in the database.
   const setupMissing = ['42P01', '42703', '42883', 'PGRST202', 'PGRST205', 'RECOMMENDATION_SETUP_REQUIRED'].includes(code);
   const forbidden = code === '42501';
   return res.status(setupMissing ? 503 : forbidden ? 403 : 500).json({

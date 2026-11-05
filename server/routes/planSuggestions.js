@@ -22,6 +22,8 @@ const MAX_OWN_EVENTS = 100;
 
 const text = (value, max) => typeof value === "string" ? value.trim().slice(0, max) : "";
 
+// Copies the request body into a safe shape with length limits.
+// Returns null if the title is empty.
 function readTarget(body) {
   const title = text(body?.title, 200);
   if (!title) return null;
@@ -46,6 +48,7 @@ function tsQuery(target) {
   return [...new Set(words)].slice(0, 12).join(" | ");
 }
 
+// Escapes LIKE wildcards, so ilike matches the exact title.
 const escapeLike = value => value.replace(/[\\%_]/g, match => `\\${match}`);
 
 function check({
@@ -56,6 +59,11 @@ function check({
   return data || [];
 }
 
+/**
+ * Loads past events for the plan: text matches, exact title matches and the caller's own events.
+ * Use the caller's client, so RLS applies.
+ * @returns {Promise<object[]>} Candidates in the format that suggestPlan expects.
+ */
 async function loadCandidates(supabase, userId, target) {
   const nowIso = new Date().toISOString();
   const past = () => supabase.from("events").select(EVENT_COLUMNS).in("status", PAST_STATUSES).lt("ends_at", nowIso);
@@ -117,7 +125,7 @@ async function loadCandidates(supabase, userId, target) {
   });
 }
 
-// post /api/plan-suggestions   { title, description?, category?, tags?, capacity?, startsat?, endsat? }
+// post /api/plan-suggestions   { title, description?, category?, tags?, capacity?, startsAt?, endsAt? }
 // suggests programme items (as fractions of the event's length) and tasks from past events.
 router.post("/", requireAuth, async (req, res) => {
   const target = readTarget(req.body);

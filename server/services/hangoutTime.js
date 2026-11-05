@@ -14,6 +14,7 @@ let slotsModule;
 
 const loadSlots = () => slotsModule ||= import(pathToFileURL(path.join(__dirname, "../../client/src/utils/hangoutSlots.js")).href);
 
+// Removes the private free times from a member record.
 const publicMember = ({
   intervals,
   ...member
@@ -26,7 +27,7 @@ const publicPeople = result => ({
   noReply: result.noReply.map(publicMember)
 });
 
-// rows: { hangout, organiserid, members: [{ user_id, display_name }], settings, replies, blocks }
+// rows: { hangout, organiserId, members: [{ user_id, display_name }], settings, replies, blocks }
 
 function buildMembers(rows) {
   const ids = [...new Set([rows.organiserId, ...rows.members.map(m => m.user_id)])];
@@ -43,6 +44,11 @@ function buildMembers(rows) {
   }));
 }
 
+/**
+ * Returns the time view for one member: ranked options, a heat map and host rescue suggestions.
+ * Member records have no free times. Only the viewer gets their own times, in myIntervals.
+ * Throws an error with status 409 if the hangout has a fixed time.
+ */
 async function hangoutTime(rows, viewerId, {
   minMinutes
 } = {}) {
@@ -85,6 +91,7 @@ async function hangoutTime(rows, viewerId, {
   };
 }
 
+// Returns the available, cannot and noReply people for one slot, without free times.
 async function previewTime(rows, slot) {
   const {
     previewSlot
@@ -130,6 +137,5 @@ async function readHangoutRows(admin, eventId) {
 module.exports = {
   hangoutTime,
   previewTime,
-  readHangoutRows,
-  buildMembers
+  readHangoutRows
 };

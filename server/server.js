@@ -22,7 +22,7 @@ app.use("/api/uploads", require("./routes/uploads"));
 app.use("/api/account", require("./routes/account"));
 // automatic event planner: programme + task suggestions from past events
 app.use("/api/plan-suggestions", require("./routes/planSuggestions"));
-// hangout late-join travel: onemap routes when onemap_email/onemap_password are set
+// Hangout late-join travel. This route uses OneMap when ONEMAP_EMAIL and ONEMAP_PASSWORD are set.
 app.use("/api/route", require("./routes/route"));
 // food places near an event (go together before/after planner)
 app.use("/api/food", require("./routes/food")());

@@ -7,31 +7,30 @@ import { CELL_MINUTES } from '../../utils/groups.js';
 // darker where more people are free; the best slot is outlined. tap a group cell to see who.
 
 const props = defineProps({
+  // 'before' | 'after'
   slot: {
     type: String,
     required: true
   },
-  // 'before' | 'after'
+  // [{ start, free: [{ id, name, me }] }]
   cells: {
     type: Array,
     required: true
   },
-  // [{ start, free: [{ id, name, me }] }]
+  // [start iso] or null if not marked yet
   myCells: {
     type: Array,
     default: null
   },
-  // [start iso] or null if not marked yet
   memberCount: {
     type: Number,
     default: 1
   },
+  // { start, end } when fitted
   best: {
     type: Object,
     default: null
-  },
-  // { start, end } when fitted
-  disabled: Boolean
+  }
 });
 
 const emit = defineEmits(['save']);
@@ -80,7 +79,7 @@ function paint(index) {
 }
 
 function start(event, index) {
-  if (props.disabled || event.pointerType === 'mouse' && event.button !== 0) return;
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
   event.preventDefault();
   painting.value = !mine.value.has(props.cells[index].start);
   lastIndex = -1;
@@ -113,7 +112,7 @@ function save() {
 // keyboard: space or enter toggles one cell (pointer clicks are handled by painting)
 
 function toggle(event, index) {
-  if (event.detail !== 0 || props.disabled) return;
+  if (event.detail !== 0) return;
   const next = new Set(mine.value);
   const start = props.cells[index].start;
   next.has(start) ? next.delete(start) : next.add(start);
@@ -134,11 +133,10 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move));
     <div class="painter-head">
       <p class="painter-q m-0">{{ slot === 'before' ? 'When are you free before?' : 'When are you free after?' }}</p>
       <span class="painter-tools">
-        <button type="button" class="btn btn-link btn-sm p-0" :disabled="disabled" @click="setAll(true)">All</button>
+        <button type="button" class="btn btn-link btn-sm p-0" @click="setAll(true)">All</button>
         <button
         type="button"
         class="btn btn-link btn-sm p-0"
-        :disabled="disabled"
         @click="setAll(false)">{{ myCells?.length ? 'Clear' : 'I can’t make it' }}</button>
       </span>
     </div>
@@ -157,7 +155,6 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move));
           :data-paint-index="i"
           :aria-pressed="mine.has(cell.start)"
           :aria-label="`${time(cell.start)} to ${time(endOf(cell.start))}: you’re ${mine.has(cell.start) ? 'free' : 'not free'}`"
-          :disabled="disabled"
           @pointerdown="start($event, i)"
           @click="toggle($event, i)"
         ></button>

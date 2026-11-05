@@ -2,9 +2,7 @@
 
 const {
   checkTrue,
-  checkEqual,
-  checkDeepEqual,
-  checkThrows
+  checkEqual
 } = require('./checks');
 
 const {

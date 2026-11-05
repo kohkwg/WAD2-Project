@@ -11,6 +11,7 @@ import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 // only `transform`: entrance uses x/y/rotation/scale, parallax ypercent, tilt rotationx/y.
 gsap.registerPlugin(ScrollTrigger, SplitText, DrawSVGPlugin);
 
+/** Starts the landing page motion on the target element and removes it on unmount. */
 export function useLandingMotion(target) {
   let dispose = () => {};
   onMounted(() => {

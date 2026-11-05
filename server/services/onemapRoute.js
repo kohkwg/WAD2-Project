@@ -1,5 +1,5 @@
 // onemap (singapore land authority) public-transport and walking routes.
-// credentials stay server-side (onemap_email / onemap_password); tokens refresh before
+// credentials stay server-side (ONEMAP_EMAIL / ONEMAP_PASSWORD); tokens refresh before
 // expiry. results are cached by normalised endpoints, mode and 15-minute departure.
 // token: https://www.onemap.gov.sg/api/auth/post/getToken
 // route: https://www.onemap.gov.sg/api/public/routingsvc/route
@@ -29,6 +29,7 @@ class RouteError extends Error {
   }
 }
 
+// Parses "lat,lng". Returns null for a different format or a point outside Singapore.
 function parsePoint(text) {
   if (typeof text !== "string" || !/^-?\d{1,3}(\.\d+)?,-?\d{1,3}(\.\d+)?$/.test(text)) return null;
   const [lat, lng] = text.split(",").map(Number);
@@ -50,6 +51,10 @@ function singaporeParts(ms) {
   };
 }
 
+/**
+ * Creates the routing service. Tests supply fetchImpl, env, now and timeoutMs.
+ * route() throws a RouteError with the code "configuration" or "unavailable".
+ */
 function createOneMapRouting({
   fetchImpl = globalThis.fetch,
   env = process.env,
@@ -78,6 +83,7 @@ function createOneMapRouting({
   async function getToken() {
     // refresh five minutes early so a request never uses an expiring token.
     if (token && now() < tokenExpiresAt - 5 * 60 * 1000) return token;
+    // Requests that run at the same time share one sign-in.
     if (!pendingToken) {
       pendingToken = (async () => {
         const response = await timedFetch(TOKEN_URL, {
@@ -104,6 +110,7 @@ function createOneMapRouting({
   }
   function cacheKey(from, to, mode, departMs) {
     const point = p => `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`;
+    // Walk times do not change with the departure time, so all departures share one entry.
     const slot = mode === "walk" ? "any" : Math.floor(departMs / QUARTER_HOUR_MS);
     return `${mode}|${point(from)}|${point(to)}|${slot}`;
   }
@@ -174,18 +181,12 @@ function createOneMapRouting({
       cached: false
     };
   }
-
-  // gettoken is exposed for other onemap calls that need the same token.
   return {
-    configured,
-    route,
-    getToken,
-    cacheSize: () => cache.size
+    route
   };
 }
 module.exports = {
   createOneMapRouting,
   parsePoint,
-  singaporeParts,
-  RouteError
+  singaporeParts
 };

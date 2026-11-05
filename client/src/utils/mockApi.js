@@ -40,6 +40,7 @@ function emptyOperations() {
   };
 }
 
+/** Reads the demo database and updates old saved data. With no saved data, it makes new seed data. */
 function loadDb() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
@@ -1468,6 +1469,7 @@ export async function expireOffersNow(eventId) {
 /** @typedef {{id:string,eventid:string,name:string,category:string,quantity:number,plannedcents:number,actualcents:number,purchasedat:(string|null)}} budgetitem */
 
 
+// Returns the event only for its owner. This is the demo version of the live owner-only rule.
 function ownedEvent(db, eventId) {
   const event = findEvent(db, eventId);
   if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('Only the event owner can manage these organiser tools.');
@@ -1812,6 +1814,7 @@ export async function getEventForecast(eventId) {
   return eventForecast(data, ownedEvent(db, eventId), db.feature4.forecastAreas[eventId] || null);
 }
 
+// Returns the saved result of an earlier venue switch, or null. A repeated request then gets the same result.
 function persistedSwitch(db, event) {
   if (!event.usingBackup) return null;
   const post = db.feature4.announcements.find(entry => entry.eventId === event.id && entry.kind === 'venue-switch' && entry.id === event.venueSwitchAnnouncementId);

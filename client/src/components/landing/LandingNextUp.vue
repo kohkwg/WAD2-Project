@@ -41,6 +41,7 @@ const slide = computed(() => slides.value[index.value % slides.value.length]);
 
 const canRotate = computed(() => slides.value.length > 1);
 
+// Stop the rotation when the user pauses it, holds the card or cannot see the card.
 const playing = computed(() => canRotate.value && !userPaused.value && !held.value && onScreen.value && pageVisible.value);
 
 const dayTime = new Intl.DateTimeFormat('en-SG', {

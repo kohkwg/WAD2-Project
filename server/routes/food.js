@@ -8,6 +8,7 @@ const {
 // get /api/food/nearby?lat=&lng=&at=iso&radius=metres  -> { places, status }
 // get /api/food/status                                  -> whether places are configured, quota
 
+// Singapore limits for lat and lng.
 const BOUNDS = {
   south: 1.144,
   west: 103.535,
@@ -15,6 +16,11 @@ const BOUNDS = {
   east: 104.131
 };
 
+/**
+ * Creates the food router.
+ * @param {object} [options]
+ * @param {object} [options.food] Replaces the default Geoapify food place service.
+ */
 function createFoodRouter({
   food = createFoodPlaces()
 } = {}) {
@@ -37,7 +43,7 @@ function createFoodRouter({
         radius,
         atMs
       }));
-    } catch (error) {
+    } catch {
       res.status(502).json({
         error: "unavailable",
         message: "Food suggestions are unavailable right now."
@@ -53,4 +59,3 @@ function createFoodRouter({
   return router;
 }
 module.exports = createFoodRouter;
-module.exports.createFoodRouter = createFoodRouter;

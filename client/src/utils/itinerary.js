@@ -7,7 +7,7 @@ const MIN = 60000;
 
 const SG_OFFSET = 8 * 60 * MIN;
 
-export const PLAN_DEFAULTS = {
+const PLAN_DEFAULTS = {
   minStops: 2,
   maxStops: 4,
   beamWidth: 12,
@@ -21,7 +21,7 @@ export const PLAN_DEFAULTS = {
 
 export const MAX_STOPS = 6;
 
-export const SOFT_ISSUES = ['no_meal', 'unknown_hours', 'full_event'];
+const SOFT_ISSUES = ['no_meal', 'unknown_hours', 'full_event'];
 
 const MEAL_WINDOWS = [{
   name: 'lunch',
@@ -126,13 +126,14 @@ function memberMatch(weights, listing) {
   return best;
 }
 
+// Scores how well the stops suit the group. The weights use the average and also protect the member with the lowest match.
 function satisfaction(stops, members) {
   if (!stops.length || !members.length) return 0;
   const perMember = members.map(m => stops.reduce((sum, s) => sum + memberMatch(m.weights, s.listing), 0) / stops.length);
   return .6 * (perMember.reduce((a, b) => a + b, 0) / perMember.length) + .4 * Math.min(...perMember);
 }
 
-export const groupMatch = (listing, members) => members.length ? members.reduce((sum, m) => sum + memberMatch(m.weights, listing), 0) / members.length : 0;
+const groupMatch = (listing, members) => members.length ? members.reduce((sum, m) => sum + memberMatch(m.weights, listing), 0) / members.length : 0;
 
 // schedule a fixed order and report every issue, even when timings are best-effort.
 
@@ -240,7 +241,8 @@ export function retime(listings, input, overrides = {}) {
   };
 }
 
-export function planScore(result, input) {
+/** Scores a scheduled plan for ranking. Match, coverage and meals increase the score. Travel and wait time decrease it. */
+function planScore(result, input) {
   const stops = result.stops.filter(s => s.listing);
   if (!stops.length) return 0;
   const slotMinutes = (input.slot.end - input.slot.start) / MIN;
@@ -383,6 +385,7 @@ export function swapAlternatives(listings, index, sequence, input, overrides = {
   }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 3);
 }
 
+/** Makes equal tag weights from the interests of a member, or from the fallback list. */
 export function memberWeights(interests, fallback) {
   const list = interests?.length ? interests : fallback || [];
   return Object.fromEntries(list.map(tag => [tag, 1]));

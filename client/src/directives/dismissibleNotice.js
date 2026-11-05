@@ -2,6 +2,7 @@
 
 const notices = new WeakMap();
 
+/** Moves focus to the next visible control after a hidden notice, or to the main element. */
 export function focusAfterNotice(element) {
   const controls = [...document.querySelectorAll('button, a[href], input, select, textarea, [tabindex="0"]')];
   const next = element.isConnected && controls.find(node => !element.contains(node) && !node.matches(':disabled') && !node.closest('[inert]') && node.getClientRects().length && element.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING);
@@ -11,6 +12,7 @@ export function focusAfterNotice(element) {
   });
 }
 
+// A change in this value shows a dismissed notice again, because the message is new.
 function signature(element) {
   return `${element.textContent}|${element.getAttribute('role')}|${element.className}`;
 }
@@ -28,6 +30,7 @@ function update(element) {
   }
 }
 
+/** Adds a close button to a notice element. A click hides the element and does not change its Vue state. */
 export const dismissibleNotice = {
   mounted(element) {
     element.classList.add('dismissible-notice');

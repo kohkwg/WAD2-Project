@@ -206,7 +206,7 @@ onMounted(() => getEvent(eventId).then(e => event.value = e).catch(() => {}));
   margin-top: 1.25rem!important;
 }
 
-.staff-page .form-control,.staff-page .form-select {
+.staff-page .form-control {
   border-color: var(--bookedz-border,#e9ded3);
   border-radius: 12px;
   min-height: 44px;
@@ -215,15 +215,6 @@ onMounted(() => getEvent(eventId).then(e => event.value = e).catch(() => {}));
 .staff-page .btn {
   min-height: 42px;
   border-radius: 12px;
-}
-
-.staff-page .btn-primary {
-  --bs-btn-bg: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-border-color: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-color: #fff;
-  --bs-btn-hover-bg: #9a3412;
-  --bs-btn-hover-border-color: #9a3412;
-  --bs-btn-hover-color: #fff;
 }
 
 .staff-page .btn-outline-primary {

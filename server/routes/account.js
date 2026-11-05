@@ -8,7 +8,7 @@ const router = express.Router();
 
 // delete /api/account — permanently deletes the signed-in user's own account.
 // deleting an auth user needs the service-role key, which only the server holds, so the
-// browser cannot do this itself. the token is verified by requireauth; only that user's own id
+// browser cannot do this itself. requireAuth verifies the token; only that user's own id
 // is ever deleted. their profile and personal rows cascade away with the login.
 // events they organise block deletion (events.organiser_id is on delete restrict), so they
 // must delete or hand over those events first rather than lose other people's rsvps.

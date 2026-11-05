@@ -187,6 +187,10 @@ watch(() => props.initialMode, value => {
   if (['signin', 'signup'].includes(value)) switchMode(value);
 });
 
+/**
+ * Submit the current form mode: sign in, sign up or forgot password.
+ * Only a wrong-credentials error counts toward the sign-in lock.
+ */
 async function submit() {
   triedSubmit.value = true;
   if (mode.value === 'signin' && secondsLeft.value > 0) return;

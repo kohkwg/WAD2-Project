@@ -512,18 +512,6 @@ watch([expanded, pageSize], () => {
   overflow: visible;
 }
 
-.day-row :deep(.is-selected .row-selected-info) {
-  display: flex;
-  overflow: visible;
-  -webkit-line-clamp: unset;
-  line-clamp: unset;
-}
-
-.day-row :deep(.row-selected-info > span) {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .day-track {
     scroll-behavior: smooth;

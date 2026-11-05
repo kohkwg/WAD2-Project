@@ -4,8 +4,8 @@ const ACTIONS = new Set(['save', 'unsave', 'dismiss', 'undo_dismiss']);
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// instantiate only after requireauth verifies the caller's token. no service-role
-// client, user id override, client timestamps or client attendance input.
+// Create this store only after requireAuth verifies the token. The store does not accept
+// a service-role client, a user ID override, client timestamps or client attendance input.
 
 function createEventEvidenceStore(accessToken, {
   clientFactory = supabaseForUser

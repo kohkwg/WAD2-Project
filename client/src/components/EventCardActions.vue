@@ -11,6 +11,7 @@ const props = defineProps({
 
 const status = computed(() => props.event.my_rsvp_status || props.event.registration_status);
 
+// Confirmed, pending and waitlisted registrations show a status. Other cases link to the RSVP form.
 const action = computed(() => {
   if (status.value === 'confirmed') {
     return {

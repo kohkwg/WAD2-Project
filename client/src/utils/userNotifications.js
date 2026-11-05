@@ -1,6 +1,6 @@
 // store a comparison token rather than the private text used to build it
 
-export function notificationVersion(value) {
+function notificationVersion(value) {
   let first = 2166136261;
   let second = 5381;
   for (const letter of String(value)) {
@@ -42,6 +42,7 @@ export function createNotificationTracker(saved = {}, notify = () => {}) {
   };
 }
 
+/** Returns the toast data for an RSVP. The `version` value changes when the RSVP state changes. */
 export function registrationNotice(row, previous = null) {
   const group = row.event?.kind === 'group' || row.isGroup || previous?.isGroup || false;
   const title = row.event?.title || row.title || previous?.title || (group ? 'your group' : 'your event');

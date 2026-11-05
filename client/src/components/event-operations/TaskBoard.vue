@@ -68,6 +68,7 @@ function saveTask() {
       notes: savedNotes.trim()
     },
     done: () => {
+      // Keep the draft if the person changed it while the save ran.
       if (title.value === savedTitle && notes.value === savedNotes && editingId.value === id) clearDraft();
     }
   });
@@ -124,6 +125,13 @@ function boardIds() {
   }) => [id, columns.value[id].map(task => task.id)]));
 }
 
+/**
+ * Move a task with the keyboard controls, then send the full board to the parent.
+ * @param {object} task The task to move.
+ * @param {string} status The id of the destination column.
+ * @param {?number} [offset] The change in row position. Null adds the task to the end of the column.
+ * @param {boolean} [keepStatusFocus] Put focus back on the status control after the save.
+ */
 function move(task, status, offset = null, keepStatusFocus = false) {
   const board = boardIds();
   const oldIndex = board[task.status].indexOf(task.id);

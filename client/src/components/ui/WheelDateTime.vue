@@ -14,11 +14,11 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  // only decides where an empty field starts
   min: {
     type: String,
     default: ''
   },
-  // only decides where an empty field starts
   clearable: Boolean,
   placeholder: {
     type: String,
@@ -150,6 +150,7 @@ const label = computed(() => {
 });
 
 function commit(next) {
+  // Limit the day, because the new month can have fewer days.
   const day = Math.min(next.day, new Date(next.year, next.month, 0).getDate());
   emit('update:modelValue', `${next.year}-${pad(next.month)}-${pad(day)}T${pad(next.hour24)}:${pad(next.minute)}`);
 }
@@ -188,6 +189,10 @@ function syncWheels(smooth = false) {
 
 const settle = {};
 
+/**
+ * Choose the row at the wheel position after the scroll stops.
+ * @param {string} key The column key of the wheel.
+ */
 function onScroll(key) {
   if (quiet) return;
   clearTimeout(settle[key]);

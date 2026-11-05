@@ -13,10 +13,10 @@
 /* 1. Movement glides on every element that has a hover or press movement */
 :is(
   .btn, .event-cta, .lift-on-hover, .discovery-event-row, .event-card, .group-card, .group-event,
-  .event-groups-card, .community-tile, .jio-card, .organiser-event-card, .recommendation-card,
-  .announcement-entry, .category-shortcut, .day-more, .dino-option, .question-add, .rsvp-back,
+  .event-groups-card, .community-tile, .organiser-event-card, .recommendation-card,
+  .announcement-entry, .category-shortcut, .day-more, .question-add, .rsvp-back,
   .place-row, .group-slot-tab, .group-keen, .dash-card, .dash-day-item, .dash-pick, .rsvp-row,
-  .community-filter, .egc-start
+  .egc-start
 ) {
   transition-property: transform, translate, scale, box-shadow, border-color, background-color, color, opacity, filter !important;
   transition-duration: var(--bookedz-motion-fast, 160ms) !important;
@@ -42,7 +42,7 @@
   transform: translateY(0) scale(.985);
   transition-duration: var(--bookedz-motion-feedback, 100ms) !important;
 }
-:is(.category-shortcut, .group-keen, .day-more, .group-slot-tab, .community-filter):active {
+:is(.category-shortcut, .group-keen, .day-more, .group-slot-tab):active {
   transform: scale(.96);
   transition-duration: var(--bookedz-motion-feedback, 100ms) !important;
 }
@@ -67,7 +67,7 @@
 
 /* 5. Reduced motion: no movement, colour changes stay */
 @media (prefers-reduced-motion: reduce) {
-  :is(.dash-card, .dash-pick, .rsvp-row, .dash-day-item, .place-row, .category-shortcut, .group-keen, .day-more, .group-slot-tab, .community-filter,
+  :is(.dash-card, .dash-pick, .rsvp-row, .dash-day-item, .place-row, .category-shortcut, .group-keen, .day-more, .group-slot-tab,
       .discovery-event-row, .event-card, .group-card, .community-tile, .organiser-event-card, .recommendation-card):is(:hover, :active),
   .side-link:hover svg {
     transform: none !important;

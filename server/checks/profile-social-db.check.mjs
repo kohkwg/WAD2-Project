@@ -50,7 +50,6 @@ async function check(name, run) {
   console.log('PASS', name);
 }
 
-const overview = async () => (await q('select public.profile_groups_overview() as data'))[0].data;
 try {
   await db.exec(`
 create role anon nologin;

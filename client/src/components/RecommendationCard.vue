@@ -5,8 +5,6 @@ import EventArtwork from './EventArtwork.vue';
 import EventBookmark from './EventBookmark.vue';
 import EventCardActions from './EventCardActions.vue';
 
-const optionsOpen = ref(false);
-
 const props = defineProps({
   event: {
     type: Object,
@@ -459,18 +457,6 @@ function onAction() {
   min-height: 44px;
   border-radius: 14px 24px 24px 14px;
   padding: 12px 54px 12px 18px;
-}
-
-.pick-waitlist, .pick-waitlist:disabled {
-  border: 1px solid #d8ad42;
-  background: #f6cf77;
-  color: #513c14;
-  opacity: 1;
-}
-
-.pick-waitlist:hover {
-  background: #edc05d;
-  border-color: #c49b39;
 }
 
 .pick-waitlist-note {

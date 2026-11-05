@@ -56,6 +56,7 @@ const chosen = slot => plan.value[slot].suggestions.find(s => s.id === plan.valu
 
 const distance = m => m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`;
 
+// Use a walking speed of 80 metres each minute.
 const walk = m => `${Math.max(1, Math.round(m / 80))} min walk`;
 
 const mapSpots = computed(() => SLOTS.flatMap(slot => plan.value[slot].suggestions.map(s => ({
@@ -64,6 +65,12 @@ const mapSpots = computed(() => SLOTS.flatMap(slot => plan.value[slot].suggestio
   label: `${slotTitle(slot)} · ${s.votes} keen`
 }))));
 
+/**
+ * Run one plan change. Send the new plan to the parent, or show the error.
+ * @param {string} key The busy key, which disables the matching button.
+ * @param {Function} fn The function that does the change and returns the new plan.
+ * @param {string} [message] The toast text to show after a successful change.
+ */
 async function act(key, fn, message) {
   busy.value = key;
   error.value = '';
@@ -140,7 +147,7 @@ watch(customName, text => {
         loading: false,
         error: ''
       });
-    } catch (e) {
+    } catch {
       if (controller.signal.aborted) return;
       Object.assign(search, {
         results: [],
@@ -163,6 +170,7 @@ const pickPlace = (slot, place, index) => suggest(slot, {
 
 const nameTaken = (slot, name) => plan.value[slot].suggestions.some(s => String(s.name).toLowerCase() === String(name).slice(0, SUGGESTION_NAME_LIMIT).toLowerCase());
 // straight-line distance from the event's venue, for the search results
+// Use the haversine formula. The result is in metres.
 
 function fromVenue(place) {
   if (!hasMap.value) return null;
@@ -594,12 +602,12 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   }
 }
 
-.group-ideas,.group-options {
+.group-ideas {
   display: grid;
   gap: 8px;
 }
 
-.group-idea,.group-option {
+.group-idea {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -625,7 +633,7 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   flex: none;
 }
 
-.group-idea-actions .btn,.group-option .btn {
+.group-idea-actions .btn {
   min-height: 36px;
 }
 
@@ -644,17 +652,6 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
 .group-add {
   justify-self: start;
   min-height: 40px;
-}
-
-.group-add-note {
-  margin: 0;
-  color: var(--bookedz-muted);
-  font-size: .9rem;
-}
-
-.group-options {
-  max-height: 300px;
-  overflow-y: auto;
 }
 
 /* the place box: one field and one scrolling list, whichever service a row came from */

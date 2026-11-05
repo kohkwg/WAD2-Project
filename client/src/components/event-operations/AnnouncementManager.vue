@@ -63,6 +63,7 @@ function save() {
     id,
     body: savedBody.trim(),
     done: () => {
+      // Keep the draft if the person changed it while the save ran.
       if (body.value === savedBody && editingId.value === id) clearDraft();
     }
   });

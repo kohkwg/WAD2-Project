@@ -9,6 +9,9 @@
  *   spots      - spots left (full = 0)
  *
  * then a diversity pass spreads the top results across categories.
+ *
+ * The live route uses recommendationPipeline.js. That file uses only haversineKm from here.
+ * Tests cover the other exports.
  */
 
 
@@ -65,7 +68,7 @@ function spotsScore(spotsLeft) {
 /**
  * @param {array}  events   rows from events_with_counts
  * @param {object} profile  { interest_weights, lat, lng }
- * @param {object} opts     { now?: date, excludeeventids?: set }
+ * @param {object} opts     { now?: date, excludeEventIds?: set }
  */
 
 function scoreEvents(events, profile, opts = {}) {
@@ -183,6 +186,5 @@ function recommend(events, profile, opts = {}) {
 module.exports = {
   recommend,
   scoreEvents,
-  diversify,
   haversineKm
 };

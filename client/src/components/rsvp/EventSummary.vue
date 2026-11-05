@@ -7,7 +7,7 @@ import BumpValue from '../ui/BumpValue.vue';
 
 // read-only card with an event's key details.
 // used on the rsvp page and the "review" step of create event.
-// anything placed between <eventsummary> ... </eventsummary> appears at the bottom (the <slot>).
+// anything placed between <EventSummary> ... </EventSummary> appears at the bottom (the <slot>).
 
 const props = defineProps({
   event: Object,
@@ -45,7 +45,7 @@ const hasCapacity = computed(() => props.event?.capacity != null && props.event?
 
 const hiddenAndFull = computed(() => Boolean(props.event?.hideCapacity) && props.event?.capacity == null && props.event?.spotsLeft === 0);
 
-// a venue hidden from participants, as its organisers see it: on the event page (hiddenvenue)
+// a venue hidden from participants, as its organisers see it: on the event page (hiddenVenue)
 // or in create event's review (the form's venue with a reveal time still to come)
 
 const hiddenFromPublic = computed(() => {

@@ -23,6 +23,10 @@ const dialog = ref(null);
 
 const draft = ref('');
 
+/**
+ * Open the dialog with a draft of the current choice. The parent calls this through a template ref.
+ * @param {string} [currentId] The id of the current dino.
+ */
 async function open(currentId) {
   draft.value = currentId || '';
   dialog.value?.showModal();
@@ -34,6 +38,7 @@ function close() {
   dialog.value?.close();
 }
 
+// Keep the dialog open while a save runs.
 function cancel() {
   if (!(dialog.value && dialog.value.dataset.busy === 'true')) close();
 }

@@ -26,6 +26,8 @@ function bearer(req: Request) {
   return match?.[1] ?? null;
 }
 
+// Reads the project URL and keys. Use the JSON key sets when they exist, else the legacy keys.
+// Only a legacy service key goes in the Authorization header.
 function apiKeys() {
   const anon = JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS') ?? '{}').default ?? Deno.env.get('SUPABASE_ANON_KEY');
   const legacyService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -40,6 +42,7 @@ function apiKeys() {
   };
 }
 
+// Sends a request with a timeout. The body is null if the response is not JSON.
 async function jsonRequest(url: string, init: RequestInit, timeoutMs = MAX_HTTP_MS) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -109,6 +112,7 @@ Deno.serve(async (req: Request) => {
         error: 'Your session is invalid or expired. Sign in and retry.'
       });
     }
+    // This ID is the caller. The caller is not always the event owner.
     const ownerId = auth.body.id;
     const eventResult = await jsonRequest(`${url}/rest/v1/events?select=${encodeURIComponent(EVENT_SELECT)}&id=eq.${encodeURIComponent(body.eventId)}&limit=1`, {
       headers: {
@@ -140,6 +144,7 @@ Deno.serve(async (req: Request) => {
     if (!allowed) return reply(403, {
       error: 'Only event organisers can switch its venue.'
     });
+    // An event on its backup venue needs no forecast. The commit RPC returns the saved switch for a retry.
     let evidence = null;
     if (!event.using_backup) {
       let weather;
@@ -160,6 +165,7 @@ Deno.serve(async (req: Request) => {
       try {
         evidence = trustedRainEvidence(weather.body, event);
       } catch (error) {
+        // An invalid NEA response is an upstream failure. Other rule failures are conflicts.
         if (error instanceof Error && error.message.startsWith('NEA returned an invalid')) {
           return reply(502, {
             error: error.message
@@ -170,6 +176,7 @@ Deno.serve(async (req: Request) => {
         });
       }
     }
+    // The commit RPC accepts only the service role.
     const rpcHeaders: Record<string, string> = {
       apikey: service,
       'Content-Type': 'application/json'

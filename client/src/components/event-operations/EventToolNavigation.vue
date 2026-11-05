@@ -43,6 +43,7 @@ function exitHover(event, id) {
   }, 180);
 }
 
+// The first mouse click after a hover keeps the menu open. A keyboard click has detail 0, so it toggles.
 function activate(id, event) {
   clearTimeout(closeTimer);
   if (event.detail > 0 && hoverOpened === id && openGroup.value === id) {

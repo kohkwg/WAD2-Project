@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 // scoped progressive enhancement: readable without js; clean up on navigation.
 gsap.registerPlugin(ScrollTrigger);
 
+/** Adds reveal motion to a Discover root element. Motion runs only when the device permits it, and stops on unmount. */
 export function useDiscoveryMotion(target) {
   let dispose = () => {};
   onMounted(() => {

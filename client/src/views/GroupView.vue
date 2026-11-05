@@ -43,6 +43,10 @@ const copied = ref(false);
 
 const token = computed(() => typeof route.params.token === 'string' ? route.params.token : '');
 
+/**
+ * Load the signed-in state and the group, by invite token or by route ID.
+ * @param {{quiet?: boolean}} [options] Set quiet to refresh without the loading state.
+ */
 async function load({
   quiet = false
 } = {}) {
@@ -65,7 +69,7 @@ async function load({
 watch(() => [route.params.id, route.params.token], () => load(), {
   immediate: true
 });
-// live: pick up others joining, marking times and suggesting spots every 20 s and on focus
+// live: pick up others joining, marking times and suggesting spots on a timer and on focus
 
 const refresh = () => {
   if (!document.hidden && group.value && !busy.value) load({
@@ -921,20 +925,6 @@ async function removeGroup() {
   padding: 8px 12px;
   border-radius: 12px;
   background: var(--bookedz-hover);
-}
-
-.group-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.group-actions:empty {
-  display: none;
-}
-
-.group-actions .btn {
-  min-height: 44px;
 }
 
 .group-rsvp-prompt {

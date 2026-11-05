@@ -36,8 +36,9 @@ export function applyEventDefaults(event) {
 
 const MEETING_URL = /^https:\/\/[^/\s?#@]+([/?#][^\s<>]*)?$/;
 
-export const MAX_LINK_LENGTH = 2048;
+const MAX_LINK_LENGTH = 2048;
 
+/** Returns true for an HTTPS meeting link that is not too long. */
 export function isMeetingUrl(value) {
   const text = String(value ?? '').trim();
   if (!text || text.length > MAX_LINK_LENGTH || !MEETING_URL.test(text)) return false;

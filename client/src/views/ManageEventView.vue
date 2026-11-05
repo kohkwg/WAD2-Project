@@ -286,6 +286,15 @@ async function refreshEditedEvent() {
   }
 }
 
+/**
+ * Run one save operation for a workspace tool and show the result on that tool.
+ * If the save fails, the function stores a retry action. A newer retryVersions value cancels that action.
+ * @param {string} tool Tool key for the pending, error and success states.
+ * @param {{done?: Function, failed?: Function}} action Callbacks from the tool component.
+ * @param {(eventId: string) => Promise<*>} operation The save request.
+ * @param {(result: *) => void} apply Puts the result into the workspace state.
+ * @param {string} message Success message.
+ */
 async function mutate(tool, action, operation, apply, message) {
   if (pending[tool] || !canManage.value) return;
   const ticket = epoch;

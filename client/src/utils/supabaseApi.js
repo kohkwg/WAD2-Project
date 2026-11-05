@@ -21,12 +21,13 @@ import { pendingVenue } from './venueReveal.js';
 
 // network trouble gets a plain message, so people know the action did not go through.
 
-export function friendlyMessage(error) {
+function friendlyMessage(error) {
   // only real connection failures get this message; a server error keeps the server's own wording.
   const text = error?.message || '';
   return /failed to fetch|networkerror|load failed|network request failed/i.test(text) ? 'Could not reach the server. Check your connection and try again; nothing was changed.' : error?.message || 'Something went wrong. Please try again.';
 }
 
+// Returns the data of a Supabase response. An error becomes an Error with a message for the user.
 function check({
   data,
   error
@@ -502,6 +503,7 @@ export async function getOrganiserEvents() {
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+/** Takes the client as an argument, so tests can supply a fake client. */
 export async function createEventWith(client, eventData) {
   if (!UUID_PATTERN.test(eventData.requestId || '')) {
     throw new Error('A valid request ID is required to publish this event.');
@@ -665,6 +667,7 @@ async function saveOnlineLinkWith(client, eventId, link) {
   }));
 }
 
+// Changes only the tags that differ between the two lists.
 async function saveEventTagsWith(client, eventId, before, after) {
   const added = after.filter(slug => !before.includes(slug));
   const removed = before.filter(slug => !after.includes(slug));

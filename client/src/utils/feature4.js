@@ -2,7 +2,7 @@
 
 export const TASK_STATUSES = Object.freeze(['todo', 'in_progress', 'done']);
 
-export const BUDGET_CATEGORIES = Object.freeze(['Food & drink', 'Venue', 'Equipment', 'Marketing', 'Other']);
+const BUDGET_CATEGORIES = Object.freeze(['Food & drink', 'Venue', 'Equipment', 'Marketing', 'Other']);
 
 export const FALLBACK_BUDGET_CATEGORY = 'Other';
 
@@ -10,7 +10,7 @@ export const MAX_CATEGORY_LENGTH = 40;
 
 export const MAX_QUANTITY = 100_000;
 
-export function validateQuantity(value) {
+function validateQuantity(value) {
   if (!Number.isSafeInteger(value) || value < 1 || value > MAX_QUANTITY) throw new Error(`Quantity must be a whole number from 1 to ${MAX_QUANTITY}.`);
   return value;
 }
@@ -58,6 +58,7 @@ export function validateCategoryName(value, existing = []) {
   return name;
 }
 
+/** Returns the value if it is safe, nonnegative integer cents. With `positive`, zero is also an error. */
 export function validateCents(value, {
   positive = false
 } = {}) {
@@ -91,6 +92,7 @@ export function formatMoneyInput(cents) {
   return `${amount < 0n ? '-' : ''}${magnitude / 100n}.${String(magnitude % 100n).padStart(2, '0')}`;
 }
 
+/** Formats integer cents for display, for example $1,234.50. */
 export function formatMoney(cents) {
   const [whole, fraction] = formatMoneyInput(cents).split('.');
   const negative = whole.startsWith('-');
@@ -98,6 +100,10 @@ export function formatMoney(cents) {
   return `${negative ? '-$' : '$'}${grouped}.${fraction}`;
 }
 
+/**
+ * Adds planned and actual cents, then compares the actual total with the limit.
+ * The level is "warning" from 90% of the limit. BigInt keeps this comparison exact.
+ */
 export function summariseBudget({
   limitCents,
   items

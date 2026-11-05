@@ -22,6 +22,10 @@ const loadError = ref('');
 let active = true,
   accountRequest = 0;
 
+/**
+ * Load the signed-in user and the account data.
+ * Each read is independent, so one failed read does not hide the data from the other reads.
+ */
 async function loadAccount() {
   const ticket = ++accountRequest;
   loadError.value = '';

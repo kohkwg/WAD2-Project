@@ -194,6 +194,8 @@ export const expireOffersNow = eventId => backend.expireOffersNow(eventId); // d
 
 export const resetDemoData = () => backend.resetDemoData();
 
+// ---------- feature 4: event operations and weather ----------
+
 export const getEventOperations = eventId => operationsBackend.getEventOperations(eventId);
 
 export const createTask = (eventId, input) => operationsBackend.createTask(eventId, input);

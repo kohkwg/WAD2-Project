@@ -277,7 +277,7 @@ function baseQuery() {
   return weekWindow(filteredQuery());
 }
 
-// the chosen filters, before limiting a plain desktop browse to one week
+// the chosen filters, before the plain browse view limits the list to one week
 
 function filteredQuery() {
   const activeFilters = {
@@ -460,6 +460,11 @@ function updateRowFade() {
   };
 }
 
+/**
+ * Switch between the list and the map on phones.
+ * The function keeps the list scroll position, so that the user returns to the same place.
+ * @param {'list'|'map'} pane Pane to show.
+ */
 async function showPane(pane) {
   if (pane === viewMode.value) {
     return;
@@ -1357,8 +1362,7 @@ onBeforeUnmount(() => {
   color: var(--bookedz-muted);
 }
 
-.empty-state,
-.loading-state {
+.empty-state {
   padding: 28px 16px;
   border: 1px solid var(--bookedz-border);
   border-radius: 12px;

@@ -1,10 +1,4 @@
-// add these to your main router (src/router/index.js):
-//
-//   import { feature1routes } from './feature1routes'
-//   const router = createrouter({
-//     history: createwebhistory(),
-//     routes: [ ...feature1routes, /* other features */ ],
-//   })
+// Feature 1 routes. router/index.js adds these routes to the main route list.
 
 export const feature1Routes = [{
   path: '/discover',

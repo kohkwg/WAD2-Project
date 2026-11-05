@@ -5,10 +5,6 @@ import * as friends from '../../utils/profileFriends.js';
 // small side panel in community (compact) next to go together.
 
 const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: true
-  },
   updates: {
     type: Number,
     default: 0
@@ -16,6 +12,7 @@ const props = defineProps({
   compact: Boolean
 });
 
+// True when an update from the parent waits for the current load or action to stop.
 let pendingUpdate = false;
 
 const loading = ref(false);
@@ -94,7 +91,7 @@ async function refresh({
 
 onMounted(refresh);
 
-watch(() => [props.visible, props.updates], () => {
+watch(() => props.updates, () => {
   pendingUpdate = true;
   refreshWhenReady();
 });
@@ -104,7 +101,7 @@ watch(busy, () => refreshWhenReady());
 watch(loading, () => refreshWhenReady());
 
 function refreshWhenReady() {
-  if (!active || !props.visible || busy.value || !pendingUpdate || loading.value) return;
+  if (!active || busy.value || !pendingUpdate || loading.value) return;
   pendingUpdate = false;
   refresh({
     silent: true

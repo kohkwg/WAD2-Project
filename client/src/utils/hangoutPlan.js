@@ -1,5 +1,5 @@
-// plan view shared by the demo and live backends: timings, issues, vote counts and the
-// official events a host can add. pure, so both backends show identical plans.
+// plan view for the live hangout adapter: timings, issues, vote counts and the
+// official events a host can add. These functions are pure, so tests need no database.
 import { retime } from './itinerary.js';
 
 // plan: { stops: [{ id, ref, version }], options, method, changedat, finalizedat }

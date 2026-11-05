@@ -1,5 +1,6 @@
 // interest arrays contain canonical slug strings. missing arrays mean no tags.
 
+// Jaccard similarity: shared interests divided by all interests.
 function calculateInterestSimilarity(a, b) {
   const first = new Set(Array.isArray(a) ? a : []);
   const second = new Set(Array.isArray(b) ? b : []);
@@ -18,7 +19,7 @@ function calculateInterestSimilarity(a, b) {
 
 // expects eligible candidates with valid ids and finite compatibility scores
 // from 0 to 100. duplicate ids must carry identical canonical evidence.
-// input order breaks ties. rankingscore records the score when selected.
+// input order breaks ties. rankingScore records the score when selected.
 
 function selectDiverseEvents(scoredEvents, limit, diversityPenalty = 0.3) {
   if (!Number.isInteger(limit) || limit < 0) {

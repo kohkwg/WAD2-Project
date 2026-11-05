@@ -1,9 +1,9 @@
-// live hangouts: the same functions and shapes as the hangout part of mockapi.js, backed
-// by supabase/migrations/20261103120000_hangouts.sql. reads use the signed-in user's
-// session, so rls decides what each person sees; every change is a security definer
+// Live hangouts, backed by supabase/migrations/20261103120000_hangouts.sql.
+// mockApi.js has no hangout functions, so these functions have no demo version.
+// reads use the session of the signed-in user, so rls decides what each person sees; every change is a security definer
 // rpc that rechecks host/member rules. group-time ranking needs everyone's private
 // free times, so it runs on the trusted express server (/api/hangouts).
-// plan timings are computed here with the same pure modules the demo uses.
+// plan timings are computed here with pure modules.
 import { supabase } from './supabase.js';
 import { eventListing, placeListing, memberWeights, retime, generatePlan, swapAlternatives, MAX_STOPS } from './itinerary.js';
 import { buildPlanView, planInputs, resolveRefs, planIssues } from './hangoutPlan.js';

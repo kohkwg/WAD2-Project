@@ -1,20 +1,20 @@
-// hangout template rules (adapted from the openjio specification). pure functions so
-// the wizard, the demo backend and tests share one definition.
+// hangout template rules (adapted from the openjio specification).
+// These are pure functions. At this time, only the unit tests use this module.
 // all dates are singapore local time (utc+8, no daylight saving).
 
 
-export const HANGOUT_MODES = ['group', 'public', 'solo'];
+const HANGOUT_MODES = ['group', 'public', 'solo'];
 
-export const JOIN_MODES = ['open', 'auto', 'approval'];
+const JOIN_MODES = ['open', 'auto', 'approval'];
 
-export const MAX_GROUP_DAYS = 7;
+const MAX_GROUP_DAYS = 7;
 
-export const CAPACITY_RANGE = {
+const CAPACITY_RANGE = {
   min: 2,
   max: 8
 };
 
-export const MAX_INTERESTS = 5;
+const MAX_INTERESTS = 5;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -149,7 +149,7 @@ export function hangoutStepErrors(form, step, now = new Date()) {
   return errors;
 }
 
-export function inviteToken() {
+function inviteToken() {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -254,21 +254,6 @@ export function joinOutcome(event, held) {
   if (mode === 'open') return full ? 'full' : 'confirmed';
   return full ? 'waitlisted' : 'confirmed';
 }
-
-export const JOIN_MODE_LABELS = {
-  open: {
-    title: 'Open',
-    detail: 'People join instantly while places last. No questions or waitlist; it closes when full.'
-  },
-  auto: {
-    title: 'RSVP, auto-confirm',
-    detail: 'RSVPs are confirmed while places last, then join the waitlist.'
-  },
-  approval: {
-    title: 'RSVP, I approve',
-    detail: 'You approve each RSVP yourself.'
-  }
-};
 
 // hangouts that should never appear in public browsing.
 

@@ -16,11 +16,6 @@ async function test(name, run) {
   catch (error) { failed++; console.log('FAIL', name, error.code || '', error.message); }
 }
 async function query(sql, params = []) { return (await db.query(sql, params)).rows; }
-async function rejects(sql, params, pattern) {
-  try { await query(sql, params); }
-  catch (error) { expect(pattern.test(error.message), `Unexpected rejection: ${error.message}`); return; }
-  throw new Error('Expected SQL rejection');
-}
 const OWNER = '30000000-0000-4000-8000-000000000001';
 const AMY = '30000000-0000-4000-8000-000000000002';
 const BEN = '30000000-0000-4000-8000-000000000003';
@@ -36,9 +31,7 @@ const basePayload = (extra = {}) => ({
   title: '[TEST] Online check', description: '', startTime: hours(48), endTime: hours(50), capacity: 1,
   requiresApproval: false, isOutdoor: false, venue, backupVenue: null, tags: ['others'], questions: [], ...extra,
 });
-const online = (link, extra = {}) => basePayload({ isOnline: true, venue: null, onlineLink: link, ...extra });
 const create = async (payload) => (await query('select public.create_event_with_details(gen_random_uuid(), $1::jsonb) as id', [JSON.stringify(payload)]))[0].id;
-const access = async (id) => (await query('select public.event_online_access($1) as a', [id]))[0].a;
 
 try {
 await db.exec(`

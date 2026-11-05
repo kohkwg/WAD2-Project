@@ -20,6 +20,7 @@ const join = ref(null);
 const accountForm = ref(null);
 useLandingMotion(welcome);
 
+/** Show the sign-in or sign-up form, scroll to it and move focus to its first field. */
 async function openAccount(mode) {
   authMode.value = mode;
   await nextTick();
@@ -120,6 +121,7 @@ onMounted(() => {
     entries.forEach(entry => entry.isIntersecting ? inView.add(entry.target.id) : inView.delete(entry.target.id));
     activeSection.value = sections.map(section => section.id).filter(id => inView.has(id)).pop() || '';
   }, {
+    // This margin leaves a thin band near the middle of the screen. A section in the band is active.
     rootMargin: '-40% 0px -55% 0px'
   });
   sections.forEach(section => {

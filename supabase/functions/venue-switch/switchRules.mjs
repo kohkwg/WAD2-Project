@@ -2,6 +2,7 @@ const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
 const TIMESTAMP = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/;
 
+// Accepts only ISO 8601 text with a time zone. Returns NaN for other values.
 function instant(value) {
   if (typeof value !== 'string' || !TIMESTAMP.test(value)) return NaN;
   return Date.parse(value);
@@ -11,6 +12,7 @@ function coordinates(lat, lng) {
   return typeof lat === 'number' && Number.isFinite(lat) && Math.abs(lat) <= 90 && typeof lng === 'number' && Number.isFinite(lng) && Math.abs(lng) <= 180;
 }
 
+// Returns the great-circle angle in radians (haversine formula). The value is not squared.
 function distanceSquaredRadians(a, b) {
   const rad = degrees => degrees * Math.PI / 180;
   const lat1 = rad(a.latitude);
@@ -21,14 +23,18 @@ function distanceSquaredRadians(a, b) {
   return 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(Math.max(0, 1 - haversine)));
 }
 
+// Returns true for rain, false for dry weather and null for an unknown description.
+// The caller must not switch the venue on null.
 function isRain(description) {
   if (/^(?:(?:light|moderate|heavy|passing|thundery|widespread)\s+)*(?:rain|showers)(?:\s+with gusty winds)?$/i.test(description)) return true;
   if (/^(?:fair(?: \((?:day|night)\))?|sunny|partly cloudy(?: \((?:day|night)\))?|cloudy|hazy|slightly hazy|windy|mist|fog)$/i.test(description)) return false;
   return null;
 }
 
-/** validate one server-fetched nea response against the persisted original venue. */
-
+/**
+ * validate one server-fetched nea response against the persisted original venue.
+ * Returns the evidence for the commit RPC. Throws an Error if a rule fails.
+ */
 export function trustedRainEvidence(payload, event, {
   now = Date.now()
 } = {}) {

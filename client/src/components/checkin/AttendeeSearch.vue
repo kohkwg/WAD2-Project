@@ -52,9 +52,6 @@ function pick(person) {
 }
 
 onMounted(load);
-defineExpose({
-  reload: load
-});
 </script>
 
 <template>

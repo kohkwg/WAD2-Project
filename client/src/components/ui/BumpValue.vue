@@ -11,6 +11,7 @@ const props = defineProps({
   }
 });
 
+// A new key creates a new span, so the CSS animation starts again.
 const bump = ref(0);
 
 watch(() => props.value, (next, previous) => {

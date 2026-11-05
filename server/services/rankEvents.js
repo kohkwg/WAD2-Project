@@ -1,6 +1,7 @@
 /**
  * feature 1 ranking only: no database, geocoding, auth, or interaction calls.
  * kept separate from recommendation.js so existing callers retain their behavior.
+ * The live route does not use this module. Tests and server/checks use it.
  *
  * hydrate event tags from event_interests/interests before calling (tags are slug
  * strings). a profile can supply interests as slug strings (weight 1 each), plus
@@ -113,9 +114,9 @@ function reasonFor(signals, weights, matched) {
 
 /**
  * @param {array} events upcoming candidates. invalid/past dates are excluded.
- * @param {object} userprofile { interests?, interest_weights?, lat?, lng? }
+ * @param {object} userProfile { interests?, interest_weights?, lat?, lng? }
  * @param {object} options { now?: date|string|number, limit?: number,
- *                          excludeeventids?: set|array }
+ *                          excludeEventIds?: set|array }
  * @returns {array<{event: object, score: number, reason: string}>}
  * score is the normalized signal score before diversity, for explainability.
  * returned order penalises maximum tag overlap with earlier selections by up

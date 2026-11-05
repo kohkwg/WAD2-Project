@@ -30,7 +30,6 @@
   --bookedz-ink: #1f2937;
   --bookedz-muted: #636975;
   --bookedz-border: #e9ded3;
-  --bookedz-coral: #ff6b35;
   --bookedz-coral-dark: #9a3412;
   --bookedz-mint: #92cfad;
   --bookedz-yellow: #fde7b0;
@@ -42,12 +41,6 @@
   --bookedz-primary-dark: #9a3412;
   --bookedz-ink-soft: #636975;
   --bookedz-body: 'DM Sans', system-ui, sans-serif;
-  --bookedz-space-1: 4px;
-  --bookedz-space-2: 8px;
-  --bookedz-space-3: 16px;
-  --bookedz-space-4: 24px;
-  --bookedz-space-5: 40px;
-  --bookedz-space-6: 64px;
   --bookedz-radius-control: 14px;
   --bookedz-radius-card: 20px;
   --bookedz-motion-feedback: 100ms;
@@ -94,12 +87,10 @@
   --bookedz-forest: #2f8a63;
   --bookedz-success: #2f8a63;
   --bookedz-hover: #ffe4d6;
-  --bookedz-icon: #636975;
   --bookedz-muted-border: #e9ded3;
   --bookedz-map-overlay: rgb(255 248 241 / 94%);
   --bookedz-disabled-bg: #e9ded3;
   --bookedz-disabled-ink: #636975;
-  --bookedz-mask-opaque: #000;
   --bookedz-card-shadow: 0 4px 20px rgb(20 184 166 / 12%);
   --bookedz-focus-glow: 0 0 0 .2rem rgb(154 52 18 / 13%);
   --bookedz-tab-shadow: 0 2px 6px rgb(68 55 27 / 4%);
@@ -108,14 +99,11 @@
   --bookedz-preview-shadow: 0 18px 45px rgb(52 79 67 / 13%);
   /* fill tokens shared by the go together and motion components. */
   --bookedz-fill: #ff6b35;
-  --bookedz-fill-active: #f75f27;
   --bookedz-on-fill: #1f2937;
   --bookedz-orange-soft: #ffe4d6;
   --bookedz-teal-ink: #25684a;
   --bookedz-teal-soft: #e4f4e0;
   --bookedz-mango-soft: #fde7b0;
-  --bookedz-pink-soft: #fce1ef;
-  --bookedz-pink-ink: #9d174d;
   --bookedz-focus: #2f7d5c;
   --bookedz-button-shadow-hover: 0 8px 22px rgb(255 107 53 / 42%);
   --bookedz-neutral-shadow: 0 3px 10px rgb(31 41 55 / 8%);
@@ -283,6 +271,8 @@ h3, .event-title {
   padding: 0;
 }
 
+/* Bootstrap overrides: cards, forms, buttons, badges, alerts and tables. */
+
 .card {
   --bs-card-bg: var(--bookedz-surface);
   --bs-card-border-color: var(--bookedz-border);
@@ -448,61 +438,8 @@ h3, .event-title {
   border-bottom: 1px solid var(--bookedz-border);
 }
 
-.workspace-header h1,.workspace-venue,.card-title {
+.workspace-header h1,.card-title {
   overflow-wrap: anywhere;
-}
-
-.workspace-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .5rem 1rem;
-  color: var(--bookedz-muted);
-  font-size: .875rem;
-}
-
-.workspace-venue {
-  margin: .7rem 0;
-}
-
-.workspace-venue span:first-child {
-  color: var(--bookedz-muted);
-  margin-right: .5rem;
-}
-
-.workspace-address summary {
-  cursor: pointer;
-  color: var(--bookedz-muted);
-  font-size: .875rem;
-}
-
-.workspace-address p {
-  font-size: .875rem;
-  margin: .5rem 0;
-  overflow-wrap: anywhere;
-}
-
-.event-tool-nav {
-  display: grid;
-  grid-template-columns: repeat(4,minmax(0,1fr));
-  gap: .4rem;
-  background: var(--bookedz-glass-solid);
-  border-radius: 1rem;
-  padding: .4rem;
-  max-width: 48rem;
-}
-
-.event-tool-nav .nav-link {
-  color: var(--bookedz-muted);
-  border-radius: .7rem;
-  text-align: center;
-  font-weight: 600;
-  padding: .7rem .5rem;
-}
-
-.event-tool-nav .nav-link.active {
-  color: var(--bookedz-primary-dark);
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-tab-shadow);
 }
 
 .tool-heading {
@@ -609,21 +546,7 @@ h3, .event-title {
   font-weight: 650;
 }
 
-.nav-section-label {
-  display: block;
-  padding: .5rem .65rem;
-  font-size: .75rem;
-  color: var(--bookedz-muted);
-}
-
-.nav-user-email {
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* slim footer: one line at every width (the second tagline is dropped on phones, where it would wrap) */
+/* Slim footer. It shows only at md (768px) and wider. */
 
 .app-footer {
   border-top: 1px solid var(--bookedz-border);
@@ -668,11 +591,6 @@ h3, .event-title {
   .app-navbar .navbar-collapse {
     padding: 1rem 0;
   }
-  .nav-section-label {
-    border-top: 1px solid var(--bookedz-border);
-    margin-top: .5rem;
-    padding-top: 1rem;
-  }
   .app-navbar .navbar-collapse > .btn {
     margin-top: 1rem;
   }
@@ -687,9 +605,6 @@ h3, .event-title {
   }
   .card-body,.workspace-panel {
     padding: 1.1rem;
-  }
-  .event-tool-nav {
-    grid-template-columns: repeat(2,minmax(0,1fr));
   }
   .app-navbar {
     min-height: 70px;
@@ -755,7 +670,6 @@ h3, .event-title {
   --bookedz-mango: #5b4210;
   --bookedz-teal: #7fc4a0;
   --bookedz-pink: #f472b6;
-  --bookedz-coral: #ff8a5b;
   --bookedz-primary: #ff8a5b;
   --bookedz-mint: #7fc4a0;
   --bookedz-yellow: #5b4210;
@@ -767,7 +681,6 @@ h3, .event-title {
   --bookedz-hover: #4a2b1f;
   --bookedz-forest: #86d1a8;
   --bookedz-success: #86d1a8;
-  --bookedz-icon: #a8a29e;
   --bookedz-map-overlay: rgb(41 37 36 / 94%);
   --bookedz-disabled-bg: #57534e;
   --bookedz-disabled-ink: #a8a29e;
@@ -789,14 +702,11 @@ h3, .event-title {
   --bs-primary-rgb: 255,138,91;
   /* fill tokens shared by the go together and motion components. */
   --bookedz-fill: #ff8a5b;
-  --bookedz-fill-active: #ff7a45;
   --bookedz-on-fill: #1c1917;
   --bookedz-orange-soft: #4a2b1f;
   --bookedz-teal-ink: #b9e8cd;
   --bookedz-teal-soft: #1e3a2b;
   --bookedz-mango-soft: #5b4210;
-  --bookedz-pink-soft: #50213a;
-  --bookedz-pink-ink: #fbcfe8;
   --bookedz-focus: #5eead4;
   --bookedz-button-shadow: 0 4px 14px rgb(255 138 91 / 22%);
   --bookedz-button-shadow-hover: 0 8px 24px rgb(255 138 91 / 36%);
@@ -867,7 +777,7 @@ h3, .event-title {
   border-color: var(--bookedz-border);
 }
 
-:root[data-theme="dark"] :is(.event-reason,.pick-reason,.nav-user-email) {
+:root[data-theme="dark"] :is(.event-reason,.pick-reason) {
   color: var(--bookedz-muted);
 }
 
@@ -879,16 +789,11 @@ h3, .event-title {
   color: var(--bookedz-muted);
 }
 
-:root[data-theme="dark"] .hosting-stamp {
-  color: var(--bookedz-ink);
-  background: var(--bookedz-yellow);
-}
-
 :root[data-theme="dark"] .event-card,:root[data-theme="dark"] .recommendation-card {
   background: var(--bookedz-surface);
 }
 
-:root[data-theme="dark"] .nav-create:hover,:root[data-theme="dark"] .nav-sign-in:hover {
+:root[data-theme="dark"] .nav-sign-in:hover {
   color: var(--bookedz-on-action);
 }
 
@@ -996,6 +901,8 @@ h3, .event-title {
   background-color: var(--bookedz-glass-hover) !important;
   color: var(--bookedz-ink) !important;
 }
+
+/* Sticky footer: the main area grows, so the footer stays at the bottom of short pages. */
 
 .app-shell {
   min-height: 100dvh;

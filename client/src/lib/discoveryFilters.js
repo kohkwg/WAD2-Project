@@ -6,8 +6,9 @@ function validDate(value) {
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-export const WHEN_VALUES = ['today', 'weekend', 'week', 'pick_dates'];
+const WHEN_VALUES = ['today', 'weekend', 'week', 'pick_dates'];
 
+/** Returns clean filters from untrusted input, such as a URL query. Unknown values become empty. */
 export function normalizeDiscoveryFilters(value = {}) {
   const categories = Array.isArray(value.categories) ? value.categories : typeof value.categories === 'string' ? [value.categories] : typeof value.category === 'string' ? [value.category] : [];
   return {
@@ -71,6 +72,7 @@ export function discoveryEventQuery(filters, {
   };
 }
 
+/** Returns the URL query for the current filters. An undefined value does not show in the URL. */
 export function discoveryUrlQuery(filters, search = '', view = 'list', sort = 'soonest') {
   const selected = normalizeDiscoveryFilters(filters);
   return {
@@ -86,6 +88,7 @@ export function discoveryUrlQuery(filters, search = '', view = 'list', sort = 's
   };
 }
 
+/** Reads filters from a URL query. One `extras` value arrives as a string, so it becomes an array. */
 export function discoveryFiltersFromQuery(query) {
   const extras = Array.isArray(query.extras) ? query.extras : typeof query.extras === 'string' ? [query.extras] : [];
   return normalizeDiscoveryFilters({

@@ -48,6 +48,7 @@ watch(() => props.areaOverride, value => {
   selectedArea.value = value || '';
 });
 
+// Check the expiry again at the next deadline. The limit is the longest delay for setTimeout.
 watch(() => [props.forecast?.validUntil, props.event.endTime], () => {
   clearTimeout(expiryTimer);
   now.value = Date.now();
@@ -283,11 +284,11 @@ function cancelSwitch() {
   font-weight: 700;
 }
 
-.area-select, :deep(.form-control), :deep(.form-select) {
+.area-select, :deep(.form-select) {
   border-radius: .7rem;
 }
 
-.area-select:focus, :deep(.form-control:focus), :deep(.form-select:focus) {
+.area-select:focus, :deep(.form-select:focus) {
   border-color: var(--bookedz-primary-dark);
   box-shadow: var(--bookedz-focus-glow);
 }

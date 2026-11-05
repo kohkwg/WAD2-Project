@@ -1,11 +1,11 @@
 /**
  * automatic event planner: suggests a programme and a task list for a new event from
- * past events. pure functions only: no database, network or clock (pass `now`).
+ * past events. pure functions only: no database or network. `now` defaults to the current time.
  *
- * target:    { title, description, category, tags[], capacity, startsat, endsat }
- * candidate: { id, title, description, category, tags[], capacity, startsat, endsat,
+ * target:    { title, description, category, tags[], capacity, startsAt, endsAt }
+ * candidate: { id, title, description, category, tags[], capacity, startsAt, endsAt,
  *              own (bool), attendance (0..1 | null),
- *              programme: [{ title, description, startsat, endsat }],
+ *              programme: [{ title, description, startsAt, endsAt }],
  *              tasks: [{ title, notes, position }] }
  *
  * `own` candidates are the caller's own events; only they may carry tasks (other
@@ -36,15 +36,15 @@ const CONFIG = Object.freeze({
     description: 1
   }),
   minSimilarity: 0.40,
+  // A shared tag and a similar size alone never make events neighbours.
   minText: 0.08,
-  // a shared tag and a similar size alone never make events neighbours
+  // Limit for each pool (own and community).
   maxNeighbours: 10,
-  // per pool (own / community)
   recencyHalfLifeDays: 365,
   minRecency: 0.25,
   clusterJaccard: 0.6,
+  // Programme items merge only if they have a similar position in the event.
   clusterTimeGap: 0.2,
-  // programme items merge only if they sit at a similar point of the event
   dedupeTimeGap: 0.15,
   community: Object.freeze({
     minEvents: 3,
@@ -200,7 +200,7 @@ function weightedMedian(entries) {
   return sorted.at(-1).value;
 }
 
-// a candidate's programme as fractions of its own length (null when it has no valid length)
+// a candidate's programme as fractions of its own length (empty when it has no valid length)
 
 function programmeFractions(candidate) {
   const length = durationMinutes(candidate);
@@ -392,6 +392,13 @@ const EMPTY = Object.freeze({
   confidence: 0
 });
 
+/**
+ * Suggests a programme and tasks for a new event. The rules are at the top of this file.
+ * @param {object} target The new event.
+ * @param {object[]} candidates Past events.
+ * @param {{now?: number|Date}} [options] The current time.
+ * @returns {{source: string, basedOn: object[], programme: object[], tasks: object[], confidence: number}}
+ */
 function suggestPlan(target, candidates, {
   now = Date.now()
 } = {}) {
@@ -434,7 +441,6 @@ function suggestPlan(target, candidates, {
   };
 }
 module.exports = {
-  CONFIG,
   normalizeTitle,
   tokenize,
   similarity,

@@ -27,16 +27,24 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Returns the R2 public base URL.
+// Throws if the URL is not HTTPS, or has credentials, a query or a fragment.
 function publicBase() {
   const url = new URL(process.env.R2_PUBLIC_URL);
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) throw new Error('Invalid public URL');
   return url.href.replace(/\/+$/, '');
 }
 
+// Checks the file name, type and size. Size is optional unless requireSize is true.
 function validFile(body, requireSize = false) {
   return body && typeof body.filename === 'string' && body.filename.trim().length > 0 && body.filename.length <= 200 && /^image\/(jpeg|png|webp)$/.test(body.contentType) && (!requireSize && body.size === undefined || Number.isInteger(body.size) && body.size > 0 && body.size <= MAX_IMAGE_BYTES);
 }
 
+/**
+ * Sends a signed R2 PUT URL that expires after 300 seconds.
+ * The object key has the prefix, a random UUID and a safe file name.
+ * Sends 503 if R2 is not configured or the signature fails.
+ */
 async function signImage(req, res, prefix) {
   try {
     const base = publicBase();

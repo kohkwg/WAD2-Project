@@ -1,3 +1,4 @@
+/** Returns the organiser tab of an event: drafts, cancelled, past or upcoming. */
 export function organiserEventState(event, now) {
   if (event.status === 'draft') return 'drafts';
   if (event.status === 'cancelled') return 'cancelled';
@@ -20,6 +21,11 @@ export function organiserEventCounts(events, now) {
   return counts;
 }
 
+/**
+ * Filters and sorts events for one organiser tab.
+ * The "all" tab shows upcoming, past, drafts, then cancelled events.
+ * An event with no valid date goes last. The event ID keeps the order stable.
+ */
 export function filterOrganiserEvents(events, {
   tab = 'upcoming',
   search = '',

@@ -54,8 +54,6 @@ const points = computed(() => props.events.flatMap(event => {
   }] : [];
 }));
 
-const missing = computed(() => props.events.length - points.value.length);
-
 const selected = computed(() => props.events.find(event => event.id === selectedId.value));
 
 const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -149,11 +147,16 @@ function fitEvents() {
   frameSingapore();
 }
 
+// Draw the pins one time per animation frame, because many events can ask for a redraw.
 function scheduleMarkers() {
   cancelAnimationFrame(renderFrame);
   renderFrame = requestAnimationFrame(renderMarkers);
 }
 
+/**
+ * Draw the event pins for the current zoom.
+ * Near events join one cluster. A featured event keeps its own pin unless it shares a location.
+ */
 function renderMarkers() {
   if (!map || !markers) return;
   markers.clearLayers();
@@ -226,13 +229,15 @@ function renderMarkers() {
     });
   }
 }
-// with no event matching the search, treat it as a place name and centre the map there.
-
 function clearPlace() {
   place.value = null;
   placeLayer?.clearLayers();
 }
 
+/**
+ * Use the search text as a place name when no event matches it.
+ * Then show a marker at that place and centre the map on the marker.
+ */
 function lookupPlace() {
   clearTimeout(placeTimer);
   placeAbort?.abort();
@@ -296,8 +301,8 @@ function zoomOut() {
 }
 
 onMounted(() => {
-  // half-step zoom lets "show all" fit the events snugly instead of jumping out a whole level.
-  // zoom buttons are our own (bottom-right, in the app's style) rather than leaflet's.
+  // Quarter-step zoom lets the map fit the island closely. A full step leaves large margins.
+  // The component supplies its own zoom buttons, so the Leaflet zoom control is off.
   map = L.map(container.value, {
     scrollWheelZoom: false,
     zoomControl: false,

@@ -7,6 +7,7 @@ const me = ref(null); // { id, dino } or null
 
 let started = false;
 
+// Starts one time only, so all avatars share one auth listener.
 function start() {
   if (started) return;
   started = true;

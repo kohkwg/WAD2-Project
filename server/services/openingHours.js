@@ -62,6 +62,7 @@ function ruleFor(rules, day) {
   return found;
 }
 
+// Returns "open", "closed" or "unknown".
 function openState(text, atMs) {
   if (!text || !Number.isFinite(atMs)) return "unknown";
   if (String(text).trim() === "24/7") return "open";

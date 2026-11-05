@@ -64,16 +64,6 @@ async function admin() {
   await db.exec('reset role');
 }
 
-const sgDate = days => new Date(Date.now() + 8 * 3600e3 + days * 864e5).toISOString().slice(0, 10);
-
-const sg = (date, time) => new Date(`${date}T${time}:00+08:00`).toISOString();
-
-const venue = {
-  name: 'Bugis Junction',
-  address: '200 Victoria St',
-  lat: 1.2995,
-  lng: 103.8545
-};
 try {
   await db.exec(`
 create role anon nologin;
