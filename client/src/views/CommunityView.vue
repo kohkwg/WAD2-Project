@@ -1,21 +1,23 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getEvents, getGroups } from '../utils/api.js'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { getEvents, getGroups, getGroupInvites, respondGroupInvite, getGroupNotices, dismissGroupNotice } from '../utils/api.js'
 import { subscribeSocialUpdates } from '../utils/profileSocial.js'
 import EventTeamPanel from '../components/event-operations/EventTeamPanel.vue'
 import FriendsPanel from '../components/community/FriendsPanel.vue'
 import '../assets/design-baseline.css'
-import GroupCard from '../components/community/GroupCard.vue'
+import EventGroupsCard from '../components/community/EventGroupsCard.vue'
 import StartGroupDialog from '../components/community/StartGroupDialog.vue'
 import SkeletonList from '../components/ui/SkeletonList.vue'
 import BumpValue from '../components/ui/BumpValue.vue'
 import { toast } from '../composables/useToast'
-import { isOfficialEvent } from '../utils/groups.js'
+import { countdownLabel, isOfficialEvent } from '../utils/groups.js'
+import { formatEventTime } from '../utils/helpers.js'
 
 // Community is Go together: people start a group for an event ("who wants to come?"),
 // others join, then RSVP to the event itself. Private groups show here only for their
-// members. Official events stay in Discover. Friends sit in a side panel (live mode).
+// members and the host's friends. Official events stay in Discover. Friends sit in a side
+// panel; invites from friends and "group deleted" notices show at the top.
 const route = useRoute()
 const router = useRouter()
 const groups = ref([])
@@ -33,11 +35,18 @@ const FILTERS = [
   { key: 'hosting', label: 'Hosting' },
 ]
 
+const invites = ref([])
+const notices = ref([])
+const inviteBusy = ref('')
 async function load() {
   error.value = ''
   try {
-    const [groupList, eventList] = await Promise.all([getGroups(), getEvents()])
+    const [groupList, eventList, inviteList, noticeList] = await Promise.all([
+      getGroups(), getEvents(), getGroupInvites().catch(() => []), getGroupNotices().catch(() => []),
+    ])
     groups.value = groupList
+    invites.value = inviteList
+    notices.value = noticeList
     events.value = eventList.filter((e) => isOfficialEvent(e) && e.status === 'published' && new Date(e.startTime) > new Date())
   } catch (e) {
     error.value = e.message
@@ -76,7 +85,8 @@ function closeComposer() {
 }
 async function onCreated(group) {
   closeComposer()
-  toast(group.visibility === 'private' ? 'Your private group is ready. Share the invite link.' : 'Your group is live')
+  const invitedText = group.invitedCount ? ` ${group.invitedCount} ${group.invitedCount === 1 ? 'friend was' : 'friends were'} invited.` : ''
+  toast((group.visibility === 'private' ? 'Your friends-only group is ready.' : 'Your group is live.') + invitedText)
   router.push(`/groups/${group.id}`)
 }
 const weekEnd = () => Date.now() + 7 * 86400000
@@ -96,6 +106,42 @@ const counts = computed(() => ({
   joined: groups.value.filter((g) => ['confirmed', 'pending'].includes(g.myStatus)).length,
   hosting: groups.value.filter((g) => g.myStatus === 'host').length,
 }))
+
+async function answerInvite(invite, accept) {
+  inviteBusy.value = invite.id
+  try {
+    await respondGroupInvite(invite.id, accept)
+    toast(accept ? `You joined ${invite.from.name}’s group` : 'Invite declined')
+    if (accept) { router.push(`/groups/${invite.group.id}`); return }
+    await load()
+  } catch (e) {
+    toast(e.message, { tone: 'error' })
+    await load()
+  } finally {
+    inviteBusy.value = ''
+  }
+}
+async function dismissNotice(notice) {
+  notices.value = notices.value.filter((n) => n.id !== notice.id)
+  try { await dismissGroupNotice(notice.id) } catch { /* it shows again next time */ }
+}
+// "Your groups": hosting, in, or asked to join; soonest first
+const mine = computed(() => groups.value
+  .filter((g) => ['host', 'confirmed', 'pending'].includes(g.myStatus))
+  .sort((a, b) => new Date(a.startTime) - new Date(b.startTime)))
+const mineChip = (g) => g.myStatus === 'host'
+  ? (g.pendingCount ? `${g.pendingCount} ${g.pendingCount === 1 ? 'request' : 'requests'} to review` : 'Hosting')
+  : g.myStatus === 'pending' ? 'Request sent' : g.myEventStatus ? 'You’re in' : 'RSVP to the event'
+// The feed: one card per event with its groups inside, soonest event first
+const byEvent = computed(() => {
+  const map = new Map()
+  for (const g of visible.value) {
+    const key = g.eventId || g.event?.id || g.id
+    if (!map.has(key)) map.set(key, { key, event: g.event, groups: [] })
+    map.get(key).groups.push(g)
+  }
+  return [...map.values()].sort((a, b) => new Date(a.event?.startTime || a.groups[0].startTime) - new Date(b.event?.startTime || b.groups[0].startTime))
+})
 </script>
 
 <template>
@@ -104,12 +150,53 @@ const counts = computed(() => ({
       <div class="community-hero-copy">
         <p class="community-eyebrow">Community</p>
         <h1 class="page-title m-0">Go together</h1>
-        <p class="community-lede">Going to an event? Join a group heading there, or start one: public for anyone, or private with an invite link for friends.</p>
+        <p class="community-lede">Going to an event? Join a group heading there, or start one: public for everyone, or just for your friends.</p>
       </div>
       <div class="community-hero-actions">
         <button type="button" class="btn btn-primary" @click="openComposer()">Start a group</button>
       </div>
     </header>
+
+    <!-- A group you were in was deleted -->
+    <TransitionGroup v-if="notices.length" tag="div" name="list-fade" class="community-notices">
+      <p v-for="notice in notices" :key="notice.id" class="community-notice" role="status">
+        <span><strong>{{ notice.hostName }}</strong> deleted their group for {{ notice.eventTitle }}. Your RSVP to the event itself hasn’t changed.</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" :aria-label="`Dismiss notice about ${notice.eventTitle}`" @click="dismissNotice(notice)">OK</button>
+      </p>
+    </TransitionGroup>
+
+    <!-- Invites from friends -->
+    <section v-if="invites.length" class="community-invites" aria-labelledby="invites-title">
+      <h2 id="invites-title" class="community-section-title">You’re invited <span class="community-count">{{ invites.length }}</span></h2>
+      <TransitionGroup tag="ul" name="list-fade" class="list-unstyled m-0 community-invite-list">
+        <li v-for="invite in invites" :key="invite.id" class="community-invite">
+          <div class="min-w-0">
+            <p class="m-0"><strong>{{ invite.from.name }}</strong> invited you to go to <strong>{{ invite.group.event?.title || 'an event' }}</strong></p>
+            <p class="text-caption text-secondary m-0">{{ invite.group.event ? formatEventTime(invite.group.event) : '' }}<template v-if="invite.group.note"> · “{{ invite.group.note }}”</template></p>
+          </div>
+          <div class="community-invite-actions">
+            <button type="button" class="btn btn-primary btn-sm" :disabled="Boolean(inviteBusy)" @click="answerInvite(invite, true)">{{ inviteBusy === invite.id ? 'Joining…' : 'Accept' }}</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="Boolean(inviteBusy)" @click="answerInvite(invite, false)">Decline</button>
+            <RouterLink :to="`/groups/${invite.group.id}`" class="btn btn-link btn-sm">View</RouterLink>
+          </div>
+        </li>
+      </TransitionGroup>
+    </section>
+
+    <!-- Your groups: quick tiles for what you host or are in -->
+    <section v-if="mine.length" class="community-mine" aria-labelledby="mine-title">
+      <h2 id="mine-title" class="community-section-title">Your groups</h2>
+      <ul class="list-unstyled m-0 community-mine-list">
+        <li v-for="g in mine" :key="g.id">
+          <RouterLink :to="`/groups/${g.id}`" class="community-tile" :class="{ 'is-alert': g.myStatus === 'host' && g.pendingCount }">
+            <span class="community-tile-when">{{ countdownLabel(g.startTime) }}</span>
+            <strong class="community-tile-title">{{ g.event?.title || 'Group' }}</strong>
+            <span class="community-tile-meta">{{ g.myStatus === 'host' ? 'You’re hosting' : `${g.host.name}’s group` }} · {{ 1 + g.members.length }} going</span>
+            <span class="community-tile-chip">{{ mineChip(g) }}</span>
+          </RouterLink>
+        </li>
+      </ul>
+    </section>
 
     <div class="community-layout">
     <div class="community-main">
@@ -131,7 +218,7 @@ const counts = computed(() => ({
         <button type="button" class="btn btn-outline-secondary" @click="load">Try again</button>
       </div>
       <TransitionGroup v-else-if="visible.length" tag="div" name="list-fade" class="community-feed stagger-in">
-        <GroupCard v-for="group in visible" :key="group.id" :group="group" @changed="load" />
+        <EventGroupsCard v-for="item in byEvent" :key="item.key" :event="item.event" :groups="item.groups" @changed="load" @start="openComposer" />
       </TransitionGroup>
       <div v-else class="community-empty" role="status">
         <h2 class="section-title">{{ query || filter !== 'all' ? 'No groups match' : 'No groups yet' }}</h2>
@@ -172,7 +259,31 @@ const counts = computed(() => ({
 .community-filter[aria-pressed='true'] { background: var(--bookedz-ink); border-color: var(--bookedz-ink); color: var(--bookedz-surface); }
 .community-filter[aria-pressed='true'] span { background: color-mix(in srgb, var(--bookedz-surface) 20%, transparent); }
 .community-search { min-height: 44px; }
-.community-feed { display: grid; gap: 14px; }
+.community-feed { display: grid; gap: 18px; }
+.community-section-title { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font: 900 1.15rem var(--bookedz-heading); }
+.community-count { padding: 0 8px; border-radius: 99px; background: var(--bookedz-fill); color: var(--bookedz-on-fill); font-size: .8rem; }
+.community-notices { display: grid; gap: 8px; margin-bottom: 18px; }
+.community-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 0; padding: 10px 14px; border: 2px dashed var(--bookedz-control-border); border-radius: 16px; background: var(--bookedz-surface); }
+.community-invites { margin-bottom: 22px; padding: 16px; border: 2px solid var(--bookedz-ink); border-radius: 24px; background: color-mix(in srgb, var(--bookedz-pink) 12%, var(--bookedz-surface)); box-shadow: 6px 6px 0 var(--bookedz-pink); }
+:global(:root[data-theme="dark"]) .community-invites { border-color: var(--bookedz-border); }
+.community-invite-list { display: grid; gap: 8px; }
+.community-invite { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 16px; background: var(--bookedz-surface); }
+.community-invite-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.community-invite-actions .btn { min-height: 40px; }
+.min-w-0 { min-width: 0; overflow-wrap: anywhere; }
+.community-mine { margin-bottom: 22px; }
+.community-mine-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 4px 10px; scroll-snap-type: x proximity; }
+.community-mine-list li { flex: 0 0 min(240px, 78vw); scroll-snap-align: start; }
+.community-tile { display: grid; gap: 4px; height: 100%; padding: 12px 14px; border: 2px solid var(--bookedz-ink); border-radius: 20px; background: var(--bookedz-surface); color: var(--bookedz-ink); text-decoration: none; box-shadow: 4px 4px 0 var(--bookedz-mango); transition: transform var(--bookedz-motion-normal) var(--bookedz-ease); }
+:global(:root[data-theme="dark"]) .community-tile { border-color: var(--bookedz-border); }
+.community-tile:hover { color: var(--bookedz-ink); transform: translate(-1px, -2px); }
+.community-tile.is-alert { box-shadow: 4px 4px 0 var(--bookedz-fill); }
+.community-tile-when { justify-self: start; padding: 1px 8px; border-radius: 99px; background: var(--bookedz-mango-soft); font-size: .72rem; font-weight: 800; }
+.community-tile-title { font-family: var(--bookedz-heading); overflow-wrap: anywhere; }
+.community-tile-meta { color: var(--bookedz-muted); font-size: .82rem; }
+.community-tile-chip { justify-self: start; margin-top: 2px; padding: 2px 9px; border: 1.5px solid var(--bookedz-control-border); border-radius: 99px; font-size: .74rem; font-weight: 700; }
+.community-tile.is-alert .community-tile-chip { border-color: var(--bookedz-fill); background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); }
+@media (prefers-reduced-motion: reduce) { .community-tile { transition: none; } .community-tile:hover { transform: none; } }
 .community-empty { padding: 32px 20px; border: 1px dashed var(--bookedz-border); border-radius: 20px; background: var(--bookedz-surface); text-align: center; }
 .community-empty p { color: var(--bookedz-muted); }
 </style>

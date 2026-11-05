@@ -238,6 +238,10 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 .community-page.community-page .group-card.is-joined { box-shadow: 6px 6px 0 var(--bookedz-mango); }
 :root[data-theme="dark"] .community-page.community-page .group-card { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
 @media (hover: hover) { .community-page.community-page .group-card:hover { transform: translate(-2px, -3px) rotate(-.3deg); box-shadow: 9px 10px 0 var(--bookedz-teal); } }
+/* Groups inside an event card are lighter, so the event card carries the ticket look */
+.community-page.community-page .event-groups-card .group-card { border: 1.5px solid var(--bookedz-control-border); border-radius: 18px; box-shadow: none; }
+.community-page.community-page .event-groups-card .group-card.is-joined { border-color: var(--bookedz-mango); background: color-mix(in srgb, var(--bookedz-mango) 8%, var(--bookedz-surface)); }
+@media (hover: hover) { .community-page.community-page .event-groups-card .group-card:hover { transform: none; box-shadow: none; } }
 .community-page.community-page .community-empty { border: 2px dashed var(--bookedz-control-border); border-radius: var(--db-r); }
 
 /* Friends side panel */
