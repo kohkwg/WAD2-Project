@@ -251,13 +251,30 @@ const initials = (name = '') => name.split(/\s+/).map(part => part[0]).join('').
   background: var(--bookedz-orange-soft);
 }
 
-@media (max-width: 575px) {
+/* phones and tablets (md and below): a tighter card so more fits on the screen; buttons stay at
+   least 40px tall, and each group card is only as tall as its own content (no empty space beside a
+   taller one). from 576px it grows a little, and an event's groups sit two across */
+@media (max-width: 991.98px) {
+  .event-groups-card {
+    gap: 10px;
+    padding: 12px;
+    border-radius: 20px;
+    box-shadow: 4px 4px 0 var(--bookedz-teal);
+  }
+  :root[data-theme="dark"] .event-groups-card {
+    box-shadow: 4px 4px 0 var(--db-dark-teal);
+  }
   .egc-head {
-    grid-template-columns: 52px minmax(0, 1fr);
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 10px;
   }
   .egc-art {
-    width: 52px;
-    height: 52px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+  .egc-title {
+    font-size: 1.05rem;
   }
   .egc-people {
     grid-column: 1 / -1;
@@ -266,6 +283,35 @@ const initials = (name = '') => name.split(/\s+/).map(part => part[0]).join('').
     justify-content: start;
     align-items: center;
     gap: 8px;
+  }
+  .egc-mini {
+    width: 24px;
+    height: 24px;
+    font-size: .6rem;
+  }
+  .egc-groups {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 8px 12px 4px;
+  }
+  .egc-slide {
+    flex-basis: 88%;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .egc-head {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+  .egc-art {
+    width: 52px;
+    height: 52px;
+  }
+  .egc-title {
+    font-size: 1.15rem;
+  }
+  .egc-slide {
+    flex-basis: calc(50% - 5px);
   }
 }
 </style>

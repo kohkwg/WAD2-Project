@@ -58,6 +58,48 @@ const FILTERS = [{
   key: 'mine',
   label: 'Your events & groups'
 }];
+// one filters panel at the right of the search bar (like discover) holds the views
+
+const shownFilters = computed(() => FILTERS.filter(item => signedIn.value || ['all'].includes(item.key)));
+
+const filterLabel = computed(() => FILTERS.find(item => item.key === filter.value)?.label);
+
+const filtersOpen = ref(false);
+
+const searchArea = ref(null);
+
+const filterToggle = ref(null);
+
+function chooseFilter(key) {
+  filter.value = key;
+  filtersOpen.value = false;
+  filterToggle.value?.focus();
+}
+// the panel closes on a click outside it, or on escape (focus goes back to the filters button)
+
+
+function closeFiltersOutside(event) {
+  if (filtersOpen.value && !searchArea.value?.contains(event.target)) filtersOpen.value = false;
+}
+
+function closeFiltersOnEscape(event) {
+  if (event.key !== 'Escape' || !filtersOpen.value) return;
+  filtersOpen.value = false;
+  filterToggle.value?.focus();
+}
+// phones and tablets (under 992px, bootstrap md and below): a groups | friends switch shows one
+// side at a time, groups first; /community#friends opens on friends
+
+
+const phoneMedia = window.matchMedia('(max-width: 991.98px)');
+
+const phone = ref(phoneMedia.matches);
+
+const pane = ref(route.hash === '#friends' ? 'friends' : 'groups');
+
+const updatePhone = () => {
+  phone.value = phoneMedia.matches;
+};
 
 const invites = ref([]);
 
@@ -102,6 +144,9 @@ const socialUpdates = ref(0);
 let stopSocial = () => {};
 
 onMounted(async () => {
+  phoneMedia.addEventListener('change', updatePhone);
+  document.addEventListener('pointerdown', closeFiltersOutside);
+  document.addEventListener('keydown', closeFiltersOnEscape);
   await load();
   if (signedIn.value) stopSocial = subscribeSocialUpdates(() => {
     socialUpdates.value++;
@@ -134,6 +179,9 @@ function refreshOnFocus() {
 onBeforeUnmount(() => {
   clearInterval(refreshTimer);
   window.removeEventListener('focus', refreshOnFocus);
+  phoneMedia.removeEventListener('change', updatePhone);
+  document.removeEventListener('pointerdown', closeFiltersOutside);
+  document.removeEventListener('keydown', closeFiltersOnEscape);
   stopSocial();
 });
 
@@ -251,6 +299,14 @@ const yours = computed(() => {
   });
   return rows.sort((a, b) => a.start - b.start);
 });
+// the search box filters this view too: by event title or the group's host
+
+
+const yoursShown = computed(() => {
+  const q = query.value.trim().toLowerCase();
+  if (!q) return yours.value;
+  return yours.value.filter(item => [item.event?.title, item.group?.event?.title, item.group?.host?.name].some(text => text?.toLowerCase().includes(q)));
+});
 
 const mineChip = g => g.myStatus === 'host' ? g.pendingCount ? `${g.pendingCount} ${g.pendingCount === 1 ? 'request' : 'requests'} to review` : 'Hosting' : g.myStatus === 'pending' ? 'Request sent' : g.myEventStatus ? 'You’re in' : 'RSVP to the event';
 // the feed: one card per event with its groups inside, soonest event first
@@ -278,21 +334,6 @@ const rsvpLabel = {
 };
 
 const groupCount = eventId => groups.value.filter(g => (g.eventId || g.event?.id) === eventId).length;
-// arrow keys move between tabs
-
-
-function tabKeys(event) {
-  const move = {
-    ArrowRight: 1,
-    ArrowLeft: -1
-  }[event.key];
-  if (!move) return;
-  const tabs = [...event.currentTarget.parentElement.querySelectorAll('[role=tab]')];
-  const next = tabs[(tabs.indexOf(event.currentTarget) + move + tabs.length) % tabs.length];
-  event.preventDefault();
-  next.focus();
-  next.click();
-}
 
 function showEventGroups(eventId) {
   filter.value = 'all';
@@ -306,11 +347,44 @@ function showEventGroups(eventId) {
 
 <template>
   <div class="container community-page">
+    <h1 v-if="phone" class="visually-hidden">Community</h1>
+    <!-- phones and tablets: groups or friends, one at a time; start a group appears with groups -->
+    <div v-if="phone" class="community-modebar">
+      <div
+          class="community-switch"
+          :class="{ 'is-friends': pane === 'friends' }"
+          role="group"
+          aria-label="Show">
+        <span class="community-switch-thumb" aria-hidden="true"></span>
+        <button type="button" :aria-pressed="pane === 'groups'" @click="pane = 'groups'">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="9" cy="8" r="3.5" />
+              <path d="M2.5 20c0-3.6 2.9-5.5 6.5-5.5s6.5 1.9 6.5 5.5" />
+              <circle cx="17" cy="9" r="3" />
+              <path d="M16 14.6c3.2.3 5.5 2 5.5 5.4" /></svg>
+          Groups
+        </button>
+        <button type="button" :aria-pressed="pane === 'friends'" @click="pane = 'friends'">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" /></svg>
+          Friends
+        </button>
+      </div>
+      <Transition name="pop-in">
+        <button
+            v-if="pane === 'groups'"
+            type="button"
+            class="btn btn-primary community-start"
+            :disabled="loading"
+            @click="openComposer()">Start a group</button>
+      </Transition>
+    </div>
     <!-- two columns from the top: everything group-related on the left, friends as a full-height sidebar -->
     <div class="community-shell">
-    <div class="community-column">
+    <div v-show="!phone || pane === 'groups'" class="community-column">
     <!-- one slim header: title and start a group, with the explainer folded away after the first visit -->
-    <header class="community-hero smart-head">
+    <header v-if="!phone" class="community-hero smart-head">
       <div class="smart-head-top">
         <div class="smart-head-title">
             <span class="smart-head-star" aria-hidden="true">★</span>
@@ -367,39 +441,61 @@ function showEventGroups(eventId) {
     </section>
 
     <div class="community-main">
-      <div class="community-tools">
-        <div class="community-filters" role="tablist" aria-label="Community">
+      <!-- search, with every view in one filters panel at its right (like discover) -->
+      <div ref="searchArea" class="community-search-area">
+        <div class="community-search-bar">
+          <label class="community-search-field">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="10.5" cy="10.5" r="6.5" />
+                <path d="m16 16 4 4" /></svg>
+            <span class="visually-hidden">Search groups</span>
+            <input
+                id="group-search"
+                v-model="query"
+                type="search"
+                placeholder="Search events, hosts or notes…"
+                autocomplete="off" />
+          </label>
           <button
-              v-for="f in FILTERS.filter(item => signedIn || ['all'].includes(item.key))"
-              :id="`community-tab-${f.key}`"
+              ref="filterToggle"
+              type="button"
+              class="community-filter-toggle"
+              :class="{ 'is-active': filter !== 'all' }"
+              :aria-expanded="filtersOpen"
+              aria-controls="community-filter-panel"
+              @click="filtersOpen = !filtersOpen">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M4 17h16" />
+                <circle cx="9" cy="7" r="3" />
+                <circle cx="15" cy="17" r="3" /></svg>
+            Filters<span v-if="filter !== 'all'" class="community-filter-count">1<span class="visually-hidden"> active</span></span>
+          </button>
+        </div>
+        <div
+            v-if="filtersOpen"
+            id="community-filter-panel"
+            class="community-filter-panel"
+            role="group"
+            aria-label="Show groups">
+          <button
+              v-for="f in shownFilters"
               :key="f.key"
               type="button"
-              role="tab"
-              class="community-filter"
-              :aria-selected="filter === f.key"
-              :tabindex="filter === f.key ? 0 : -1"
-              @click="filter = f.key"
-              @keydown="tabKeys">
-            {{ f.label }} <span class="tnum">
+              class="community-filter-option"
+              :aria-pressed="filter === f.key"
+              @click="chooseFilter(f.key)">
+            <span>{{ f.label }}</span><span class="community-filter-option-count tnum">
                 <BumpValue :value="counts[f.key]" /></span>
           </button>
         </div>
-        <label v-if="filter !== 'mine'" class="visually-hidden" for="group-search">Search groups</label>
-        <input
-            v-if="filter !== 'mine'"
-            id="group-search"
-            v-model="query"
-            type="search"
-            class="form-control community-search"
-            placeholder="Search events, hosts or notes…"
-            autocomplete="off" />
+        <p v-if="filter !== 'all'" class="community-filter-active">Showing <strong>{{ filterLabel }}</strong> <button type="button" class="btn btn-link btn-sm" @click="chooseFilter('all')">Show all groups</button></p>
       </div>
 
-      <!-- your events and groups, merged into one tab -->
-      <div v-if="filter === 'mine'" role="tabpanel" aria-labelledby="community-tab-mine" class="community-yours">
+      <!-- your events and groups, merged into one view -->
+      <div v-if="filter === 'mine'" class="community-yours">
       <!-- one card per event, with your group for it attached (you can be in one group per event) -->
-      <ul v-if="yours.length" class="list-unstyled m-0 community-yours-list">
-        <li v-for="item in yours" :key="item.key">
+      <ul v-if="yoursShown.length" class="list-unstyled m-0 community-yours-list">
+        <li v-for="item in yoursShown" :key="item.key">
           <article class="community-tile community-event-tile" :class="{ 'is-alert': item.group?.myStatus === 'host' && item.group?.pendingCount }">
             <span class="community-tile-when">{{ countdownLabel(item.event?.startTime || item.group.startTime) }}</span>
             <RouterLink
@@ -430,8 +526,8 @@ function showEventGroups(eventId) {
           </article>
         </li>
       </ul>
-        <div v-if="!yours.length && !loading" class="community-empty" role="status">
-          <h2 class="section-title">Nothing here yet</h2>
+        <div v-if="!yoursShown.length && !loading" class="community-empty" role="status">
+          <h2 class="section-title">{{ query ? 'Nothing matches your search' : 'Nothing here yet' }}</h2>
           <p>RSVP to an event, then start a group for it or join someone else’s.</p>
           <button type="button" class="btn btn-primary" @click="openComposer()">Start a group</button>
         </div>
@@ -475,7 +571,11 @@ function showEventGroups(eventId) {
     </div>
 
     <!-- friends sidebar: find people by username and handle friend requests -->
-    <aside id="friends" class="community-aside" aria-label="Friends">
+    <aside
+        v-show="!phone || pane === 'friends'"
+        id="friends"
+        class="community-aside"
+        aria-label="Friends">
       <FriendsPanel v-if="signedIn" compact :updates="socialUpdates" />
       <section v-else class="community-empty">
         <h2 class="section-title">Find your people</h2>
@@ -515,11 +615,12 @@ function showEventGroups(eventId) {
   scroll-margin-top: 16px;
 }
 
-/* wide screens: friends is a sidebar beside everything, from the top of the page, as tall as its content needs */
+/* from 992px (lg): friends is a sidebar beside everything, from the top of the page, as tall as its
+   content needs; a third of the width, at most 340px, so the groups keep room on smaller laptops */
 
-@media (min-width: 1100px) {
+@media (min-width: 992px) {
   .community-shell {
-    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-columns: minmax(0, 1fr) min(340px, 34%);
   }
   .community-aside {
     position: sticky;
@@ -567,57 +668,259 @@ function showEventGroups(eventId) {
   min-height: 44px;
 }
 
-.community-tools {
-  display: grid;
-  gap: 12px;
+/* search bar with the filters button at its right, like discover */
+
+.community-search-area {
+  position: relative;
   margin-bottom: 18px;
 }
 
-.community-filters {
+.community-search-bar {
   display: flex;
+  align-items: stretch;
   gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  padding: 5px;
+  border: 2px solid var(--bookedz-ink);
+  border-radius: 999px;
+  background: var(--bookedz-surface);
 }
 
-.community-filters::-webkit-scrollbar {
-  display: none;
+.community-search-bar:focus-within {
+  border-color: var(--bookedz-fill);
+  box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--bookedz-fill) 28%, transparent);
 }
 
-.community-filter {
+.community-search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0 6px 0 12px;
+}
+
+.community-search-field svg {
   flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--bookedz-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.community-search-field input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--bookedz-ink);
+  font-size: var(--text-small);
+  outline: none;
+}
+
+.community-filter-toggle {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 6px;
-  min-height: 40px;
-  padding: 6px 14px;
-  border: 1px solid var(--bookedz-border);
-  border-radius: 99px;
-  background: var(--bookedz-surface);
+  min-height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--bookedz-ink);
+  border-radius: 999px;
+  background: var(--bookedz-orange-soft);
   color: var(--bookedz-ink);
-  font-size: .88rem;
-  transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease);
+  font-weight: 700;
 }
 
-.community-filter span {
-  padding: 0 6px;
+.community-filter-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.community-filter-toggle.is-active {
+  background: var(--bookedz-fill);
+  color: var(--bookedz-on-fill);
+}
+
+.community-filter-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
   border-radius: 99px;
-  background: var(--bookedz-hover);
+  background: var(--bookedz-ink);
+  color: var(--bookedz-surface);
   font-size: .75rem;
 }
 
-.community-filter[aria-selected='true'] {
-  background: var(--bookedz-ink);
-  border-color: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+.community-filter-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  gap: 6px;
+  width: min(100%, 22rem);
+  padding: 12px;
+  border: 2px solid var(--bookedz-ink);
+  border-radius: 20px;
+  background: var(--bookedz-surface);
+  box-shadow: var(--bookedz-neutral-shadow-hover);
 }
 
-.community-filter[aria-selected='true'] span {
-  background: color-mix(in srgb, var(--bookedz-surface) 20%, transparent);
-}
-
-.community-search {
+.community-filter-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   min-height: 44px;
+  padding: 8px 14px;
+  border: 2px solid var(--bookedz-control-border);
+  border-radius: 99px;
+  background: var(--bookedz-surface);
+  color: var(--bookedz-ink);
+  font-weight: 700;
+  text-align: left;
+}
+
+.community-filter-option:hover {
+  background: var(--bookedz-hover);
+}
+
+.community-filter-option[aria-pressed='true'] {
+  background: var(--bookedz-fill);
+  border-color: var(--bookedz-ink);
+  color: var(--bookedz-on-fill);
+}
+
+.community-filter-option-count {
+  padding: 0 8px;
+  border-radius: 99px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  font-size: .75rem;
+}
+
+.community-filter-active {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 8px 0 0 14px;
+  color: var(--bookedz-muted);
+  font-size: var(--text-small);
+}
+
+.community-filter-active .btn {
+  padding: 0 4px;
+}
+
+/* dark mode: the same bright edge as the outline buttons */
+
+:root[data-theme="dark"] .community-search-bar,
+:root[data-theme="dark"] .community-filter-toggle,
+:root[data-theme="dark"] .community-filter-panel,
+:root[data-theme="dark"] .community-switch {
+  border-color: color-mix(in srgb, var(--bookedz-ink) 75%, var(--bookedz-surface));
+}
+
+:root[data-theme="dark"] .community-filter-option[aria-pressed='true'] {
+  border-color: var(--bookedz-fill);
+}
+
+/* phones and tablets: the groups | friends switch, and start a group popping in beside it in groups mode */
+
+.community-modebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.community-switch {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  border: 2px solid var(--bookedz-ink);
+  border-radius: 99px;
+  background: var(--bookedz-surface);
+}
+
+.community-switch button {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 88px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 99px;
+  background: transparent;
+  color: var(--bookedz-muted);
+  font-size: var(--text-small);
+  font-weight: 700;
+  transition: color var(--bookedz-motion-fast) var(--bookedz-ease);
+}
+
+.community-switch button[aria-pressed='true'] {
+  color: var(--bookedz-on-fill);
+}
+
+.community-switch svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.community-switch-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: 99px;
+  background: var(--bookedz-fill);
+  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp);
+}
+
+.community-switch.is-friends .community-switch-thumb {
+  transform: translateX(100%);
+}
+
+.community-start {
+  min-height: 44px;
+  border-radius: 99px;
+}
+
+.pop-in-enter-active, .pop-in-leave-active {
+  transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease), transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp);
+}
+
+.pop-in-enter-from, .pop-in-leave-to {
+  opacity: 0;
+  transform: scale(.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .community-switch-thumb, .community-switch button, .pop-in-enter-active, .pop-in-leave-active {
+    transition: none;
+  }
 }
 
 .community-feed {

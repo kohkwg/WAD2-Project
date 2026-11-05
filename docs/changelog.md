@@ -12,6 +12,16 @@ the day their status entry gives.
 
 ## 5 November 2026
 
+On 5 November 2026, at Gregory's request, we reworked Community (Go together) for every screen
+size. Its views (All groups, I'm going, Hosting, Your events & groups) moved from a row of chips
+into one Filters panel at the right of the search bar, as on Discover. Below 992px
+a Groups | Friends switch shows one side at a time, the header card is left out and Start a group
+appears beside the switch; event and group cards are smaller, an event's groups sit two across
+from 576px, and the group buttons share their row at equal widths. From 992px the Friends sidebar
+sits on the right (it used to start at 1100px). We changed `CommunityView.vue`,
+`EventGroupsCard.vue`, `GroupCard.vue`, `design-baseline.css` and `e2e/go-together.spec.js`, on
+top of Vivienne's reformatted versions of those files, keeping her changes.
+
 On 5 November 2026, at Denzel's request, we moved the signed-out Sign in button from an otherwise
 empty top bar into the sidebar on laptops and desktops, and made every sign-in route open the home
 page's sign-in section and return to the previous page afterwards (`NavBar.vue`, `router/index.js`).
