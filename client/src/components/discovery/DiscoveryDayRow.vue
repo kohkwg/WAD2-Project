@@ -120,7 +120,7 @@ watch([expanded, pageSize], () => {
     :class="{ 'is-expanded': expanded }"
     :aria-label="ariaLabel"
   >
-    <header class="day-head">
+    <header class="day-head" :class="{ 'has-more': expanded || group.events.length > pageSize }">
       <span class="day-dot" aria-hidden="true"></span>
       <time :datetime="group.date">
         <strong>{{ dateLabel }}</strong>
@@ -135,7 +135,7 @@ watch([expanded, pageSize], () => {
         :aria-expanded="expanded"
         @click="toggle"
       >
-        {{ expanded ? 'Close' : 'See more' }}
+        {{ expanded ? 'Close' : 'See more' }}<span v-if="!expanded" class="day-more-count" aria-hidden="true"> · {{ group.events.length }}</span>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path :d="moreIconPath" />
         </svg>
@@ -253,6 +253,20 @@ watch([expanded, pageSize], () => {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+/* Narrow rows (phones and tablets): keep the date on one line, drop the divider, and fold the
+   count into See more so the header never wraps */
+.day-row { container-type: inline-size; }
+.day-head strong, .day-count, .day-more { white-space: nowrap; }
+.day-more-count { display: none; }
+@container (max-width: 460px) {
+  .day-head { gap: 8px; }
+  .day-line { display: none; }
+  .day-count { margin-left: auto; }
+  .day-head.has-more .day-count { display: none; }
+  .day-head.has-more .day-more { margin-left: auto; }
+  .day-more { min-height: 38px; padding: 4px 12px; }
+  .day-more-count { display: inline; }
 }
 /* Bleed so a hovered card's shadow isn't clipped */
 /* The left bleed is smaller than the gap between cards, so the card scrolled out of view never shows

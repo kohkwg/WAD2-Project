@@ -1042,3 +1042,30 @@ began with "(" and was read as a call on `nextTick()`'s result; it is now its ow
 Checked in demo mode at 375px in dark mode (the nearby list, a search for "lau pa" showing Lau Pa
 Sat with its address and distance, the typed-name row) and by sending a chat message. Go together
 e2e: 5/6 pass, the sixth being the unrelated Friends sidebar height.
+
+## Discover: day carousels at every width (5 November)
+
+Below 992px Discover's list view used a separate vertical timeline. It now uses the same
+`DiscoveryDayRow` as wide screens: a swipeable row per day with page dots and See more / Close.
+The row already picks how many cards fit (one per page on phones, two on tablets). On rows
+narrower than 460px the header keeps the date on one line, drops the divider and shows the count
+in the button ("See more · 2"). The old timeline markup and its styles (in `DiscoverView.vue` and
+`design-baseline.css`) were removed; the list/map switch below 992px is unchanged.
+
+Checked by hand at 375px (swipe, dots, See more opens all of a day's events) and 768px (two per
+page). Discover e2e files (`immersive-discovery`, `discovery-rsvp-regressions`, `filter-panel`,
+`discover-browse`, `discovery-list-palette`) give the same results before and after the change
+(12 failures, all already failing on dev before it).
+
+## Discover: the next seven days on first load (5 November)
+
+With no search or filters, Discover used to start with the calendar week containing today
+(Monday to Sunday), so later in the week it showed only a few days, and below 992px it showed the
+first 10 events instead of a week. It now starts with the next seven days from today at every
+width (`weekAt` in `DiscoverView.vue`), and "Show more" adds seven days at a time. Moving the week
+calendar to another week still shows that Monday-to-Sunday week. The empty state reads "Nothing
+on in the next 7 days" and works on narrow screens too.
+
+Checked in demo mode on 5 November at 1440px and 375px: first load covers 5–11 November, Show more
+adds 12–18 November and offers 19–25. Discover e2e: the same 12 failures as before (all already
+failing on dev).

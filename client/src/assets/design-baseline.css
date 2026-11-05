@@ -412,10 +412,6 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 .discover-page.discover-page .category-shortcut:hover { transform: translateY(-2px) rotate(-1deg); }
 .discover-page.discover-page .results-sort select { border: 2px solid var(--bookedz-ink); border-radius: 999px; padding: 0 14px; background: var(--bookedz-surface); font-weight: 600; }
 .discover-page.discover-page .pane-switch { border: 2px solid var(--bookedz-ink); }
-.discover-page.discover-page .event-timeline::before { width: 0; background: none; border-left: 2px dashed var(--bookedz-ink); opacity: .35; }
-.discover-page.discover-page .timeline-date::after { background: var(--bookedz-fill); border: 2px solid var(--bookedz-ink); width: 12px; height: 12px; right: -7px; top: 10px; }
-.discover-page.discover-page .date-label { font-weight: 800; }
-.discover-page.discover-page .weekday { color: var(--bookedz-teal-ink); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .discover-page.discover-page .discovery-event-row { border: 2px solid var(--bookedz-ink); box-shadow: 5px 5px 0 var(--bookedz-teal); background: var(--bookedz-surface); }
 .discover-page.discover-page .discovery-event-row:is(:hover, :focus-within) { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--bookedz-teal); }
 .discover-page.discover-page .discovery-event-row.is-selected { border-color: var(--bookedz-ink); box-shadow: 6px 6px 0 var(--bookedz-fill); background: color-mix(in srgb, var(--bookedz-orange-soft) 55%, var(--bookedz-surface)); }
