@@ -1,0 +1,78 @@
+/* Motion layer, loaded after every other stylesheet (main.js).
+ *
+ * Why it exists: many cards and buttons have a hover lift or a press nudge, but later rules set
+ * their `transition` to colours and shadows only, so the movement snapped instead of gliding and
+ * the app felt static. This file makes those movements animate everywhere, adds a lift to the
+ * clickable cards that had none, and gives each page's first block a gentle rise.
+ *
+ * Left out on purpose: map markers (the map moves them with transforms as it pans), dragged cards
+ * (task board, Picked for you deck) and the sidebar's own collapse animation.
+ * Everything here is switched off when the device asks for reduced motion (end of file).
+ */
+
+/* 1. Movement glides on every element that has a hover or press movement */
+:is(
+  .btn, .event-cta, .lift-on-hover, .discovery-event-row, .event-card, .group-card, .group-event,
+  .event-groups-card, .community-tile, .jio-card, .organiser-event-card, .recommendation-card,
+  .announcement-entry, .category-shortcut, .day-more, .dino-option, .question-add, .rsvp-back,
+  .place-row, .group-slot-tab, .group-keen, .dash-card, .dash-day-item, .dash-pick, .rsvp-row,
+  .community-filter, .egc-start
+) {
+  transition-property: transform, translate, scale, box-shadow, border-color, background-color, color, opacity, filter !important;
+  transition-duration: var(--bookedz-motion-fast, 160ms) !important;
+  transition-timing-function: var(--bookedz-ease, cubic-bezier(.22, .61, .36, 1)) !important;
+}
+
+/* 2. A lift for the clickable cards that had no hover movement */
+@media (hover: hover) {
+  :is(.dash-card:not(.dash-welcome), .dash-pick, .rsvp-row):hover {
+    transform: translateY(-2px);
+  }
+  .dash-day-item:hover { transform: translateX(3px); }
+  .place-row:hover { transform: translateX(2px); }
+  .category-shortcut:hover { transform: translateY(-1px); }
+  .group-keen:hover { transform: scale(1.04); }
+  /* Sidebar links: the icon nudges towards the page */
+  .side-link svg { transition: transform var(--bookedz-motion-fast, 160ms) var(--bookedz-ease, ease); }
+  .side-link:hover svg { transform: translateX(2px) scale(1.06); }
+}
+
+/* 3. Press feedback: cards and buttons settle a little under the pointer */
+:is(.discovery-event-row, .event-card, .group-card, .community-tile, .organiser-event-card, .recommendation-card, .dash-card:not(.dash-welcome), .rsvp-row):active {
+  transform: translateY(0) scale(.985);
+  transition-duration: var(--bookedz-motion-feedback, 100ms) !important;
+}
+:is(.category-shortcut, .group-keen, .day-more, .group-slot-tab, .community-filter):active {
+  transform: scale(.96);
+  transition-duration: var(--bookedz-motion-feedback, 100ms) !important;
+}
+
+/* 4. Pages arrive with a fade, and their first few blocks rise into place one after another.
+   The rise is on blocks inside the page, not the page wrapper, so sticky and fixed parts keep
+   working; the landing page has its own scroll animations, so it is left alone. */
+.route-view {
+  animation-duration: 280ms;
+}
+.route-view > :not(.landing-page) > :not(.visually-hidden, .skip-link, script, style, template):nth-child(-n+4) {
+  /* backwards, not both: once it ends the element's own hover movement works again */
+  animation: motion-rise 380ms var(--bookedz-ease, ease) backwards;
+}
+.route-view > :not(.landing-page) > :nth-child(2) { animation-delay: 50ms; }
+.route-view > :not(.landing-page) > :nth-child(3) { animation-delay: 100ms; }
+.route-view > :not(.landing-page) > :nth-child(4) { animation-delay: 150ms; }
+@keyframes motion-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 5. Reduced motion: no movement, colour changes stay */
+@media (prefers-reduced-motion: reduce) {
+  :is(.dash-card, .dash-pick, .rsvp-row, .dash-day-item, .place-row, .category-shortcut, .group-keen, .day-more, .group-slot-tab, .community-filter,
+      .discovery-event-row, .event-card, .group-card, .community-tile, .organiser-event-card, .recommendation-card):is(:hover, :active),
+  .side-link:hover svg {
+    transform: none !important;
+  }
+  .route-view > * > * {
+    animation: none !important;
+  }
+}

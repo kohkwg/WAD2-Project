@@ -12,6 +12,8 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 // our own small style tweaks go after bootstrap so they win when both set the same thing
 import './assets/main.css';
+// shared hover, press and page motion; last so its transitions apply over every other stylesheet
+import './assets/motion.css';
 
 const stopTheme = initTheme();
 if (import.meta.hot) import.meta.hot.dispose(stopTheme);
