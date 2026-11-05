@@ -11,7 +11,7 @@ import VenueMap from '../components/VenueMap.vue'
 import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue'
 import { uploadCover } from '../lib/uploadCover.js'
-import { createEvent, getEvent, getEventOnlineAccess, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
+import { createEvent, setEventPublished, getEvent, getEventOnlineAccess, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
 import { defaultRevealTime } from '../utils/onlineEvents.js'
 import { defaultVenueRevealTime, venueRevealToSave } from '../utils/venueReveal.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
@@ -35,6 +35,8 @@ const step = ref(1)
 const direction = ref(1)
 const showErrors = ref(false) // only show errors after they press Next
 const publishing = ref(false)
+const publishWhen = ref('now') // 'now' goes live straight away; 'later' saves it as a draft to publish from Manage event
+let visibilitySettled = false
 const errorMessage = ref('')
 let createAttempt = null
 let createdEventId = null
@@ -630,6 +632,20 @@ function closeAnnounceDialog() {
   if (changesSaved.value) finishEditing()
 }
 
+// New events are created live; "publish later" hides the new event again before anyone is sent there
+async function settleVisibility(eventId) {
+  if (publishWhen.value !== 'later' || visibilitySettled) return true
+  try {
+    await setEventPublished(eventId, false)
+    visibilitySettled = true
+    return true
+  } catch (error) {
+    errorMessage.value = 'The event was created, but could not be saved as a draft: ' + error.message + ' Press the button again to retry.'
+    return false
+  }
+}
+const afterCreateUrl = (eventId) => '/organiser/events?created=' + eventId + (publishWhen.value === 'later' ? '&draft=1' : '')
+
 async function publish() {
   if (publishing.value || uploadingCover.value) return
   const invalidStep = [1, 2].find((stepNumber) => errorsForStep(form.value, stepNumber, ruleContext()).length > 0)
@@ -644,11 +660,12 @@ async function publish() {
     publishing.value = true
     errorMessage.value = ''
     try {
+      if (!(await settleVisibility(createdEventId))) return
       if (!(await finishPlan(createdEventId))) return
     } finally {
       publishing.value = false
     }
-    await router.push('/organiser/events?created=' + createdEventId)
+    await router.push(afterCreateUrl(createdEventId))
     return
   }
   publishing.value = true
@@ -667,8 +684,9 @@ async function publish() {
     createdDates = { startsAt: eventData.startTime, endsAt: eventData.endTime }
     eventCreated.value = true
     createAttempt = null
+    if (!(await settleVisibility(created.id))) return
     if (!(await finishPlan(created.id))) return
-    const navigationFailure = await router.push('/organiser/events?created=' + created.id)
+    const navigationFailure = await router.push(afterCreateUrl(created.id))
     if (navigationFailure) errorMessage.value = 'Event was created, but could not open its organiser page. Press Publish to continue.'
   } catch (error) {
     errorMessage.value = createdEventId
@@ -1108,6 +1126,19 @@ async function publish() {
               : 'Check everything before publishing. Use Back to change anything; nothing is lost.' }}
           </p>
           <p v-dismissible v-if="questionNotice" class="question-notice" role="status">{{ questionNotice }}</p>
+          <fieldset v-if="!isEditing" class="publish-choice" :disabled="publishing || eventCreated">
+            <legend class="form-label">When should it go live?</legend>
+            <div class="choice-group">
+              <div class="form-check choice-option">
+                <input id="publish-now" v-model="publishWhen" class="form-check-input" type="radio" name="publish-when" value="now" />
+                <label class="form-check-label" for="publish-now">Publish now</label>
+              </div>
+              <div class="form-check choice-option">
+                <input id="publish-later" v-model="publishWhen" class="form-check-input" type="radio" name="publish-when" value="later" />
+                <label class="form-check-label" for="publish-later">Save as a draft, publish later</label>
+              </div>
+            </div>
+          </fieldset>
           <EventSummary :event="form">
             <hr />
             <p v-if="form.isOnline" class="mb-1">
@@ -1244,7 +1275,7 @@ async function publish() {
             @click="publish"
           >
             <span v-if="publishing" class="spinner-border spinner-border-sm me-2"></span>
-            {{ publishing ? 'Publishing…' : 'Publish event' }}
+            {{ publishWhen === 'later' ? (publishing ? 'Saving…' : 'Save as draft') : (publishing ? 'Publishing…' : 'Publish event') }}
           </button>
         </div>
       </div>
@@ -1390,6 +1421,12 @@ async function publish() {
 .online-grid .online-reveal { max-width: none; }
 .online-grid :deep(.wheel-panel) { left: auto; right: 0; }
 @media (max-width: 767.98px) { .online-grid { grid-template-columns: 1fr; } .online-grid :deep(.wheel-panel) { left: 0; right: auto; } }
+.publish-choice { margin: 0 0 1rem; padding: 0; border: 0; }
+.publish-choice legend { float: none; width: auto; padding: 0; margin-bottom: .5rem; font-size: 1rem; }
+.publish-choice .choice-group { display: flex; flex-wrap: wrap; gap: .5rem; }
+.publish-choice .choice-option { display: inline-flex; align-items: center; gap: .55rem; min-height: 44px; margin: 0; padding: 0 1.1rem 0 2.2rem; border: 2px solid var(--bookedz-control-border); border-radius: 12px; background: var(--bookedz-surface); }
+.publish-choice .choice-option:has(.form-check-input:checked) { border-color: var(--bookedz-primary-dark); background: color-mix(in srgb, var(--bookedz-primary-dark) 12%, var(--bookedz-surface)); }
+.publish-choice .choice-option .form-check-label { cursor: pointer; }
 .questions-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1.5rem; margin-bottom: .5rem; }
 .capacity-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem .75rem; margin-bottom: .5rem; }
 .capacity-head .form-check-label { font-size: .85rem; }

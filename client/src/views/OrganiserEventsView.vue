@@ -29,6 +29,7 @@ watch([activeTab, search, pendingOnly], () => {
   try { sessionStorage.setItem(storageKey, JSON.stringify({ tab: activeTab.value, search: search.value, pendingOnly: pendingOnly.value })) } catch { /* browsing still works without storage */ }
 })
 const justCreatedId = computed(() => route.query.created)
+const savedAsDraft = computed(() => route.query.draft === '1')
 const justUpdatedId = computed(() => route.query.updated)
 const counts = computed(() => organiserEventCounts(events.value, now.value))
 const tabs = computed(() => [
@@ -69,7 +70,7 @@ async function teamResponded({ remaining }) {
 }
 onMounted(() => {
   mounted = true
-  if (justCreatedId.value) { activeTab.value = 'upcoming'; search.value = ''; pendingOnly.value = false }
+  if (justCreatedId.value) { activeTab.value = savedAsDraft.value ? 'drafts' : 'upcoming'; search.value = ''; pendingOnly.value = false }
   loadEvents()
   timer = setInterval(loadEvents, 30000)
   window.addEventListener('focus', loadEvents)
@@ -141,7 +142,7 @@ async function removeEvent(eventId) {
       </div>
       <aside v-if="!loading && pendingCount > 0" class="pending-summary" aria-label="Pending RSVP requests"><p><span aria-hidden="true">!</span><strong>{{ pendingCount }}</strong> {{ pendingCount === 1 ? 'RSVP is' : 'RSVPs are' }} waiting for your approval across {{ pendingEvents.length }} {{ pendingEvents.length === 1 ? 'event' : 'events' }}.</p><button type="button" class="btn btn-primary" @click="reviewAll">Review all requests</button></aside>
     </header>
-    <div v-dismissible v-if="justCreatedId" class="alert alert-success" role="status">Event published. Participants can now find it and RSVP.</div>
+    <div v-dismissible v-if="justCreatedId" class="alert alert-success" role="status">{{ savedAsDraft ? 'Saved as a draft. Nobody can see it yet; publish it from Manage event when you are ready.' : 'Event published. Participants can now find it and RSVP.' }}</div>
     <div v-dismissible v-if="justUpdatedId" class="alert alert-success" role="status">Changes saved. {{ route.query.announced ? 'An announcement about them is now on the event page.' : 'No announcement was posted.' }}</div>
     <div v-dismissible v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success" role="status">{{ statusMessage }}</div>
     <div v-dismissible v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }} <button type="button" class="btn btn-outline-secondary" :disabled="busyId !== null" @click="loadEvents">Retry loading events</button></div>
