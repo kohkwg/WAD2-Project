@@ -61,7 +61,7 @@ status. Use the timeline for the latest verified checkpoint and remaining limits
 
 On 5 November 2026, organisers got a "coming with a group" indicator on Manage RSVPs
 (`components/rsvp/GroupChip.vue`, `getEventGroupMembers`), Friends became a full-height sidebar in
-Community, and migration `20261105150000_event_group_members.sql` added the live lookup and merged the
+Community, and migration `20261105074842_event_group_members.sql` added the live lookup and merged the
 two `create_group` definitions into one.
 
 Also on 5 November 2026: only people going to an event can start a group for it, joining a group

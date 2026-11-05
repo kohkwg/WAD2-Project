@@ -3,9 +3,9 @@
 -- Friends-only groups don't reveal their host's name. Mirrors getEventGroupMembers in mockApi.js.
 --
 -- Also reconciles create_group: 20261105050527 (friends, invites, RSVP rule) and
--- 20261105120000 (no groups for online events) both redefined it. On a fresh database the second
--- left an extra 5-argument version beside the 6-argument one; on the hosted project the online
--- check was lost. This keeps one create_group with every rule.
+-- 20261105120000 (no groups for online events) both redefined it, and on the hosted project the
+-- online check was lost. This keeps one create_group with every rule; 20261105120000 now defines
+-- the same, so a fresh database ends up identical. Applied to the hosted project 5 November 2026.
 
 drop function if exists public.create_group(uuid, text, int, text, text);
 create or replace function public.create_group(p_event_id uuid, p_note text default '', p_capacity int default 4,
