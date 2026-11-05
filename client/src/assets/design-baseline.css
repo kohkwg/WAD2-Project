@@ -149,6 +149,17 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
   background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 :root[data-theme="dark"] .organiser-events-page.organiser-events-page .organiser-heading { border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill); }
+/* Compact Organise header: title and Create on one line beside search and tabs, smaller title,
+   less padding and no big background star (it sat behind the tabs) */
+.organiser-events-page.organiser-events-page .organiser-heading { padding: .85rem 1.25rem; gap: .75rem 1.5rem; margin-bottom: 1.1rem; box-shadow: 4px 4px 0 var(--bookedz-ink); }
+:root[data-theme="dark"] .organiser-events-page.organiser-events-page .organiser-heading { box-shadow: 4px 4px 0 var(--bookedz-fill); }
+.organiser-events-page.organiser-events-page .organiser-heading::after { display: none; }
+.organiser-events-page.organiser-events-page .organiser-heading h1 { margin: 0; font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.1; }
+.organiser-events-page.organiser-events-page .organiser-heading .smart-head-top { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+.organiser-events-page.organiser-events-page .organiser-heading .smart-head-title { display: flex; align-items: center; gap: .5rem; }
+.organiser-events-page.organiser-events-page .organiser-heading .events-controls { margin-bottom: 0; flex: 1 1 22rem; justify-content: flex-end; gap: .5rem; }
+.organiser-events-page.organiser-events-page .organiser-heading .event-search { flex: 1 1 14rem; max-width: 26rem; }
+.organiser-events-page.organiser-events-page .organiser-heading .pending-summary { flex: 1 1 100%; margin-bottom: 0; }
 
 /* Search, filter pills, sort */
 .organiser-events-page.organiser-events-page .event-search input,
