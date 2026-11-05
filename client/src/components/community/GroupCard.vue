@@ -117,7 +117,7 @@ async function join() {
 </template>
 
 <style scoped>
-.group-card { display: grid; gap: 12px; padding: 18px; border: 1px solid var(--bookedz-border); border-radius: 20px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
+.group-card { display: grid; align-content: start; gap: 12px; padding: 18px; border: 1px solid var(--bookedz-border); border-radius: 20px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
 .group-card.is-joined { border-color: color-mix(in srgb, var(--bookedz-primary) 45%, var(--bookedz-border)); }
 .group-card.is-highlighted { animation: attention-once 1.2s var(--bookedz-ease) 200ms 1; }
 .group-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -133,7 +133,7 @@ async function join() {
 .group-badge { flex: none; padding: 3px 10px; border-radius: 99px; background: var(--bookedz-hover); color: var(--bookedz-muted); font-size: var(--text-caption); font-weight: 700; }
 .group-badge--host { background: var(--bookedz-mango-soft); color: var(--bookedz-ink); }
 .group-badge--in { background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
-.group-rules { display: flex; flex-wrap: wrap; gap: 6px; }
+.group-rules { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; }
 .group-rule { padding: 2px 9px; border: 1.5px solid var(--bookedz-control-border); border-radius: 99px; color: var(--bookedz-muted); font-size: .74rem; font-weight: 700; }
 .group-rule.is-friends { border-color: var(--bookedz-pink); color: var(--bookedz-ink); }
 .group-rule.is-friend { border-color: var(--bookedz-teal); background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
