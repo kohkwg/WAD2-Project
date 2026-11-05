@@ -148,8 +148,10 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 .app-navbar .nav-link.active { color: var(--bookedz-primary-dark); background: var(--bookedz-glass-active); font-weight: 650; }
 .nav-section-label { display: block; padding: .5rem .65rem; font-size: .75rem; color: var(--bookedz-muted); }
 .nav-user-email { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.app-footer { border-top: 1px solid var(--bookedz-border); padding: 1.75rem 0; color: var(--bookedz-muted); background: var(--bookedz-glass-solid); font-size: .8rem; }
-.app-footer .container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
+/* Slim footer: one line at every width (the second tagline is dropped on phones, where it would wrap) */
+.app-footer { border-top: 1px solid var(--bookedz-border); padding: .75rem 0; color: var(--bookedz-muted); background: var(--bookedz-glass-solid); font-size: .75rem; line-height: 1.4; }
+.app-footer .container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem 1rem; }
+@media (max-width: 575.98px) { .app-footer .footer-tagline { display: none; } }
 .app-footer strong { font-family: var(--bookedz-heading); color: var(--bookedz-ink); font-size: 1.3rem; letter-spacing: -.04em; }
 @media(min-width:1400px) { .app-main:not(.app-main--discover) { max-width: 1440px; } }
 @media(max-width:991.98px) { .app-navbar .navbar-collapse { padding: 1rem 0; } .nav-section-label { border-top: 1px solid var(--bookedz-border); margin-top: .5rem; padding-top: 1rem; } .app-navbar .navbar-collapse > .btn { margin-top: 1rem; } }
