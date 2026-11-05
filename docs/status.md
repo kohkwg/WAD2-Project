@@ -38,6 +38,14 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — navbar cleanup merge repair
+
+Combined Aishani's formatted navbar and comments with dev's collapsed-by-default
+sidebar, retaining saved browser choices. Kept the local Discover restoration
+entry in the relocated `docs/status.md`. NavBar script, template and styles compile;
+conflict-marker and whitespace checks pass on the repaired working files. No
+browser checks, full build/suite, commit, push or hosted changes in this repair.
+
 ### 5 November — sidebar starts collapsed on laptops and desktops
 
 From 992px the sidebar now starts as the 76px icon rail at every size and expands only when
@@ -70,6 +78,15 @@ split, carousel paused, content in place), no horizontal overflow or extra `main
 (demo cannot sign in; live sign-in is human-only), live event loading in headless Chromium
 (Supabase requests did not answer from the sandbox, Discover included; the in-app browser
 did load live events), Safari/iOS feel. No full build/suite, commit, push or hosted changes.
+
+### 5 November — Discover stash restoration
+
+Resolved `DiscoveryDayRow.vue` by keeping
+the local fixed-size card layout and removal of carousel arrows, together with
+dev's selected-event scrolling and reduced-motion handling. DiscoveryDayRow,
+DiscoveryEventRow, DiscoveryWeekCalendar, EventFilters and DiscoverView pass
+script/template/style compilation. No browser checks, full build/suite, commit,
+push or hosted changes performed; the retained stash remains a local backup.
 
 ### 5 November — account/dev merge conflict repair
 

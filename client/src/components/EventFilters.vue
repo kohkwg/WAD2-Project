@@ -69,7 +69,8 @@ function choose(group, value) {
   emit('update:modelValue', next)
   if (group === 'when' && next.when === 'pick_dates') emit('pick-dates')
 }
-const activeCount = computed(() => Number(Boolean(selected.value.when)) + selected.value.extras.length + selected.value.categories.length)
+const whenSet = computed(() => Boolean(selected.value.when) && !(selected.value.when === 'pick_dates' && !(selected.value.dateFrom && selected.value.dateTo)))
+const activeCount = computed(() => Number(whenSet.value) + selected.value.extras.length + selected.value.categories.length)
 const activeChips = computed(() => groups.value.flatMap(group => {
   const options = group.key === 'categories'
     ? [...group.options, ...selected.value.categories.filter(value => !group.options.some(option => option.value === value)).map(value => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }))]

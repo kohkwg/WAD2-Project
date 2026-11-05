@@ -383,8 +383,8 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 .discover-page.discover-page .discovery-event-row:is(:hover, :focus-within) { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--bookedz-teal); }
 .discover-page.discover-page .discovery-event-row.is-selected { border-color: var(--bookedz-ink); box-shadow: 6px 6px 0 var(--bookedz-fill); background: color-mix(in srgb, var(--bookedz-orange-soft) 55%, var(--bookedz-surface)); }
 .discover-page.discover-page .row-cover { border: 2px solid var(--bookedz-ink); border-radius: 12px; }
-.discover-page.discover-page .row-picked { background: var(--bookedz-pink); color: #3b0a24; border-radius: 999px; padding: 2px 9px; rotate: -2deg; }
-.discover-page.discover-page .discovery-street-map { box-shadow: 6px 6px 0 var(--bookedz-mango); }
+.discover-page.discover-page .row-picked { background: var(--bookedz-fill); color: var(--bookedz-on-fill); border-radius: 999px; padding: 2px 9px; }
+.discover-page.discover-page .discovery-street-map { box-shadow: 6px 6px 0 var(--bookedz-teal); }
 .discover-page.discover-page :is(.empty-state, .loading-state) { background: var(--bookedz-surface); box-shadow: 5px 5px 0 var(--bookedz-mango); }
 .discover-page.discover-page :is(.event-pagination, .event-more) .btn { border: 2px solid var(--bookedz-ink); border-radius: 999px; font-weight: 700; }
 :root[data-theme="dark"] .discover-page.discover-page :is(.search-toolbar, .discovery-event-row, .category-shortcut, .results-sort select, .pane-switch) { border-color: var(--bookedz-fill); }

@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import EventArtwork from '../EventArtwork.vue'
-import EventCardActions from '../EventCardActions.vue'
 import EventBookmark from '../EventBookmark.vue'
 
 const props = defineProps({
@@ -65,22 +64,21 @@ function selectFromRow(clickEvent) {
         <h3><RouterLink class="row-title" :to="`/events/${event.id}/rsvp`" :title="event.title">{{ event.title }}</RouterLink></h3>
         <span v-if="picked" class="row-picked">Picked for you</span>
       </div>
-      <!-- Spots come before the venue, so a long venue name is what gets cut off -->
-      <p class="row-facts" :title="factsText"><time :datetime="event.start_time">{{ time }}</time><template v-if="places"> · {{ places }}</template> · {{ venue }}</p>
+      <!-- Time and spots on one line; the venue, often long, gets its own line below -->
+      <p class="row-facts" :title="factsText"><time :datetime="event.start_time">{{ time }}</time><template v-if="places"> · {{ places }}</template></p>
+      <p class="row-facts row-venue" :title="venue">{{ venue }}</p>
       <p v-if="selected" class="row-selected-info reveal-down"><span v-if="selectedNote">{{ selectedNote }}</span><RouterLink :to="`/events/${event.id}/rsvp`" class="row-view">View event ›</RouterLink></p>
       <p v-else-if="statusNote" class="row-going" :class="`row-going--${status}`">{{ statusNote }}</p>
       <p v-else-if="match" class="row-reason">{{ match }}</p>
     </div>
     <div class="row-actions">
       <EventBookmark v-if="bookmarkEnabled" :saved="Boolean(event.saved)" :pending="preferencePending" :event-title="event.title" @toggle="emit('preference', {event, action: event.saved ? 'unsave' : 'save'})" />
-      <!-- RSVP / Join waitlist / your status only on the selected row; others show just the bookmark -->
-      <EventCardActions v-if="selected" class="reveal-down" :event="event" />
     </div>
   </article>
 </template>
 
 <style scoped>
-.discovery-event-row { display: grid; grid-template-columns: 66px minmax(0,1fr) auto; align-items: center; gap: 12px; min-width: 0; padding: 10px; border: 1px solid var(--bookedz-border); border-radius: 13px; background: var(--bookedz-surface); cursor: pointer; }
+.discovery-event-row { position: relative; display: grid; grid-template-columns: 66px minmax(0,1fr) auto; align-items: center; gap: 12px; min-width: 0; padding: 10px; border: 1px solid var(--bookedz-border); border-radius: 13px; background: var(--bookedz-surface); cursor: pointer; }
 .discovery-event-row.is-selected { border-color: var(--bookedz-primary-dark); box-shadow: 0 0 0 1px var(--bookedz-primary-dark); }
 .row-cover { padding: 0; border: 0; cursor: pointer; position: relative; width: 66px; height: 66px; overflow: hidden; border-radius: 9px; background: var(--bookedz-mint); }
 .row-cover img,.row-cover :deep(svg) { width: 100%; height: 100%; object-fit: cover; }
@@ -100,6 +98,7 @@ h3 { margin: 0; font-family: var(--bookedz-body); font-size: 15px; font-weight: 
 .row-selected-info { display: flex; flex-wrap: wrap; gap: 0 4px; margin: 6px 0 0; font-size: 12px; color: var(--bookedz-primary-dark); }
 .row-view { margin-left: auto; font-weight: 700; color: var(--bookedz-primary-dark); text-decoration: none; }
 .row-facts { color: var(--bookedz-muted); }
+.row-venue { margin-top: 1px; }
 .row-reason { color: var(--bookedz-primary-dark); }
 .row-going { color: var(--bookedz-success); font-weight: 600; }
 .row-going--pending,.row-going--waitlisted { color: var(--bookedz-muted); }
