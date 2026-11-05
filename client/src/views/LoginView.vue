@@ -13,11 +13,12 @@ import PasswordInput from '../components/ui/PasswordInput.vue'
 // After signing in it returns to ?redirect= if there is one, otherwise it tells the
 // landing page, which then shows the account summary.
 const emit = defineEmits(['signed-in'])
+const props = defineProps({ embedded: Boolean, initialMode: { type: String, default: 'signin' } })
 
 const route = useRoute()
 const router = useRouter()
 
-const mode = ref('signin') // 'signin', 'signup' or 'forgot' (asks for an email to send a reset link to)
+const mode = ref(props.initialMode === 'signup' ? 'signup' : 'signin') // 'signin', 'signup' or 'forgot' (asks for an email to send a reset link to)
 const name = ref('')
 const username = ref('')
 const email = ref('')
@@ -116,6 +117,9 @@ function switchMode(newMode) {
   errorMessage.value = ''
   infoMessage.value = ''
 }
+defineExpose({ setMode: switchMode })
+watch(() => props.initialMode, value => { if (['signin', 'signup'].includes(value)) switchMode(value) })
+
 
 async function submit() {
   triedSubmit.value = true
@@ -162,8 +166,8 @@ async function submit() {
 </script>
 
 <template>
-  <section class="auth-wrap">
-    <div class="auth-intro">
+  <section class="auth-wrap" :class="{ 'auth-wrap--embedded': embedded }">
+    <div v-if="!embedded" class="auth-intro">
       <p class="auth-kicker">Your next good day starts here</p>
       <h1 class="auth-title">Find your people.<br />Make a plan.</h1>
       <p class="auth-copy">Sign in to keep your event plans close, or create an account to join in.</p>
@@ -277,4 +281,5 @@ async function submit() {
 :deep(.btn-primary) { min-height: 46px; border-color: var(--bookedz-primary); border-radius: 12px; background: var(--bookedz-primary); }
 :deep(:focus-visible) { outline: 3px solid var(--bookedz-focus); outline-offset: 3px; }
 @media (max-width: 700px) { .auth-wrap { max-width: 480px; grid-template-columns: 1fr; gap: 1.5rem; margin: 1.25rem auto; } .auth-title { font-size: clamp(2.3rem, 12vw, 3.2rem); } .auth-copy { margin-top: .8rem; } }
+.auth-wrap--embedded { display:block; max-width:480px; width:100%; margin:0; justify-self:center; min-width:0; }
 </style>

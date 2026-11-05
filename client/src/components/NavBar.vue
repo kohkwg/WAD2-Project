@@ -136,7 +136,7 @@ function resetDemo() {
       <button ref="menuToggle" class="navbar-toggler" type="button" aria-controls="mainNav" :aria-expanded="menuOpen" aria-label="Toggle navigation" @click="menuOpen = !menuOpen"><svg class="toggler-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
       <RouterLink class="topbar-brand" to="/" aria-label="Dino home" translate="no"><img class="brand-symbol" :src="dinoMark" alt="" aria-hidden="true"> Dino</RouterLink>
       <div class="nav-account">
-        <RouterLink v-if="USING_SUPABASE && !hasSession" to="/" class="nav-sign-in">Sign in <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 10h12m-4-4 4 4-4 4"/></svg></RouterLink>
+        <RouterLink v-if="USING_SUPABASE && !hasSession" to="/#join-dino" class="nav-sign-in">Sign in <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 10h12m-4-4 4 4-4 4"/></svg></RouterLink>
         <button v-else-if="!USING_SUPABASE" type="button" class="nav-quiet" @click="resetDemo">Reset demo data</button>
       </div>
     </header>

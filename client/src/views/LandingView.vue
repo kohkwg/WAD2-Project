@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import LoginView from './LoginView.vue'
+import LandingWelcome from '../components/landing/LandingWelcome.vue'
 import CountUp from '@/components/ui/CountUp.vue'
 import { USING_SUPABASE, getCurrentUser, getUser, getMyRsvps, getSavedEvents, onAuthChange, signOut } from '@/utils/api'
 import { formatEventTime } from '@/utils/helpers'
@@ -86,7 +86,7 @@ function signedIn() {
       <span>Checking your account…</span>
     </div>
 
-    <LoginView v-else-if="!session" @signed-in="signedIn" />
+    <LandingWelcome v-else-if="!session" @signed-in="signedIn" />
 
     <section v-else class="account" aria-labelledby="account-title">
       <header class="account-head">
