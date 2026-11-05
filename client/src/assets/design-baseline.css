@@ -224,8 +224,8 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 
 /* Filter pills and search */
 .community-page.community-page .community-filter { border-width: 2px; border-color: var(--bookedz-control-border); font-weight: 700; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp), background-color var(--bookedz-motion-fast) var(--bookedz-ease); }
-.community-page.community-page .community-filter[aria-pressed='true'] { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); transform: translateY(-2px) rotate(-.8deg); box-shadow: 3px 3px 0 var(--bookedz-ink); }
-:root[data-theme="dark"] .community-page.community-page .community-filter[aria-pressed='true'] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--bookedz-fill); }
+.community-page.community-page .community-filter[aria-selected='true'] { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); transform: translateY(-2px) rotate(-.8deg); box-shadow: 3px 3px 0 var(--bookedz-ink); }
+:root[data-theme="dark"] .community-page.community-page .community-filter[aria-selected='true'] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--bookedz-fill); }
 .community-page.community-page .community-filters { padding: 4px 4px 8px; }
 .community-page.community-page .community-search { border-width: 2px; border-radius: 99px; border-color: var(--bookedz-control-border); }
 .community-page.community-page .community-search:focus,
@@ -291,7 +291,7 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
   .group-page.group-page .group-event { rotate: 0deg; }
 }
 @media (prefers-reduced-motion: reduce) {
-  :is(.community-page.community-page, .group-page.group-page, .my-rsvps-page.my-rsvps-page) :is(.btn:not(:disabled):hover, .group-card:hover, .community-filter[aria-pressed='true'], .rsvp-tabs button[aria-selected=true]) { transform: none; }
+  :is(.community-page.community-page, .group-page.group-page, .my-rsvps-page.my-rsvps-page) :is(.btn:not(:disabled):hover, .group-card:hover, .community-filter[aria-selected='true'], .rsvp-tabs button[aria-selected=true]) { transform: none; }
   .group-page.group-page .group-event { rotate: 0deg; transition: none; }
 }
 .design-baseline.design-baseline .hangout-head .hangout-washi { background: var(--bookedz-pink); color: #3b0a24; }

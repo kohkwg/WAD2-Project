@@ -26,7 +26,9 @@ test('join a group, get the event RSVP prompt, plan lunch and chat', async ({ pa
   await expect(card).toContainText('You’re waiting for the organiser to approve your RSVP')
   await expect(page.getByText(/You joined the group and RSVP’d to Intro to Vue Workshop/)).toBeVisible()
   // Now going to Intro to Vue, Alex can start a group for it: it's in Your events
-  await expect(page.getByRole('region', { name: /Your events/ })).toContainText('Intro to Vue Workshop')
+  await page.getByRole('tab', { name: /Your events & groups/ }).click()
+  await expect(page.getByRole('tabpanel')).toContainText('Intro to Vue Workshop')
+  await page.getByRole('tab', { name: /All groups/ }).click()
   // Event teams are not in Community
   await expect(page.getByRole('heading', { name: 'Your event teams' })).toHaveCount(0)
 
@@ -69,7 +71,8 @@ test('only people going can start a group; start a friends-only one and open it 
   await expect(box.getByRole('link', { name: 'Start a group' })).toHaveCount(0)
   // The dropdown only lists events Alex has RSVPd to
   await page.goto('/community')
-  await expect(page.getByRole('region', { name: /Your events/ })).toContainText('Career Fair Prep Talk')
+  await page.getByRole('tab', { name: /Your events & groups/ }).click()
+  await expect(page.getByRole('tabpanel')).toContainText('Career Fair Prep Talk')
   await page.getByRole('button', { name: 'Start a group' }).first().click()
   const dialog = page.getByRole('dialog', { name: 'Start a group' })
   const options = await dialog.getByLabel('Event you’re going to').locator('option:not([disabled])').allTextContents()

@@ -35,6 +35,7 @@ const FILTERS = [
   { key: 'week', label: 'This week' },
   { key: 'joined', label: 'I’m going' },
   { key: 'hosting', label: 'Hosting' },
+  { key: 'mine', label: 'Your events & groups' },
 ]
 
 const invites = ref([])
@@ -120,6 +121,7 @@ const counts = computed(() => ({
   week: groups.value.filter((g) => new Date(g.startTime) <= weekEnd()).length,
   joined: groups.value.filter((g) => ['confirmed', 'pending'].includes(g.myStatus)).length,
   hosting: groups.value.filter((g) => g.myStatus === 'host').length,
+  mine: yours.value.length,
 }))
 
 async function answerInvite(invite, accept) {
@@ -144,6 +146,14 @@ async function dismissNotice(notice) {
 const mine = computed(() => groups.value
   .filter((g) => ['host', 'confirmed', 'pending'].includes(g.myStatus))
   .sort((a, b) => new Date(a.startTime) - new Date(b.startTime)))
+// Events you're going to, each with your group for it (one per event); groups whose event isn't listed stand alone
+const yours = computed(() => {
+  const groupFor = (id) => mine.value.find((g) => (g.eventId || g.event?.id) === id)
+  const rows = events.value.map((event) => ({ key: `e-${event.id}`, event, group: groupFor(event.id), start: new Date(event.startTime) }))
+  const listed = new Set(events.value.map((event) => event.id))
+  for (const group of mine.value) if (!listed.has(group.eventId || group.event?.id)) rows.push({ key: `g-${group.id}`, event: null, group, start: new Date(group.startTime) })
+  return rows.sort((a, b) => a.start - b.start)
+})
 const mineChip = (g) => g.myStatus === 'host'
   ? (g.pendingCount ? `${g.pendingCount} ${g.pendingCount === 1 ? 'request' : 'requests'} to review` : 'Hosting')
   : g.myStatus === 'pending' ? 'Request sent' : g.myEventStatus ? 'You’re in' : 'RSVP to the event'
@@ -159,6 +169,16 @@ const byEvent = computed(() => {
 })
 const rsvpLabel = { confirmed: 'Going', pending: 'Waiting for approval', waitlisted: 'On the waitlist', offered: 'Spot offered' }
 const groupCount = (eventId) => groups.value.filter((g) => (g.eventId || g.event?.id) === eventId).length
+// Arrow keys move between tabs
+function tabKeys(event) {
+  const move = { ArrowRight: 1, ArrowLeft: -1 }[event.key]
+  if (!move) return
+  const tabs = [...event.currentTarget.parentElement.querySelectorAll('[role=tab]')]
+  const next = tabs[(tabs.indexOf(event.currentTarget) + move + tabs.length) % tabs.length]
+  event.preventDefault()
+  next.focus()
+  next.click()
+}
 function showEventGroups(eventId) {
   filter.value = 'all'
   query.value = ''
@@ -208,51 +228,49 @@ function showEventGroups(eventId) {
       </TransitionGroup>
     </section>
 
-    <!-- Your events: what you've RSVP'd to, with a way to start or find a group for each -->
-    <section v-if="events.length" class="community-mine" aria-labelledby="my-events-title">
-      <h2 id="my-events-title" class="community-section-title">Your events <span class="community-count">{{ events.length }}</span></h2>
-      <ul class="list-unstyled m-0 community-mine-list">
-        <li v-for="event in events" :key="event.id">
-          <article class="community-tile community-event-tile">
-            <span class="community-tile-when">{{ countdownLabel(event.startTime) }}</span>
-            <RouterLink :to="`/events/${event.id}/rsvp`" class="community-tile-title">{{ event.title }}</RouterLink>
-            <span class="community-tile-meta">{{ formatEventTime(event) }}</span>
-            <span class="community-tile-chip">{{ rsvpLabel[event.myRsvpStatus] }} · {{ groupCount(event.id) }} {{ groupCount(event.id) === 1 ? 'group' : 'groups' }}</span>
-            <span class="community-event-actions">
-              <button type="button" class="btn btn-primary btn-sm" @click="openComposer(event.id)">Start a group</button>
-              <button v-if="groupCount(event.id)" type="button" class="btn btn-outline-secondary btn-sm" @click="showEventGroups(event.id)">See groups</button>
+    <div class="community-main">
+      <div class="community-tools">
+        <div class="community-filters" role="tablist" aria-label="Community">
+          <button v-for="f in FILTERS.filter(item => signedIn || ['all', 'week'].includes(item.key))" :id="`community-tab-${f.key}`" :key="f.key" type="button" role="tab" class="community-filter" :aria-selected="filter === f.key" :tabindex="filter === f.key ? 0 : -1" @click="filter = f.key" @keydown="tabKeys">
+            {{ f.label }} <span class="tnum"><BumpValue :value="counts[f.key]" /></span>
+          </button>
+        </div>
+        <label v-if="filter !== 'mine'" class="visually-hidden" for="group-search">Search groups</label>
+        <input v-if="filter !== 'mine'" id="group-search" v-model="query" type="search" class="form-control community-search" placeholder="Search events, hosts or notes…" autocomplete="off" />
+      </div>
+
+      <!-- Your events and groups, merged into one tab -->
+      <div v-if="filter === 'mine'" role="tabpanel" aria-labelledby="community-tab-mine" class="community-yours">
+      <!-- One card per event, with your group for it attached (you can be in one group per event) -->
+      <ul v-if="yours.length" class="list-unstyled m-0 community-yours-list">
+        <li v-for="item in yours" :key="item.key">
+          <article class="community-tile community-event-tile" :class="{ 'is-alert': item.group?.myStatus === 'host' && item.group?.pendingCount }">
+            <span class="community-tile-when">{{ countdownLabel(item.event?.startTime || item.group.startTime) }}</span>
+            <RouterLink v-if="item.event" :to="`/events/${item.event.id}/rsvp`" class="community-tile-title">{{ item.event.title }}</RouterLink>
+            <strong v-else class="community-tile-title">{{ item.group.event?.title || 'Group' }}</strong>
+            <span class="community-tile-meta">{{ formatEventTime(item.event || item.group.event || item.group) }}</span>
+            <span v-if="item.event" class="community-tile-chip">{{ rsvpLabel[item.event.myRsvpStatus] }}</span>
+            <div v-if="item.group" class="community-attached">
+              <span class="community-attached-label">Your group</span>
+              <RouterLink :to="`/groups/${item.group.id}`" class="community-attached-link">
+                <strong>{{ item.group.myStatus === 'host' ? 'You’re hosting' : `${item.group.host.name}’s group` }}</strong>
+                <span>{{ 1 + item.group.members.length }} going · {{ mineChip(item.group) }}</span>
+              </RouterLink>
+            </div>
+            <span v-else class="community-event-actions">
+              <button type="button" class="btn btn-primary btn-sm" @click="openComposer(item.event.id)">Start a group</button>
+              <button v-if="groupCount(item.event.id)" type="button" class="btn btn-outline-secondary btn-sm" @click="showEventGroups(item.event.id)">See {{ groupCount(item.event.id) }} {{ groupCount(item.event.id) === 1 ? 'group' : 'groups' }}</button>
             </span>
           </article>
         </li>
       </ul>
-    </section>
-
-    <!-- Your groups: quick tiles for what you host or are in -->
-    <section v-if="mine.length" class="community-mine" aria-labelledby="mine-title">
-      <h2 id="mine-title" class="community-section-title">Your groups</h2>
-      <ul class="list-unstyled m-0 community-mine-list">
-        <li v-for="g in mine" :key="g.id">
-          <RouterLink :to="`/groups/${g.id}`" class="community-tile" :class="{ 'is-alert': g.myStatus === 'host' && g.pendingCount }">
-            <span class="community-tile-when">{{ countdownLabel(g.startTime) }}</span>
-            <strong class="community-tile-title">{{ g.event?.title || 'Group' }}</strong>
-            <span class="community-tile-meta">{{ g.myStatus === 'host' ? 'You’re hosting' : `${g.host.name}’s group` }} · {{ 1 + g.members.length }} going</span>
-            <span class="community-tile-chip">{{ mineChip(g) }}</span>
-          </RouterLink>
-        </li>
-      </ul>
-    </section>
-
-    <div class="community-main">
-      <div class="community-tools">
-        <div class="community-filters" role="group" aria-label="Show groups">
-          <button v-for="f in FILTERS.filter(item => signedIn || ['all', 'week'].includes(item.key))" :key="f.key" type="button" class="community-filter" :aria-pressed="filter === f.key" @click="filter = f.key">
-            {{ f.label }} <span class="tnum"><BumpValue :value="counts[f.key]" /></span>
-          </button>
+        <div v-if="!yours.length && !loading" class="community-empty" role="status">
+          <h2 class="section-title">Nothing here yet</h2>
+          <p>RSVP to an event, then start a group for it or join someone else’s.</p>
+          <button type="button" class="btn btn-primary" @click="openComposer()">Start a group</button>
         </div>
-        <label class="visually-hidden" for="group-search">Search groups</label>
-        <input id="group-search" v-model="query" type="search" class="form-control community-search" placeholder="Search events, hosts or notes…" autocomplete="off" />
       </div>
-
+      <template v-else>
       <SkeletonList v-if="loading" :count="3" label="Loading groups…" />
       <div v-dismissible v-else-if="error" class="community-empty" role="alert">
         <h2 class="section-title">Couldn’t load groups</h2>
@@ -270,6 +288,7 @@ function showEventGroups(eventId) {
           <button v-if="query || filter !== 'all'" type="button" class="btn btn-outline-secondary" @click="query = ''; filter = 'all'">Show all groups</button>
         </div>
       </div>
+      </template>
     </div>
     </div>
 
@@ -305,8 +324,8 @@ function showEventGroups(eventId) {
 .community-filters::-webkit-scrollbar { display: none; }
 .community-filter { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .88rem; transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .community-filter span { padding: 0 6px; border-radius: 99px; background: var(--bookedz-hover); font-size: .75rem; }
-.community-filter[aria-pressed='true'] { background: var(--bookedz-ink); border-color: var(--bookedz-ink); color: var(--bookedz-surface); }
-.community-filter[aria-pressed='true'] span { background: color-mix(in srgb, var(--bookedz-surface) 20%, transparent); }
+.community-filter[aria-selected='true'] { background: var(--bookedz-ink); border-color: var(--bookedz-ink); color: var(--bookedz-surface); }
+.community-filter[aria-selected='true'] span { background: color-mix(in srgb, var(--bookedz-surface) 20%, transparent); }
 .community-search { min-height: 44px; }
 .community-feed { display: grid; gap: 18px; }
 .community-section-title { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font: 900 1.15rem var(--bookedz-heading); }
@@ -321,6 +340,12 @@ function showEventGroups(eventId) {
 .community-invite-actions .btn { min-height: 40px; }
 .min-w-0 { min-width: 0; overflow-wrap: anywhere; }
 .community-mine { margin-bottom: 22px; }
+.community-yours-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 14px; }
+.community-attached { display: grid; gap: 2px; margin-top: 8px; padding: 8px 10px; border: 2px dashed var(--bookedz-control-border); border-radius: 14px; background: var(--bookedz-orange-soft, transparent); }
+.community-attached-label { color: var(--bookedz-muted); font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.community-attached-link { display: grid; gap: 1px; color: var(--bookedz-ink); text-decoration: none; }
+.community-attached-link span { color: var(--bookedz-muted); font-size: .82rem; }
+.community-attached-link:hover strong { text-decoration: underline; }
 .community-mine-list { display: flex; gap: 12px; overflow-x: auto; padding: 4px 4px 10px; scroll-snap-type: x proximity; }
 .community-mine-list li { flex: 0 0 min(240px, 78vw); scroll-snap-align: start; }
 .community-tile { display: grid; gap: 4px; height: 100%; padding: 12px 14px; border: 2px solid var(--bookedz-ink); border-radius: 20px; background: var(--bookedz-surface); color: var(--bookedz-ink); text-decoration: none; box-shadow: 4px 4px 0 var(--bookedz-mango); transition: transform var(--bookedz-motion-normal) var(--bookedz-ease); }
