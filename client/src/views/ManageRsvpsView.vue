@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../components/ui/BackLink.vue'
 import '../assets/design-baseline.css'
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -364,7 +365,7 @@ async function demoExpireOffers() {
 
 <template>
 <div class="design-baseline">
-  <div v-if="!embedded" class="d-flex justify-content-between flex-wrap gap-2"><RouterLink to="/organiser/events" class="rsvp-back">&larr; Organise</RouterLink><div class="d-flex flex-wrap gap-2"><RouterLink v-if="isMyEvent && new Date(event.startTime) > new Date()" class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage?tab=edit`">Edit event</RouterLink><RouterLink class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage`">Event tools</RouterLink></div></div>
+  <div v-if="!embedded" class="d-flex justify-content-between flex-wrap gap-2"><BackLink to="/organiser/events" class="rsvp-back">&larr; Back</BackLink><div class="d-flex flex-wrap gap-2"><RouterLink v-if="isMyEvent && new Date(event.startTime) > new Date()" class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage?tab=edit`">Edit event</RouterLink><RouterLink class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage`">Event tools</RouterLink></div></div>
 
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status">

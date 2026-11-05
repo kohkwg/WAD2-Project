@@ -261,15 +261,15 @@ async function cancel(rsvpId) {
 </script>
 
 <template>
-  <div class="my-rsvps-page">
-    <!-- One slim header: title and refresh, then the section tabs -->
-    <header class="rsvps-heading smart-head">
-      <div class="smart-head-top">
-        <div class="smart-head-title"><span class="header-star smart-head-star" aria-hidden="true">★</span><h1 class="page-title">Plans</h1></div>
-        <div class="rsvps-toolbar"><p>Updates on its own every 30 seconds.</p><button type="button" class="btn btn-outline-secondary btn-sm" :disabled="loading || busyId !== null" @click="refreshRsvps">Refresh RSVPs</button></div>
+  <div class="container my-rsvps-page">
+    <header class="rsvps-heading">
+      <div class="rsvps-heading-copy">
+        <p class="rsvps-eyebrow">Your plans</p>
+        <h1 class="page-title m-0">My RSVPs</h1>
+        <p class="rsvps-lede">Your plans, saved favourites and good times to come.</p>
       </div>
-      <div class="rsvp-tabs" role="tablist" aria-label="Your events">
-        <button v-for="(tab, index) in tabs" :id="`tab-${tab.id}`" :key="tab.id" role="tab" type="button" :aria-selected="activeTab === tab.id" :aria-controls="`panel-${tab.id}`" :tabindex="activeTab === tab.id ? 0 : -1" @click="activeTab = tab.id" @keydown="moveTab($event, index)">{{ tab.label }} <span v-if="!loading">{{ tab.count }}</span></button>
+      <div class="rsvps-heading-actions">
+        <button v-if="!loading" type="button" class="btn btn-primary" :disabled="busyId !== null" @click="refreshRsvps">Refresh RSVPs</button>
       </div>
     </header>
     <SkeletonList v-if="loading" class="mt-4" :count="3" label="Loading your RSVPs…" />
@@ -297,7 +297,7 @@ async function cancel(rsvpId) {
   </div>
 </template>
 <style scoped>
-.my-rsvps-page{max-width:1060px;margin:0 auto;padding:12px 0 48px;color:var(--bookedz-ink)}.rsvps-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 28px;border-radius:22px;background:var(--bookedz-peach);border:1px solid var(--bookedz-border)}.rsvps-heading h1{ margin:10px 0; }.rsvps-heading p{margin:8px 0 0;color:var(--bookedz-muted);font-size:var(--text-body)}.rsvps-heading .rsvps-eyebrow{font-size:var(--text-caption);letter-spacing:.13em;font-weight:700}.header-star{font-size:3.5rem;line-height:1;color:var(--bookedz-primary);transform:rotate(15deg)}.offers-first{margin-top:20px}.rsvps-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:20px 0}.rsvps-toolbar p{font-size:var(--text-small);color:var(--bookedz-muted);margin:0}.rsvps-toolbar button{ min-height:44px; }.rsvp-tabs{display:flex;gap:8px;border-bottom:1px solid var(--bookedz-border);overflow-x:auto}.rsvp-tabs button{position:relative;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--bookedz-muted);padding:14px 12px;font-size:var(--text-button);white-space:nowrap;min-height:48px;transition:color var(--bookedz-motion-fast) var(--bookedz-ease)}.rsvp-tabs button::after{content:'';position:absolute;left:10px;right:10px;bottom:-3px;height:3px;border-radius:3px;background:var(--bookedz-primary-dark);transform:scaleX(0);transition:transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp)}.rsvp-tabs button[aria-selected=true]{color:var(--bookedz-primary-dark);font-weight:650}.rsvp-tabs button[aria-selected=true]::after{transform:scaleX(1)}.rsvp-tabs span{font-size:var(--text-caption);padding:3px 6px;border-radius:7px;background:var(--bookedz-hover);margin-left:4px}.rsvp-panel{padding-top:24px}.saved-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.section-title{ margin:0 0 18px; }.rsvp-panel .next-event{margin-top:0}.alert{overflow-wrap:anywhere}.alert button{min-height:44px;margin-left:8px}:deep(:focus-visible){outline:3px solid var(--bookedz-primary-dark);outline-offset:3px}
+.my-rsvps-page{max-width:1060px;margin:0 auto;padding:12px var(--bs-gutter-x,.75rem) 48px;color:var(--bookedz-ink)}.rsvps-heading{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;padding:22px 28px;border-radius:22px;background:var(--bookedz-peach);border:1px solid var(--bookedz-border)}.rsvps-heading h1{ margin:10px 0; }.rsvps-heading p{margin:8px 0 0;color:var(--bookedz-muted);font-size:var(--text-body)}.header-star{font-size:3.5rem;line-height:1;color:var(--bookedz-primary);transform:rotate(15deg)}.offers-first{margin-top:20px}.rsvps-eyebrow{margin:0 0 6px;font-weight:600}.rsvps-lede{max-width:46ch}.rsvps-heading-actions .btn{min-height:44px;white-space:nowrap}.rsvps-toolbar p{font-size:var(--text-small);color:var(--bookedz-muted);margin:0}.rsvps-toolbar button{ min-height:44px; }.rsvp-tabs{display:flex;gap:8px;border-bottom:1px solid var(--bookedz-border);overflow-x:auto}.rsvp-tabs button{position:relative;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--bookedz-muted);padding:14px 12px;font-size:var(--text-button);white-space:nowrap;min-height:48px;transition:color var(--bookedz-motion-fast) var(--bookedz-ease)}.rsvp-tabs button::after{content:'';position:absolute;left:10px;right:10px;bottom:-3px;height:3px;border-radius:3px;background:var(--bookedz-primary-dark);transform:scaleX(0);transition:transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp)}.rsvp-tabs button[aria-selected=true]{color:var(--bookedz-primary-dark);font-weight:650}.rsvp-tabs button[aria-selected=true]::after{transform:scaleX(1)}.rsvp-tabs span{font-size:var(--text-caption);padding:3px 6px;border-radius:7px;background:var(--bookedz-hover);margin-left:4px}.rsvp-panel{padding-top:24px}.saved-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.section-title{ margin:0 0 18px; }.rsvp-panel .next-event{margin-top:0}.alert{overflow-wrap:anywhere}.alert button{min-height:44px;margin-left:8px}:deep(:focus-visible){outline:3px solid var(--bookedz-primary-dark);outline-offset:3px}
 @media(max-width:767px){.saved-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:575px){.rsvps-heading{padding:24px 20px}.header-star{font-size:3rem}.rsvps-heading .rsvps-eyebrow{max-width:210px;line-height:1.7}.saved-grid{grid-template-columns:1fr}.rsvps-toolbar p{max-width:150px}.rsvp-tabs{gap:0}.rsvp-tabs button{padding:13px 8px;font-size:.8rem}.rsvp-tabs span{margin-left:2px}.my-rsvps-page{padding-top:0}}
+@media(max-width:575px){.rsvps-heading{padding:24px 20px;flex-wrap:wrap}.header-star{font-size:3rem}.saved-grid{grid-template-columns:1fr}.rsvp-tabs{gap:0}.rsvp-tabs button{padding:13px 8px;font-size:.8rem}.rsvp-tabs span{margin-left:2px}.my-rsvps-page{padding-top:0}}
 </style>

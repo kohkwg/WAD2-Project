@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../../components/ui/BackLink.vue'
 // Feature 3: live attendance dashboard for organisers/helpers.
 // Checked-in vs confirmed, plus an arrivals feed that updates as people arrive
 // (from the staff station, self check-in, or a CSV import). Fraud flags come later.
@@ -137,7 +138,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
 
 <template>
   <div class="container py-4 attendance-page">
-    <RouterLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event</RouterLink>
+    <BackLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Back</BackLink>
 
     <header class="attendance-header d-flex justify-content-between align-items-start gap-2 mb-4">
       <div>

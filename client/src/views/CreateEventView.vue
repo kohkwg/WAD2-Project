@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../components/ui/BackLink.vue'
 import { ref, computed, nextTick, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import '../assets/design-baseline.css'
@@ -681,7 +682,7 @@ async function publish() {
       <span class="visually-hidden">Loading the event…</span>
     </div>
     <div v-dismissible v-else-if="isEditing && editBlocked" class="alert alert-warning" role="alert">
-      {{ editBlocked }} <RouterLink to="/organiser/events">Back to Organise</RouterLink>
+      {{ editBlocked }} <BackLink to="/organiser/events">Go back</BackLink>
     </div>
 
     <template v-else>

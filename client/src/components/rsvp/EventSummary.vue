@@ -46,15 +46,16 @@ const descriptionToShow = computed(() => {
 <template>
   <article class="card event-summary">
     <div class="card-body">
-      <!-- Key details on the left, the square cover beside them (stacked below on phones) -->
-      <div class="event-top">
-      <div class="event-top-details">
-      <div class="event-heading">
-        <component :is="headingTag" class="event-title">{{ event.title || 'Untitled event' }}</component>
-      </div>
-      <p class="event-time"><span class="detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg></span>{{ formatEventTime(event) }}</p>
+      <!-- Title block: a banner on the public event page, plain text elsewhere -->
+      <header class="event-hero">
+        <p v-if="coverCategory" class="event-eyebrow">{{ coverCategory }}</p>
+        <div class="event-heading">
+          <component :is="headingTag" class="event-title">{{ event.title || 'Untitled event' }}</component>
+        </div>
+        <p class="event-time"><span class="detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg></span>{{ formatEventTime(event) }}</p>
+      </header>
 
-      <!-- The RSVP page fills this with the online link card; Create Event's review uses the fallback -->
+      <div class="event-body">
       <slot v-if="event.isOnline" name="online-venue">
         <div class="event-venue">
           <span class="venue-label">Where</span>
@@ -123,6 +124,7 @@ const descriptionToShow = computed(() => {
       </template>
 
       <slot></slot>
+      </div>
     </div>
   </article>
 </template>
@@ -135,6 +137,7 @@ const descriptionToShow = computed(() => {
 .event-cover { position: relative; display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 16px; overflow: hidden; background: var(--bookedz-mint); }
 .event-cover img { display: block; width: 100%; height: 100%; object-fit: cover; animation: image-settle 650ms ease both; }
 .event-cover > :deep(.event-artwork) { position: absolute; inset: 0; }
+.event-eyebrow { display: none; }
 .event-tags .badge { text-transform: capitalize; }
 .cover-category { text-transform: capitalize; }
 .cover-category { position: absolute; left: .7rem; bottom: .7rem; max-width: calc(100% - 1.4rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: .35rem .75rem; border: 1px solid var(--bookedz-glass-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-glass); font-size: .8rem; font-weight: 700; }
