@@ -2,22 +2,22 @@
 import '../assets/design-baseline.css'
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { signIn, signUp, requestPasswordReset } from '../utils/api.js'
+import { signIn, signUp } from '../utils/api.js'
 import { passwordErrors } from '../lib/passwordRules.js'
 import { emailError } from '../lib/emailRules.js'
+import { cleanUsername as cleanHandle, nameError, usernameError } from '../lib/fieldRules.js'
 import { usernameAvailable } from '../lib/usernameAvailability.js'
 import PasswordInput from '../components/ui/PasswordInput.vue'
 
 // Supabase Auth: email + password. Shown on the landing page (/) for signed-out visitors;
 // in demo mode Alex is always signed in, so it never appears there.
-// After signing in it returns to ?redirect= if there is one, otherwise it tells the
-// landing page, which then shows the account summary.
-const emit = defineEmits(['signed-in'])
+// After signing in or creating an account it goes to ?redirect= if there is one, otherwise Discover.
+defineEmits(['signed-in'])
 
 const route = useRoute()
 const router = useRouter()
 
-const mode = ref('signin') // 'signin', 'signup' or 'forgot' (asks for an email to send a reset link to)
+const mode = ref('signin') // 'signin' or 'signup'
 const name = ref('')
 const username = ref('')
 const email = ref('')
@@ -26,6 +26,9 @@ const loading = ref(false)
 const errorMessage = ref('')
 const infoMessage = ref('')
 const triedSubmit = ref(false)
+// A field's error appears once it has been left (blur) or the form was submitted, never on an untouched field.
+const touched = ref({ name: false, username: false, email: false, password: false })
+const touch = field => { touched.value[field] = true }
 
 // Three wrong sign-ins in a row lock the form for a minute. The count lives in this browser
 // (localStorage), so a refresh does not reset it. It slows down someone guessing in the form;
@@ -65,60 +68,61 @@ function recordFailure() {
   writeLock(state)
 }
 
-// Create account is strict; Sign in only checks the fields are filled, so older accounts
-// with shorter passwords can still get in.
 // People type usernames as @handle; the @ is a prefix, not part of the name.
-const cleanUsername = computed(() => username.value.trim().replace(/^@/, '').toLowerCase())
-
-// One message per field, shown directly under it after the first submit attempt.
-const fieldErrors = computed(() => {
-  const errors = { name: '', username: '', email: emailError(email.value, { requireCom: true }), password: [] }
-  if (mode.value === 'forgot') return errors
-  const signingUp = mode.value === 'signup'
-  if (signingUp) {
-    if (name.value.trim() === '') errors.name = 'Please enter your name.'
-    if (!cleanUsername.value) errors.username = 'Please choose a username.'
-    else if (!/^[a-z0-9_]{3,20}$/.test(cleanUsername.value)) errors.username = 'Username must be 3–20 letters, numbers or underscores.'
-    else if (usernameState.value === 'taken') errors.username = 'That username is already taken. Choose another.'
-  }
-  if (!signingUp) errors.password = password.value === '' ? ['Please enter your password.'] : []
-  else errors.password = passwordErrors(password.value)
-  return errors
-})
-const hasErrors = computed(() => Object.values(fieldErrors.value).some(value => (Array.isArray(value) ? value.length : value)))
-// Problems that only the server can tell us (unknown email, wrong password, email already used).
-const serverErrors = ref({ email: '', password: '' })
-const shown = field => (triedSubmit.value ? fieldErrors.value[field] : field === 'password' ? [] : '')
-const emailMessage = computed(() => shown('email') || serverErrors.value.email)
-const passwordMessages = computed(() => (shown('password').length ? shown('password') : serverErrors.value.password ? [serverErrors.value.password] : []))
+const handle = computed(() => cleanHandle(username.value))
 
 // Live "is this username free?" while creating an account (needs docs/sql/username-available-draft.sql;
-// without it the indicator stays hidden and saving still catches duplicates).
+// without it the indicator stays hidden and the database still refuses duplicates on save).
 const usernameState = ref('idle') // 'idle' | 'checking' | 'available' | 'taken'
 let usernameTimer
-watch([cleanUsername, mode], ([handle, currentMode]) => {
+watch([handle, mode], ([value, currentMode]) => {
   clearTimeout(usernameTimer)
   usernameState.value = 'idle'
-  if (currentMode !== 'signup' || !/^[a-z0-9_]{3,20}$/.test(handle)) return
+  if (currentMode !== 'signup' || usernameError(value)) return
   usernameState.value = 'checking'
   usernameTimer = setTimeout(async () => {
-    const free = await usernameAvailable(handle)
-    if (handle !== cleanUsername.value) return
+    const free = await usernameAvailable(value)
+    if (value !== handle.value) return
     usernameState.value = free === true ? 'available' : free === false ? 'taken' : 'idle'
   }, 450)
 })
 onBeforeUnmount(() => clearTimeout(usernameTimer))
 
+// What is wrong with each field right now. Create account is strict; Sign in only checks that
+// the fields are filled and the email is well formed, so older accounts can still get in.
+const fieldErrors = computed(() => {
+  const signingUp = mode.value === 'signup'
+  const errors = { name: '', username: '', email: emailError(email.value, { simple: !signingUp }), password: [] }
+  if (signingUp) {
+    errors.name = nameError(name.value)
+    errors.username = usernameError(username.value) || (usernameState.value === 'taken' ? 'This username is already taken.' : '')
+    errors.password = password.value === '' ? ['Password is required.'] : passwordErrors(password.value)
+  } else if (password.value === '') {
+    errors.password = ['Password is required.']
+  }
+  return errors
+})
+const hasErrors = computed(() => Object.values(fieldErrors.value).some(value => (Array.isArray(value) ? value.length : value)))
+// Problems only the server can report (email already used).
+const serverErrors = ref({ email: '' })
+const visible = field => triedSubmit.value || touched.value[field]
+const nameMessage = computed(() => (visible('name') ? fieldErrors.value.name : ''))
+const usernameMessage = computed(() => (visible('username') ? fieldErrors.value.username : ''))
+const emailMessage = computed(() => (visible('email') ? fieldErrors.value.email : '') || serverErrors.value.email)
+const passwordMessages = computed(() => (visible('password') ? fieldErrors.value.password : []))
+
 function switchMode(newMode) {
   mode.value = newMode
-  serverErrors.value = { email: '', password: '' }
+  serverErrors.value = { email: '' }
   triedSubmit.value = false
+  touched.value = { name: false, username: false, email: false, password: false }
   errorMessage.value = ''
   infoMessage.value = ''
 }
 
 async function submit() {
   triedSubmit.value = true
+  if (loading.value) return
   if (mode.value === 'signin' && secondsLeft.value > 0) return
   if (hasErrors.value) return
 
@@ -126,17 +130,11 @@ async function submit() {
   errorMessage.value = ''
   infoMessage.value = ''
   try {
-    if (mode.value === 'forgot') {
-      await requestPasswordReset(email.value.trim())
-      // Same message whether or not the address has an account.
-      infoMessage.value = 'If that email has an account, we have sent a link to reset your password. Check your inbox.'
-      return
-    }
     if (mode.value === 'signin') {
       await signIn(email.value.trim(), password.value)
       writeLock({ fails: 0, until: 0 })
     } else {
-      const { mustConfirmEmail, usernameTaken } = await signUp(name.value.trim(), email.value.trim(), password.value, cleanUsername.value)
+      const { mustConfirmEmail, usernameTaken } = await signUp(name.value.trim(), email.value.trim(), password.value, handle.value)
       if (mustConfirmEmail) {
         switchMode('signin') // clears the messages, so set the info message after
         infoMessage.value = 'Account created. Check your email for the confirmation link, then sign in.'
@@ -145,15 +143,12 @@ async function submit() {
       // They are signed in; only the username needs another try, so Profile opens with that error.
       if (usernameTaken) { router.push({ path: '/profile', query: { username: 'taken' } }); return }
     }
-    // Back to the page they were trying to open (the router put it in ?redirect=)
-    if (typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')) router.push(route.query.redirect)
-    else emit('signed-in')
+    // Back to the page they were trying to open (the router put it in ?redirect=), otherwise Discover
+    router.push(typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/') ? route.query.redirect : '/discover')
   } catch (error) {
     if (mode.value === 'signin' && error.kind === 'credentials') recordFailure()
-    // Put the message under the field it is about, where we can tell which one that is.
-    if (/no account found/i.test(error.message)) serverErrors.value.email = error.message
-    else if (/wrong password/i.test(error.message)) serverErrors.value.password = error.message
-    else if (/already (been )?registered/i.test(error.message)) serverErrors.value.email = 'An account with this email already exists. Try signing in.'
+    // The entered details stay in the form; only a message appears.
+    if (/already (been )?registered/i.test(error.message)) serverErrors.value.email = 'An account with this email already exists. Try signing in.'
     else errorMessage.value = error.message
   } finally {
     loading.value = false
@@ -170,72 +165,57 @@ async function submit() {
       <RouterLink to="/discover" class="auth-browse">Just looking? Browse events without signing in</RouterLink>
     </div>
     <div class="card auth-card">
-      <div class="card-body p-4 p-md-5" :class="{ 'is-forgot': mode === 'forgot' }">
+      <div class="card-body p-4 p-md-5">
         <!-- Two tabs switch the form between Sign in and Create account (mode) -->
         <ul class="nav nav-pills nav-fill auth-tabs mb-4">
           <li class="nav-item">
-            <button
-              type="button"
-              class="nav-link"
-              :class="{ active: mode === 'signin' }"
-              @click="switchMode('signin')"
-            >
-              Sign in
-            </button>
+            <button type="button" class="nav-link" :class="{ active: mode === 'signin' }" @click="switchMode('signin')">Sign in</button>
           </li>
           <li class="nav-item">
-            <button
-              type="button"
-              class="nav-link"
-              :class="{ active: mode === 'signup' }"
-              @click="switchMode('signup')"
-            >
-              Create account
-            </button>
+            <button type="button" class="nav-link" :class="{ active: mode === 'signup' }" @click="switchMode('signup')">Create account</button>
           </li>
         </ul>
 
         <!-- .prevent stops the page reloading; novalidate turns off browser pop-ups so our messages show under each field instead -->
-        <form @submit.prevent="submit" novalidate>
+        <form :aria-busy="loading" @submit.prevent="submit" novalidate>
           <!-- Name and username are only needed when creating an account -->
           <div v-if="mode === 'signup'" class="mb-3">
             <label for="name" class="form-label">Name</label>
-            <input id="name" class="form-control" :class="{ 'is-invalid': shown('name') }" v-model="name" autocomplete="name" :aria-invalid="Boolean(shown('name'))" aria-describedby="name-msg" />
-            <p v-if="shown('name')" id="name-msg" class="field-error" role="alert">{{ shown('name') }}</p>
+            <input id="name" class="form-control" :class="{ 'is-invalid': nameMessage }" v-model="name" autocomplete="name" :aria-invalid="Boolean(nameMessage)" aria-describedby="name-msg" @blur="touch('name')" />
+            <p v-if="nameMessage" id="name-msg" class="field-error" role="alert">{{ nameMessage }}</p>
           </div>
           <div v-if="mode === 'signup'" class="mb-3">
             <label for="username" class="form-label">Username</label>
-            <input id="username" class="form-control" :class="{ 'is-invalid': shown('username') }" v-model="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="21" :aria-invalid="Boolean(shown('username'))" aria-describedby="username-msg" />
-            <p v-if="shown('username')" id="username-msg" class="field-error" role="alert">{{ shown('username') }}</p>
+            <input id="username" class="form-control" :class="{ 'is-invalid': usernameMessage }" v-model="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="21" :aria-invalid="Boolean(usernameMessage)" aria-describedby="username-msg" @blur="touch('username')" />
+            <p v-if="usernameMessage" id="username-msg" class="field-error" role="alert">{{ usernameMessage }}</p>
             <p v-else-if="usernameState === 'checking'" id="username-msg" class="field-note" role="status">Checking…</p>
-            <p v-else-if="usernameState === 'available'" id="username-msg" class="field-ok" role="status">✓ @{{ cleanUsername }} is available</p>
+            <p v-else-if="usernameState === 'available'" id="username-msg" class="field-ok" role="status">✓ @{{ handle }} is available</p>
           </div>
           <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input id="email" type="email" class="form-control" :class="{ 'is-invalid': emailMessage }" v-model="email" autocomplete="email" :aria-invalid="Boolean(emailMessage)" aria-describedby="email-msg" @input="serverErrors.email = ''" />
+            <input id="email" type="email" class="form-control" :class="{ 'is-invalid': emailMessage }" v-model="email" autocomplete="email" :aria-invalid="Boolean(emailMessage)" aria-describedby="email-msg" @blur="touch('email')" @input="serverErrors.email = ''" />
             <p v-if="emailMessage" id="email-msg" class="field-error" role="alert">{{ emailMessage }}</p>
           </div>
-          <div v-if="mode !== 'forgot'" class="mb-3">
+          <div class="mb-3">
             <label for="password" class="form-label">Password</label>
             <!-- autocomplete tells password managers to fill a saved password (sign in) or suggest a new one (sign up) -->
-            <PasswordInput id="password" v-model="password" :class="{ 'is-invalid': passwordMessages.length }" :autocomplete="mode === 'signin' ? 'current-password' : 'new-password'" :aria-invalid="passwordMessages.length > 0" aria-describedby="password-msg" @input="serverErrors.password = ''" />
+            <PasswordInput id="password" v-model="password" :class="{ 'is-invalid': passwordMessages.length }" :autocomplete="mode === 'signin' ? 'current-password' : 'new-password'" :aria-invalid="passwordMessages.length > 0" aria-describedby="password-msg" @blur="touch('password')" />
             <ul v-if="passwordMessages.length" id="password-msg" class="field-error field-list" role="alert"><li v-for="message in passwordMessages" :key="message">{{ message }}</li></ul>
           </div>
 
-          <p v-if="mode === 'signin'" class="auth-forgot"><button type="button" class="auth-link" @click="switchMode('forgot')">Forgot password?</button></p>
-          <p v-if="mode === 'forgot'" class="auth-forgot">Enter your email and we will send you a link to choose a new password.</p>
+          <!-- Passwords can only be reset with an email link, which sample accounts cannot receive -->
+          <p v-if="mode === 'signin'" class="auth-forgot">Forgot your password? Password recovery is unavailable for demo accounts. Once signed in, you can change it in Profile.</p>
 
           <div v-if="mode === 'signin' && secondsLeft > 0" class="alert alert-danger" role="alert">Too many wrong attempts. Please wait {{ secondsLeft }} second{{ secondsLeft === 1 ? '' : 's' }} before trying again.</div>
           <div v-else-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
           <!-- Shown after sign-up: tells them to check their email for the confirmation link -->
-          <div v-if="infoMessage" class="alert alert-success">{{ infoMessage }}</div>
+          <div v-if="infoMessage" class="alert alert-success" role="status">{{ infoMessage }}</div>
 
-          <!-- Disabled while loading; label changes with the mode -->
+          <!-- Disabled while the request runs, so it cannot be sent twice; the label changes with the mode -->
           <button type="submit" class="btn btn-primary w-100" :disabled="loading || (mode === 'signin' && secondsLeft > 0)">
-            <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
-            {{ mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Send reset link' }}
+            <span v-if="loading" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            {{ loading ? (mode === 'signin' ? 'Signing in…' : 'Creating account…') : mode === 'signin' ? 'Sign in' : 'Create account' }}
           </button>
-          <p v-if="mode === 'forgot'" class="auth-forgot mt-3 mb-0"><button type="button" class="auth-link" @click="switchMode('signin')">← Back to sign in</button></p>
         </form>
       </div>
     </div>
@@ -258,12 +238,9 @@ async function submit() {
 .field-list { padding-left: 1.1rem; }
 .field-ok { color: var(--bookedz-success); }
 .field-note { color: var(--bookedz-muted); }
-/* Forgot password has only one field, so trim the empty space under it (width and position stay put). */
-.card-body.is-forgot { padding-bottom: 1.5rem !important; }
-.is-forgot .auth-forgot { margin-bottom: .75rem; }
-.is-forgot .auth-forgot.mt-3 { margin-top: .5rem !important; margin-bottom: 0; }
-.is-forgot .auth-forgot .auth-link { min-height: 40px; }
-.auth-forgot { margin: -.25rem 0 1rem; color: var(--bookedz-muted); font-size: .9rem; }
+/* Browser autofill paints inputs pale blue/yellow; keep them matching the form, light or dark */
+:deep(input:-webkit-autofill) { -webkit-box-shadow: 0 0 0 1000px var(--bookedz-surface) inset; -webkit-text-fill-color: var(--bookedz-ink); caret-color: var(--bookedz-ink); }
+.auth-forgot { margin: -.25rem 0 1rem; color: var(--bookedz-muted); font-size: .9rem; line-height: 1.45; }
 .auth-link { min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--bookedz-primary-dark); font-weight: 600; text-decoration: underline; text-underline-offset: .2em; }
 .auth-tabs { padding: .3rem; border-radius: 14px; background: var(--bookedz-peach); }
 :deep(.form-control.is-invalid) { background-image: none; padding-right: .9rem; }

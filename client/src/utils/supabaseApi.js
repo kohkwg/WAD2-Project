@@ -17,8 +17,17 @@ import { supabase } from './supabase.js'
 import { api as recommendationApi } from '../lib/api.js'
 import * as hangouts from './supabaseHangoutsApi.js'
 
+// Network trouble gets a plain message, so people know the action did not go through.
+export function friendlyMessage(error) {
+  // Only real connection failures get this message; a server error keeps the server's own wording.
+  const text = error?.message || ''
+  return /failed to fetch|networkerror|load failed|network request failed/i.test(text)
+    ? 'Could not reach the server. Check your connection and try again; nothing was changed.'
+    : error?.message || 'Something went wrong. Please try again.'
+}
+
 function check({ data, error }) {
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(friendlyMessage(error))
   return data
 }
 
@@ -41,20 +50,12 @@ async function requireUserId() {
 }
 
 export async function signIn(email, password) {
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
   if (!error) return
-  // Supabase uses one message for a wrong email and a wrong password. Ask the database which
-  // it was (docs/sql/email-registered-draft.sql); if that function is not installed, keep the
-  // clearer generic message below.
-  if (/invalid login credentials/i.test(error.message)) {
-    const { data: registered, error: lookupError } = await supabase.rpc('email_registered', { p_email: email })
-    const message = !lookupError && registered === false ? 'No account found with that email.'
-      : !lookupError && registered === true ? 'Wrong password. Try again, or use Forgot password?'
-        : 'Email or password is incorrect.'
-    // `kind` lets the sign-in form count wrong attempts (it ignores network errors and the like).
-    throw Object.assign(new Error(message), { kind: 'credentials' })
-  }
-  throw new Error(error.message)
+  // One message for an unknown email and a wrong password, so the form never reveals which
+  // emails have accounts. `kind` lets the sign-in form count wrong attempts.
+  if (/invalid login credentials/i.test(error.message)) throw Object.assign(new Error('Invalid email or password.'), { kind: 'credentials' })
+  throw new Error(friendlyMessage(error))
 }
 
 // The database makes a profile for every new account (trigger handle_new_user);
@@ -66,7 +67,7 @@ export async function signIn(email, password) {
 export async function signUp(name, email, password, username = '') {
   const handle = username.trim().replace(/^@/, '').toLowerCase()
   const data = check(
-    await supabase.auth.signUp({ email, password, options: { data: { full_name: name, username: handle } } }),
+    await supabase.auth.signUp({ email: email.trim().toLowerCase(), password, options: { data: { full_name: name, username: handle } } }),
   )
   // When "Confirm email" is on, Supabase does not report an existing address as an error (that
   // would reveal who is registered). It returns a user with an empty `identities` list instead.
