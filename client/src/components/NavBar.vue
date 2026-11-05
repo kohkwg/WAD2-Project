@@ -836,6 +836,13 @@ function resetDemo() {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  transform: scale(1.3);
+}
+
+/* A dino shows whole, not cropped to the circle and its background */
+.nav-avatar:has(.nav-avatar-dino) {
+  overflow: visible;
+  background: none;
 }
 
 .nav-avatar {

@@ -73,7 +73,7 @@ function signedIn() {
 </template>
 
 <style scoped>
-.landing-page { min-height: calc(100svh - 150px); padding: 28px 24px 40px; }
+.landing-page { min-height: calc(100svh - 150px); padding: 28px var(--page-gutter) 40px; }
 .landing-checking { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 40vh; color: var(--bookedz-muted); }
-@media (max-width: 767px) { .landing-page { padding: 18px 12px 32px; } }
+@media (max-width: 767px) { .landing-page { padding: 18px var(--page-gutter) 32px; } }
 </style>
