@@ -453,13 +453,13 @@ async function removeGroup() {
 .group-share .form-control { flex: 1 1 240px; min-height: 44px; font-size: .9rem; }
 .group-share .btn { min-height: 44px; }
 .group-teaser { border-style: dashed; box-shadow: none; }
-.group-rules { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px !important; }
-.group-rule { padding: 2px 9px; border: 1.5px solid var(--bookedz-control-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .74rem; font-weight: 700; }
+.group-rules { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px !important; }
+/* Same chips as the Community cards: one soft warm colour; the time and "Your friend" keep their own */
+.group-rule { display: inline-flex; align-items: center; line-height: 1.2; padding: 2px 9px; border: 1.5px solid transparent; border-radius: 99px; background: color-mix(in srgb, var(--bookedz-fill) 18%, var(--bookedz-surface)); color: var(--bookedz-ink); font-size: .74rem; font-weight: 700; }
 .group-rule--when { border-color: var(--bookedz-ink); background: var(--bookedz-mango-soft); }
-.group-rule.is-friends { border-color: var(--bookedz-pink); }
 .group-rule.is-friend { border-color: var(--bookedz-teal); background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
 .group-bar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 8px 8px 8px 16px; border: 2px solid var(--bookedz-ink); border-radius: 99px; background: var(--bookedz-surface); box-shadow: 4px 4px 0 var(--bookedz-ink); }
-:global(:root[data-theme="dark"]) .group-bar { border-color: var(--bookedz-fill); box-shadow: 4px 4px 0 var(--bookedz-fill); }
+:root[data-theme="dark"] .group-bar { border-color: var(--db-dark-edge); box-shadow: 4px 4px 0 var(--db-dark-orange); }
 .group-bar-title { min-width: 0; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 160px; }
 .group-bar-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .group-bar-actions .btn { min-height: 40px; }
@@ -469,7 +469,7 @@ async function removeGroup() {
 .group-option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 2px solid var(--bookedz-control-border); border-radius: 16px; cursor: pointer; }
 .group-option > span { display: grid; gap: 2px; }
 .group-option.is-on { border-color: var(--bookedz-ink); background: var(--bookedz-orange-soft); box-shadow: 3px 3px 0 var(--bookedz-ink); }
-:global(:root[data-theme="dark"]) .group-option.is-on { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--bookedz-fill); }
+:root[data-theme="dark"] .group-option.is-on { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--db-dark-edge); }
 .group-option .form-check-input { margin-top: 4px; flex: none; }
 .settings-capacity { width: 90px; }
 .group-danger { display: grid; gap: 8px; padding-top: 14px; border-top: 2px dashed var(--bookedz-control-border); }

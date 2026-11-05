@@ -58,7 +58,7 @@ const initials = (name = '') => name.split(/\s+/).map((part) => part[0]).join(''
 
 <style scoped>
 .event-groups-card { display: grid; gap: 14px; padding: 16px; border: 2px solid var(--bookedz-ink); border-radius: 24px; background: var(--bookedz-surface); box-shadow: 6px 6px 0 var(--bookedz-teal); }
-:global(:root[data-theme="dark"]) .event-groups-card { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+:root[data-theme="dark"] .event-groups-card { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 var(--db-dark-teal); }
 .egc-head { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 14px; }
 .egc-art { display: block; width: 64px; height: 64px; overflow: hidden; border-radius: 16px; }
 .egc-art :deep(svg) { width: 100%; height: 100%; }

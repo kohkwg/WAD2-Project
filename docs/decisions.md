@@ -9,6 +9,18 @@ the [README](../README.md#credits-and-licences). Original supplied material stay
 
 ## Decision log, newest first
 
+5 November 2026 — Gregory, soft dark mode back, clearer dark buttons and Discover cards that
+close: the soft dark tokens (`--db-dark-hero`, `--db-dark-edge`, `--db-dark-orange`,
+`--db-dark-teal`) are restored on every ticket page, Vivienne's event page and dashboard and the
+Go together pages, and now live in `main.css`'s dark theme so any page or component can use
+them. This settles "restoring them is undecided" in the earlier Plans and Organise entry. In dark
+mode, outline buttons have white text, a bright edge and a warm orange hover (disabled ones stay
+dim), and clickable rows and tiles on the dashboard and Community get a bright edge that turns
+orange on hover; a dashboard card's buttons sit at its bottom. On Discover, clicking an open card
+again closes it, as do a click outside the cards and map and Escape inside it (focus returns to
+the thumbnail);
+
+
 5 November 2026 — Denzel, Discover map shows location only: choosing an event (its card or its
 pin) no longer opens a pop-up card on the map. The map highlights the pin and zooms to the
 event's general area (street level), and the event's **View event** and **RSVP** buttons move
