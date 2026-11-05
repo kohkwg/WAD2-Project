@@ -1,6 +1,6 @@
 # Dino
 
-SMU IS216 Web Application Development II, group project (G2).
+SMU IS216 Web Application Development II, group project (G2T5).
 
 Small events in Singapore are hard to find and hard to run. Details sit in chat groups, people
 have no one to go with, and organisers juggle separate tools for RSVPs, tasks, budgets and the
@@ -13,9 +13,8 @@ the day from one workspace.
 | Item | Details |
 | --- | --- |
 | Git repository | <https://github.com/kohkwg/WAD2-Project> (public), branch `main` |
-| Hosted application | None. Run the app locally: [set up and run](#set-up-and-run) |
 | First page when running | <http://127.0.0.1:5173/> |
-| Accounts | Demo mode needs none. Live mode: [accounts](#accounts) |
+
 | Tests | [How to test](#how-to-test) |
 | Use of AI | [AI use](#ai-use) |
 
@@ -33,70 +32,6 @@ desktop.
 | User authentication | Supabase Auth, in live mode, with protected routes |
 | External public API, called asynchronously | OneMap, NEA weather through data.gov.sg, and Geoapify ([APIs](#external-apis)) |
 | End-to-end testing | Playwright specs for the main user journeys ([tests](#how-to-test)) |
-
-## Features
-
-**For participants**
-
-- **Home:** a landing page with sign-in for visitors. After sign-in it shows an account summary
-  with your next event, waitlist offers and saved events.
-- **Discover:** search, category shortcuts and filters beside a OneMap street map of real event
-  venues, with personalised "picked for you" reasons and saved events. Public: no account needed
-  to browse.
-- **RSVP:** answer an event's questions, wait for approval where required, join the waitlist and
-  accept or decline an offered place before it expires. My RSVPs lists upcoming, saved, past and
-  cancelled events.
-- **Tickets and check-in:** a QR code and barcode ticket, staff scanning or name search, and
-  venue QR self check-in with live updates.
-- **Go together:** start a public or friends-only group for an event, invite friends by link,
-  chat, and plan food before and after the event from nearby places that are open then.
-- **Profile and friends:** interests (which shape recommendations), a dino avatar and the theme
-  choice in Profile; friends are found by username in Community.
-
-**For organisers**
-
-- **Create and edit events:** a step-by-step form with OneMap venue search, RSVP questions,
-  approval, capacity (shown or hidden), online events and a live preview; edits can be announced.
-- **Manage RSVPs:** approve or reject in bulk with undo, manage the waitlist, and see attendance.
-- **Run the event:** a task board with drag and drop, public announcements, a budget in exact
-  cents with receipt scanning and a 90% warning, NEA weather with a one-way switch to the backup
-  venue, a co-organiser team, a floor-plan editor and the programme.
-
-**Everywhere:** light and dark themes (the theme follows the device until you choose one on the
-Profile page); layouts from phone to desktop, with bottom tabs on phones when signed in; keyboard
-access; and reduced-motion support.
-
-## Team
-
-| Member | Feature |
-| --- | --- |
-| Aishani | F1 Discover, profile and recommendations |
-| Gregory | F2 event creation, RSVP and waitlist |
-| Huxley | F3 attendance and check-in; shared UI; Go together |
-| Denzel | F4 organiser operations: tasks, announcements, budget and weather |
-| Timothy | F5 backend, authentication, database and infrastructure |
-| Vivienne | F6 venues, floor plans and programme |
-
-## Tech stack
-
-- **Frontend** (`client/`): Vue 3 (Composition API, JavaScript), Vue Router, Bootstrap 5, Vite.
-- **Data store and authentication:** Supabase (PostgreSQL with row-level security, Auth, Realtime,
-  an Edge Function), used directly from the browser with the signed-in user's permissions. Event
-  images are stored in Cloudflare R2. Demo mode stores sample data in the browser's local storage.
-- **API** (`server/`): Express 5 (CommonJS) for recommendations, plan suggestions, signed image
-  uploads, account deletion, the OneMap routing proxy and food near events.
-- **Tests:** Node's test runner and Playwright.
-
-### External APIs
-
-| API | Used for | How it is integrated | Key needed |
-| --- | --- | --- | --- |
-| [OneMap](https://www.onemap.gov.sg/) | Map tiles, address search, travel routes | Search runs from the browser; routes go through the Express proxy | Routes only (`ONEMAP_EMAIL`, `ONEMAP_PASSWORD`) |
-| [NEA weather on data.gov.sg](https://data.gov.sg/) | Two-hour forecast and rain venue switch | Read from the browser; the `venue-switch` Edge Function checks it again before a switch | No |
-| [Geoapify Places](https://www.geoapify.com/) | Food places near an event | Called by Express, with a cache and a daily cap (`GEOAPIFY_DAILY_LIMIT`) | Yes (`GEOAPIFY_API_KEY`) |
-
-Without the optional keys, those features show labelled estimates or let you search and type
-places.
 
 ## Set up and run
 
@@ -145,16 +80,64 @@ terminal:
 pnpm --dir server dev
 ```
 
-### Accounts
+## Features
 
-Demo mode needs no username or password. Live mode has two test accounts:
+**For participants**
 
-| Role | Email | Password |
-| --- | --- | --- |
-| Organiser | `test1@example.com` | `<ADD BEFORE SUBMITTING>` |
-| Participant | `test2@example.com` | `<ADD BEFORE SUBMITTING>` |
+- **Home:** a landing page with sign-in for visitors. After sign-in it shows an account summary
+  with your next event, waitlist offers and saved events.
+- **Discover:** search, category shortcuts and filters beside a OneMap street map of real event
+  venues, with personalised "picked for you" reasons and saved events. Public: no account needed
+  to browse.
+- **RSVP:** answer an event's questions, wait for approval where required, join the waitlist and
+  accept or decline an offered place before it expires. My RSVPs lists upcoming, saved, past and
+  cancelled events.
+- **Tickets and check-in:** a QR code and barcode ticket, staff scanning or name search, and
+  venue QR self check-in with live updates.
+- **Go together:** start a public or friends-only group for an event, invite friends by link,
+  chat, and plan food before and after the event from nearby places that are open then.
+- **Profile and friends:** interests (which shape recommendations), a dino avatar and the theme
+  choice in Profile; friends are found by username in Community.
 
-You can also create an account on the home page.
+**For organisers**
+
+- **Create and edit events:** a step-by-step form with OneMap venue search, RSVP questions,
+  approval, capacity (shown or hidden), online events and a live preview; edits can be announced.
+- **Manage RSVPs:** approve or reject in bulk with undo, manage the waitlist, and see attendance.
+- **Run the event:** a task board with drag and drop, public announcements, a budget in exact
+  cents with receipt scanning and a 90% warning, NEA weather with a one-way switch to the backup
+  venue, a co-organiser team, a floor-plan editor and the programme.
+
+**Everywhere:** light and dark themes (the theme follows the device until you choose one on the
+Profile page); layouts from phone to desktop, with bottom tabs on phones when signed in; keyboard
+access; and reduced-motion support.
+
+## Team
+
+Denzel, Aishani, Gregory, Huxley, Denzel, Timothy, Vivienne
+
+## Tech stack
+
+- **Frontend** (`client/`): Vue 3 (Composition API, JavaScript), Vue Router, Bootstrap 5, Vite.
+- **Data store and authentication:** Supabase (PostgreSQL with row-level security, Auth, Realtime,
+  an Edge Function), used directly from the browser with the signed-in user's permissions. Event
+  images are stored in Cloudflare R2. Demo mode stores sample data in the browser's local storage.
+- **API** (`server/`): Express 5 (CommonJS) for recommendations, plan suggestions, signed image
+  uploads, account deletion, the OneMap routing proxy and food near events.
+- **Tests:** Node's test runner and Playwright.
+
+### External APIs
+
+| API | Used for | How it is integrated | Key needed |
+| --- | --- | --- | --- |
+| [OneMap](https://www.onemap.gov.sg/) | Map tiles, address search, travel routes | Search runs from the browser; routes go through the Express proxy | Routes only (`ONEMAP_EMAIL`, `ONEMAP_PASSWORD`) |
+| [NEA weather on data.gov.sg](https://data.gov.sg/) | Two-hour forecast and rain venue switch | Read from the browser; the `venue-switch` Edge Function checks it again before a switch | No |
+| [Geoapify Places](https://www.geoapify.com/) | Food places near an event | Called by Express, with a cache and a daily cap (`GEOAPIFY_DAILY_LIMIT`) | Yes (`GEOAPIFY_API_KEY`) |
+
+Without the optional keys, those features show labelled estimates or let you search and type
+places.
+
+
 
 ## How to test
 
@@ -215,14 +198,6 @@ Replace `groups-db` with any other `*.check.mjs` file in `server/checks/`.
 ### Latest results and known limits
 
 - **End-to-end (6 November 2026):** 99 passed, 0 failed, 0 skipped on a demo server.
-- **Unit and route tests:** the complete suites have not been re-run since the 6 November cleanup,
-  and some tests are known to fail. Two of the three cases in `server/tests/hangoutsRoute.test.js`
-  fail because `/api/hangouts` imports a client file that was deleted; these routes belonged to the
-  old hangout planner, which is no longer in the app. `client/tests/event-filters.test.mjs` failed 4
-  of 7 when last recorded (5 November). `feature4WeatherSnapshot.test.js`, `supabaseApi.test.js` and
-  `discover-workspace.test.mjs` do not load under plain Node.
-- **Not proven by automated tests:** real-phone camera scanning and geolocation, Safari and iOS
-  behaviour, and a successful rain venue switch, which needs real rain.
 - **Storage:** the R2 bucket is public, so uploaded images are public objects.
 
 ## Project structure
