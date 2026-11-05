@@ -2,7 +2,7 @@
 import '../assets/design-baseline.css'
 import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import { supabase } from '@/lib/supabase'
-import { USING_SUPABASE } from '@/utils/api'
+import { USING_SUPABASE, getMyRsvps, JOINED_STATUSES } from '@/utils/api'
 import { observeDiscoverySession } from '@/lib/discoveryState'
 import { useRouter, useRoute } from 'vue-router'
 import { useEvents, useRecommendations } from '@/composables/useEvents'
@@ -122,19 +122,25 @@ const clock = ref(Date.now())
 const STEP = 10
 const visibleCount = ref(STEP)
 // Saved needs a session; a remembered Saved choice is ignored while signed out
-// Laptops and up browse one Monday-to-Sunday week at a time; the calendar's arrows move it, and the
-// list and map follow. Searching or filtering looks across every upcoming date instead, so nothing
-// outside the displayed week is hidden from discovery (the calendar still shows that week's slice).
+// Laptops and up browse one Monday-to-Sunday week at a time: the calendar's arrows move it, and the
+// list and map show only that week. Searching or filtering looks across every upcoming date instead
+// (the calendar still shows the week it is on), so nothing is hidden from discovery.
 const weekOffset = ref(0)
+// "Show more" adds the following week's events under this week's, one week at a time
+const weeksShown = ref(1)
+const MAX_WEEKS = 26
+const weekMode = computed(() => !smallScreen.value && !filtersActive.value)
+const weekAt = weeks => discoveryDateRange('week', clock.value + (weekOffset.value + weeks) * 7 * 86400000)
 function weekWindow(range) {
-  if (smallScreen.value || filtersActive.value) return range
-  const week = discoveryDateRange('week', clock.value + weekOffset.value * 7 * 86400000)
-  const dateFrom = range.dateFrom && range.dateFrom > week.dateFrom ? range.dateFrom : week.dateFrom
-  const dateTo = range.dateTo && range.dateTo < week.dateTo ? range.dateTo : week.dateTo
+  if (!weekMode.value) return range
+  const dateFrom = range.dateFrom && range.dateFrom > weekAt(0).dateFrom ? range.dateFrom : weekAt(0).dateFrom
+  const dateTo = range.dateTo && range.dateTo < weekAt(weeksShown.value - 1).dateTo ? range.dateTo : weekAt(weeksShown.value - 1).dateTo
   return { ...range, dateFrom, dateTo }
 }
+const dayLabel = key => new Date(`${key}T00:00:00Z`).toLocaleDateString('en-SG', { timeZone: 'UTC', day: 'numeric', month: 'short' })
+const nextWeekLabel = computed(() => { const next = weekAt(weeksShown.value); return `${dayLabel(next.dateFrom)} – ${dayLabel(next.dateTo)}` })
 const baseQuery = () => weekWindow(discoveryEventQuery({ ...filters.value, saved: filters.value.saved && loggedIn.value }, { search: search.value, sort: sort.value, page: 1, now: clock.value }))
-const eventQuery = computed(() => ({ ...baseQuery(), limit: visibleCount.value }))
+const eventQuery = computed(() => ({ ...baseQuery(), limit: weekMode.value ? 200 : visibleCount.value }))
 // The map always gets every matching event, whatever the list has revealed so far.
 const mapQuery = computed(() => ({ ...baseQuery(), forMap: true }))
 let clockTimer
@@ -181,11 +187,25 @@ async function changeListingPreference(payload) {
   }
 }
 const loggedIn = ref(false)
+// The calendar is the visitor's own schedule (RSVPs they hold), so they can see when they are free
+const mySchedule = ref([])
+const scheduleError = ref('')
+async function loadSchedule(signedIn) {
+  if (!signedIn) { mySchedule.value = []; scheduleError.value = ''; return }
+  try {
+    const rsvps = await getMyRsvps()
+    mySchedule.value = rsvps.filter(rsvp => JOINED_STATUSES.includes(rsvp.status) && rsvp.event)
+      .map(rsvp => ({ id: rsvp.event.id, title: rsvp.event.title, start_time: rsvp.event.startTime, category: rsvp.event.tags?.[0] || 'event', status: rsvp.status }))
+    scheduleError.value = ''
+  } catch { scheduleError.value = 'Could not load your schedule.' }
+}
 const remaining = computed(() => Math.max(0, total.value - events.value.length))
-const filtersActive = computed(() => Boolean(search.value || filters.value.when || filters.value.extras.length || filters.value.categories.length || savedSelected.value))
+// "Pick dates" with no dates chosen yet filters nothing, so it must not switch off the weekly view
+const whenActive = computed(() => Boolean(filters.value.when) && !(filters.value.when === 'pick_dates' && !(filters.value.dateFrom && filters.value.dateTo)))
+const filtersActive = computed(() => Boolean(search.value || whenActive.value || filters.value.extras.length || filters.value.categories.length || savedSelected.value))
 // Only real recommendations earn a "Picked for you" badge; signed-out visitors have none.
 const discoveryPicks = computed(() => loggedIn.value ? recommended.value : [])
-watch([filters, search, sort, weekOffset], () => { visibleCount.value = STEP }, { deep: true })
+watch([filters, search, sort, weekOffset], () => { visibleCount.value = STEP; weeksShown.value = 1 }, { deep: true })
 // Display supplied recommendation metadata only; ranking/scoring stays upstream.
 const recommendationById = computed(() => new Map(discoveryPicks.value.map(event => [event.id, event])))
 const mappedPageEvents = computed(() => (mapEvents.value.length || mapLoading.value ? mapEvents.value : events.value).map(event => {
@@ -232,9 +252,10 @@ watch([filters, search, sort], () => {
 }, { deep: true })
 let stopAuth
 onMounted(() => {
-  if (!USING_SUPABASE) { refreshDiscovery(); return }
+  if (!USING_SUPABASE) { refreshDiscovery(); loadSchedule(true); return }
   stopAuth = observeDiscoverySession(supabase, session => {
     loggedIn.value = Boolean(session)
+    loadSchedule(Boolean(session))
     clearRecommendations()
     refreshDiscovery()
     if (session) fetchRecommendations(24)
@@ -285,8 +306,8 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
             </template>
             <template v-else-if="!smallScreen && !filtersActive">
               <h2>Nothing on this week</h2>
-              <p>Try another week in the calendar, or search and pick a category to see events on every date.</p>
-              <button type="button" class="btn btn-outline-secondary" @click="weekOffset = Math.min(weekOffset + 1, 52)">Next week</button>
+              <p>Try another week in the calendar, or search or pick a category to see events on every date.</p>
+              <button type="button" class="btn btn-outline-secondary" @click="weekOffset++">Next week</button>
             </template>
             <template v-else>
             <h2>No events found</h2>
@@ -308,11 +329,12 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
               </TransitionGroup>
             </section>
           </div>
-          <div v-if="remaining > 0 && !error" class="event-more"><button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="showMore">{{ loading ? 'Loading…' : `Show ${Math.min(STEP, remaining)} more` }}</button><span>Showing {{ events.length }} of {{ total }}</span></div>
+          <div v-if="weekMode && !error && events.length" class="event-more"><button type="button" class="btn btn-outline-secondary" :disabled="loading || weeksShown >= MAX_WEEKS" @click="weeksShown++">{{ loading ? 'Loading…' : `Show more (${nextWeekLabel})` }}</button></div>
+          <div v-else-if="remaining > 0 && !error" class="event-more"><button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="showMore">{{ loading ? 'Loading…' : `Show ${Math.min(STEP, remaining)} more` }}</button><span>Showing {{ events.length }} of {{ total }}</span></div>
         </section>
         <div class="discovery-map-column">
           <DiscoveryStreetMap :events="mappedPageEvents" :search-text="search" :focused-event-id="selectedEventId" :prominent-ids="discoveryPicks.map(event => event.id)" :loading="loading" :error="error" @select="selectedEventId = $event" @retry="refreshDiscovery" />
-          <DiscoveryWeekCalendar v-if="!smallScreen" v-model:offset="weekOffset" :events="mapEvents.length || mapLoading ? mapEvents : events" :selected-event-id="selectedEventId" @select="selectedEventId = $event.id" />
+          <DiscoveryWeekCalendar v-if="!smallScreen" v-model:offset="weekOffset" :events="mySchedule" :signed-in="loggedIn || !USING_SUPABASE" :error="scheduleError" @select="router.push(`/events/${$event.id}/rsvp`)" />
         </div>
       </div>
   </div>
@@ -380,7 +402,7 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
 @media(min-width:992px) {
   .discover-page { display: flex; flex-direction: column; box-sizing: border-box; height: calc(100svh - var(--topbar-h, 0px)); padding-bottom: 16px; overflow: hidden; }
   .discovery-workspace { flex: 1; min-height: 0; }
-  .discovery-list { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 4px 8px 8px 0; }
+  .discovery-list { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 4px 14px 8px 12px; margin-left: -12px; }
   .discovery-map-column { position: static; align-self: stretch; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
   /* Map and week share the column's width; the map keeps its shape so the whole island shows */
   .discovery-map-column > :first-child { flex: none; }

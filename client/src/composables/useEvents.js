@@ -126,7 +126,8 @@ export function useEvents() {
       let q = supabase
         .from('events_with_counts')
         .select(filters.countOnly ? 'id' : '*', { count: 'exact', ...(filters.countOnly ? { head: true } : {}) })
-        .gt('start_time', new Date().toISOString())
+        // From the start of today (Singapore): today's events stay listed, earlier days never do
+        .gte('start_time', new Date(`${new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' })}T00:00:00+08:00`).toISOString())
 
       if (search) {
         const terms = [`title.ilike.%${search}%`, `description.ilike.%${search}%`]

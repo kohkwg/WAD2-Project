@@ -1,11 +1,12 @@
 <script setup>
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 
 // A Monday-to-Sunday glance at the events Discover is showing, in Singapore time.
 const props = defineProps({
   events: { type: Array, default: () => [] },
-  selectedEventId: { type: [String, Number], default: null },
   offset: { type: Number, default: 0 },
+  signedIn: Boolean, error: { type: String, default: '' },
 })
 const emit = defineEmits(['select', 'update:offset'])
 const zone = 'Asia/Singapore'
@@ -45,7 +46,9 @@ const categoryOf = event => event.category || event.tags?.[0] || 'event'
     <header class="week-head">
       <div>
         <h2>{{ range }}</h2>
-        <p aria-live="polite">{{ weekTotal }} {{ weekTotal === 1 ? 'event' : 'events' }} this week</p>
+        <p v-if="!signedIn"><RouterLink to="/login?redirect=/discover">Sign in</RouterLink> to see your events here.</p>
+        <p v-else-if="error" role="alert">{{ error }}</p>
+        <p v-else aria-live="polite">{{ weekTotal ? `You're going to ${weekTotal} ${weekTotal === 1 ? 'event' : 'events'} this week` : 'Your week is free' }}</p>
       </div>
       <div class="week-nav">
         <button type="button" aria-label="Previous week" :disabled="offset <= 0" @click="emit('update:offset', offset - 1)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6" /></svg></button>
@@ -55,10 +58,10 @@ const categoryOf = event => event.category || event.tags?.[0] || 'event'
     <ol class="week-days">
       <li v-for="day in days" :key="day.key" class="week-day" :class="{ 'has-events': day.events.length }">
         <div class="week-label"><span>{{ day.weekday }}</span><b :class="{ 'is-today': day.today }">{{ day.number }}</b></div>
-        <p v-if="!day.events.length" class="week-empty">No events</p>
+        <p v-if="!day.events.length" class="week-empty">Free</p>
         <ul v-else class="week-events">
           <li v-for="event in day.events" :key="event.id">
-            <button type="button" :class="{ 'is-selected': selectedEventId === event.id }" @click="emit('select', event)">
+            <button type="button" @click="emit('select', event)">
               <i class="week-swatch cat-tint" :class="`cat-${categoryOf(event)}`" aria-hidden="true"></i>
               <time :datetime="event.start_time">{{ timeOf(event) }}</time>
               <span class="week-title">{{ event.title }}</span>
@@ -75,6 +78,7 @@ const categoryOf = event => event.category || event.tags?.[0] || 'event'
 .week-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 2px; }
 .week-head h2 { margin: 0; font-family: var(--bookedz-body); font-size: 15px; font-weight: 800; }
 .week-head p { margin: 2px 0 0; font-size: 12px; color: var(--bookedz-muted); }
+.week-head p a { color: var(--bookedz-primary-dark); font-weight: 700; }
 .week-nav { display: flex; gap: 8px; }
 .week-nav button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--bookedz-border); border-radius: 50%; background: var(--bookedz-surface); color: var(--bookedz-ink); }
 .week-nav button:hover:not(:disabled) { background: var(--bookedz-hover); }

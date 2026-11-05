@@ -47,6 +47,9 @@ export function matchesDiscoveryFilters(event, filters = {}) {
     && (!filters.savedOnly || event.saved === true)
 }
 
+// Midnight today in Singapore: today's events stay listed, earlier days never do
+const startOfToday = now => new Date(`${now.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' })}T00:00:00+08:00`)
+
 export function demoDiscoveryEvents(events, filters = {}, now = new Date()) {
   return events.map(event => ({
     ...event, start_time: event.startTime, end_time: event.endTime,
@@ -55,7 +58,7 @@ export function demoDiscoveryEvents(events, filters = {}, now = new Date()) {
     venue_address: event.venue?.address, attendees: [],
     // The same columns as events_with_counts
     is_online: Boolean(event.isOnline), hide_capacity: Boolean(event.hideCapacity),
-  })).filter(event => new Date(event.start_time) > now)
+  })).filter(event => new Date(event.start_time) >= startOfToday(now))
     // Discover lists official events only; Go together groups live in Community
     .filter(isOfficialEvent)
     .filter(event => matchesDiscoveryFilters(event, filters))

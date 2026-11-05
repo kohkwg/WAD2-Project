@@ -1,5 +1,12 @@
 # Project status and timeline
 
+5 November, Discover stash restoration — resolved `DiscoveryDayRow.vue` by keeping
+the local fixed-size card layout and removal of carousel arrows, together with
+dev's selected-event scrolling and reduced-motion handling. DiscoveryDayRow,
+DiscoveryEventRow, DiscoveryWeekCalendar, EventFilters and DiscoverView pass
+script/template/style compilation. No browser checks, full build/suite, commit,
+push or hosted changes performed; the retained stash remains a local backup.
+
 5 November, account/dev merge conflict repair — retained the navbar's saved
 profile-label lookup and incoming accessible theme label together. Login success
 messages retain `role="status"` alongside dev's dismissible-notice directive.
