@@ -84,7 +84,7 @@ function frameZoom() {
   const size = map.getSize()
   if (!size.x || !size.y) return null
   const zoom = Math.max(map.getBoundsZoom(SINGAPORE), map.getBoundsZoom(SINGAPORE_MAX_BOUNDS, true))
-  return Number.isFinite(zoom) ? Math.min(13, Math.max(10, zoom)) : null
+  return Number.isFinite(zoom) ? Math.min(13, Math.max(9, zoom)) : null
 }
 function frameSingapore() {
   const zoom = map && frameZoom()
@@ -187,7 +187,7 @@ function zoomOut() { map?.zoomOut() }
 onMounted(() => {
   // Half-step zoom lets "Show all" fit the events snugly instead of jumping out a whole level.
   // Zoom buttons are our own (bottom-right, in the app's style) rather than Leaflet's.
-  map = L.map(container.value, { scrollWheelZoom: false, zoomControl: false, zoomSnap: 0.25, minZoom: 10, maxZoom: 19, maxBounds: SINGAPORE_MAX_BOUNDS, maxBoundsViscosity: 1 }).setView([1.3521, 103.8198], 11)
+  map = L.map(container.value, { scrollWheelZoom: false, zoomControl: false, zoomSnap: 0.25, minZoom: 9, maxZoom: 19, maxBounds: SINGAPORE_MAX_BOUNDS, maxBoundsViscosity: 1 }).setView([1.3521, 103.8198], 11)
   // Night tiles in dark mode, so the map does not glare inside the dark interface.
   stopTiles = addOneMapTiles(map)
   tiles = stopTiles.layer

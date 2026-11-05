@@ -7,6 +7,8 @@ import { observeDiscoverySession } from '@/lib/discoveryState'
 import { useRouter, useRoute } from 'vue-router'
 import { useEvents, useRecommendations } from '@/composables/useEvents'
 import DiscoveryEventRow from '@/components/discovery/DiscoveryEventRow.vue'
+import DiscoveryDayRow from '@/components/discovery/DiscoveryDayRow.vue'
+import DiscoveryWeekCalendar from '@/components/discovery/DiscoveryWeekCalendar.vue'
 import DiscoveryStreetMap from '@/components/discovery/DiscoveryStreetMap.vue'
 import EventFilters from '@/components/EventFilters.vue'
 import SkeletonList from '@/components/ui/SkeletonList.vue'
@@ -15,7 +17,7 @@ import { toast } from '@/composables/useToast'
 import { useDiscoveryMotion } from '@/composables/useDiscoveryMotion'
 import { CATEGORIES } from '@/lib/constants'
 import { EVENT_GROUPS, sameCategories } from '@/lib/eventGroups'
-import { normalizeDiscoveryFilters, discoveryEventQuery, discoveryUrlQuery, discoveryFiltersFromQuery } from '@/lib/discoveryFilters'
+import { normalizeDiscoveryFilters, discoveryDateRange, discoveryEventQuery, discoveryUrlQuery, discoveryFiltersFromQuery } from '@/lib/discoveryFilters'
 
 const defaults = () => normalizeDiscoveryFilters()
 const route = useRoute()
@@ -120,7 +122,18 @@ const clock = ref(Date.now())
 const STEP = 10
 const visibleCount = ref(STEP)
 // Saved needs a session; a remembered Saved choice is ignored while signed out
-const baseQuery = () => discoveryEventQuery({ ...filters.value, saved: filters.value.saved && loggedIn.value }, { search: search.value, sort: sort.value, page: 1, now: clock.value })
+// Laptops and up browse one Monday-to-Sunday week at a time; the calendar's arrows move it, and the
+// list and map follow. Searching or filtering looks across every upcoming date instead, so nothing
+// outside the displayed week is hidden from discovery (the calendar still shows that week's slice).
+const weekOffset = ref(0)
+function weekWindow(range) {
+  if (smallScreen.value || filtersActive.value) return range
+  const week = discoveryDateRange('week', clock.value + weekOffset.value * 7 * 86400000)
+  const dateFrom = range.dateFrom && range.dateFrom > week.dateFrom ? range.dateFrom : week.dateFrom
+  const dateTo = range.dateTo && range.dateTo < week.dateTo ? range.dateTo : week.dateTo
+  return { ...range, dateFrom, dateTo }
+}
+const baseQuery = () => weekWindow(discoveryEventQuery({ ...filters.value, saved: filters.value.saved && loggedIn.value }, { search: search.value, sort: sort.value, page: 1, now: clock.value }))
 const eventQuery = computed(() => ({ ...baseQuery(), limit: visibleCount.value }))
 // The map always gets every matching event, whatever the list has revealed so far.
 const mapQuery = computed(() => ({ ...baseQuery(), forMap: true }))
@@ -172,7 +185,7 @@ const remaining = computed(() => Math.max(0, total.value - events.value.length))
 const filtersActive = computed(() => Boolean(search.value || filters.value.when || filters.value.extras.length || filters.value.categories.length || savedSelected.value))
 // Only real recommendations earn a "Picked for you" badge; signed-out visitors have none.
 const discoveryPicks = computed(() => loggedIn.value ? recommended.value : [])
-watch([filters, search, sort], () => { visibleCount.value = STEP }, { deep: true })
+watch([filters, search, sort, weekOffset], () => { visibleCount.value = STEP }, { deep: true })
 // Display supplied recommendation metadata only; ranking/scoring stays upstream.
 const recommendationById = computed(() => new Map(discoveryPicks.value.map(event => [event.id, event])))
 const mappedPageEvents = computed(() => (mapEvents.value.length || mapLoading.value ? mapEvents.value : events.value).map(event => {
@@ -242,7 +255,7 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
 <template>
   <div ref="pageRoot" class="discover-page" tabindex="-1">
     <h1 class="visually-hidden">{{ categoryTitle }}</h1>
-      <div class="discovery-search"><EventFilters ref="searchControl" v-model="filters" v-model:search="search" :total="total" :loading="loading" :error="error" show-active @show="showList" @retry="refreshDiscovery" /></div>
+      <div class="discovery-search"><EventFilters ref="searchControl" v-model="filters" v-model:search="search" v-model:sort="sort" :total="total" :loading="loading" :error="error" show-active @show="showList" @retry="refreshDiscovery" /></div>
       <div ref="toolbar" class="discovery-toolbar">
         <nav ref="categoryRow" class="category-shortcuts" :class="{ 'fade-start': rowFade.start, 'fade-end': rowFade.end }" aria-label="Event categories" @scroll.passive="updateRowFade">
           <button v-if="showSavedChip" type="button" class="category-shortcut saved-shortcut" :aria-pressed="savedSelected" :aria-label="`Saved events, ${savedCount}`" @click="chooseSaved"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4V3Z" /></svg>Saved<span class="saved-count" aria-hidden="true">{{ savedCount }}</span></button>
@@ -256,8 +269,6 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
             <button type="button" :aria-pressed="mobilePane === 'list'" @click="showPane('list')">List</button>
             <button type="button" :aria-pressed="mobilePane === 'map'" @click="showPane('map')">Map</button>
           </div>
-          <label class="results-sort"><span class="visually-hidden">Sort by</span><select v-model="sort" name="sort" aria-label="Sort events"><option value="soonest">Soonest first</option><option value="popular">Most popular</option></select></label>
-
         </div>
       </div>
       <div class="discovery-workspace" :data-pane="smallScreen ? mobilePane : undefined" id="event-directory">
@@ -272,6 +283,11 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
               <p>{{ search || filters.when || filters.extras.length ? 'None of your saved events match these filters.' : 'Tap the bookmark on any event to keep it here. Past saves stay in My RSVPs.' }}</p>
               <button type="button" class="btn btn-outline-secondary" @click="chooseCategory()">Browse all events</button>
             </template>
+            <template v-else-if="!smallScreen && !filtersActive">
+              <h2>Nothing on this week</h2>
+              <p>Try another week in the calendar, or search and pick a category to see events on every date.</p>
+              <button type="button" class="btn btn-outline-secondary" @click="weekOffset = Math.min(weekOffset + 1, 52)">Next week</button>
+            </template>
             <template v-else>
             <h2>No events found</h2>
             <p>{{ filters.categories.length ? 'Nothing in this group right now. Try another one:' : 'Try another search, or browse a category:' }}</p>
@@ -280,6 +296,9 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
             </div>
             <button type="button" class="btn btn-outline-secondary" @click="clearFilters">Clear search and filters</button>
             </template>
+          </div>
+          <div v-else-if="!smallScreen" class="event-days" :class="{ 'is-refreshing': loading }">
+            <DiscoveryDayRow v-for="group in dateGroups" :key="group.key" :group="group" :recommendation-by-id="recommendationById" :selected-event-id="selectedEventId" :bookmark-enabled="loggedIn" :preference-pending="actionPending" @select="selectMapEvent" @preference="changeListingPreference" />
           </div>
           <div v-else class="event-timeline" :class="{ 'is-refreshing': loading }">
             <section v-for="group in dateGroups" :key="group.key" class="date-group" :aria-label="`${group.label}, ${group.weekday} ${group.year}`">
@@ -293,6 +312,7 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
         </section>
         <div class="discovery-map-column">
           <DiscoveryStreetMap :events="mappedPageEvents" :search-text="search" :focused-event-id="selectedEventId" :prominent-ids="discoveryPicks.map(event => event.id)" :loading="loading" :error="error" @select="selectedEventId = $event" @retry="refreshDiscovery" />
+          <DiscoveryWeekCalendar v-if="!smallScreen" v-model:offset="weekOffset" :events="mapEvents.length || mapLoading ? mapEvents : events" :selected-event-id="selectedEventId" @select="selectedEventId = $event.id" />
         </div>
       </div>
   </div>
@@ -327,7 +347,6 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
 .pane-switch button { transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .all-categories-link,.browse-back { display: inline-flex; align-items: center; min-height: 44px; padding: 6px; color: var(--bookedz-primary-dark); font-size: 12px; }
 .results-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--bookedz-muted); font-size: 12px; }
-.results-sort select { min-height: 44px; border: 0; background: transparent; color: var(--bookedz-ink); font: inherit; }
 /* Phones: List | Map segmented toggle (44px tall in all) */
 .pane-switch { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; padding: 2px; border-radius: 99px; background: var(--bookedz-hover); }
 .pane-switch button { position: relative; z-index: 1; min-width: 64px; min-height: 40px; padding: 6px 14px; border: 0; border-radius: 99px; background: transparent; color: var(--bookedz-muted); font-size: 12px; font-weight: 600; }
@@ -336,7 +355,7 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
 .pane-thumb { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); border-radius: 99px; background: var(--bookedz-surface); box-shadow: var(--bookedz-tab-shadow); transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp); }
 .pane-switch.is-map .pane-thumb { transform: translateX(100%); }
 
-.discovery-workspace { display: grid; grid-template-columns: minmax(0,.94fr) minmax(0,1.06fr); align-items: start; gap: 16px; min-width: 0; }
+.discovery-workspace { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); align-items: start; gap: 16px; min-width: 0; }
 .discovery-list,.discovery-map-column { min-width: 0; }
 .discovery-map-column { position: sticky; top: calc(var(--topbar-h, 0px) + 18px); }
 
@@ -362,7 +381,11 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
   .discover-page { display: flex; flex-direction: column; box-sizing: border-box; height: calc(100svh - var(--topbar-h, 0px)); padding-bottom: 16px; overflow: hidden; }
   .discovery-workspace { flex: 1; min-height: 0; }
   .discovery-list { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 4px 8px 8px 0; }
-  .discovery-map-column { position: static; }
+  .discovery-map-column { position: static; align-self: stretch; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+  /* Map and week share the column's width; the map keeps its shape so the whole island shows */
+  .discovery-map-column > :first-child { flex: none; }
+  .event-days { transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease); }
+  .event-days.is-refreshing { opacity: .55; }
 }
 @media(max-width:991px) {
   .discover-page { padding: 18px 12px 32px; }
