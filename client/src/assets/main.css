@@ -81,9 +81,10 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 .text-meta { font-size: var(--text-small); line-height: 1.5; }
 .text-caption { font-size: var(--text-caption); line-height: 1.5; }
 :root { --sidebar-w: 240px; }
-/* Laptops use NavBar's slim rail instead of the full sidebar, and pages fill the room it frees
-   (Bootstrap's .container would otherwise stop at 960px and leave empty gutters) */
-@media(min-width:992px) and (max-width:1199.98px) { :root { --sidebar-w: 84px; } .app-main:not(.app-main--discover) { max-width: none; } }
+/* Laptops and desktops start with NavBar's 76px icon rail; on laptops pages fill the room it
+   frees (Bootstrap's .container would otherwise stop at 960px and leave empty gutters) */
+@media(min-width:992px) { :root { --sidebar-w: 76px; } }
+@media(min-width:992px) and (max-width:1199.98px) { .app-main:not(.app-main--discover) { max-width: none; } }
 /* NavBar's collapse button sets data-sidebar; it wins over the width defaults above */
 @media(min-width:992px) { :root[data-sidebar='collapsed'] { --sidebar-w: 76px; } :root[data-sidebar='expanded'] { --sidebar-w: 240px; } }
 .app-shell { min-height: 100vh; padding-left: var(--sidebar-w); transition: padding-left var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease); }

@@ -73,7 +73,10 @@ async function logOut() {
     signingOut.value = false
   }
 }
+// Coming straight from the sign-in form earns a little celebration on the account summary
+const justJoined = ref(false)
 function signedIn() {
+  justJoined.value = true
   checking.value = true
   loadAccount()
 }
@@ -90,7 +93,10 @@ function signedIn() {
 
     <section v-else class="account" aria-labelledby="account-title">
       <header class="account-head">
-        <span class="account-avatar" aria-hidden="true"><img v-if="myDinoSrc" class="dino-face" :src="myDinoSrc" alt="">{{ myDinoSrc ? '' : initials }}</span>
+        <span class="account-avatar-wrap" :class="{ celebrate: justJoined }" aria-hidden="true">
+          <span class="account-avatar"><img v-if="myDinoSrc" class="dino-face" :src="myDinoSrc" alt="">{{ myDinoSrc ? '' : initials }}</span>
+          <span v-if="justJoined" class="account-burst"><span v-for="n in 8" :key="n" :style="{ '--burst-angle': `${n * 45}deg` }">✦</span></span>
+        </span>
         <div class="min-w-0">
           <p class="account-greeting">{{ greeting }},</p>
           <h1 id="account-title" class="page-title m-0">{{ firstName }}</h1>
@@ -178,5 +184,12 @@ function signedIn() {
 .account-links { display: flex; flex-wrap: wrap; gap: 8px; }
 .account-links .btn { min-height: 44px; }
 @media (max-width: 767px) { .landing-page { padding: 18px 12px 32px; } .account-grid { grid-template-columns: 1fr; } .account-stats { gap: 8px; } .account-stats > div { padding: 12px; } }
-@media (prefers-reduced-motion: reduce) { .account-avatar { animation: none; } }
+.account-avatar-wrap { position: relative; flex: none; display: grid; place-items: center; }
+.celebrate .account-avatar { animation: avatar-hop 900ms var(--bookedz-ease-stamp) both; }
+.account-burst { position: absolute; inset: 50% auto auto 50%; pointer-events: none; }
+.account-burst span { position: absolute; left: -.5em; top: -.5em; width: 1em; text-align: center; color: var(--bookedz-primary); font-size: .95rem; opacity: 0; animation: avatar-burst 900ms var(--bookedz-ease) 180ms both; }
+.account-burst span:nth-child(even) { color: var(--bookedz-yellow); font-size: .75rem; }
+@keyframes avatar-hop { 0% { transform: translateY(24px) scale(.4); } 45% { transform: translateY(-14px) scale(1.12); } 70% { transform: translateY(0) scale(.95); } 100% { transform: none; } }
+@keyframes avatar-burst { 0% { opacity: 1; transform: rotate(var(--burst-angle)) translateY(-18px) scale(.4); } 100% { opacity: 0; transform: rotate(var(--burst-angle)) translateY(-56px) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .account-avatar, .celebrate .account-avatar { animation: none; } .account-burst { display: none; } }
 </style>

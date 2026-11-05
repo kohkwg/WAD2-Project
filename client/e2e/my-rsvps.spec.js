@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test'
 import { createSeedData } from '../src/utils/mockData.js'
 
+// These checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// unless someone expanded it (docs/decisions.md, 5 November), so start from that remembered choice.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { try { localStorage.setItem('bookedz-sidebar', 'expanded') } catch { /* storage blocked */ } }) })
+
 const STORE = 'bookedz-feature2-demo'
 const NOW = Date.parse('2026-11-02T10:00:00Z')
 function fixture() {

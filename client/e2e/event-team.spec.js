@@ -1,4 +1,8 @@
 import { test, expect } from '@playwright/test'
+
+// These checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// unless someone expanded it (docs/decisions.md, 5 November), so start from that remembered choice.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { try { localStorage.setItem('bookedz-sidebar', 'expanded') } catch { /* storage blocked */ } }) })
 async function fixture(page, unavailable = false) {
   await page.route(/\/src\/utils\/eventTeam\.js(?:\?.*)?$/, route => route.fulfill({ contentType:'text/javascript', body: `
     export const USING_SUPABASE = true;

@@ -62,7 +62,7 @@ def main():
 
     print(f"Labels: {len(labels)}, compared: {compared}, no draft found: {missing}")
     if not labels:
-        print("labels/labels.json is empty. Label 30 to 50 posts first (see labels/README.md).")
+        print("labels/labels.json is empty. Label 30 to 50 posts first (see Hand labels in pipeline/README.md).")
     for field in FIELDS:
         if total[field]:
             pct = 100 * correct[field] / total[field]

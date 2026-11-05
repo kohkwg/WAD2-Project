@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
 
+// These checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// unless someone expanded it (docs/decisions.md, 5 November), so start from that remembered choice.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { try { localStorage.setItem('bookedz-sidebar', 'expanded') } catch { /* storage blocked */ } }) })
+
 // Replace only Profile's data boundary; the shell and routing retain demo mode.
 async function profileFixture(page, missingUsername = false) {
   await page.route('**/__profile-fixture.js', route => route.fulfill({

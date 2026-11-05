@@ -83,7 +83,7 @@ function readSidebar() {
   }
 }
 // Use the saved sidebar setting if one exists.
-// Otherwise, start collapsed on screens narrower than 1200px.
+// Otherwise, start with the sidebar collapsed.
 function startsCollapsed() {
   const saved = readSidebar()
 
@@ -91,7 +91,7 @@ function startsCollapsed() {
     return saved === 'collapsed'
   }
 
-  return typeof window !== 'undefined' && window.innerWidth < 1200
+  return true
 }
 
 const collapsed = ref(startsCollapsed())
