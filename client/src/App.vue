@@ -43,9 +43,8 @@ watch(() => route.path, async () => {
   <footer class="app-footer">
     <div class="container">
       <div>
-        <RouterLink to="/" class="footer-home-link" aria-label="Bookedz home">Bookedz</RouterLink>
-        <span class="ms-3">A little island. A lot to discover.</span></div>
-      <span class="footer-tagline">Explore Singapore. Make a little room for something new.</span></div>
+        <RouterLink to="/" class="footer-home-link" aria-label="Dino home">Dino</RouterLink></div>
+      <span class="footer-tagline">Explore Singapore. Make room for something more!</span></div>
   </footer>
   </div>
   <ToastHost />
