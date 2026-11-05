@@ -33,7 +33,9 @@ test('demo account sees its summary, and Bookedz logos return home', async ({ pa
   expect(errors).toEqual([])
 })
 
-test('signed-out live visitors get the sign-in form on the landing page', async ({ page }) => {
+test('signed-out live visitors get the sign-in form on the landing page', async ({ page }, testInfo) => {
+  const errors=[];page.on('pageerror',error=>errors.push(error.message))
+  await page.emulateMedia({reducedMotion:'reduce'})
   await page.route('**/*.supabase.co/**', route => route.abort())
   await page.route('**/__home-auth.js', route => route.fulfill({ contentType: 'text/javascript', body: `
     export const USING_SUPABASE = true;
@@ -52,11 +54,33 @@ test('signed-out live visitors get the sign-in form on the landing page', async 
     await route.fulfill({ response, body: (await response.text()).replace(/from (["'])\/src\/utils\/api(?:\.js)?\1/g, 'from "/__home-auth.js"') })
   })
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1, name: /Find your people/ })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: /Less .*what.*plan/ })).toBeVisible()
   await expect(page.getByLabel('Email')).toBeVisible()
-  await expect(page.getByRole('link', { name: /Browse events without signing in/ })).toHaveAttribute('href', '/discover')
+  await expect(page.getByRole('link', { name: /Explore events/ })).toHaveAttribute('href', '/discover')
+  await expect(page.getByRole('heading',{name:'Good plans. Great company.',exact:true})).toBeVisible()
+  await page.getByRole('button',{name:/^Sign up/}).click()
+  await expect(page.getByLabel('Name',{exact:true})).toBeFocused()
+  await page.getByRole('button',{name:'Log in',exact:true}).click()
+  await expect(page.getByLabel('Email',{exact:true})).toBeFocused()
+  await page.getByRole('button',{name:'Create account',exact:true}).first().click()
+  await page.getByRole('button',{name:'Log in',exact:true}).click()
+  await expect(page.getByLabel('Name',{exact:true})).toHaveCount(0)
+  for (const scheme of ['light','dark']) {
+    await page.getByLabel('Color theme').selectOption(scheme)
+    for (const width of [375,575,768,1280]) {
+      await page.setViewportSize({width,height:900})
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
+      await expect(page.locator('main')).toHaveCount(1)
+      await expect(page.getByRole('heading',{level:1})).toHaveCount(1)
+      if (width===375 || width===1280) await page.screenshot({path:testInfo.outputPath(`welcome-${scheme}-${width}.png`),fullPage:true})
+    }
+  }
+  expect(errors).toEqual([])
   await expect(page.locator('.app-topbar').getByRole('link', { name: 'Sign in', exact: true })).toBeVisible()
   await expect(page).toHaveURL(/:\d+\/$/)
+  await page.locator('.app-topbar').getByRole('link',{name:'Sign in',exact:true}).click()
+  await expect(page.getByLabel('Email',{exact:true})).toBeFocused()
+  await expect(page).toHaveURL(/#join-dino$/)
 })
 
 test('old /login links open the landing page and keep where to go next', async ({ page }) => {

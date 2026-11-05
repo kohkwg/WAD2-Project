@@ -23,11 +23,19 @@ export function filterOrganiserEvents(events, { tab = 'upcoming', search = '', s
     return !query || [event.title, event.venue?.name, event.venue?.address, ...(event.tags || [])]
       .some(value => String(value || '').toLowerCase().includes(query))
   }).sort((a, b) => {
+    const firstState = organiserEventState(a, now)
+    const secondState = organiserEventState(b, now)
+    if (tab === 'all') {
+      const groupOrder = { upcoming: 0, past: 1, drafts: 2, cancelled: 3 }
+      const groupDifference = groupOrder[firstState] - groupOrder[secondState]
+      if (groupDifference) return groupDifference
+    }
+    const descending = tab === 'all' ? firstState === 'past' : sort === 'newest'
     const first = Date.parse(a.startTime), second = Date.parse(b.startTime)
     if (!Number.isFinite(first) && Number.isFinite(second)) return 1
     if (Number.isFinite(first) && !Number.isFinite(second)) return -1
     const difference = first - second
-    return (Number.isFinite(difference) ? difference * (sort === 'newest' ? -1 : 1) : 0)
+    return (Number.isFinite(difference) ? difference * (descending ? -1 : 1) : 0)
       || String(a.id).localeCompare(String(b.id))
   })
 }

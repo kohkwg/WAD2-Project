@@ -111,7 +111,7 @@ onUnmounted(() => {
 })
 
 // TODO (Timothy - row-level security): the database should also block other organisers
-const isMyEvent = computed(() => event.value && (event.value.isMine || event.value.organiserId === CURRENT_ORGANISER_ID))
+const isMyEvent = computed(() => event.value && (event.value.isMine || event.value.canManage || event.value.organiserId === CURRENT_ORGANISER_ID))
 
 // ---------- Split RSVPs into the tabs ----------
 

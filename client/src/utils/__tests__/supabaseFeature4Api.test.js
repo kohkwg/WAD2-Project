@@ -51,7 +51,7 @@ test('public feed reads only everyone posts and maps public DTO timestamps', asy
 test('private workspace rejects a non-owner before any private table reads', async () => {
   const client = fakeClient()
   const api = createSupabaseFeature4Api(client, async () => ({ isMine: false }))
-  await assert.rejects(api.getEventOperations('e1'), /Only the event organiser/)
+  await assert.rejects(api.getEventOperations('e1'), /Only event organisers/)
   assert.deepEqual(client.calls, [])
 })
 
@@ -227,4 +227,12 @@ test('permission and validation failures do not reconcile into apparent success'
   const api = createSupabaseFeature4Api(client, async () => ({ isMine: true }))
   await assert.rejects(api.createTask('e1', { requestId: 'denied', title: 'Room' }), /Only the event owner/)
   assert.equal(client.calls.filter(call => call.table === 'tasks').length, 0)
+})
+
+ test('co-organiser can load private operations and save tasks', async () => {
+  const client = fakeClient()
+  const api = createSupabaseFeature4Api(client, async () => ({ isMine: false, canManage: true }))
+  await api.getEventOperations('e1')
+  await api.createTask('e1', { requestId: 'coorg-task', title: 'Room' })
+  assert.ok(client.calls.some(call => call.rpc === 'create_feature4_task'))
 })

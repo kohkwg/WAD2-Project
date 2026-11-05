@@ -5,8 +5,6 @@ import { themePreference, setTheme } from '../lib/theme.js'
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { USING_SUPABASE, getCurrentUser, onAuthChange, signOut, resetDemoData } from '../utils/api.js'
-import { supabase } from '../lib/supabase.js'
-import { profileLabel } from '../lib/profileLabel.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,8 +13,7 @@ const menuToggle = ref(null)
 const user = ref(null)
 const userDino = computed(() => dinoById(user.value?.user_metadata?.dino))
 const hasSession = computed(() => Boolean(user.value))
-// Shows the saved username once it is known; the email's first part until then (and when none is set).
-const accountName = computed(() => profileLabel.value.username || user.value?.email?.split('@')[0] || 'Your account')
+const accountName = computed(() => user.value?.email?.split('@')[0] || 'Your account')
 const signingOut = ref(false)
 const authError = ref('')
 // Categories and Map are views inside Discover (its own links and Map/List switch), so all count as Discover
@@ -51,25 +48,17 @@ const THEME_ICONS = {
 }
 const THEME_CYCLE = { system: { label: 'Auto', next: 'light' }, light: { label: 'Light', next: 'dark' }, dark: { label: 'Dark', next: 'system' } }
 const cycleTheme = () => setTheme(THEME_CYCLE[themePreference.value].next)
-// Looks up the saved username for the sidebar. Quietly keeps the email fallback if it can't.
-async function loadProfileLabel(account) {
-  if (!account || !USING_SUPABASE) { profileLabel.value = { username: '', displayName: '' }; return }
-  try {
-    const { data } = await supabase.from('profiles').select('username, display_name').eq('id', account.id).maybeSingle()
-    if (!disposed && data) profileLabel.value = { username: data.username || '', displayName: data.display_name || '' }
-  } catch { /* the email fallback stays */ }
-}
 // Says the current theme and what a press does, e.g. "Theme: Auto. Switch to Light"
 const themeCycleLabel = computed(() => { const now = THEME_CYCLE[themePreference.value]; return `Theme: ${now.label}. Switch to ${THEME_CYCLE[now.next].label}` })
 let stopListening = () => {}
 let disposed = false
 let authRevision = 0
 onMounted(async () => {
-  stopListening = onAuthChange(nextUser => { authRevision++; user.value = nextUser; loadProfileLabel(nextUser) })
+  stopListening = onAuthChange(nextUser => { authRevision++; user.value = nextUser })
   const revision = authRevision
   try {
     const currentUser = await getCurrentUser()
-    if (!disposed && revision === authRevision) { user.value = currentUser; loadProfileLabel(currentUser) }
+    if (!disposed && revision === authRevision) user.value = currentUser
   } catch { /* Anonymous navigation remains usable when session lookup fails. */ }
 })
 onUnmounted(() => { disposed = true; stopListening() })
@@ -109,7 +98,7 @@ function resetDemo() {
         <li><RouterLink class="side-link" data-label="Community" active-class="active" to="/community"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.community" /></svg><span class="side-label">Community</span></RouterLink></li>
         <template v-if="hasSession">
           <li><RouterLink class="side-link" data-label="My RSVPs" active-class="active" to="/my-rsvps"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg><span class="side-label">My RSVPs</span></RouterLink></li>
-          <li><RouterLink class="side-link" data-label="My Events" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg><span class="side-label">My Events</span></RouterLink></li>
+          <li><RouterLink class="side-link" data-label="My events" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg><span class="side-label">My events</span></RouterLink></li>
         </template>
       </ul>
       <!-- The divider carries the desktop collapse toggle, centred on the sidebar's right edge.
@@ -147,7 +136,7 @@ function resetDemo() {
       <button ref="menuToggle" class="navbar-toggler" type="button" aria-controls="mainNav" :aria-expanded="menuOpen" aria-label="Toggle navigation" @click="menuOpen = !menuOpen"><svg class="toggler-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
       <RouterLink class="topbar-brand" to="/" aria-label="Dino home" translate="no"><img class="brand-symbol" :src="dinoMark" alt="" aria-hidden="true"> Dino</RouterLink>
       <div class="nav-account">
-        <RouterLink v-if="USING_SUPABASE && !hasSession && route.path !== '/'" to="/" class="nav-sign-in">Sign in <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 10h12m-4-4 4 4-4 4"/></svg></RouterLink>
+        <RouterLink v-if="USING_SUPABASE && !hasSession" to="/#join-dino" class="nav-sign-in">Sign in <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 10h12m-4-4 4 4-4 4"/></svg></RouterLink>
         <button v-else-if="!USING_SUPABASE" type="button" class="nav-quiet" @click="resetDemo">Reset demo data</button>
       </div>
     </header>
@@ -158,7 +147,7 @@ function resetDemo() {
     <RouterLink class="bottom-tab" :class="{ active: isOnDiscover }" active-class="" exact-active-class="" to="/discover"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.discover" /></svg>Discover</RouterLink>
     <RouterLink class="bottom-tab" active-class="active" to="/community"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.community" /></svg>Community</RouterLink>
     <RouterLink class="bottom-tab" active-class="active" to="/my-rsvps"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg>My RSVPs</RouterLink>
-    <RouterLink class="bottom-tab" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>My Events</RouterLink>
+    <RouterLink class="bottom-tab" active-class="" :class="{ active: isMyEvents }" to="/organiser/events"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>My events</RouterLink>
   </nav>
 </template>
 

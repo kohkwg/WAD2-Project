@@ -159,7 +159,7 @@ watch(editId, async (id) => {
   try {
     const event = await getEvent(id)
     if (request !== editRequest) return
-    if (!event.isMine) editBlocked.value = 'You can only edit events you organise.'
+    if (!event.isMine && !event.canManage) editBlocked.value = 'You can only edit events you organise.'
     else if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
     else if (!isOfficialEvent(event)) editBlocked.value = 'Groups are managed from their page in Community.'
     else {

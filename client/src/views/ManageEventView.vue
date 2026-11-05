@@ -68,7 +68,7 @@ const errors = reactive({ tasks: '', announcements: '', budget: '', weather: '' 
 const successes = reactive({ tasks: '', announcements: '', budget: '', weather: '' })
 const retries = reactive({ tasks: null, announcements: null, budget: null, weather: null })
 const retryVersions = { tasks: 0, announcements: 0, budget: 0, weather: 0 }
-const isOwner = computed(() => workspace.value?.event.isMine || workspace.value?.event.organiserId === api.CURRENT_ORGANISER_ID)
+const canManage = computed(() => Boolean(workspace.value?.event.isMine || workspace.value?.event.canManage || (!api.USING_SUPABASE && workspace.value?.event.organiserId === api.CURRENT_ORGANISER_ID)))
 let epoch = 0
 let weatherRequest = 0
 const createRequestIds = new WeakMap()
@@ -90,7 +90,7 @@ async function load() {
   finally { if (ticket === epoch) loading.value = false }
 }
 watch(() => route.params.id, load, { immediate: true })
-watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => { if (tab === 'weather' && eventId && isOwner.value && !workspace.value.event.isOnline) refreshWeather() })
+watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => { if (tab === 'weather' && eventId && canManage.value) refreshWeather() })
 onBeforeUnmount(() => { epoch++; weatherRequest++ })
 
 async function refreshEditedEvent() {
@@ -109,7 +109,7 @@ async function refreshEditedEvent() {
 }
 
 async function mutate(tool, action, operation, apply, message) {
-  if (pending[tool] || !isOwner.value) return
+  if (pending[tool] || !canManage.value) return
   const ticket = epoch
   const retryVersion = retryVersions[tool]
   const eventId = String(route.params.id)
@@ -185,17 +185,17 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 
 <template>
 <div class="design-baseline">
-  <RouterLink to="/organiser/events" class="workspace-back">← My Events</RouterLink>
+  <RouterLink to="/organiser/events" class="workspace-back">← My events</RouterLink>
   <p v-if="loading" class="my-5 text-center" role="status">Loading event workspace…</p>
   <div v-dismissible v-else-if="loadError" class="alert alert-danger mt-3" role="alert">{{ loadError }} <button type="button" class="btn btn-sm btn-outline-danger" @click="load">Retry event</button></div>
-  <div v-dismissible v-else-if="workspace && !isOwner" class="alert alert-danger mt-3" role="alert">Only this event’s organiser can manage its tasks, announcements, budget, and weather plan.</div>
+  <div v-dismissible v-else-if="workspace && !canManage" class="alert alert-danger mt-3" role="alert">Only this event’s organisers can use these tools.</div>
   <template v-else-if="workspace">
     <header class="workspace-header mt-3">
       <div class="workspace-title-row"><div class="workspace-title-copy"><p class="workspace-eyebrow">Organiser workspace</p><h1>{{ workspace.event.title }}</h1></div><span class="workspace-mode">{{ api.USING_SUPABASE ? 'Live workspace' : 'Demo workspace' }}</span></div>
       <div class="workspace-overview">
         <div class="overview-item"><span class="overview-label">Event time</span><strong>{{ formatEventTime(workspace.event) }}</strong></div>
         <div class="overview-item"><span class="overview-label">Active venue</span><strong>{{ workspace.event.venue?.name || 'Venue not set' }}</strong><span v-if="workspace.event.usingBackup" class="workspace-mode workspace-mode--success">Backup active</span></div>
-        <details v-if="!workspace.event.isOnline" class="workspace-address"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
+        <details class="workspace-address"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
       </div>
       <div class="workspace-link-groups">
         <div class="workspace-primary-links"><RouterLink class="btn event-cta" :to="'/organiser/events/' + workspace.event.id + '/rsvps'">Manage RSVPs</RouterLink><RouterLink class="btn btn-primary" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink><span class="workspace-publish"><span v-if="publishState === 'draft'" class="workspace-mode">Unpublished</span><span v-else-if="publishState !== 'published'" class="workspace-mode">{{ publishState[0].toUpperCase() + publishState.slice(1) }}</span><button v-if="canTogglePublish" type="button" class="btn" :class="publishState === 'published' ? 'btn-outline-secondary' : 'btn-primary'" :disabled="publishing" @click="togglePublish">{{ publishing ? 'Saving…' : publishState === 'published' ? 'Unpublish' : 'Publish' }}</button></span><span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>

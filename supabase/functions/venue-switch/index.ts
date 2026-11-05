@@ -1,3 +1,4 @@
+import { canManageVenueSwitch } from './switchAccess.mjs'
 import { trustedRainEvidence } from './switchRules.mjs'
 
 const WEATHER_URL = 'https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast'
@@ -81,7 +82,15 @@ Deno.serve(async (req: Request) => {
     if (!eventResult.response.ok) return reply(500, { error: 'Could not load the event for venue switching.' })
     const event = Array.isArray(eventResult.body) ? eventResult.body[0] : null
     if (!event) return reply(404, { error: 'Event not found.' })
-    if (event.organiser_id !== ownerId) return reply(403, { error: 'Only the event owner can switch its venue.' })
+    const allowed = await canManageVenueSwitch(ownerId, event.organiser_id, async () => {
+      const access = await jsonRequest(`${url}/rest/v1/rpc/is_event_organiser`, {
+        method: 'POST',
+        headers: { apikey: anon, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_event_id: body.eventId }),
+      })
+      return access.response.ok && access.body === true
+    })
+    if (!allowed) return reply(403, { error: 'Only event organisers can switch its venue.' })
 
     let evidence = null
     if (!event.using_backup) {
@@ -105,7 +114,7 @@ Deno.serve(async (req: Request) => {
     const result = await jsonRequest(`${url}/rest/v1/rpc/commit_trusted_venue_switch`, {
       method: 'POST',
       headers: rpcHeaders,
-      body: JSON.stringify({ p_event_id: body.eventId, p_owner_id: ownerId, p_evidence: evidence }),
+      body: JSON.stringify({ p_event_id: body.eventId, p_owner_id: event.organiser_id, p_evidence: evidence }),
     })
     if (!result.response.ok) {
       const message = databaseError(result.body, 'The trusted venue switch could not be saved.')

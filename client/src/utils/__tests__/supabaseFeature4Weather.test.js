@@ -13,11 +13,12 @@ const payload = {
   }],
 }
 
-function clientFor({ ownerId = 'user-1', eventError = null, settingError = null, area = null, coordinates = true, invoke = async () => ({ data: null, error: null }) } = {}) {
+function clientFor({ ownerId = 'user-1', organiser = false, eventError = null, settingError = null, area = null, coordinates = true, invoke = async () => ({ data: null, error: null }) } = {}) {
   const calls = []
   const client = {
     auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } }, error: null }) },
     functions: { invoke },
+    rpc: async () => ({ data: organiser, error: null }),
     from(table) {
       calls.push(table)
       const query = {
@@ -58,7 +59,7 @@ test('live event weather derives areas and forecast from one weather response', 
 
 test('live forecast rejects non-owner and setting read failures', async () => {
   const notOwner = createFeature4WeatherAdapter({ client: clientFor({ ownerId: 'someone-else' }).client, fetchData: async () => payload })
-  await assert.rejects(notOwner.getEventForecast('event-1'), /Only the event owner/)
+  await assert.rejects(notOwner.getEventForecast('event-1'), /Only event organisers/)
 
   const { client } = clientFor({ settingError: { message: 'settings denied' } })
   const failedSettings = createFeature4WeatherAdapter({ client, fetchData: async () => payload })
@@ -86,4 +87,9 @@ test('live confirmation surfaces server eligibility errors without changing loca
     data: null, error: { message: 'Edge Function returned a non-2xx status code', context: { json: async () => ({ error: 'The forecast is stale.' }) } },
   }) }).client })
   await assert.rejects(api.confirmBackupVenueSwitch('event-1'), /forecast is stale/i)
+})
+
+test('co-organiser can read event weather through verified membership', async () => {
+  const api = createFeature4WeatherAdapter({ client: clientFor({ ownerId: 'owner', organiser: true }).client, now: () => now, fetchData: async () => payload })
+  assert.equal((await api.getEventWeather('event-1')).forecast.available, true)
 })
