@@ -59,6 +59,14 @@ status. Use the timeline for the latest verified checkpoint and remaining limits
 
 ## Change history
 
+On 5 November 2026, Go together gained friends-only groups, friend invites, join messages, host
+settings and deleting, and a new layout (groups under their event, a "Your groups" strip, a sticky
+bar on the group page). We wrote migration `20261105120000_go_together_friends_invites.sql`,
+`components/community/EventGroupsCard.vue`, and changed `StartGroupDialog.vue`, `GroupCard.vue`,
+`CommunityView.vue`, `GroupView.vue`, `FriendsPanel.vue`, `profileFriends.js` (demo friends),
+`groups.js`, `mockApi.js`, `mockData.js` (seed version 6), `supabaseGroupsApi.js` and `api.js`, with
+tests in `groups.test.js`, `e2e/go-together.spec.js` and `server/checks/groups-db.check.mjs`.
+
 On 4 November 2026, Friends moved from Profile into a side panel in Community, and the Profile
 Groups tab was removed (its hosted tables were left alone). Go together, the group page and My RSVPs
 were restyled with Vivienne's design baseline, and the broken Edit event links now open Manage

@@ -72,13 +72,13 @@ const view = async (id, token = null) => (await query('select public.group_view(
 const list = async () => (await query('select public.group_list() as l'))[0].l;
 const plan = async (id) => (await query('select public.group_plan($1) as p', [id]))[0].p;
 const cell = (base, minutes) => new Date(new Date(base).getTime() + minutes * 60000).toISOString();
-let pub, priv;
+let pub, priv, fo;
 
 await test('starting a group checks the event and the form, and copies time, venue and interests', async () => {
   await asUser(HOST);
   await rejects('select public.create_group($1,$2,$3,$4,$5)', [official.id, '', 9, 'open', 'public'], /2 to 8 spots/);
   await rejects('select public.create_group($1,$2,$3,$4,$5)', [official.id, 'x'.repeat(201), 4, 'open', 'public'], /200 characters/);
-  await rejects('select public.create_group($1,$2,$3,$4,$5)', [official.id, '', 4, 'open', 'secret'], /who can find/);
+  await rejects('select public.create_group($1,$2,$3,$4,$5)', [official.id, '', 4, 'open', 'secret'], /who can see/);
   pub = await create([official.id, 'Meet at the gate', 3, 'open', 'public']);
   await rejects('select public.create_group($1,$2,$3,$4,$5)', [pub, '', 4, 'open', 'public'], /Choose the event/);
   const row = (await query('select kind::text, title, starts_at, ends_at, organiser_id from public.events where id = $1', [pub]))[0];
@@ -122,12 +122,12 @@ await test('private groups need the invite link to be seen or joined', async () 
   await asUser(DAN);
   expect(!(await list()).some((g) => g.id === priv), 'not listed for others');
   expect((await query('select id from public.events where id = $1', [priv])).length === 0, 'event row hidden');
-  await rejects('select public.group_view($1)', [priv], /private/);
+  await rejects('select public.group_view($1)', [priv], /host’s friends/);
   await rejects('select public.group_view(null, $1)', ['nope'], /isn’t valid/);
   const viaLink = await view(null, token);
   expect(viaLink.id === priv && viaLink.viaInvite === true && viaLink.inviteToken === null, 'link shows the group but not the token');
   await rejects('select public.register_for_event($1)', [priv], /invite link/);
-  await rejects('select public.join_group($1)', [priv], /private/);
+  await rejects('select public.join_group($1)', [priv], /host’s friends/);
   expect((await query('select status from public.join_group($1,$2)', [priv, token]))[0].status === 'pending', 'approval group: request is pending');
   const mine = await view(priv);
   expect(mine.myStatus === 'pending' && mine.myRsvpId, 'Dan can see the group while waiting');
@@ -207,6 +207,85 @@ await test('availability: 15-minute cells inside each three-hour side; leavers s
   expect(!p.availability[CARA] && p.members.length === 2, 'Cara left, so her times no longer count');
   await asUser(DAN);
   await rejects('select public.set_group_availability($1,$2,$3)', [pub, 'before', []], /Join the group/);
+});
+
+await test('friends only: the host’s friends see it, others need the link; quick add invites friends only', async () => {
+  await admin();
+  // Hana and Cara are friends; Dan has only asked
+  await query("insert into public.profile_friendships(user_low,user_high,requester_id,status) values (least($1::uuid,$2::uuid),greatest($1::uuid,$2::uuid),$1,'accepted'), (least($1::uuid,$3::uuid),greatest($1::uuid,$3::uuid),$3,'pending')", [HOST, CARA, DAN]);
+  await asUser(HOST);
+  fo = (await query('select public.create_group($1,$2,$3,$4,$5,$6) as id', [official.id, 'Friends only', 4, 'approval', 'private', [CARA, DAN, BOB, HOST]]))[0].id;
+  await admin();
+  const invited = (await query('select user_id from public.group_invites where group_id = $1', [fo])).map((r) => r.user_id);
+  expect(invited.length === 1 && invited[0] === CARA, 'only the accepted friend was invited');
+  await asUser(BOB);
+  expect(!(await list()).some((g) => g.id === fo), 'not listed for someone who is not a friend');
+  await rejects('select public.group_view($1)', [fo], /host’s friends/);
+  await rejects('select public.join_group($1)', [fo], /host’s friends/);
+  await asUser(CARA);
+  const seen = (await list()).find((g) => g.id === fo);
+  expect(seen && seen.hostIsFriend === true && seen.myInvite?.from?.name === 'Hana', 'friend sees it, with the invite');
+});
+
+await test('an invite counts as approval; a join request carries a message the host reads', async () => {
+  await asUser(CARA);
+  const invites = (await query('select public.group_invites_list() as l'))[0].l;
+  expect(invites.length === 1 && invites[0].id === fo && invites[0].group.visibility === 'private', 'invite listed');
+  expect((await query('select status from public.respond_group_invite($1, true)', [fo]))[0].status === 'confirmed', 'accepting joins straight away in an approval group');
+  await rejects('select public.respond_group_invite($1, true)', [fo], /isn’t open/);
+  expect((await query('select public.group_invites_list() as l'))[0].l.length === 0, 'invite gone from the list');
+  // Bob opens the link and asks to join with a message
+  await asUser(HOST);
+  const token = (await view(fo)).inviteToken;
+  await asUser(BOB);
+  await rejects('select public.join_group($1,$2,$3)', [fo, token, 'x'.repeat(201)], /200 characters/);
+  expect((await query('select status from public.join_group($1,$2,$3)', [fo, token, '  Hi, I’m Cara’s classmate  ']))[0].status === 'pending', 'request pending');
+  await asUser(HOST);
+  const req = (await view(fo)).requests;
+  expect(req.length === 1 && req[0].name === 'Bob' && req[0].message === 'Hi, I’m Cara’s classmate' && req[0].rsvpId, 'host sees the message');
+  await asUser(CARA);
+  expect((await view(fo)).requests.length === 0, 'members don’t see requests');
+});
+
+await test('host settings: visibility, who can join, spots and note, with checks', async () => {
+  await asUser(CARA);
+  await rejects('select public.update_group_settings($1,$2,$3,$4,$5)', [fo, 'public', 'open', 4, ''], /Only the host/);
+  await asUser(HOST);
+  await rejects('select public.update_group_settings($1,$2,$3,$4,$5)', [fo, 'public', 'open', 1, ''], /2 to 8/);
+  await rejects('select public.update_group_settings($1,$2,$3,$4,$5)', [fo, 'secret', 'open', 4, ''], /who can see/);
+  await query("update public.registrations set status = 'confirmed' where event_id = $1 and user_id = $2", [fo, BOB]);
+  await rejects('select public.update_group_settings($1,$2,$3,$4,$5)', [fo, 'public', 'open', 2, ''], /3 people are already in/);
+  await query('select public.update_group_settings($1,$2,$3,$4,$5)', [fo, 'public', 'open', 5, ' New note ']);
+  const v = await view(fo);
+  expect(v.visibility === 'public' && v.joinMode === 'open' && v.capacity === 5 && v.note === 'New note' && v.spotsLeft === 2, 'settings saved');
+});
+
+await test('deleting a group removes it and tells its people', async () => {
+  await asUser(HOST);
+  // Dan is invited after becoming a friend, so he gets a notice too
+  await admin();
+  await query("update public.profile_friendships set status = 'accepted' where requester_id = $1", [DAN]);
+  await query("insert into public.group_invites(group_id,user_id,invited_by) values ($1,$2,$3)", [fo, DAN, HOST]);
+  await asUser(CARA);
+  await rejects('select public.delete_group($1)', [fo], /Only the host/);
+  await asUser(HOST);
+  await query('select public.delete_group($1)', [fo]);
+  await admin();
+  expect((await query('select id from public.events where id = $1', [fo])).length === 0, 'group event gone');
+  expect((await query('select 1 from public.group_invites where group_id = $1', [fo])).length === 0, 'invites gone');
+  const told = (await query('select user_id from public.group_notices order by user_id')).map((r) => r.user_id);
+  expect(told.join() === [BOB, CARA, DAN].sort().join(), 'members, requesters and invited people are told; not the host');
+  await asUser(CARA);
+  const notices = (await query('select public.group_notices_list() as l'))[0].l;
+  expect(notices.length === 1 && notices[0].hostName === 'Hana' && notices[0].eventTitle === '[TEST] Jazz night', 'notice text');
+  await query('select public.dismiss_group_notice($1)', [notices[0].id]);
+  expect((await query('select public.group_notices_list() as l'))[0].l.length === 0, 'dismissed');
+  // A host deleting the group's event row directly (organiser rights) also works
+  await asUser(HOST);
+  const direct = await create([official.id, '', 3, 'open', 'public']);
+  await query('delete from public.events where id = $1', [direct]);
+  await admin();
+  expect((await query('select 1 from public.groups where event_id = $1', [direct])).length === 0, 'groups row gone with its event');
 });
 
 await test('deleting the official event removes its groups', async () => {

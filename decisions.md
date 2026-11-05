@@ -1,5 +1,20 @@
 # Decisions
 
+5 November 2026 — Huxley, Go together with friends: every group has two settings shown as badges,
+**who can see it** (Public, or Friends only: the host's friends see it in Community, anyone else
+needs the invite link) and **who can join** (Anyone can join, or Host approves). People asking to
+join can add a message of up to 200 characters, which the host sees with Approve / Decline. When
+starting a group the host can tick friends to invite; invites show at the top of Community, and
+accepting counts as the host's approval (it still needs a free spot). The host can change both
+settings, the spots (not below the people already in) and the note, or delete the group; everyone
+who was in it, asking or invited gets a "group deleted" notice in Community. Community now shows one
+card per event with its groups inside, a "Your groups" strip, and avatar stacks and countdowns; the
+group page has a sticky action bar. Friends work in demo mode with sample friends. Live mode needs
+migration `20261105120000_go_together_friends_invites.sql` (tables `group_invites`,
+`group_join_notes`, `group_notices`; `are_friends()`; updated `_group_can_view`, `_group_summary`,
+`group_view`, `create_group`, `join_group`), checked in PGlite and not yet applied to the hosted
+project. It creates `profile_friendships` only if it is missing.
+
 5 November 2026 — saved events are one journey, adopted after reviewing rendered previews. The
 words are **Save** / **Saved** everywhere: the bookmark reads "Save {event}" / "Remove {event} from
 saved" with the tooltips "Save event" / "Remove from saved". Saving on Discover shows "Saved to your

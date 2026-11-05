@@ -7,6 +7,36 @@ export const CAPACITY_RANGE = { min: 2, max: 8 } // spots in a group, including 
 export const NOTE_LIMIT = 200
 export const SUGGESTION_NAME_LIMIT = 80
 export const VISIBILITIES = ['public', 'private']
+export const JOIN_MODES = ['open', 'approval'] // anyone can join straight away, or the host approves
+export const JOIN_MESSAGE_LIMIT = 200
+// Labels shown as badges on every group
+export const visibilityLabel = (v) => (v === 'private' ? 'Friends only' : 'Public')
+export const joinModeLabel = (m) => (m === 'approval' ? 'Host approves' : 'Anyone can join')
+
+// The host's settings form (visibility, who can join, spots, note); members counts the host
+export function settingsErrors({ visibility, joinMode, capacity, note = '' }, members = 1) {
+  const errors = []
+  if (!VISIBILITIES.includes(visibility)) errors.push({ field: 'visibility', message: 'Choose who can see the group.' })
+  if (!JOIN_MODES.includes(joinMode)) errors.push({ field: 'joinMode', message: 'Choose who can join.' })
+  const spots = Number(capacity)
+  if (!Number.isInteger(spots) || spots < CAPACITY_RANGE.min || spots > CAPACITY_RANGE.max) {
+    errors.push({ field: 'capacity', message: `A group has ${CAPACITY_RANGE.min} to ${CAPACITY_RANGE.max} spots, including you.` })
+  } else if (spots < members) errors.push({ field: 'capacity', message: `${members} people are already in, so keep at least ${members} spots.` })
+  if (String(note).trim().length > NOTE_LIMIT) errors.push({ field: 'note', message: `Keep the note to ${NOTE_LIMIT} characters or fewer.` })
+  return errors
+}
+
+// "Tonight", "Tomorrow", "In 3 days" for a group card
+export function countdownLabel(startTime, now = new Date()) {
+  const start = new Date(startTime)
+  const sg = (d) => new Date(d.getTime() + 8 * 3600e3).toISOString().slice(0, 10)
+  const days = Math.round((new Date(sg(start)) - new Date(sg(now))) / 864e5)
+  if (start <= now) return 'Happening now'
+  if (days === 0) return start - now < 3 * 3600e3 ? `In ${Math.max(1, Math.round((start - now) / 3600e3))}h` : 'Today'
+  if (days === 1) return 'Tomorrow'
+  if (days < 7) return `In ${days} days`
+  return `In ${Math.round(days / 7)} wk`
+}
 // Live events carry only the kind; demo records also have the group field
 export const isGroup = (event) => event?.kind === 'group'
 // A real event people can RSVP to, as opposed to a group (or an older live-mode hangout row).

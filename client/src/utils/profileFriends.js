@@ -1,5 +1,10 @@
+// Friends: live mode uses the profile_friends_* database functions; demo mode uses sample
+// friends in mockApi.js (Alex is friends with Bea and Chen, and Dina has sent a request).
 import { supabase } from './supabase.js'
-export { USING_SUPABASE } from './api.js'
+import { USING_SUPABASE } from './api.js'
+import * as mock from './mockApi.js'
+export { USING_SUPABASE }
+
 async function call(name, params) {
   if (!supabase) throw new Error('Sign in in live mode to use friends.')
   const { data, error } = await supabase.rpc(name, params)
@@ -9,7 +14,8 @@ async function call(name, params) {
   }
   return data
 }
-export const getFriends = () => call('profile_friends_overview')
-export const searchPeople = query => call('search_profile_friends', { p_query: query.trim().replace(/^@/, '').toLowerCase() })
-export const sendRequest = id => call('send_profile_friend_request', { p_user_id: id })
-export const respondToRequest = (id, accept) => call('respond_profile_friend_request', { p_user_id: id, p_accept: accept })
+const clean = (query) => query.trim().replace(/^@/, '').toLowerCase()
+export const getFriends = () => (USING_SUPABASE ? call('profile_friends_overview') : mock.getFriends())
+export const searchPeople = (query) => (USING_SUPABASE ? call('search_profile_friends', { p_query: clean(query) }) : mock.searchFriends(clean(query)))
+export const sendRequest = (id) => (USING_SUPABASE ? call('send_profile_friend_request', { p_user_id: id }) : mock.sendFriendRequest(id))
+export const respondToRequest = (id, accept) => (USING_SUPABASE ? call('respond_profile_friend_request', { p_user_id: id, p_accept: accept }) : mock.respondFriendRequest(id, accept))
