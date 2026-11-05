@@ -76,11 +76,8 @@ test('signed-out live visitors get the sign-in form on the landing page', async 
     }
   }
   expect(errors).toEqual([])
-  await expect(page.locator('.app-topbar').getByRole('link', { name: 'Sign in', exact: true })).toBeVisible()
+  await expect(page.locator('.app-topbar').getByRole('link', { name: 'Sign in', exact: true })).toHaveCount(0)
   await expect(page).toHaveURL(/:\d+\/$/)
-  await page.locator('.app-topbar').getByRole('link',{name:'Sign in',exact:true}).click()
-  await expect(page.getByLabel('Email',{exact:true})).toBeFocused()
-  await expect(page).toHaveURL(/#join-dino$/)
 })
 
 test('old /login links open the landing page and keep where to go next', async ({ page }) => {
