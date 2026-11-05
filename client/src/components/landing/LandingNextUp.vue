@@ -219,10 +219,10 @@ onBeforeUnmount(() => {
 <style scoped>
 .scene-card {
   rotate: -4deg;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 24px;
-  background: var(--bookedz-surface);
-  box-shadow: 8px 8px 0 var(--bookedz-ink);
+  background: var(--dino-surface);
+  box-shadow: 8px 8px 0 var(--dino-ink);
   overflow: hidden;
   transform-style: preserve-3d;
 }
@@ -252,7 +252,7 @@ onBeforeUnmount(() => {
 
 .scene-card-count {
   margin-right: .2rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .7rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -264,16 +264,16 @@ onBeforeUnmount(() => {
   width: 32px;
   height: 32px;
   padding: 0;
-  border: 1.5px solid var(--bookedz-border);
+  border: 1.5px solid var(--dino-border);
   border-radius: 50%;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   cursor: pointer;
-  transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), scale var(--bookedz-motion-fast) var(--bookedz-ease-stamp);
+  transition: background-color var(--dino-motion-fast) var(--dino-ease), scale var(--dino-motion-fast) var(--dino-ease-stamp);
 }
 
 .scene-card-button:hover {
-  background: var(--bookedz-orange-soft);
+  background: var(--dino-orange-soft);
   scale: 1.08;
 }
 
@@ -284,7 +284,7 @@ onBeforeUnmount(() => {
 }
 
 .scene-card-button:focus-visible, .scene-slide-link:focus-visible {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 2px;
 }
 
@@ -306,11 +306,11 @@ onBeforeUnmount(() => {
   position: relative;
   height: 200px;
   overflow: hidden;
-  background: var(--bookedz-surface-muted, var(--bookedz-yellow));
+  background: var(--dino-surface-muted, var(--dino-yellow));
 }
 
 .art-yellow {
-  background: var(--bookedz-yellow);
+  background: var(--dino-yellow);
 }
 
 .scene-card-art img {
@@ -336,7 +336,7 @@ onBeforeUnmount(() => {
   right: 18px;
   top: 15px;
   font-size: 2.8rem;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .scene-tag {
@@ -344,10 +344,10 @@ onBeforeUnmount(() => {
   left: 12px;
   bottom: 12px;
   padding: .25rem .6rem;
-  border: 1.5px solid var(--bookedz-ink);
+  border: 1.5px solid var(--dino-ink);
   border-radius: 99px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font-size: .7rem;
   font-weight: 750;
 }
@@ -376,7 +376,7 @@ onBeforeUnmount(() => {
 }
 
 .scene-card-bottom > span {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .8rem;
   display: -webkit-box;
   -webkit-line-clamp: 1;

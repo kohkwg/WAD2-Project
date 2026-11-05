@@ -307,7 +307,7 @@ function hop(event) {
 .welcome {
   max-width: 1360px;
   margin: 0 auto;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .welcome-nav {
@@ -319,19 +319,19 @@ function hop(event) {
   gap: 1.75rem;
   margin-top: .75rem;
   padding: .45rem .6rem .45rem 1.5rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--bookedz-surface) 82%, transparent);
+  background: color-mix(in srgb, var(--dino-surface) 82%, transparent);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   box-shadow: 0 6px 22px rgba(0,0,0,.06);
-  transition: padding var(--bookedz-motion-normal) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease), background-color var(--bookedz-motion-normal) var(--bookedz-ease);
+  transition: padding var(--dino-motion-normal) var(--dino-ease), box-shadow var(--dino-motion-normal) var(--dino-ease), background-color var(--dino-motion-normal) var(--dino-ease);
 }
 
 .welcome-nav.is-scrolled {
   padding-top: .3rem;
   padding-bottom: .3rem;
-  background: color-mix(in srgb, var(--bookedz-surface) 92%, transparent);
+  background: color-mix(in srgb, var(--dino-surface) 92%, transparent);
   box-shadow: 0 12px 32px rgba(0,0,0,.13);
 }
 
@@ -344,10 +344,10 @@ function hop(event) {
   padding: 0 14px;
   box-sizing: content-box;
   border-radius: 999px;
-  background: var(--bookedz-orange-soft);
+  background: var(--dino-orange-soft);
   opacity: 0;
   pointer-events: none;
-  transition: translate var(--bookedz-motion-reveal) var(--bookedz-ease-stamp), width var(--bookedz-motion-reveal) var(--bookedz-ease-stamp), opacity var(--bookedz-motion-normal) var(--bookedz-ease);
+  transition: translate var(--dino-motion-reveal) var(--dino-ease-stamp), width var(--dino-motion-reveal) var(--dino-ease-stamp), opacity var(--dino-motion-normal) var(--dino-ease);
 }
 
 .nav-pill.is-visible {
@@ -355,7 +355,7 @@ function hop(event) {
 }
 
 .welcome-nav>a,.welcome-login {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: .9rem;
   font-weight: 600;
   text-decoration: none;
@@ -366,11 +366,11 @@ function hop(event) {
   display: flex;
   align-items: center;
   min-height: 44px;
-  transition: color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .welcome-nav>a.is-active {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .welcome-account-actions {
@@ -416,18 +416,18 @@ function hop(event) {
 
 .welcome-eyebrow>span {
   display: inline-block;
-  color: var(--bookedz-primary);
+  color: var(--dino-primary);
   margin-right: .5rem;
 }
 
 .welcome h1 {
-  font: 750 clamp(2.6rem,5.8vw,5.5rem)/1.06 var(--bookedz-heading);
+  font: 750 clamp(2.6rem,5.8vw,5.5rem)/1.06 var(--dino-heading);
   letter-spacing: -.055em;
   margin: 0;
 }
 
 .welcome h1 span,.join-copy h2 span {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .title-accent {
@@ -448,7 +448,7 @@ function hop(event) {
 
 .title-squiggle path {
   fill: none;
-  stroke: var(--bookedz-primary);
+  stroke: var(--dino-primary);
   stroke-width: 5;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
@@ -457,7 +457,7 @@ function hop(event) {
 .welcome-intro {
   max-width: 54ch;
   margin: 1.5rem auto;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 1.12rem;
   line-height: 1.7;
 }
@@ -471,13 +471,13 @@ function hop(event) {
 }
 
 .welcome-text-button {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 650;
 }
 
 .welcome-text-button span {
   display: inline-block;
-  transition: translate var(--bookedz-motion-normal) var(--bookedz-ease-stamp);
+  transition: translate var(--dino-motion-normal) var(--dino-ease-stamp);
 }
 
 .welcome-text-button:hover span {
@@ -485,7 +485,7 @@ function hop(event) {
 }
 
 .welcome-small {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .82rem;
   margin-top: 1rem;
 }
@@ -506,7 +506,7 @@ function hop(event) {
   border-radius: 50%;
   bottom: 1rem;
   left: 5%;
-  background: radial-gradient(ellipse,var(--bookedz-mint),transparent 68%);
+  background: radial-gradient(ellipse,var(--dino-mint),transparent 68%);
   opacity: .55;
 }
 
@@ -548,11 +548,11 @@ function hop(event) {
   left: 50%;
   translate: -50% 0;
   padding: .25rem .65rem;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 14px 14px 14px 4px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
-  font: 750 .85rem var(--bookedz-heading);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
+  font: 750 .85rem var(--dino-heading);
   opacity: 0;
   pointer-events: none;
 }
@@ -571,9 +571,9 @@ function hop(event) {
   position: absolute;
   z-index: 2;
   padding: .8rem 1rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   font-size: .85rem;
   box-shadow: 0 6px 18px #00000009;
 }
@@ -585,7 +585,7 @@ function hop(event) {
 }
 
 .note-one>span {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   margin-right: .4rem;
 }
 
@@ -600,7 +600,7 @@ function hop(event) {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--bookedz-success);
+  background: var(--dino-success);
   margin-right: .4rem;
 }
 
@@ -616,13 +616,13 @@ function hop(event) {
 }
 
 .welcome h2 {
-  font: 700 clamp(2rem,3.6vw,3.3rem)/1.12 var(--bookedz-heading);
+  font: 700 clamp(2rem,3.6vw,3.3rem)/1.12 var(--dino-heading);
   letter-spacing: -.04em;
   margin: 0 0 1.2rem;
 }
 
 .welcome-section-head>p:last-child,.welcome-feature>p,.welcome-steps p,.welcome-host p:not(.welcome-eyebrow),.join-copy>p:last-of-type {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   line-height: 1.7;
 }
 
@@ -633,23 +633,23 @@ function hop(event) {
 }
 
 .welcome-feature {
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 24px;
   padding: 1.7rem;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   min-width: 0;
 }
 
 .feature-peach {
-  background: color-mix(in srgb,var(--bookedz-peach) 40%,var(--bookedz-surface));
+  background: color-mix(in srgb,var(--dino-peach) 40%,var(--dino-surface));
 }
 
 .feature-mint {
-  background: color-mix(in srgb,var(--bookedz-mint) 30%,var(--bookedz-surface));
+  background: color-mix(in srgb,var(--dino-mint) 30%,var(--dino-surface));
 }
 
 .feature-yellow {
-  background: color-mix(in srgb,var(--bookedz-yellow) 30%,var(--bookedz-surface));
+  background: color-mix(in srgb,var(--dino-yellow) 30%,var(--dino-surface));
 }
 
 .feature-top {
@@ -672,7 +672,7 @@ function hop(event) {
 }
 
 .welcome h3 {
-  font: 650 1.3rem/1.25 var(--bookedz-heading);
+  font: 650 1.3rem/1.25 var(--dino-heading);
   letter-spacing: -.025em;
 }
 
@@ -683,10 +683,10 @@ function hop(event) {
 
 @media (hover:hover) and (pointer:fine) {
   .welcome-feature {
-    transition: translate var(--bookedz-motion-normal) var(--bookedz-ease), rotate var(--bookedz-motion-normal) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease);
+    transition: translate var(--dino-motion-normal) var(--dino-ease), rotate var(--dino-motion-normal) var(--dino-ease), box-shadow var(--dino-motion-normal) var(--dino-ease);
   }
   .welcome-feature img,.feature-arrow {
-    transition: translate var(--bookedz-motion-reveal) var(--bookedz-ease-stamp), scale var(--bookedz-motion-reveal) var(--bookedz-ease-stamp), rotate var(--bookedz-motion-reveal) var(--bookedz-ease-stamp);
+    transition: translate var(--dino-motion-reveal) var(--dino-ease-stamp), scale var(--dino-motion-reveal) var(--dino-ease-stamp), rotate var(--dino-motion-reveal) var(--dino-ease-stamp);
   }
   .welcome-feature:hover {
     translate: 0 -6px;
@@ -708,7 +708,7 @@ function hop(event) {
   grid-template-columns: 1fr 1.3fr;
   gap: 3rem;
   padding: 2rem;
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
 }
 
 .welcome-how-intro>img {
@@ -728,7 +728,7 @@ function hop(event) {
   display: flex;
   gap: 1.3rem;
   padding: 1.5rem 0;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 .welcome-steps li>span {
@@ -738,7 +738,7 @@ function hop(event) {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--bookedz-peach);
+  background: var(--dino-peach);
   font-size: .85rem;
   font-weight: 700;
 }
@@ -753,10 +753,10 @@ function hop(event) {
   grid-template-columns: 1.1fr 1fr;
   gap: 3rem;
   padding: clamp(1.5rem,4vw,4rem);
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 30px;
-  background: linear-gradient(120deg,var(--bookedz-peach),var(--bookedz-yellow));
-  box-shadow: 7px 7px 0 var(--bookedz-ink);
+  background: linear-gradient(120deg,var(--dino-peach),var(--dino-yellow));
+  box-shadow: 7px 7px 0 var(--dino-ink);
 }
 
 .welcome-host p:not(.welcome-eyebrow) {
@@ -778,8 +778,8 @@ function hop(event) {
 }
 
 .host-notes>span {
-  background: var(--bookedz-surface);
-  border: 1px solid var(--bookedz-border);
+  background: var(--dino-surface);
+  border: 1px solid var(--dino-border);
   border-radius: 999px;
   padding: .6rem .9rem;
   font-size: .84rem;
@@ -787,7 +787,7 @@ function hop(event) {
 
 .host-check {
   display: inline-block;
-  color: var(--bookedz-success);
+  color: var(--dino-success);
   font-weight: 800;
 }
 
@@ -822,7 +822,7 @@ function hop(event) {
 }
 
 .welcome :is(a,button):focus-visible {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 4px;
 }
 

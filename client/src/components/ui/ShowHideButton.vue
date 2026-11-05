@@ -43,30 +43,30 @@ defineProps({
   gap: .4rem;
   min-height: 44px;
   padding: .4rem .9rem;
-  border: 2px solid var(--bookedz-control-border);
+  border: 2px solid var(--dino-control-border);
   border-radius: 999px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font-size: .88rem;
   font-weight: 700;
   white-space: nowrap;
-  transition: background-color var(--bookedz-motion-fast, 150ms) ease, border-color var(--bookedz-motion-fast, 150ms) ease;
+  transition: background-color var(--dino-motion-fast, 150ms) ease, border-color var(--dino-motion-fast, 150ms) ease;
 }
 
 .show-hide:hover {
-  border-color: var(--bookedz-ink);
-  background: var(--bookedz-hover);
+  border-color: var(--dino-ink);
+  background: var(--dino-hover);
 }
 
 .show-hide:focus-visible {
-  outline: 3px solid var(--bookedz-focus);
+  outline: 3px solid var(--dino-focus);
   outline-offset: 2px;
 }
 
 .show-hide-chevron {
   width: 18px;
   height: 18px;
-  transition: transform var(--bookedz-motion-fast, 150ms) ease;
+  transition: transform var(--dino-motion-fast, 150ms) ease;
 }
 
 .show-hide[aria-expanded='true'] .show-hide-chevron {

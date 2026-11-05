@@ -69,14 +69,14 @@ function avatarFailed(src) {
 <style scoped>
 /* A slim line in the event banner: "Hosted by" and a chip per host */
 .event-hosts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 14px; }
-.hosts-label { color: var(--bookedz-muted, #6b5d52); font-size: .85rem; font-weight: 600; }
+.hosts-label { color: var(--dino-muted, #6b5d52); font-size: .85rem; font-weight: 600; }
 .hosts-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.host { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; padding: 3px 10px 3px 3px; border: 1px solid var(--bookedz-border, #e9ded3); border-radius: 99px; background: color-mix(in srgb, var(--bookedz-surface, #fff) 70%, transparent); font-size: .85rem; }
-.host-avatar { display: grid; place-items: center; flex: none; overflow: hidden; width: 26px; height: 26px; border-radius: 50%; background: var(--bookedz-orange-soft, #fde3d3); color: var(--bookedz-primary-dark, #b5471b); font-size: .66rem; font-weight: 800; }
+.host { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; padding: 3px 10px 3px 3px; border: 1px solid var(--dino-border, #e9ded3); border-radius: 99px; background: color-mix(in srgb, var(--dino-surface, #fff) 70%, transparent); font-size: .85rem; }
+.host-avatar { display: grid; place-items: center; flex: none; overflow: hidden; width: 26px; height: 26px; border-radius: 50%; background: var(--dino-orange-soft, #fde3d3); color: var(--dino-primary-dark, #b5471b); font-size: .66rem; font-weight: 800; }
 .host-avatar img { width: 100%; height: 100%; object-fit: cover; }
 /* A dino shows whole, not cropped to the circle */
 .host-avatar.has-dino { overflow: visible; background: none; }
 .host-avatar.has-dino img { object-fit: contain; }
-.host-name { font-weight: 700; color: var(--bookedz-ink, #2b2118); overflow-wrap: anywhere; }
-.host-handle { color: var(--bookedz-muted, #6b5d52); overflow-wrap: anywhere; }
+.host-name { font-weight: 700; color: var(--dino-ink, #2b2118); overflow-wrap: anywhere; }
+.host-handle { color: var(--dino-muted, #6b5d52); overflow-wrap: anywhere; }
 </style>

@@ -1,22 +1,18 @@
-# Bookedz
+# Dino
 
 SMU IS216 Web Application Development II, group project (G2).
 
 Small events in Singapore are hard to find and hard to run. Details sit in chat groups, people
 have no one to go with, and organisers juggle separate tools for RSVPs, tasks, budgets and the
-weather. Bookedz puts this in one web app: participants discover events, RSVP, join waitlists,
+weather. Dino puts this in one web app: participants discover events, RSVP, join waitlists,
 find people to go with and check in with a ticket; organisers create events, manage RSVPs and run
 the day from one workspace.
-
-**Name:** the repository, the documents, the CSS tokens (`--bookedz-*`) and the storage keys
-(`bookedz-*`) use **Bookedz**. The app itself shows **Dino**: the page title, the logo word and
-the names of the brand links.
 
 ## Submission details
 
 | Item | Details |
 | --- | --- |
-| Git repository | <https://github.com/kohkwg/WAD2-Project> (public), branch `dev` |
+| Git repository | <https://github.com/kohkwg/WAD2-Project> (public), branch `main` |
 | Hosted application | None. Run the app locally: [set up and run](#set-up-and-run) |
 | First page when running | <http://127.0.0.1:5173/> |
 | Accounts | Demo mode needs none. Live mode: [accounts](#accounts) |
@@ -28,7 +24,7 @@ desktop.
 
 ## How the project meets the requirements
 
-| Requirement | How Bookedz meets it |
+| Requirement | How Dino meets it |
 | --- | --- |
 | Identify and solve a problem | Finding, joining and running small events ([features](#features)) |
 | HTML, CSS and JavaScript, with a framework | Vue 3 Composition API, Vue Router and Bootstrap 5 |
@@ -109,7 +105,7 @@ places.
 You need **Node 22** and **pnpm**. From a terminal:
 
 ```bash
-git clone --branch dev https://github.com/kohkwg/WAD2-Project.git
+git clone --branch main https://github.com/kohkwg/WAD2-Project.git
 cd WAD2-Project
 pnpm --dir client install --frozen-lockfile --ignore-scripts
 pnpm --dir server install --frozen-lockfile --ignore-scripts
@@ -202,15 +198,23 @@ npm --prefix server run check
 On Windows, use the first command above instead of `pnpm --dir client test:unit`: that script sets
 `NODE_ENV` in a way the Windows command prompt does not accept.
 
-**Live tests** (`pnpm --dir client test:e2e:live`) use the hosted project, need a person to sign in
-and write temporary `[TEST]` data. [docs/testing.md](docs/testing.md) explains them, along with the
-database checks.
+### Database checks
+
+The checks in `server/checks/` apply the SQL migrations to a temporary in-memory PostgreSQL
+([PGlite](https://github.com/electric-sql/pglite)) and test the row-level security and database
+functions. They never connect to the hosted project. Install PGlite once in a folder outside the
+repository, then pass its path:
+
+```bash
+mkdir -p /tmp/pglite && npm --prefix /tmp/pglite install @electric-sql/pglite
+node server/checks/groups-db.check.mjs /tmp/pglite/node_modules/@electric-sql/pglite/dist/index.js
+```
+
+Replace `groups-db` with any other `*.check.mjs` file in `server/checks/`.
 
 ### Latest results and known limits
 
-- **End-to-end (6 November 2026):** 99 passed, 0 failed, 0 skipped on a demo server. This followed
-  the removal of 82 outdated tests, which include some that may have found real problems. The
-  [status timeline](docs/status.md) lists them.
+- **End-to-end (6 November 2026):** 99 passed, 0 failed, 0 skipped on a demo server.
 - **Unit and route tests:** the complete suites have not been re-run since the 6 November cleanup,
   and some tests are known to fail. Two of the three cases in `server/tests/hangoutsRoute.test.js`
   fail because `/api/hangouts` imports a client file that was deleted; these routes belonged to the
@@ -225,13 +229,12 @@ database checks.
 
 ```text
 client/      Vue app: src/views (pages), src/components, src/router, src/utils (demo and live
-             data adapters), src/lib, e2e (Playwright), e2e-live (tests against the hosted
-             project), tests (Node tests)
+             data adapters), src/lib, e2e (Playwright), tests (Node tests)
 server/      Express API: routes, services, lib, tests, checks (isolated database checks)
              and scripts
 supabase/    SQL migrations, sample-event seed, the venue-switch Edge Function and SQL tests
-docs/        Project documentation (below), SQL drafts (docs/sql) and test fixtures (docs/testing)
-AGENTS.md    Rules for AI coding agents working in this repository
+docs/sql/    SQL for tables the hosted project added outside the migrations (used by the
+             database checks)
 ```
 
 ### Pages
@@ -251,19 +254,6 @@ AGENTS.md    Rules for AI coding agents working in this repository
 | `/organiser/events/:eventId/floor-plan` | Floor-plan editor (live mode only) | Yes |
 | `/events/:eventId/ticket`, `/events/:eventId/check-in` | Your ticket; venue self check-in | Yes |
 | `/organiser/events/:eventId/check-in`, `/venue-qr`, `/attendance` | Staff check-in station, venue QR, attendance | Yes |
-
-## Documentation
-
-| Document | What it covers |
-| --- | --- |
-| [Design](docs/design/DESIGN.md) | How the app looks, reads and behaves: tokens, components, pages, motion, accessibility |
-| [Status](docs/status.md) | What has been delivered and how it was checked, newest first |
-| [Decisions](docs/decisions.md) | Who decided what, and the technical contracts |
-| [Testing](docs/testing.md) | Commands, environments, live tests and known limits |
-| [Change history](docs/changelog.md) | What changed, who requested it and who wrote it |
-| [Contributing](docs/contributing.md) | Owners, branches, pull requests and design rules |
-| [Recommendation design](docs/recommendation-design.md) | How recommendations are scored |
-| [Asset register](docs/design/assets.md) | Where images, fonts and map data came from |
 
 ## Credits and licences
 
@@ -300,19 +290,11 @@ AGENTS.md    Rules for AI coding agents working in this repository
 **Maps and data:** map tiles, address search and routes from [OneMap](https://www.onemap.gov.sg/)
 © OneMap contributors | Singapore Land Authority, attributed on every map; weather forecasts from
 the National Environment Agency via [data.gov.sg](https://data.gov.sg/); nearby places from
-[Geoapify](https://www.geoapify.com/). The repository also keeps a coastline file from
-[Natural Earth](https://www.naturalearthdata.com/) (public domain); no page draws it now.
-
-**Images:** the Singapore island illustrations and their edits are recorded with their sources
-and prompts in the [asset register](docs/design/assets.md). The repository keeps them, but no page
-shows them now. The dino character art in
-`client/src/assets/dinos/` and `client/src/assets/brand/` was added by Vivienne; its source is
-not yet recorded in the asset register.
+[Geoapify](https://www.geoapify.com/).
 
 ## AI use
 
-The team used an AI coding assistant. The [change history](docs/changelog.md) records each piece of
-work it wrote, who asked for it and when. It records the assistant writing these parts:
+The team used an AI coding assistant for these parts:
 
 - **Feature 4:** the first version of tasks, announcements, budget and weather, and the live
   preparation of Feature 4 and the rain venue switch.

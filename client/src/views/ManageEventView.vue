@@ -606,18 +606,18 @@ function switchVenue(action) {
 /* unpublish sits on the coloured header, so give it a solid face and full-strength text */
 
 .workspace-publish .btn.workspace-unpublish {
-  --bs-btn-bg: var(--bookedz-surface);
-  --bs-btn-color: var(--bookedz-ink);
-  --bs-btn-border-color: var(--bookedz-ink);
-  --bs-btn-hover-bg: var(--bookedz-hover);
-  --bs-btn-hover-color: var(--bookedz-ink);
-  --bs-btn-hover-border-color: var(--bookedz-ink);
-  --bs-btn-active-bg: var(--bookedz-hover);
-  --bs-btn-active-color: var(--bookedz-ink);
-  --bs-btn-active-border-color: var(--bookedz-ink);
-  --bs-btn-disabled-bg: var(--bookedz-surface);
-  --bs-btn-disabled-color: var(--bookedz-muted);
-  --bs-btn-disabled-border-color: var(--bookedz-control-border);
+  --bs-btn-bg: var(--dino-surface);
+  --bs-btn-color: var(--dino-ink);
+  --bs-btn-border-color: var(--dino-ink);
+  --bs-btn-hover-bg: var(--dino-hover);
+  --bs-btn-hover-color: var(--dino-ink);
+  --bs-btn-hover-border-color: var(--dino-ink);
+  --bs-btn-active-bg: var(--dino-hover);
+  --bs-btn-active-color: var(--dino-ink);
+  --bs-btn-active-border-color: var(--dino-ink);
+  --bs-btn-disabled-bg: var(--dino-surface);
+  --bs-btn-disabled-color: var(--dino-muted);
+  --bs-btn-disabled-border-color: var(--dino-control-border);
   border-width: 2px;
   font-weight: 700;
 }
@@ -627,7 +627,7 @@ function switchVenue(action) {
   align-items: center;
   min-height: 44px;
   padding: 0 .5rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-weight: 600;
   text-decoration: none;
 }
@@ -635,10 +635,10 @@ function switchVenue(action) {
 .workspace-header {
   padding: clamp(1.15rem, 3vw, 2rem);
   margin-bottom: 1.25rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1.25rem;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .workspace-title-row {
@@ -655,14 +655,14 @@ function switchVenue(action) {
 
 .workspace-eyebrow {
   margin: 0 0 .35rem;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-size: .78rem;
   font-weight: 700;
 }
 
 .workspace-header h1 {
   margin: 0;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: clamp(1.55rem, 3vw, 2.2rem);
   font-weight: 700;
   letter-spacing: -.04em;
@@ -674,18 +674,18 @@ function switchVenue(action) {
   align-items: center;
   min-height: 30px;
   padding: .25rem .65rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 99px;
-  background: var(--bookedz-glass-solid);
-  color: var(--bookedz-muted);
+  background: var(--dino-glass-solid);
+  color: var(--dino-muted);
   font-size: .75rem;
   font-weight: 650;
   white-space: nowrap;
 }
 
 .workspace-mode--success {
-  border-color: var(--bookedz-success);
-  color: var(--bookedz-success);
+  border-color: var(--dino-success);
+  color: var(--dino-success);
 }
 
 /* event time, active venue and venue address share the row equally (stacked on small screens) */
@@ -704,17 +704,17 @@ function switchVenue(action) {
   min-width: 0;
   padding: .8rem .9rem;
   border-radius: .85rem;
-  background: var(--bookedz-glass-solid);
+  background: var(--dino-glass-solid);
 }
 
 .overview-label {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .74rem;
   font-weight: 650;
 }
 
 .overview-item strong {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: .9rem;
   overflow-wrap: anywhere;
 }
@@ -734,7 +734,7 @@ function switchVenue(action) {
   gap: .75rem 1.25rem;
   padding-top: 1rem;
   margin-top: 1rem;
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
 }
 
 .workspace-primary-links {
@@ -753,7 +753,7 @@ function switchVenue(action) {
 }
 
 .workspace-save-note {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .8rem;
 }
 
@@ -785,12 +785,12 @@ function switchVenue(action) {
   gap: 1rem;
   padding: .2rem 0 1rem;
   margin-bottom: 1.25rem;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 :deep(.tool-heading h2) {
   margin: 0;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: clamp(1.45rem, 2.5vw, 1.8rem);
   font-weight: 700;
   letter-spacing: -.035em;
@@ -799,7 +799,7 @@ function switchVenue(action) {
 :deep(.tool-description) {
   max-width: 44rem;
   margin: .35rem 0 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 :deep(.tool-heading .btn) {
@@ -808,14 +808,14 @@ function switchVenue(action) {
 
 :deep(.workspace-panel) {
   padding: clamp(1rem, 2vw, 1.35rem);
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1rem;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 :deep(.section-heading) {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 700;
 }
 

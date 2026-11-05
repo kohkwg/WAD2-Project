@@ -85,10 +85,10 @@ onBeforeUnmount(() => {
   height: fit-content;
   max-height: calc(100dvh - 2rem);
   margin: auto;
-  border: 1px solid var(--bookedz-border, #e9ded3) !important;
+  border: 1px solid var(--dino-border, #e9ded3) !important;
   border-radius: 20px;
-  color: var(--bookedz-ink);
-  background: var(--bookedz-surface, #ffffff);
+  color: var(--dino-ink);
+  background: var(--dino-surface, #ffffff);
 }
 
 .confirmation::backdrop {

@@ -195,7 +195,7 @@ onBeforeUnmount(() => {
 }
 
 .card {
-  border-color: var(--bookedz-border, #e9ded3);
+  border-color: var(--dino-border, #e9ded3);
   border-radius: 18px;
   background: #ffffff;
 }
@@ -211,7 +211,7 @@ separators sit between posts */
 
 .post+.post {
   margin-top: .5rem;
-  box-shadow: 0 -1px 0 var(--bookedz-border, #e9ded3);
+  box-shadow: 0 -1px 0 var(--dino-border, #e9ded3);
 }
 
 .post.is-new,
@@ -225,15 +225,15 @@ separators sit between posts */
 }
 
 .post.is-new {
-  background: color-mix(in srgb, var(--bookedz-mint, #d8f3e6) 35%, transparent);
+  background: color-mix(in srgb, var(--dino-mint, #d8f3e6) 35%, transparent);
 }
 
 .post.is-edited {
-  background: color-mix(in srgb, var(--bookedz-mango, #fde7b0) 45%, transparent);
+  background: color-mix(in srgb, var(--dino-mango, #fde7b0) 45%, transparent);
 }
 
 .new-badge {
-  background: var(--bookedz-primary-dark, #b5471b);
+  background: var(--dino-primary-dark, #b5471b);
   color: #fff;
   font-weight: 650;
 }

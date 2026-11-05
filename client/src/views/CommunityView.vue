@@ -661,7 +661,7 @@ function showEventGroups(eventId) {
 .community-lede {
   margin: 8px 0 0;
   max-width: 46ch;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .community-hero-actions {
@@ -686,14 +686,14 @@ function showEventGroups(eventId) {
   align-items: stretch;
   gap: 6px;
   padding: 5px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 999px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .community-search-bar:focus-within {
-  border-color: var(--bookedz-fill);
-  box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--bookedz-fill) 28%, transparent);
+  border-color: var(--dino-fill);
+  box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--dino-fill) 28%, transparent);
 }
 
 .community-search-field {
@@ -711,7 +711,7 @@ function showEventGroups(eventId) {
   width: 18px;
   height: 18px;
   fill: none;
-  stroke: var(--bookedz-muted);
+  stroke: var(--dino-muted);
   stroke-width: 2;
   stroke-linecap: round;
 }
@@ -722,7 +722,7 @@ function showEventGroups(eventId) {
   min-height: 40px;
   border: 0;
   background: transparent;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: var(--text-small);
   outline: none;
 }
@@ -734,10 +734,10 @@ function showEventGroups(eventId) {
   gap: 6px;
   min-height: 44px;
   padding: 0 16px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 999px;
-  background: var(--bookedz-orange-soft);
-  color: var(--bookedz-ink);
+  background: var(--dino-orange-soft);
+  color: var(--dino-ink);
   font-weight: 700;
 }
 
@@ -751,8 +751,8 @@ function showEventGroups(eventId) {
 }
 
 .community-filter-toggle.is-active {
-  background: var(--bookedz-fill);
-  color: var(--bookedz-on-fill);
+  background: var(--dino-fill);
+  color: var(--dino-on-fill);
 }
 
 .community-filter-count {
@@ -762,8 +762,8 @@ function showEventGroups(eventId) {
   height: 20px;
   padding: 0 5px;
   border-radius: 99px;
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
   font-size: .75rem;
 }
 
@@ -776,10 +776,10 @@ function showEventGroups(eventId) {
   gap: 6px;
   width: min(100%, 22rem);
   padding: 12px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 20px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-neutral-shadow-hover);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-neutral-shadow-hover);
 }
 
 .community-filter-option {
@@ -789,22 +789,22 @@ function showEventGroups(eventId) {
   gap: 10px;
   min-height: 44px;
   padding: 8px 14px;
-  border: 2px solid var(--bookedz-control-border);
+  border: 2px solid var(--dino-control-border);
   border-radius: 99px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font-weight: 700;
   text-align: left;
 }
 
 .community-filter-option:hover {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .community-filter-option[aria-pressed='true'] {
-  background: var(--bookedz-fill);
-  border-color: var(--bookedz-ink);
-  color: var(--bookedz-on-fill);
+  background: var(--dino-fill);
+  border-color: var(--dino-ink);
+  color: var(--dino-on-fill);
 }
 
 .community-filter-option-count {
@@ -820,7 +820,7 @@ function showEventGroups(eventId) {
   align-items: center;
   gap: 4px;
   margin: 8px 0 0 14px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: var(--text-small);
 }
 
@@ -834,11 +834,11 @@ function showEventGroups(eventId) {
 :root[data-theme="dark"] .community-filter-toggle,
 :root[data-theme="dark"] .community-filter-panel,
 :root[data-theme="dark"] .community-switch {
-  border-color: color-mix(in srgb, var(--bookedz-ink) 75%, var(--bookedz-surface));
+  border-color: color-mix(in srgb, var(--dino-ink) 75%, var(--dino-surface));
 }
 
 :root[data-theme="dark"] .community-filter-option[aria-pressed='true'] {
-  border-color: var(--bookedz-fill);
+  border-color: var(--dino-fill);
 }
 
 /* phones and tablets: the groups | friends switch, and start a group popping in beside it in groups mode */
@@ -856,9 +856,9 @@ function showEventGroups(eventId) {
   display: inline-grid;
   grid-template-columns: 1fr 1fr;
   padding: 3px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 99px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .community-switch button {
@@ -874,14 +874,14 @@ function showEventGroups(eventId) {
   border: 0;
   border-radius: 99px;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: var(--text-small);
   font-weight: 700;
-  transition: color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .community-switch button[aria-pressed='true'] {
-  color: var(--bookedz-on-fill);
+  color: var(--dino-on-fill);
 }
 
 .community-switch svg {
@@ -901,8 +901,8 @@ function showEventGroups(eventId) {
   left: 3px;
   width: calc(50% - 3px);
   border-radius: 99px;
-  background: var(--bookedz-fill);
-  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp);
+  background: var(--dino-fill);
+  transition: transform var(--dino-motion-normal) var(--dino-ease-stamp);
 }
 
 .community-switch.is-friends .community-switch-thumb {
@@ -915,7 +915,7 @@ function showEventGroups(eventId) {
 }
 
 .pop-in-enter-active, .pop-in-leave-active {
-  transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease), transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp);
+  transition: opacity var(--dino-motion-fast) var(--dino-ease), transform var(--dino-motion-normal) var(--dino-ease-stamp);
 }
 
 .pop-in-enter-from, .pop-in-leave-to {
@@ -939,14 +939,14 @@ function showEventGroups(eventId) {
   align-items: center;
   gap: 8px;
   margin: 0 0 10px;
-  font: 900 1.15rem var(--bookedz-heading);
+  font: 900 1.15rem var(--dino-heading);
 }
 
 .community-count {
   padding: 0 8px;
   border-radius: 99px;
-  background: var(--bookedz-fill);
-  color: var(--bookedz-on-fill);
+  background: var(--dino-fill);
+  color: var(--dino-on-fill);
   font-size: .8rem;
 }
 
@@ -964,22 +964,22 @@ function showEventGroups(eventId) {
   gap: 10px;
   margin: 0;
   padding: 10px 14px;
-  border: 2px dashed var(--bookedz-control-border);
+  border: 2px dashed var(--dino-control-border);
   border-radius: 16px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .community-invites {
   margin-bottom: 22px;
   padding: 16px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 24px;
-  background: color-mix(in srgb, var(--bookedz-pink) 12%, var(--bookedz-surface));
-  box-shadow: 6px 6px 0 var(--bookedz-pink);
+  background: color-mix(in srgb, var(--dino-pink) 12%, var(--dino-surface));
+  box-shadow: 6px 6px 0 var(--dino-pink);
 }
 
 :root[data-theme="dark"] .community-invites {
-  border-color: var(--bookedz-border);
+  border-color: var(--dino-border);
 }
 
 .community-invite-list {
@@ -995,7 +995,7 @@ function showEventGroups(eventId) {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 16px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .community-invite-actions {
@@ -1025,13 +1025,13 @@ function showEventGroups(eventId) {
   gap: 2px;
   margin-top: 8px;
   padding: 8px 10px;
-  border: 2px dashed var(--bookedz-control-border);
+  border: 2px dashed var(--dino-control-border);
   border-radius: 14px;
-  background: var(--bookedz-orange-soft, transparent);
+  background: var(--dino-orange-soft, transparent);
 }
 
 .community-attached-label {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .72rem;
   font-weight: 800;
   letter-spacing: .06em;
@@ -1041,12 +1041,12 @@ function showEventGroups(eventId) {
 .community-attached-link {
   display: grid;
   gap: 1px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   text-decoration: none;
 }
 
 .community-attached-link span {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .82rem;
 }
 
@@ -1059,59 +1059,59 @@ function showEventGroups(eventId) {
   gap: 4px;
   height: 100%;
   padding: 12px 14px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 20px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   text-decoration: none;
-  box-shadow: 4px 4px 0 var(--bookedz-mango);
-  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease);
+  box-shadow: 4px 4px 0 var(--dino-mango);
+  transition: transform var(--dino-motion-normal) var(--dino-ease);
 }
 
 /* tiles open something, so in dark mode they get a bright edge that turns orange on hover */
 
 :root[data-theme="dark"] .community-tile {
-  border-color: color-mix(in srgb, var(--bookedz-ink) 60%, var(--bookedz-surface));
+  border-color: color-mix(in srgb, var(--dino-ink) 60%, var(--dino-surface));
 }
 
 :root[data-theme="dark"] .community-tile:hover {
-  border-color: var(--bookedz-fill);
+  border-color: var(--dino-fill);
 }
 
 .community-tile:hover {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   transform: translate(-1px, -2px);
 }
 
 .community-tile.is-alert {
-  box-shadow: 4px 4px 0 var(--bookedz-fill);
+  box-shadow: 4px 4px 0 var(--dino-fill);
 }
 
 .community-tile-when {
   justify-self: start;
   padding: 1px 8px;
   border-radius: 99px;
-  background: var(--bookedz-mango-soft);
+  background: var(--dino-mango-soft);
   font-size: .72rem;
   font-weight: 800;
 }
 
 .community-tile-title {
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   overflow-wrap: anywhere;
 }
 
 .community-tile-meta {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .82rem;
 }
 
 .community-event-tile {
-  box-shadow: 4px 4px 0 var(--bookedz-teal);
+  box-shadow: 4px 4px 0 var(--dino-teal);
 }
 
 .community-event-tile .community-tile-title {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   text-decoration: none;
 }
 
@@ -1134,16 +1134,16 @@ function showEventGroups(eventId) {
   justify-self: start;
   margin-top: 2px;
   padding: 2px 9px;
-  border: 1.5px solid var(--bookedz-control-border);
+  border: 1.5px solid var(--dino-control-border);
   border-radius: 99px;
   font-size: .74rem;
   font-weight: 700;
 }
 
 .community-tile.is-alert .community-tile-chip {
-  border-color: var(--bookedz-fill);
-  background: var(--bookedz-orange-soft);
-  color: var(--bookedz-primary-dark);
+  border-color: var(--dino-fill);
+  background: var(--dino-orange-soft);
+  color: var(--dino-primary-dark);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1157,13 +1157,13 @@ function showEventGroups(eventId) {
 
 .community-empty {
   padding: 32px 20px;
-  border: 1px dashed var(--bookedz-border);
+  border: 1px dashed var(--dino-border);
   border-radius: 20px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   text-align: center;
 }
 
 .community-empty p {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 </style>

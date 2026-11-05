@@ -87,7 +87,7 @@ export const getEventHosts = eventId => backend.getEventHosts(eventId);
 export const releaseDueEventVenues = () => backend.releaseDueEventVenues();
 
 // ---------- go together groups (community) ----------
-// live mode uses migrations 20261104142732 and 20261104142907 (see docs/decisions.md); a database
+// live mode uses migrations 20261104142732 and 20261104142907; a database
 // without them makes the live calls say go together isn't set up yet.
 
 const groupsBackend = USING_SUPABASE ? supabaseGroupsApi : mockApi;

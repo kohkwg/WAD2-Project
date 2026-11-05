@@ -146,15 +146,15 @@ function selectFromRow(clickEvent) {
   gap: 12px;
   min-width: 0;
   padding: 10px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 13px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   cursor: pointer;
 }
 
 .discovery-event-row.is-selected {
-  border-color: var(--bookedz-primary-dark);
-  box-shadow: 0 0 0 1px var(--bookedz-primary-dark);
+  border-color: var(--dino-primary-dark);
+  box-shadow: 0 0 0 1px var(--dino-primary-dark);
 }
 
 .row-cover {
@@ -166,7 +166,7 @@ function selectFromRow(clickEvent) {
   height: 66px;
   overflow: hidden;
   border-radius: 9px;
-  background: var(--bookedz-mint);
+  background: var(--dino-mint);
 }
 
 .row-cover img,.row-cover :deep(svg) {
@@ -197,7 +197,7 @@ function selectFromRow(clickEvent) {
 
 h3 {
   margin: 0;
-  font-family: var(--bookedz-body);
+  font-family: var(--dino-body);
   font-size: 15px;
   font-weight: 700;
 }
@@ -208,7 +208,7 @@ h3 {
   padding: 3px 0;
   border: 0;
   background: transparent;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font: inherit;
   text-align: left;
   white-space: nowrap;
@@ -225,8 +225,8 @@ h3 {
   flex: none;
   padding: 1px 7px;
   border-radius: 5px;
-  background: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
+  background: var(--dino-primary);
+  color: var(--dino-on-action);
   font-size: 10px;
   font-weight: 700;
 }
@@ -260,13 +260,13 @@ h3 {
   display: grid;
   gap: 8px;
   padding-top: 10px;
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
   cursor: auto;
 }
 
 .row-selected-note {
   margin: 0;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-size: 12px;
   font-weight: 600;
   overflow-wrap: anywhere;
@@ -285,7 +285,7 @@ h3 {
 }
 
 .row-facts {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .row-venue {
@@ -293,7 +293,7 @@ h3 {
 }
 
 .row-reason {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .row-reason--picked {
@@ -311,16 +311,16 @@ h3 {
 }
 
 .row-going {
-  color: var(--bookedz-success);
+  color: var(--dino-success);
   font-weight: 600;
 }
 
 .row-going--pending,.row-going--waitlisted {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .row-going--offered {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .row-actions {

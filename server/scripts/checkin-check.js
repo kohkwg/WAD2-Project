@@ -22,7 +22,7 @@ for (const name of ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY"]) {
   }
 }
 
-const PASSWORD = env.SEED_PASSWORD || "Bookedz-test-2026";
+const PASSWORD = env.SEED_PASSWORD || "Dino-test-2026";
 
 const EVENT_TITLE = "[TEST] Check-in demo";
 
@@ -61,7 +61,7 @@ async function signIn(who) {
     data,
     error
   } = await client.auth.signInWithPassword({
-    email: `checkin-${who}@bookedz.test`,
+    email: `checkin-${who}@dino.test`,
     password: PASSWORD
   });
   if (error) throw new Error(`sign in as ${who}: ${error.message} (did you run pnpm seed:checkin?)`);

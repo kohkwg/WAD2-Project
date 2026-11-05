@@ -112,7 +112,7 @@ function addCalendar(event) {
   }));
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'bookedz-event.ics';
+  link.download = 'dino-event.ics';
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -430,7 +430,7 @@ async function cancel(rsvpId) {
   max-width: 1060px;
   margin: 0 auto;
   padding: 12px 0 48px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .rsvps-heading {
@@ -442,8 +442,8 @@ async function cancel(rsvpId) {
   margin-bottom: 22px;
   padding: 22px 28px;
   border-radius: 22px;
-  background: var(--bookedz-peach);
-  border: 1px solid var(--bookedz-border);
+  background: var(--dino-peach);
+  border: 1px solid var(--dino-border);
 }
 
 .rsvps-heading h1 {
@@ -453,7 +453,7 @@ async function cancel(rsvpId) {
 .header-star {
   font-size: 3.5rem;
   line-height: 1;
-  color: var(--bookedz-primary);
+  color: var(--dino-primary);
   transform: rotate(15deg);
 }
 
@@ -468,7 +468,7 @@ async function cancel(rsvpId) {
 .rsvp-tabs {
   display: flex;
   gap: 8px;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
   overflow-x: auto;
 }
 
@@ -477,12 +477,12 @@ async function cancel(rsvpId) {
   border: 0;
   border-bottom: 3px solid transparent;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   padding: 14px 12px;
   font-size: var(--text-button);
   white-space: nowrap;
   min-height: 48px;
-  transition: color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .rsvp-tabs button::after {
@@ -493,13 +493,13 @@ async function cancel(rsvpId) {
   bottom: -3px;
   height: 3px;
   border-radius: 3px;
-  background: var(--bookedz-primary-dark);
+  background: var(--dino-primary-dark);
   transform: scaleX(0);
-  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp);
+  transition: transform var(--dino-motion-normal) var(--dino-ease-stamp);
 }
 
 .rsvp-tabs button[aria-selected=true] {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 650;
 }
 
@@ -511,7 +511,7 @@ async function cancel(rsvpId) {
   font-size: var(--text-caption);
   padding: 3px 6px;
   border-radius: 7px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
   margin-left: 4px;
 }
 
@@ -543,7 +543,7 @@ async function cancel(rsvpId) {
 }
 
 :deep(:focus-visible) {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 3px;
 }
 

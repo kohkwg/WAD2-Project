@@ -193,13 +193,13 @@ onMounted(() => getEvent(eventId).then(e => event.value = e).catch(() => {}));
 
 .scanner-card,.manual-card {
   padding: 1.25rem;
-  border: 1px solid var(--bookedz-border,#e9ded3);
+  border: 1px solid var(--dino-border,#e9ded3);
   border-radius: 22px;
   background: #ffffff;
 }
 
 .scanner-card {
-  background: var(--bookedz-cream,#fff8f1);
+  background: var(--dino-cream,#fff8f1);
 }
 
 .manual-card {
@@ -207,7 +207,7 @@ onMounted(() => getEvent(eventId).then(e => event.value = e).catch(() => {}));
 }
 
 .staff-page .form-control {
-  border-color: var(--bookedz-border,#e9ded3);
+  border-color: var(--dino-border,#e9ded3);
   border-radius: 12px;
   min-height: 44px;
 }
@@ -218,10 +218,10 @@ onMounted(() => getEvent(eventId).then(e => event.value = e).catch(() => {}));
 }
 
 .staff-page .btn-outline-primary {
-  --bs-btn-color: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-border-color: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-hover-bg: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-hover-border-color: var(--bookedz-coral-dark,#9a3412);
+  --bs-btn-color: var(--dino-coral-dark,#9a3412);
+  --bs-btn-border-color: var(--dino-coral-dark,#9a3412);
+  --bs-btn-hover-bg: var(--dino-coral-dark,#9a3412);
+  --bs-btn-hover-border-color: var(--dino-coral-dark,#9a3412);
 }
 
 .staff-page .alert {

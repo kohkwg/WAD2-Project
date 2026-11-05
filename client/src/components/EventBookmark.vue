@@ -39,7 +39,7 @@ watch(() => props.saved, (now, before) => {
 </template>
 <style scoped>
 .event-bookmark {
-  transition: color var(--bookedz-motion-fast) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: color var(--dino-motion-fast) var(--dino-ease), border-color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .event-bookmark {
@@ -52,15 +52,15 @@ watch(() => props.saved, (now, before) => {
   padding: 9px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--bookedz-control-border);
+  border: 1px solid var(--dino-control-border);
   border-radius: 50%;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   cursor: pointer;
 }
 
 .event-bookmark[aria-pressed="true"] {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .event-bookmark svg {
@@ -91,17 +91,17 @@ watch(() => props.saved, (now, before) => {
   align-items: center;
   height: calc(100% + 2px);
   padding: 0 46px 0 15px;
-  border: 1px solid var(--bookedz-primary-dark);
+  border: 1px solid var(--dino-primary-dark);
   border-radius: 99px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-surface);
+  color: var(--dino-primary-dark);
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   opacity: 0;
   transform: translateX(12px);
   pointer-events: none;
-  transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease), transform var(--bookedz-motion-normal) var(--bookedz-ease);
+  transition: opacity var(--dino-motion-fast) var(--dino-ease), transform var(--dino-motion-normal) var(--dino-ease);
 }
 
 .event-bookmark:focus-visible .bookmark-hint {
@@ -110,13 +110,13 @@ watch(() => props.saved, (now, before) => {
 }
 
 .event-bookmark:focus-visible {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 @media (hover:hover) {
   .event-bookmark:not(:disabled):hover {
-    color: var(--bookedz-primary-dark);
-    border-color: var(--bookedz-primary-dark);
+    color: var(--dino-primary-dark);
+    border-color: var(--dino-primary-dark);
   }
   .event-bookmark:not(:disabled):hover .bookmark-hint {
     opacity: 1;
@@ -132,7 +132,7 @@ watch(() => props.saved, (now, before) => {
 }
 
 .event-bookmark:focus-visible {
-  outline: 2px solid var(--bookedz-primary-dark);
+  outline: 2px solid var(--dino-primary-dark);
   outline-offset: 3px;
 }
 </style>

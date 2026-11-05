@@ -6,7 +6,7 @@ import donutO from '@/assets/brand/dino-donut-o.png';
 import { dinoById } from '@/lib/dinos';
 import { USING_SUPABASE, getCurrentUser, onAuthChange, signOut, resetDemoData } from '../utils/api.js';
 
-const SIDEBAR_KEY = 'bookedz-sidebar';
+const SIDEBAR_KEY = 'dino-sidebar';
 // svg shapes used for the navigation icons.
 
 const ICONS = {
@@ -459,8 +459,8 @@ function resetDemo() {
   padding: 24px 14px 16px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: var(--bookedz-surface);
-  border-right: 1px solid var(--bookedz-border);
+  background: var(--dino-surface);
+  border-right: 1px solid var(--dino-border);
 }
 
 /* brand */
@@ -470,8 +470,8 @@ function resetDemo() {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--bookedz-ink);
-  font-family: var(--bookedz-heading);
+  color: var(--dino-ink);
+  font-family: var(--dino-heading);
   font-size: 1.65rem;
   font-weight: 700;
   letter-spacing: -0.06em;
@@ -528,7 +528,7 @@ function resetDemo() {
   min-height: 48px;
   padding: 10px 16px;
   border-radius: 14px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 0.92rem;
   font-weight: 550;
   text-decoration: none;
@@ -548,20 +548,20 @@ function resetDemo() {
 }
 
 .side-link:hover {
-  background: var(--bookedz-glass-hover);
-  color: var(--bookedz-ink);
+  background: var(--dino-glass-hover);
+  color: var(--dino-ink);
 }
 
 .side-link.active {
-  background: var(--bookedz-glass-active);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-glass-active);
+  color: var(--dino-primary-dark);
   font-weight: 650;
 }
 
 .side-link:focus-visible,
 .topbar-brand:focus-visible,
 .sidebar-brand:focus-visible {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 2px;
 }
 
@@ -572,18 +572,18 @@ function resetDemo() {
   gap: 6px;
   margin-top: auto;
   padding-top: 18px;
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
 }
 
 /* Same fill as the top bar's Sign in button */
 .side-link.sidebar-sign-in {
-  background: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
+  background: var(--dino-primary);
+  color: var(--dino-on-action);
   font-weight: 650;
 }
 
 .side-link.sidebar-sign-in:hover {
-  background: var(--bookedz-primary-hover);
+  background: var(--dino-primary-hover);
   color: #fff;
 }
 
@@ -605,7 +605,7 @@ function resetDemo() {
 }
 
 .sidebar-profile-copy strong {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 650;
 }
 
@@ -636,7 +636,7 @@ function resetDemo() {
 }
 
 .sidebar-sign-out:focus-visible {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 2px;
 }
 
@@ -657,7 +657,7 @@ function resetDemo() {
   gap: 8px 16px;
   min-height: 72px;
   padding: 12px clamp(12px, 3vw, 36px);
-  background: color-mix(in srgb, var(--bookedz-canvas) 86%, transparent);
+  background: color-mix(in srgb, var(--dino-canvas) 86%, transparent);
 }
 
 @supports (backdrop-filter: blur(12px)) {
@@ -680,7 +680,7 @@ function resetDemo() {
 }
 
 .sidebar-account :focus-visible {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 2px;
 }
 
@@ -710,12 +710,12 @@ function resetDemo() {
 }
 
 .nav-sign-in {
-  background: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
+  background: var(--dino-primary);
+  color: var(--dino-on-action);
 }
 
 .nav-sign-in:hover {
-  background: var(--bookedz-primary-hover);
+  background: var(--dino-primary-hover);
   color: #fff;
 }
 
@@ -727,13 +727,13 @@ function resetDemo() {
 .nav-quiet,
 .nav-profile {
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .nav-quiet:hover,
 .nav-profile:hover {
-  background: var(--bookedz-glass-hover);
-  color: var(--bookedz-ink);
+  background: var(--dino-glass-hover);
+  color: var(--dino-ink);
 }
 
 .nav-profile {
@@ -746,7 +746,7 @@ function resetDemo() {
 
 .nav-profile--demo:hover {
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .nav-avatar-dino {
@@ -770,8 +770,8 @@ function resetDemo() {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: var(--bookedz-glass-active);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-glass-active);
+  color: var(--dino-primary-dark);
 }
 
 .nav-account-name {
@@ -783,7 +783,7 @@ function resetDemo() {
 .nav-auth-error {
   flex-basis: 100%;
   margin: 0;
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
   font-size: 0.875rem;
   text-align: right;
 }
@@ -794,9 +794,9 @@ function resetDemo() {
   width: 44px;
   height: 44px;
   padding: 9px;
-  border-color: var(--bookedz-control-border);
+  border-color: var(--dino-control-border);
   border-radius: 12px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .toggler-icon {
@@ -898,12 +898,12 @@ function resetDemo() {
     width: 28px;
     height: 28px;
     padding: 0;
-    border: 1px solid var(--bookedz-border);
+    border: 1px solid var(--dino-border);
     border-radius: 50%;
-    background: var(--bookedz-surface);
-    color: var(--bookedz-muted);
+    background: var(--dino-surface);
+    color: var(--dino-muted);
     transform: translate(-50%, -50%);
-    transition: left var(--bookedz-motion-normal, 0.24s) var(--bookedz-ease, ease),
+    transition: left var(--dino-motion-normal, 0.24s) var(--dino-ease, ease),
       background-color 0.15s ease,
       color 0.15s ease,
       border-color 0.15s ease;
@@ -923,15 +923,15 @@ function resetDemo() {
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    transition: transform var(--bookedz-motion-normal, 0.24s) var(--bookedz-ease, ease);
+    transition: transform var(--dino-motion-normal, 0.24s) var(--dino-ease, ease);
   }
   .sidebar-collapse:hover {
-    border-color: var(--bookedz-primary);
-    background: var(--bookedz-glass-active);
-    color: var(--bookedz-primary-dark);
+    border-color: var(--dino-primary);
+    background: var(--dino-glass-active);
+    color: var(--dino-primary-dark);
   }
   .sidebar-collapse:focus-visible {
-    outline: 3px solid var(--bookedz-primary-dark);
+    outline: 3px solid var(--dino-primary-dark);
     outline-offset: 2px;
   }
   /* tooltip bubble: shared by the collapse button and the collapsed-rail links.
@@ -946,16 +946,16 @@ function resetDemo() {
     top: 50%;
     padding: 5px 10px;
     border-radius: 8px;
-    background: var(--bookedz-ink);
-    color: var(--bookedz-surface);
+    background: var(--dino-ink);
+    color: var(--dino-surface);
     font-size: 0.8rem;
     font-weight: 600;
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
     transform: translate(-4px, -50%);
-    transition: opacity var(--bookedz-motion-fast, 0.16s) var(--bookedz-ease, ease),
-      transform var(--bookedz-motion-fast, 0.16s) var(--bookedz-ease, ease);
+    transition: opacity var(--dino-motion-fast, 0.16s) var(--dino-ease, ease),
+      transform var(--dino-motion-fast, 0.16s) var(--dino-ease, ease);
   }
   .is-collapsed .side-link::after,
   .is-collapsed .sidebar-sign-out::after {
@@ -974,21 +974,21 @@ function resetDemo() {
      when a short window scrolls the sidebar */
   @supports (anchor-name: --a) {
     .sidebar-divider {
-      anchor-name: --bookedz-sidebar-divider;
+      anchor-name: --dino-sidebar-divider;
     }
     .sidebar-collapse {
-      position-anchor: --bookedz-sidebar-divider;
+      position-anchor: --dino-sidebar-divider;
       top: anchor(top);
       position-visibility: anchors-visible;
     }
   }
   .app-sidebar {
-    transition: width var(--bookedz-motion-normal, 0.24s) var(--bookedz-ease, ease),
-      padding var(--bookedz-motion-normal, 0.24s) var(--bookedz-ease, ease);
+    transition: width var(--dino-motion-normal, 0.24s) var(--dino-ease, ease),
+      padding var(--dino-motion-normal, 0.24s) var(--dino-ease, ease);
     overflow-x: hidden;
   }
   .side-label {
-    transition: opacity var(--bookedz-motion-fast, 0.16s) var(--bookedz-ease, ease);
+    transition: opacity var(--dino-motion-fast, 0.16s) var(--dino-ease, ease);
     white-space: nowrap;
   }
   /* collapsed icon rail */
@@ -1063,8 +1063,8 @@ function resetDemo() {
     grid-auto-flow: column;
     gap: 4px;
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--bookedz-border);
-    background: color-mix(in srgb, var(--bookedz-surface) 94%, transparent);
+    border-top: 1px solid var(--dino-border);
+    background: color-mix(in srgb, var(--dino-surface) 94%, transparent);
   }
   @supports (backdrop-filter: blur(12px)) {
     .bottom-tabs {
@@ -1080,7 +1080,7 @@ function resetDemo() {
     min-height: 52px;
     padding: 4px 2px;
     border-radius: 12px;
-    color: var(--bookedz-muted);
+    color: var(--dino-muted);
     font-size: 0.72rem;
     font-weight: 600;
     line-height: 1.15;
@@ -1097,12 +1097,12 @@ function resetDemo() {
     stroke-linejoin: round;
   }
   .bottom-tab.active {
-    color: var(--bookedz-primary-dark);
-    background: var(--bookedz-glass-active);
+    color: var(--dino-primary-dark);
+    background: var(--dino-glass-active);
     font-weight: 700;
   }
   .bottom-tab:focus-visible {
-    outline: 3px solid var(--bookedz-focus);
+    outline: 3px solid var(--dino-focus);
     outline-offset: -3px;
   }
 }

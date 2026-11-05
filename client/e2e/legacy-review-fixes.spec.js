@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const STORE = 'bookedz-feature2-demo';
+const STORE = 'dino-feature2-demo';
 
 const EVENT_ID = 'e-weather-demo';
 test.beforeEach(async ({

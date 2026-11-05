@@ -279,20 +279,20 @@ async function submit() {
   width: min(560px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
   padding: 0;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 24px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
-  box-shadow: 8px 8px 0 var(--bookedz-teal);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
+  box-shadow: 8px 8px 0 var(--dino-teal);
   overflow: auto;
 }
 
 :root[data-theme="dark"] .group-dialog {
-  border-color: var(--bookedz-border);
+  border-color: var(--dino-border);
 }
 
 .group-dialog[open] {
-  animation: group-dialog-in var(--bookedz-motion-normal) var(--bookedz-ease);
+  animation: group-dialog-in var(--dino-motion-normal) var(--dino-ease);
 }
 
 .group-dialog::backdrop {
@@ -332,29 +332,29 @@ async function submit() {
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 1.6rem;
   line-height: 1;
 }
 
 .group-close:hover {
-  background: var(--bookedz-hover);
-  color: var(--bookedz-ink);
+  background: var(--dino-hover);
+  color: var(--dino-ink);
 }
 
 .group-chosen {
   margin: 6px 0 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .group-count {
   margin: 4px 0 0;
   text-align: right;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .group-count.is-low {
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
 }
 
 .group-form :is(.form-control, .form-select) {
@@ -388,10 +388,10 @@ async function submit() {
   align-items: flex-start;
   gap: 10px;
   padding: 10px 12px;
-  border: 2px solid var(--bookedz-control-border);
+  border: 2px solid var(--dino-control-border);
   border-radius: 16px;
   cursor: pointer;
-  transition: border-color var(--bookedz-motion-fast) var(--bookedz-ease), background-color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: border-color var(--dino-motion-fast) var(--dino-ease), background-color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .group-option > span {
@@ -400,13 +400,13 @@ async function submit() {
 }
 
 .group-option.is-on {
-  border-color: var(--bookedz-ink);
-  background: var(--bookedz-orange-soft);
-  box-shadow: 3px 3px 0 var(--bookedz-ink);
+  border-color: var(--dino-ink);
+  background: var(--dino-orange-soft);
+  box-shadow: 3px 3px 0 var(--dino-ink);
 }
 
 :root[data-theme="dark"] .group-option.is-on {
-  border-color: var(--bookedz-fill);
+  border-color: var(--dino-fill);
   box-shadow: 3px 3px 0 var(--db-dark-edge);
 }
 
@@ -429,14 +429,14 @@ async function submit() {
   gap: 10px;
   min-height: 48px;
   padding: 6px 10px;
-  border: 2px solid var(--bookedz-control-border);
+  border: 2px solid var(--dino-control-border);
   border-radius: 14px;
   cursor: pointer;
 }
 
 .group-friend.is-on {
-  border-color: var(--bookedz-teal);
-  background: color-mix(in srgb, var(--bookedz-teal) 14%, var(--bookedz-surface));
+  border-color: var(--dino-teal);
+  background: color-mix(in srgb, var(--dino-teal) 14%, var(--dino-surface));
 }
 
 .group-friend .form-check-input {
@@ -451,8 +451,8 @@ async function submit() {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--bookedz-orange-soft);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-orange-soft);
+  color: var(--dino-primary-dark);
   font-size: .78rem;
   font-weight: 700;
 }
@@ -466,7 +466,7 @@ async function submit() {
   display: grid;
   gap: 6px;
   padding: 14px;
-  border: 2px dashed var(--bookedz-control-border);
+  border: 2px dashed var(--dino-control-border);
   border-radius: 16px;
 }
 
@@ -476,7 +476,7 @@ async function submit() {
 
 .group-error {
   margin: 6px 0 0;
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
   font-size: .88rem;
 }
 

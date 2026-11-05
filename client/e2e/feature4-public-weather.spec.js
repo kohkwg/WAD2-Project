@@ -3,7 +3,7 @@ import { createSeedData } from '../src/utils/mockData.js';
 
 const ENDPOINT = '**/v2/real-time/api/two-hr-forecast*';
 
-const STORE = 'bookedz-feature2-demo';
+const STORE = 'dino-feature2-demo';
 
 function forecast() {
   return {

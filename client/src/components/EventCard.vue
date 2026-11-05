@@ -175,9 +175,9 @@ function initials(attendee) {
   grid-template-columns: minmax(12rem, .85fr) minmax(0, 1.4fr);
   gap: clamp(1.1rem, 2.4vw, 2rem);
   padding: clamp(1rem, 2vw, 1.35rem);
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 22px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   box-shadow: 0 8px 22px rgb(41 45 50 / 4%);
   transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
@@ -213,7 +213,7 @@ function initials(attendee) {
   aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 16px;
-  background: var(--bookedz-mint, #ffe4d6);
+  background: var(--dino-mint, #ffe4d6);
 }
 
 .event-cover > :deep(.event-artwork), .event-cover-image {
@@ -235,7 +235,7 @@ function initials(attendee) {
   border: 1px solid rgb(255 249 239 / 72%);
   border-radius: 999px;
   background: rgb(255 249 239 / 92%);
-  color: var(--bookedz-ink, #1f2937);
+  color: var(--dino-ink, #1f2937);
   font-size: var(--text-caption);
   font-weight: 650;
   text-overflow: ellipsis;
@@ -258,7 +258,7 @@ function initials(attendee) {
 
 .event-time {
   display: block;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: var(--text-small);
 }
 
@@ -281,7 +281,7 @@ function initials(attendee) {
 }
 
 .event-title a {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   text-decoration: none;
 }
 
@@ -297,7 +297,7 @@ function initials(attendee) {
   -webkit-box-orient: vertical;
   overflow: hidden;
   overflow-wrap: anywhere;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: var(--text-body);
   line-height: 1.5;
   margin: 0 0 .8rem;
@@ -307,7 +307,7 @@ function initials(attendee) {
   display: flex;
   align-items: flex-start;
   gap: 7px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: var(--text-small);
   margin-bottom: 14px;
 }
@@ -378,12 +378,12 @@ function initials(attendee) {
 
 .attendee-overflow {
   padding: 0 6px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .75rem;
 }
 
 .going-count {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: var(--text-small);
 }
 
@@ -429,7 +429,7 @@ function initials(attendee) {
 }
 
 .event-card :deep(:focus-visible) {
-  outline: 3px solid var(--bookedz-primary-dark, #9a3412);
+  outline: 3px solid var(--dino-primary-dark, #9a3412);
   outline-offset: 3px;
 }
 </style>

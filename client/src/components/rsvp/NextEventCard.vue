@@ -52,15 +52,15 @@ defineEmits(['calendar']);
   gap: 28px;
   padding: 24px;
   margin: 24px 0;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 24px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .next-art {
   overflow: hidden;
   border-radius: 18px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .next-art :deep(svg) {
@@ -79,7 +79,7 @@ defineEmits(['calendar']);
 }
 
 .next-copy>p:not(.next-eyebrow) {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   margin: 8px 0;
   font-size: var(--text-small);
 }
@@ -95,10 +95,10 @@ defineEmits(['calendar']);
 
 .next-eyebrow span {
   letter-spacing: 0;
-  color: var(--bookedz-success);
+  color: var(--dino-success);
   padding: 5px 9px;
   border-radius: 20px;
-  background: color-mix(in srgb,var(--bookedz-success) 10%,var(--bookedz-surface));
+  background: color-mix(in srgb,var(--dino-success) 10%,var(--dino-surface));
 }
 
 .next-actions {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as api from '../api.js';
 import { createSeedData } from '../mockData.js';
 
-const KEY = 'bookedz-feature2-demo';
+const KEY = 'dino-feature2-demo';
 
 let stored;
 

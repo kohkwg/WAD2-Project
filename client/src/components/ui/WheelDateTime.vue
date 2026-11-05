@@ -400,7 +400,7 @@ onBeforeUnmount(() => {
 }
 
 .wheel-trigger.is-placeholder span {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .wheel-trigger svg {
@@ -414,10 +414,10 @@ onBeforeUnmount(() => {
   left: 0;
   width: min(380px, calc(100vw - 2rem));
   padding: 12px 12px 10px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 18px;
-  background: var(--bookedz-surface);
-  box-shadow: 5px 5px 0 var(--bookedz-teal);
+  background: var(--dino-surface);
+  box-shadow: 5px 5px 0 var(--dino-teal);
 }
 
 .wheel-panel--fixed {
@@ -426,7 +426,7 @@ onBeforeUnmount(() => {
 }
 
 :global(:root[data-theme="dark"]) .wheel-panel {
-  border-color: var(--bookedz-border);
+  border-color: var(--dino-border);
 }
 
 .wheel-cols {
@@ -445,7 +445,7 @@ onBeforeUnmount(() => {
 .wheel-label {
   height: 1.2rem;
   overflow: hidden;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .7rem;
   font-weight: 700;
   line-height: 1.2rem;
@@ -473,7 +473,7 @@ onBeforeUnmount(() => {
 }
 
 .wheel:focus-visible {
-  outline: 3px solid var(--bookedz-focus);
+  outline: 3px solid var(--dino-focus);
 }
 
 .wheel-item {
@@ -481,7 +481,7 @@ onBeforeUnmount(() => {
   place-items: center;
   height: 40px;
   scroll-snap-align: center;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   cursor: pointer;
@@ -489,7 +489,7 @@ onBeforeUnmount(() => {
 }
 
 .wheel-item.is-selected {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 800;
 }
 
@@ -502,7 +502,7 @@ onBeforeUnmount(() => {
   top: calc(1.2rem + 4px + 80px);
   height: 40px;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--bookedz-fill) 16%, transparent);
+  background: color-mix(in srgb, var(--dino-fill) 16%, transparent);
   pointer-events: none;
 }
 

@@ -674,13 +674,13 @@ async function removeGroup() {
 
 .group-back {
   justify-self: start;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   text-decoration: none;
   font-weight: 600;
 }
 
 .group-back:hover {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .group-loading {
@@ -688,19 +688,19 @@ async function removeGroup() {
   align-items: center;
   gap: 10px;
   padding: 40px 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .group-empty {
   padding: 32px 20px;
-  border: 1px dashed var(--bookedz-border);
+  border: 1px dashed var(--dino-border);
   border-radius: 20px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   text-align: center;
 }
 
 .group-empty p {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .group-hero {
@@ -719,8 +719,8 @@ async function removeGroup() {
   place-items: center;
   flex: none;
   border-radius: 50%;
-  background: var(--bookedz-orange-soft);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-orange-soft);
+  color: var(--dino-primary-dark);
   font-weight: 700;
 }
 
@@ -762,27 +762,27 @@ async function removeGroup() {
   flex: none;
   padding: 3px 10px;
   border-radius: 99px;
-  background: var(--bookedz-hover);
-  color: var(--bookedz-muted);
+  background: var(--dino-hover);
+  color: var(--dino-muted);
   font-size: var(--text-caption);
   font-weight: 700;
 }
 
 .group-badge--host {
-  background: var(--bookedz-mango-soft);
-  color: var(--bookedz-ink);
+  background: var(--dino-mango-soft);
+  color: var(--dino-ink);
 }
 
 .group-badge--in {
-  background: var(--bookedz-teal-soft);
-  color: var(--bookedz-teal-ink);
+  background: var(--dino-teal-soft);
+  color: var(--dino-teal-ink);
 }
 
 .group-invited {
   margin: 0;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--bookedz-teal-soft);
+  background: var(--dino-teal-soft);
 }
 
 .group-note {
@@ -799,12 +799,12 @@ async function removeGroup() {
   gap: 12px;
   padding: 12px;
   border-radius: 16px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   text-decoration: none;
 }
 
 .group-event:hover {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .group-event-art {
@@ -812,7 +812,7 @@ async function removeGroup() {
   height: 64px;
   overflow: hidden;
   border-radius: 12px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .group-event-art :deep(svg) {
@@ -829,17 +829,17 @@ async function removeGroup() {
 
 .group-event-go {
   font-size: 1.5rem;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .group-card {
   display: grid;
   gap: 12px;
   padding: 18px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 20px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .group-people-head {
@@ -862,7 +862,7 @@ async function removeGroup() {
 }
 
 .person-in-enter-active {
-  transition: opacity var(--bookedz-motion-normal) var(--bookedz-ease), transform var(--bookedz-motion-slip, .25s) var(--bookedz-ease-stamp, ease-out);
+  transition: opacity var(--dino-motion-normal) var(--dino-ease), transform var(--dino-motion-slip, .25s) var(--dino-ease-stamp, ease-out);
 }
 
 .person-in-enter-from {
@@ -871,7 +871,7 @@ async function removeGroup() {
 }
 
 .person-in-leave-active {
-  transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: opacity var(--dino-motion-fast) var(--dino-ease);
 }
 
 .person-in-leave-to {
@@ -879,11 +879,11 @@ async function removeGroup() {
 }
 
 .person-in-move {
-  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease);
+  transition: transform var(--dino-motion-normal) var(--dino-ease);
 }
 
 .group-card {
-  animation: stagger-rise var(--bookedz-motion-reveal, .42s) var(--bookedz-ease) both;
+  animation: stagger-rise var(--dino-motion-reveal, .42s) var(--dino-ease) both;
 }
 
 .group-card:nth-of-type(2) {
@@ -924,7 +924,7 @@ async function removeGroup() {
   gap: 8px;
   padding: 8px 12px;
   border-radius: 12px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .group-rsvp-prompt {
@@ -935,7 +935,7 @@ async function removeGroup() {
   gap: 10px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--bookedz-teal-soft);
+  background: var(--dino-teal-soft);
 }
 
 .group-rsvp-prompt .btn {
@@ -944,12 +944,12 @@ async function removeGroup() {
 
 .group-rsvp-done {
   margin: 0;
-  color: var(--bookedz-teal-ink);
+  color: var(--dino-teal-ink);
 }
 
 .group-error {
   margin: 0;
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
   font-size: .9rem;
 }
 
@@ -991,21 +991,21 @@ async function removeGroup() {
   padding: 2px 9px;
   border: 1.5px solid transparent;
   border-radius: 99px;
-  background: color-mix(in srgb, var(--bookedz-fill) 18%, var(--bookedz-surface));
-  color: var(--bookedz-ink);
+  background: color-mix(in srgb, var(--dino-fill) 18%, var(--dino-surface));
+  color: var(--dino-ink);
   font-size: .74rem;
   font-weight: 700;
 }
 
 .group-rule--when {
-  border-color: var(--bookedz-ink);
-  background: var(--bookedz-mango-soft);
+  border-color: var(--dino-ink);
+  background: var(--dino-mango-soft);
 }
 
 .group-rule.is-friend {
-  border-color: var(--bookedz-teal);
-  background: var(--bookedz-teal-soft);
-  color: var(--bookedz-teal-ink);
+  border-color: var(--dino-teal);
+  background: var(--dino-teal-soft);
+  color: var(--dino-teal-ink);
 }
 
 .group-bar {
@@ -1018,10 +1018,10 @@ async function removeGroup() {
   justify-content: space-between;
   gap: 8px 12px;
   padding: 8px 8px 8px 16px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 99px;
-  background: var(--bookedz-surface);
-  box-shadow: 4px 4px 0 var(--bookedz-ink);
+  background: var(--dino-surface);
+  box-shadow: 4px 4px 0 var(--dino-ink);
 }
 
 :root[data-theme="dark"] .group-bar {
@@ -1056,7 +1056,7 @@ async function removeGroup() {
 .group-request-note {
   display: block;
   margin-top: 2px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-style: italic;
   overflow-wrap: anywhere;
 }
@@ -1072,7 +1072,7 @@ async function removeGroup() {
   align-items: flex-start;
   gap: 10px;
   padding: 10px 12px;
-  border: 2px solid var(--bookedz-control-border);
+  border: 2px solid var(--dino-control-border);
   border-radius: 16px;
   cursor: pointer;
 }
@@ -1083,13 +1083,13 @@ async function removeGroup() {
 }
 
 .group-option.is-on {
-  border-color: var(--bookedz-ink);
-  background: var(--bookedz-orange-soft);
-  box-shadow: 3px 3px 0 var(--bookedz-ink);
+  border-color: var(--dino-ink);
+  background: var(--dino-orange-soft);
+  box-shadow: 3px 3px 0 var(--dino-ink);
 }
 
 :root[data-theme="dark"] .group-option.is-on {
-  border-color: var(--bookedz-fill);
+  border-color: var(--dino-fill);
   box-shadow: 3px 3px 0 var(--db-dark-edge);
 }
 
@@ -1106,7 +1106,7 @@ async function removeGroup() {
   display: grid;
   gap: 8px;
   padding-top: 14px;
-  border-top: 2px dashed var(--bookedz-control-border);
+  border-top: 2px dashed var(--dino-control-border);
 }
 
 .justify-self-start {

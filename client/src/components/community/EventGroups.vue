@@ -113,15 +113,15 @@ const openSpots = computed(() => groups.value.filter(group => group.spotsLeft > 
   display: grid;
   gap: 2px;
   padding: 10px 12px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   text-decoration: none;
 }
 
 .event-group:hover {
-  color: var(--bookedz-ink);
-  border-color: var(--bookedz-control-border);
+  color: var(--dino-ink);
+  border-color: var(--dino-control-border);
 }
 
 .event-group-note {

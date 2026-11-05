@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 // public or private with an invite link; joining offers an event rsvp; members plan food
 // before and after on the group page. groups stay out of discover and organise.
 
-const STORE = 'bookedz-feature2-demo';
+const STORE = 'dino-feature2-demo';
 test.beforeEach(async ({
   page
 }) => {

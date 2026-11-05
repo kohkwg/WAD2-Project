@@ -2,13 +2,13 @@ import { test, expect } from '@playwright/test';
 import { setColorTheme } from './support/colorTheme.js';
 
 // these checks expect the expanded sidebar. from 992px the sidebar starts as an icon rail
-// unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
+// unless someone expanded it, so start from that remembered choice.
 test.beforeEach(async ({
   page
 }) => {
   await page.addInitScript(() => {
     try {
-      localStorage.setItem('bookedz-sidebar', 'expanded');
+      localStorage.setItem('dino-sidebar', 'expanded');
     } catch {/* storage blocked */}
   });
 });

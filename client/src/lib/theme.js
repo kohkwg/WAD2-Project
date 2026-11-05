@@ -3,7 +3,7 @@ import { readonly, ref } from 'vue';
 // two themes only: light and dark. someone who has never chosen starts in whichever their device
 // uses, and follows it until they pick one (an old saved "system" choice is treated as not chosen).
 
-const KEY = 'bookedz-color-theme';
+const KEY = 'dino-color-theme';
 
 const choices = ['light', 'dark'];
 

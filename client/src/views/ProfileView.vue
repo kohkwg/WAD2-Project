@@ -997,19 +997,19 @@ onBeforeUnmount(() => {
 
 .profile-kicker {
   margin: 0 0 0.55rem;
-  color: var(--bookedz-ink-soft, #636975);
+  color: var(--dino-ink-soft, #636975);
   font-size: 0.9rem;
 }
 
 .profile-title {
   margin: 0;
-  color: var(--bookedz-ink, #1f2937);
+  color: var(--dino-ink, #1f2937);
 }
 
 .profile-lede {
   max-width: 48ch;
   margin: 0.85rem 0 0;
-  color: var(--bookedz-ink-soft, #636975);
+  color: var(--dino-ink-soft, #636975);
   line-height: 1.6;
 }
 
@@ -1017,10 +1017,10 @@ onBeforeUnmount(() => {
 
 .profile-form {
   padding: clamp(1.1rem, 4vw, 2rem);
-  border: 1px solid var(--bookedz-border);
-  border-radius: var(--bookedz-radius-card);
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-shadow);
+  border: 1px solid var(--dino-border);
+  border-radius: var(--dino-radius-card);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-shadow);
 }
 
 .profile-summary {
@@ -1041,7 +1041,7 @@ onBeforeUnmount(() => {
     padding: 0 9rem 1.25rem 2rem;
     /* room on the right for the edit profile button */
     border-top: 0;
-    border-left: 1px solid var(--bookedz-border);
+    border-left: 1px solid var(--dino-border);
   }
   /* edit profile sits at the far right of the whole box, past the interests */
   .profile-summary.is-viewing {
@@ -1086,9 +1086,9 @@ onBeforeUnmount(() => {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--bookedz-orange-soft, var(--bookedz-glass-active));
-  color: var(--bookedz-ink);
-  font: 700 1.4rem var(--bookedz-heading);
+  background: var(--dino-orange-soft, var(--dino-glass-active));
+  color: var(--dino-ink);
+  font: 700 1.4rem var(--dino-heading);
 }
 
 /* the picked dino shows whole, with no circle or background behind it */
@@ -1107,7 +1107,7 @@ onBeforeUnmount(() => {
   width: 1.5rem;
   height: 1.5rem;
   place-items: center;
-  border: 2px solid var(--bookedz-surface);
+  border: 2px solid var(--dino-surface);
   border-radius: 50%;
   background: #267a56;
   color: #fff;
@@ -1115,7 +1115,7 @@ onBeforeUnmount(() => {
 }
 
 .profile-avatar:focus-visible {
-  outline: 3px solid var(--bookedz-focus);
+  outline: 3px solid var(--dino-focus);
   outline-offset: 3px;
 }
 
@@ -1132,7 +1132,7 @@ onBeforeUnmount(() => {
 
 .profile-name {
   margin: 0;
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: 1.5rem;
   font-weight: 700;
   overflow-wrap: anywhere;
@@ -1142,12 +1142,12 @@ onBeforeUnmount(() => {
 .profile-email,
 .profile-postal {
   margin: 0.15rem 0 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   overflow-wrap: anywhere;
 }
 
 .profile-handle {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 600;
 }
 
@@ -1155,7 +1155,7 @@ onBeforeUnmount(() => {
 
 .profile-block {
   padding: 1.1rem 0;
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
 }
 
 /* the last block sits on the card's own padding, so the bottom gap matches the top */
@@ -1191,13 +1191,13 @@ onBeforeUnmount(() => {
 }
 
 .theme-options .btn-check:focus-visible + .btn {
-  outline: 3px solid var(--bookedz-focus);
+  outline: 3px solid var(--dino-focus);
   outline-offset: 2px;
 }
 
 .profile-block-title {
   margin: 0 0 0.5rem;
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: 1.1rem;
   font-weight: 650;
 }
@@ -1222,7 +1222,7 @@ onBeforeUnmount(() => {
 
 .field-error {
   margin: 0.35rem 0 0;
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
   font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
@@ -1232,18 +1232,18 @@ onBeforeUnmount(() => {
 }
 
 .profile-note {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 0.875rem;
 }
 
 .profile-ok {
-  color: var(--bookedz-success);
+  color: var(--dino-success);
   font-size: 0.875rem;
 }
 
 .profile-empty {
   margin: 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 /* interest tags (viewing) */
@@ -1260,8 +1260,8 @@ onBeforeUnmount(() => {
 .profile-chips li {
   padding: 0.3rem 0.85rem;
   border-radius: 99px;
-  background: var(--bookedz-orange-soft, var(--bookedz-glass-active));
-  color: var(--bookedz-ink);
+  background: var(--dino-orange-soft, var(--dino-glass-active));
+  color: var(--dino-ink);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -1273,27 +1273,27 @@ onBeforeUnmount(() => {
   margin: 0 0 1.75rem;
   padding: 0 0 1.5rem;
   border: 0;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 .profile-section legend {
   float: none;
   width: auto;
   margin-bottom: 0.5rem;
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: 1.35rem;
   font-weight: 650;
 }
 
 .profile-section legend,
 .profile-section .form-label {
-  color: var(--bookedz-ink, #1f2937);
+  color: var(--dino-ink, #1f2937);
 }
 
 .profile-help {
   max-width: 55ch;
   margin-bottom: 1.25rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .profile-interests {
@@ -1302,7 +1302,7 @@ onBeforeUnmount(() => {
 }
 
 .interest-count {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 0.875rem;
   margin-bottom: 0.75rem;
   font-variant-numeric: tabular-nums;
@@ -1344,15 +1344,15 @@ onBeforeUnmount(() => {
 }
 
 .btn-check:checked + .btn-outline-primary {
-  color: var(--bookedz-on-action);
-  border-color: var(--bookedz-primary);
-  background: var(--bookedz-primary);
+  color: var(--dino-on-action);
+  border-color: var(--dino-primary);
+  background: var(--dino-primary);
 }
 
 .btn-check:focus-visible + label {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 4px;
-  box-shadow: var(--bookedz-focus-glow);
+  box-shadow: var(--dino-focus-glow);
 }
 
 /* save and cancel buttons */
@@ -1363,7 +1363,7 @@ onBeforeUnmount(() => {
   gap: 0.75rem;
   padding-top: 1.5rem;
   padding-bottom: 1.5rem;
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
 }
 
 .profile-unavailable,

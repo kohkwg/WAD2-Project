@@ -171,7 +171,7 @@ onUnmounted(() => clearInterval(timer));
   display: flex;
   width: min(100%,520px);
   padding: 1.5rem;
-  border: 1px solid var(--bookedz-border,#e9ded3);
+  border: 1px solid var(--dino-border,#e9ded3);
   border-radius: 24px;
   background: #fff;
   flex-direction: column;
@@ -192,7 +192,7 @@ onUnmounted(() => clearInterval(timer));
 }
 
 .venue-qr-page .progress-bar {
-  background: var(--bookedz-coral-dark,#9a3412);
+  background: var(--dino-coral-dark,#9a3412);
   border-radius: 999px;
 }
 

@@ -166,7 +166,7 @@ test('a hidden tab waits, then catches up when shown again', () => {
 test('demo mode listens for the demo data changing in another tab', () => {
   const h = harness({
     withClient: false,
-    storageKey: 'bookedz-feature2-demo'
+    storageKey: 'dino-feature2-demo'
   });
   h.listeners.window.storage({
     key: 'something-else'
@@ -174,7 +174,7 @@ test('demo mode listens for the demo data changing in another tab', () => {
   h.flush();
   expect(h.calls).toBe(0);
   h.listeners.window.storage({
-    key: 'bookedz-feature2-demo'
+    key: 'dino-feature2-demo'
   });
   h.flush();
   expect(h.calls).toBe(1);

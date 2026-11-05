@@ -3,10 +3,10 @@
 //                     pnpm seed:checkin --reset    remove everything it made
 //
 // creates (all clearly marked as test data):
-//   - users  checkin-organiser@bookedz.test   organiser of the test event
-//            checkin-helper@bookedz.test      helper (can scan, can't export emails)
-//            checkin-p1..p4@bookedz.test      confirmed participants
-//            checkin-p5@bookedz.test          pending participant (scan should be refused)
+//   - users  checkin-organiser@dino.test   organiser of the test event
+//            checkin-helper@dino.test      helper (can scan, can't export emails)
+//            checkin-p1..p4@dino.test      confirmed participants
+//            checkin-p5@dino.test          pending participant (scan should be refused)
 //   - venue  "[test] smu scis 1" with coordinates (for the far_from_venue check later)
 //   - event  "[test] check-in demo", published, started 30 min ago, ends in 6 h,
 //            so check-ins don't get the outside_event_window flag. re-running moves
@@ -36,7 +36,7 @@ const admin = createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
   }
 });
 
-const PASSWORD = env.SEED_PASSWORD || "Bookedz-test-2026";
+const PASSWORD = env.SEED_PASSWORD || "Dino-test-2026";
 
 const EVENT_TITLE = "[TEST] Check-in demo";
 
@@ -44,35 +44,35 @@ const VENUE_NAME = "[TEST] SMU SCIS 1";
 
 const USERS = [{
   key: "organiser",
-  email: "checkin-organiser@bookedz.test",
+  email: "checkin-organiser@dino.test",
   name: "Test Organiser"
 }, {
   key: "helper",
-  email: "checkin-helper@bookedz.test",
+  email: "checkin-helper@dino.test",
   name: "Test Helper"
 }, {
   key: "p1",
-  email: "checkin-p1@bookedz.test",
+  email: "checkin-p1@dino.test",
   name: "Alice Tan",
   status: "confirmed"
 }, {
   key: "p2",
-  email: "checkin-p2@bookedz.test",
+  email: "checkin-p2@dino.test",
   name: "Ben Lim",
   status: "confirmed"
 }, {
   key: "p3",
-  email: "checkin-p3@bookedz.test",
+  email: "checkin-p3@dino.test",
   name: "Chloe Ng",
   status: "confirmed"
 }, {
   key: "p4",
-  email: "checkin-p4@bookedz.test",
+  email: "checkin-p4@dino.test",
   name: "Daniel Koh",
   status: "confirmed"
 }, {
   key: "p5",
-  email: "checkin-p5@bookedz.test",
+  email: "checkin-p5@dino.test",
   name: "Esther Goh",
   status: "pending"
 }];
@@ -85,7 +85,7 @@ function must({
   return data;
 }
 
-// finds our test users by email. only ever returns the @bookedz.test accounts.
+// finds our test users by email. only ever returns the @dino.test accounts.
 
 async function findTestUsers() {
   const wanted = new Set(USERS.map(u => u.email));

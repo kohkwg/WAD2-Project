@@ -166,14 +166,14 @@ function formatAnswer(question, answer) {
 <style scoped>
 .table {
   --bs-table-bg: transparent;
-  --bs-table-striped-bg: var(--bookedz-glass-solid);
+  --bs-table-striped-bg: var(--dino-glass-solid);
   margin-bottom: 0;
 }
 
 .table thead th {
   padding-top: .8rem;
   padding-bottom: .8rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .82rem;
   font-weight: 700;
   white-space: nowrap;
@@ -185,7 +185,7 @@ function formatAnswer(question, answer) {
 }
 
 .table-responsive {
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
 }
 
@@ -221,10 +221,10 @@ function formatAnswer(question, answer) {
     display: grid;
     gap: 0;
     padding: .6rem .85rem;
-    border: 1px solid var(--bookedz-border);
+    border: 1px solid var(--dino-border);
     border-radius: 15px;
-    background: var(--bookedz-surface);
-    box-shadow: var(--bookedz-card-shadow);
+    background: var(--dino-surface);
+    box-shadow: var(--dino-card-shadow);
   }
   .table td {
     display: grid;
@@ -232,7 +232,7 @@ function formatAnswer(question, answer) {
     align-items: center;
     gap: .6rem;
     padding: .55rem 0;
-    border-bottom: 1px solid var(--bookedz-border);
+    border-bottom: 1px solid var(--dino-border);
     text-align: left !important;
     white-space: normal;
   }
@@ -241,7 +241,7 @@ function formatAnswer(question, answer) {
   }
   .table td::before {
     content: attr(data-label);
-    color: var(--bookedz-muted);
+    color: var(--dino-muted);
     font-size: .74rem;
     font-weight: 700;
   }
@@ -254,7 +254,7 @@ function formatAnswer(question, answer) {
   }
   .table td[data-label="Name"] .fw-semibold {
     font-size: 1rem;
-    color: var(--bookedz-ink);
+    color: var(--dino-ink);
   }
   .table td[data-label="Name"] .small {
     overflow-wrap: anywhere;
@@ -295,6 +295,6 @@ function formatAnswer(question, answer) {
 }
 
 tr.is-chosen>td {
-  background: color-mix(in srgb, var(--bookedz-primary) 8%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-primary) 8%, var(--dino-surface));
 }
 </style>

@@ -276,10 +276,10 @@ const time = value => new Intl.DateTimeFormat('en-SG', {
 <style scoped>
 .programme-flow {
   padding: 1.1rem 1.25rem;
-  border: 1px solid var(--bookedz-border,#e9ded3);
+  border: 1px solid var(--dino-border,#e9ded3);
   border-radius: 18px;
-  background: var(--bookedz-surface,#ffffff);
-  box-shadow: var(--bookedz-card-shadow,none);
+  background: var(--dino-surface,#ffffff);
+  box-shadow: var(--dino-card-shadow,none);
 }
 
 .programme-heading {
@@ -297,28 +297,28 @@ const time = value => new Intl.DateTimeFormat('en-SG', {
 
 .programme-kicker {
   display: block;
-  color: var(--bookedz-muted,#636975);
+  color: var(--dino-muted,#636975);
   font-size: .72rem;
   font-weight: 750;
 }
 
 .programme-flow h2,.programme-flow h3 {
-  font-family: var(--bookedz-heading,'Bricolage Grotesque',sans-serif);
+  font-family: var(--dino-heading,'Bricolage Grotesque',sans-serif);
   letter-spacing: -.02em;
 }
 
 .programme-form {
-  background: var(--bookedz-cream,#fff8f1);
+  background: var(--dino-cream,#fff8f1);
 }
 
 .programme-flow .border.rounded {
-  border-color: var(--bookedz-border,#e9ded3)!important;
+  border-color: var(--dino-border,#e9ded3)!important;
   border-radius: 14px!important;
 }
 
 .programme-flow .form-control,.programme-flow .form-select {
   min-height: 42px;
-  border-color: var(--bookedz-border,#e9ded3);
+  border-color: var(--dino-border,#e9ded3);
   border-radius: 10px;
 }
 
@@ -328,16 +328,16 @@ const time = value => new Intl.DateTimeFormat('en-SG', {
 }
 
 .programme-flow .btn-primary {
-  --bs-btn-bg: var(--bookedz-primary-dark,#9a3412);
-  --bs-btn-border-color: var(--bookedz-primary-dark,#9a3412);
-  --bs-btn-color: var(--bookedz-on-action,#ffffff);
-  --bs-btn-hover-bg: var(--bookedz-primary-hover,#9a3412);
-  --bs-btn-hover-border-color: var(--bookedz-primary-hover,#9a3412);
+  --bs-btn-bg: var(--dino-primary-dark,#9a3412);
+  --bs-btn-border-color: var(--dino-primary-dark,#9a3412);
+  --bs-btn-color: var(--dino-on-action,#ffffff);
+  --bs-btn-hover-bg: var(--dino-primary-hover,#9a3412);
+  --bs-btn-hover-border-color: var(--dino-primary-hover,#9a3412);
 }
 
 .programme-empty {
   margin: 0;
-  color: var(--bookedz-muted,#636975);
+  color: var(--dino-muted,#636975);
 }
 
 .programme-list {
@@ -353,13 +353,13 @@ const time = value => new Intl.DateTimeFormat('en-SG', {
   grid-template-columns: minmax(9rem,13rem) minmax(0,1fr);
   gap: 1rem;
   padding: 1rem;
-  border: 1px solid var(--bookedz-border,#e9ded3);
+  border: 1px solid var(--dino-border,#e9ded3);
   border-radius: 14px;
-  background: var(--bookedz-cream,#fff8f1);
+  background: var(--dino-cream,#fff8f1);
 }
 
 .programme-time {
-  color: var(--bookedz-primary-dark,#9a3412);
+  color: var(--dino-primary-dark,#9a3412);
   font-weight: 750;
   line-height: 1.35;
 }
@@ -382,7 +382,7 @@ const time = value => new Intl.DateTimeFormat('en-SG', {
   }
   .programme-time {
     padding-bottom: .45rem;
-    border-bottom: 1px solid var(--bookedz-border,#e9ded3);
+    border-bottom: 1px solid var(--dino-border,#e9ded3);
   }
 }
 </style>

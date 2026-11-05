@@ -235,31 +235,31 @@ function view(event) {
 
 .picks-header h2 {
   margin: 0;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .see-all {
   min-height: 40px;
   padding: 7px 12px;
-  border: 1px solid var(--bookedz-control-border);
+  border: 1px solid var(--dino-control-border);
   border-radius: 5px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
-  font-family: var(--bookedz-body);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
+  font-family: var(--dino-body);
   font-weight: 600;
   font-size: var(--text-button);
   cursor: pointer;
 }
 
 .see-all:hover {
-  border-color: var(--bookedz-primary-dark);
-  color: var(--bookedz-primary-dark);
+  border-color: var(--dino-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .picks-note,
 .picks-context p,
 .picks-message {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: var(--text-small);
 }
 
@@ -368,7 +368,7 @@ function view(event) {
 .pick-skeleton {
   height: 340px;
   border-radius: 8px;
-  background: var(--bookedz-border);
+  background: var(--dino-border);
 }
 
 @media (max-width: 1000px) {
@@ -390,7 +390,7 @@ function view(event) {
 }
 
 .picked-for-you :deep(:focus-visible) {
-  outline: 2px solid var(--bookedz-primary-dark);
+  outline: 2px solid var(--dino-primary-dark);
   outline-offset: 3px;
 }
 
@@ -404,9 +404,9 @@ function view(event) {
   align-items: start;
   padding: 14px;
   margin: 0;
-  border: 1px solid var(--bookedz-primary);
+  border: 1px solid var(--dino-primary);
   border-radius: 15px;
-  background: var(--bookedz-glass-active);
+  background: var(--dino-glass-active);
 }
 
 .picked-for-you--strip .picks-header {
@@ -426,7 +426,7 @@ function view(event) {
 
 .picks-eyebrow {
   margin: 0;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-size: 11px;
   font-weight: 700;
 }

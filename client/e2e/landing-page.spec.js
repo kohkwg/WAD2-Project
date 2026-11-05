@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 // these checks expect the expanded sidebar. from 992px the sidebar starts as an icon rail
-// unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
+// unless someone expanded it, so start from that remembered choice.
 test.beforeEach(async ({
   page
 }) => {
   await page.addInitScript(() => {
     try {
-      localStorage.setItem('bookedz-sidebar', 'expanded');
+      localStorage.setItem('dino-sidebar', 'expanded');
     } catch {/* storage blocked */}
   });
 });
@@ -15,7 +15,7 @@ test.beforeEach(async ({
 // the landing page is the front door (design.md, landing): signed-out visitors sign in or create
 // an account; signed-in people (and the demo account) see an account summary. no island map.
 
-test('demo account sees its summary, and Bookedz logos return home', async ({
+test('demo account sees its summary, and Dino logos return home', async ({
   page
 }, testInfo) => {
   const errors = [];

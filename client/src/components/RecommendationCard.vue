@@ -236,13 +236,13 @@ function onAction() {
 .pick-source {
   margin: 0 0 .4rem;
   font-weight: 700;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .pick-explanation {
   margin-bottom: .5rem;
   font-size: var(--text-small);
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .pick-explanation summary {
@@ -257,7 +257,7 @@ function onAction() {
 
 .pick-preferences {
   margin-top: 10px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: var(--text-small);
 }
 
@@ -280,9 +280,9 @@ function onAction() {
   min-width: 0;
   height: 100%;
   padding: 1rem;
-  border: 1px solid var(--bookedz-border, #e9ded3);
+  border: 1px solid var(--dino-border, #e9ded3);
   border-radius: 20px;
-  background: var(--bookedz-surface, #ffffff);
+  background: var(--dino-surface, #ffffff);
   box-shadow: 0 8px 22px rgb(41 45 50 / 4%);
   transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
@@ -296,7 +296,7 @@ function onAction() {
   min-height: 104px;
   overflow: hidden;
   border-radius: 14px;
-  background: var(--bookedz-mint, #ffe4d6);
+  background: var(--dino-mint, #ffe4d6);
 }
 
 .pick-cover > img, .pick-cover :deep(.event-artwork) {
@@ -320,7 +320,7 @@ function onAction() {
   overflow: hidden;
   border-radius: 999px;
   background: rgb(255 249 239 / 93%);
-  color: var(--bookedz-ink, #1f2937);
+  color: var(--dino-ink, #1f2937);
   font-size: var(--text-caption);
   font-weight: 650;
   text-overflow: ellipsis;
@@ -338,7 +338,7 @@ function onAction() {
   gap: 7px;
   margin: 0 0 5px;
   font-size: var(--text-small);
-  color: var(--bookedz-muted, #596b58);
+  color: var(--dino-muted, #596b58);
   font-weight: 650;
   overflow-wrap: anywhere;
 }
@@ -376,14 +376,14 @@ function onAction() {
   overflow-wrap: anywhere;
   font-size: var(--text-body);
   line-height: 1.5;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   margin: .5rem 0 0;
 }
 
 .pick-date, .pick-spots, .pick-venue {
   margin: 0;
   font-size: var(--text-small);
-  color: var(--bookedz-muted, #636975);
+  color: var(--dino-muted, #636975);
 }
 
 .pick-venue {
@@ -517,15 +517,15 @@ function onAction() {
   align-items: center;
   gap: 4px 6px;
   padding-right: 26px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 10px;
 }
 
 .strip-score {
   padding: 1px 6px;
   border-radius: 99px;
-  background: var(--bookedz-primary-dark);
-  color: var(--bookedz-on-action);
+  background: var(--dino-primary-dark);
+  color: var(--dino-on-action);
   font-size: 10px;
   font-weight: 600;
 }
@@ -534,10 +534,10 @@ function onAction() {
   display: block;
   min-height: 44px;
   padding: 6px 10px;
-  border: 1px solid var(--bookedz-control-border);
+  border: 1px solid var(--dino-control-border);
   border-radius: 6px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font: inherit;
 }
 
@@ -555,7 +555,7 @@ function onAction() {
 .recommendation-card--strip .pick-title {
   order: 2;
   margin: 0;
-  font-family: var(--bookedz-body);
+  font-family: var(--dino-body);
   font-size: 15px;
   line-height: 1.3;
   padding-right: 30px;
@@ -577,8 +577,8 @@ function onAction() {
   margin: 0 30px 2px 0;
   padding: 2px 7px;
   border-radius: 99px;
-  background: var(--bookedz-primary-dark);
-  color: var(--bookedz-on-action);
+  background: var(--dino-primary-dark);
+  color: var(--dino-on-action);
   font-size: 10px;
 }
 
@@ -599,7 +599,7 @@ function onAction() {
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 11px;
 }
 
@@ -611,7 +611,7 @@ function onAction() {
   overflow: hidden;
   order: 5;
   margin: 0;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-size: 11px;
   line-height: 1.4;
 }

@@ -1513,12 +1513,12 @@ function addPerson() {
 <style scoped>
 .floor-editor,
 .floor-plan-viewer {
-  --floor-ink: var(--bookedz-ink, #1f2937);
-  --floor-muted: var(--bookedz-muted, #636975);
-  --floor-paper: var(--bookedz-cream, #fff8f1);
-  --floor-surface: var(--bookedz-surface, #ffffff);
-  --floor-coral: var(--bookedz-coral-dark, #9a3412);
-  --floor-line: var(--bookedz-border, #e9ded3);
+  --floor-ink: var(--dino-ink, #1f2937);
+  --floor-muted: var(--dino-muted, #636975);
+  --floor-paper: var(--dino-cream, #fff8f1);
+  --floor-surface: var(--dino-surface, #ffffff);
+  --floor-coral: var(--dino-coral-dark, #9a3412);
+  --floor-line: var(--dino-border, #e9ded3);
   color: var(--floor-ink);
 }
 
@@ -1528,7 +1528,7 @@ function addPerson() {
 }
 
 .floor-page-heading h1 {
-  font-family: var(--bookedz-heading, 'Bricolage Grotesque', sans-serif);
+  font-family: var(--dino-heading, 'Bricolage Grotesque', sans-serif);
   letter-spacing: -.035em;
   font-size: clamp(1.8rem, 4vw, 2.4rem);
 }
@@ -1612,10 +1612,10 @@ function addPerson() {
 .floor-editor .btn-primary {
   --bs-btn-bg: var(--floor-coral);
   --bs-btn-border-color: var(--floor-coral);
-  --bs-btn-color: var(--bookedz-on-action, #ffffff);
-  --bs-btn-hover-bg: var(--bookedz-primary-hover, #7c2d12);
-  --bs-btn-hover-border-color: var(--bookedz-primary-hover, #7c2d12);
-  --bs-btn-hover-color: var(--bookedz-on-action, #ffffff);
+  --bs-btn-color: var(--dino-on-action, #ffffff);
+  --bs-btn-hover-bg: var(--dino-primary-hover, #7c2d12);
+  --bs-btn-hover-border-color: var(--dino-primary-hover, #7c2d12);
+  --bs-btn-hover-color: var(--dino-on-action, #ffffff);
   border-radius: 12px;
   min-height: 42px;
 }
@@ -1653,7 +1653,7 @@ function addPerson() {
   border: 1px solid var(--floor-line);
   border-radius: 18px;
   background: var(--floor-surface);
-  box-shadow: var(--bookedz-card-shadow, none);
+  box-shadow: var(--dino-card-shadow, none);
 }
 
 .panel-heading {
@@ -1692,7 +1692,7 @@ function addPerson() {
 }
 
 .helper-panel h2 {
-  font-family: var(--bookedz-heading, 'Bricolage Grotesque', sans-serif);
+  font-family: var(--dino-heading, 'Bricolage Grotesque', sans-serif);
   font-weight: 700;
   letter-spacing: -.02em;
 }
@@ -1883,8 +1883,8 @@ function addPerson() {
 .floor-aux-panel :deep(.btn-primary) {
   --bs-btn-bg: var(--floor-coral);
   --bs-btn-border-color: var(--floor-coral);
-  --bs-btn-hover-bg: var(--bookedz-primary-hover, #7c2d12);
-  --bs-btn-hover-border-color: var(--bookedz-primary-hover, #7c2d12)
+  --bs-btn-hover-bg: var(--dino-primary-hover, #7c2d12);
+  --bs-btn-hover-border-color: var(--dino-primary-hover, #7c2d12)
 ;
 }
 

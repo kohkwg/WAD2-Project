@@ -238,10 +238,10 @@ onUnmounted(() => channel && supabase.removeChannel(channel));
 
 <style scoped>
 .attendance-page {
-  --checkin-ink: var(--bookedz-ink,#1f2937);
-  --checkin-coral: var(--bookedz-coral-dark,#9a3412);
-  --checkin-mint: var(--bookedz-mint,#ffe4d6);
-  --checkin-line: var(--bookedz-border,#e9ded3);
+  --checkin-ink: var(--dino-ink,#1f2937);
+  --checkin-coral: var(--dino-coral-dark,#9a3412);
+  --checkin-mint: var(--dino-mint,#ffe4d6);
+  --checkin-line: var(--dino-border,#e9ded3);
   max-width: 820px;
   color: var(--checkin-ink);
 }
@@ -252,7 +252,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel));
 }
 
 .attendance-header h1 {
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: clamp(1.8rem,4vw,2.5rem);
   letter-spacing: -.035em;
 }
@@ -274,7 +274,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel));
 }
 
 .attendance-stat .display-6 {
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: 3.6rem;
   color: var(--checkin-ink);
   line-height: 1;
@@ -308,7 +308,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel));
 }
 
 .attendance-section-title {
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-weight: 700;
   letter-spacing: -.02em;
 }

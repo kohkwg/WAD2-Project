@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const NOW = '2026-10-16T04:00:00.000Z';
 
-const STORE = 'bookedz-feature2-demo';
+const STORE = 'dino-feature2-demo';
 
 const ENDPOINT = '**/v2/real-time/api/two-hr-forecast*';
 
@@ -245,7 +245,7 @@ test('failed storage save keeps the draft and supports retry', async ({
   await page.evaluate(() => {
     window.__originalSetItem = Storage.prototype.setItem;
     Storage.prototype.setItem = function (key, value) {
-      if (key === 'bookedz-feature2-demo') throw new DOMException('Storage full', 'QuotaExceededError');
+      if (key === 'dino-feature2-demo') throw new DOMException('Storage full', 'QuotaExceededError');
       return window.__originalSetItem.call(this, key, value);
     };
   });

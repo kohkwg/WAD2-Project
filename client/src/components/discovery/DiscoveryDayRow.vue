@@ -231,7 +231,7 @@ watch([expanded, pageSize], () => {
   gap: 10px;
   margin-bottom: 10px;
   font-size: 12px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .day-head time {
@@ -241,7 +241,7 @@ watch([expanded, pageSize], () => {
 }
 
 .day-head strong {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: 15px;
 }
 
@@ -249,13 +249,13 @@ watch([expanded, pageSize], () => {
   flex: none;
   width: 12px;
   height: 12px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 50%;
-  background: var(--bookedz-fill);
+  background: var(--dino-fill);
 }
 
 .day-weekday {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -266,7 +266,7 @@ watch([expanded, pageSize], () => {
   flex: 1;
   min-width: 12px;
   height: 2px;
-  background: var(--bookedz-border);
+  background: var(--dino-border);
 }
 
 .day-more {
@@ -275,16 +275,16 @@ watch([expanded, pageSize], () => {
   gap: 6px;
   min-height: 44px;
   padding: 6px 14px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 99px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font: inherit;
   font-weight: 700;
 }
 
 .day-more:hover {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .day-more svg {
@@ -412,23 +412,23 @@ watch([expanded, pageSize], () => {
   content: '';
   position: absolute;
   inset: 7px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 50%;
   background: transparent;
   transition: background 0.15s;
 }
 
 .day-dot-btn.is-active::before {
-  background: var(--bookedz-fill);
+  background: var(--dino-fill);
 }
 
 /* "see more" opens every event of the day as one raised card */
 
 .is-expanded {
   padding: 14px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 18px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   box-shadow: 0 10px 28px rgba(31, 41, 55, 0.13);
 }
 

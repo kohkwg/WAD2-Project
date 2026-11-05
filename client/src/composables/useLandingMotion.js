@@ -17,7 +17,7 @@ export function useLandingMotion(target) {
   onMounted(() => {
     const root = toValue(target);
     if (!root) return;
-    const reveal = parseFloat(getComputedStyle(root).getPropertyValue('--bookedz-motion-reveal')) / 1000 || .42;
+    const reveal = parseFloat(getComputedStyle(root).getPropertyValue('--dino-motion-reveal')) / 1000 || .42;
     const q = selector => root.querySelector(selector);
     const qa = selector => [...root.querySelectorAll(selector)];
 

@@ -109,34 +109,34 @@ const revealed = computed(() => Date.parse(access.value?.revealAt) <= Date.now()
   margin-bottom: .9rem;
   padding: .85rem 1rem;
   border-radius: 15px;
-  background: color-mix(in srgb, var(--bookedz-yellow) 20%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-yellow) 20%, var(--dino-surface));
 }
 
 .online-link.is-ready {
   padding: 1rem;
-  border: 1px solid var(--bookedz-border);
-  background: color-mix(in srgb, var(--bookedz-mint) 18%, var(--bookedz-surface));
+  border: 1px solid var(--dino-border);
+  background: color-mix(in srgb, var(--dino-mint) 18%, var(--dino-surface));
 }
 
 .venue-label {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .8rem;
   font-weight: 650;
 }
 
 .venue-name {
   margin: .15rem 0 0;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 750;
 }
 
 .venue-name span {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .online-link-heading {
   margin: 0 0 .5rem;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: 1rem;
   font-weight: 700;
 }
@@ -147,14 +147,14 @@ const revealed = computed(() => Date.parse(access.value?.revealAt) <= Date.now()
 
 .online-link-url {
   margin: .5rem 0 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .85rem;
   overflow-wrap: anywhere;
 }
 
 .online-link-note {
   margin: .15rem 0 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .9rem;
 }
 

@@ -7,9 +7,9 @@ import { expect } from '@playwright/test';
  */
 export async function setColorTheme(page, theme) {
   await page.evaluate(value => {
-    localStorage.setItem('bookedz-color-theme', value);
+    localStorage.setItem('dino-color-theme', value);
     window.dispatchEvent(new StorageEvent('storage', {
-      key: 'bookedz-color-theme',
+      key: 'dino-color-theme',
       newValue: value
     }));
   }, theme);

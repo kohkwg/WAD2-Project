@@ -93,8 +93,8 @@ function confirm() {
   position: fixed;
   height: fit-content;
   max-height: calc(100dvh - 2rem);
-  color: var(--bookedz-ink);
-  background: var(--bookedz-surface);
+  color: var(--dino-ink);
+  background: var(--dino-surface);
 }
 
 .change-list {
@@ -102,7 +102,7 @@ function confirm() {
   gap: .35rem;
   margin: 0;
   padding-left: 1.1rem;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   overflow-wrap: anywhere;
 }
 

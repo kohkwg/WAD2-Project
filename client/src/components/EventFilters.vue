@@ -475,9 +475,9 @@ onBeforeUnmount(() => {
 
 .search-toolbar, .filter-panel {
   box-sizing: border-box;
-  border: 1px solid var(--bookedz-control-border);
+  border: 1px solid var(--dino-control-border);
   border-radius: 18px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .search-toolbar {
@@ -485,7 +485,7 @@ onBeforeUnmount(() => {
   align-items: stretch;
   gap: 6px;
   padding: 6px;
-  box-shadow: var(--bookedz-search-shadow);
+  box-shadow: var(--dino-search-shadow);
 }
 
 .search-suggestions {
@@ -500,10 +500,10 @@ onBeforeUnmount(() => {
   padding: 6px;
   overflow-y: auto;
   list-style: none;
-  border: 1px solid var(--bookedz-control-border);
+  border: 1px solid var(--dino-control-border);
   border-radius: 8px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-search-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-search-shadow);
 }
 
 .search-suggestion {
@@ -513,22 +513,22 @@ onBeforeUnmount(() => {
   min-height: 44px;
   padding: 8px 10px;
   border-radius: 5px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   cursor: pointer;
 }
 
 .search-suggestion:hover, .search-suggestion.is-active {
-  background: var(--bookedz-glass-hover);
+  background: var(--dino-glass-hover);
 }
 
 .search-suggestion.is-active {
-  outline: 2px solid var(--bookedz-primary-dark);
+  outline: 2px solid var(--dino-primary-dark);
   outline-offset: -2px;
 }
 
 .suggestion-kind {
   flex: 0 0 4.75rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .75rem;
   font-weight: 600;
 }
@@ -550,7 +550,7 @@ onBeforeUnmount(() => {
 
 .suggestion-count {
   flex-shrink: 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .8rem;
   font-variant-numeric: tabular-nums;
 }
@@ -569,7 +569,7 @@ onBeforeUnmount(() => {
   width: 22px;
   height: 22px;
   pointer-events: none;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 svg {
@@ -589,7 +589,7 @@ svg {
   border-radius: 12px;
   padding: 8px 40px 8px 42px;
   background: transparent;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font: inherit;
   font-size: 1rem;
 }
@@ -606,7 +606,7 @@ svg {
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 1.4rem;
 }
 
@@ -619,8 +619,8 @@ svg {
   padding: 8px 14px;
   border: 0;
   border-radius: 12px;
-  background: var(--bookedz-glass-active);
-  color: var(--bookedz-ink);
+  background: var(--dino-glass-active);
+  color: var(--dino-ink);
   font-size: .9rem;
   font-weight: 650;
 }
@@ -633,8 +633,8 @@ svg {
 /* surface-coloured text stays readable on primary-dark in both themes (white was 1.7:1 in dark) */
 
 .filter-toggle.is-active {
-  background: var(--bookedz-primary-dark);
-  color: var(--bookedz-surface);
+  background: var(--dino-primary-dark);
+  color: var(--dino-surface);
 }
 
 .filter-count {
@@ -644,8 +644,8 @@ svg {
   height: 20px;
   padding-inline: 5px;
   border-radius: 99px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-surface);
+  color: var(--dino-primary-dark);
   font-size: .75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -658,7 +658,7 @@ svg {
   left: 0;
   width: 100%;
   padding: 22px;
-  box-shadow: var(--bookedz-search-shadow);
+  box-shadow: var(--dino-search-shadow);
   max-height: min(620px, 75svh);
   overflow-y: auto;
   overflow-x: hidden;
@@ -679,7 +679,7 @@ svg {
   margin: 0 0 12px;
   font-size: .95rem;
   font-weight: 700;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .filter-footer {
@@ -688,7 +688,7 @@ svg {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
   padding-top: 16px;
 }
 
@@ -697,7 +697,7 @@ svg {
   padding: 8px 0;
   border: 0;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   text-decoration: underline;
   text-underline-offset: 3px;
   font-size: .875rem;
@@ -706,10 +706,10 @@ svg {
 .show-events {
   min-height: 44px;
   padding: 10px 16px;
-  border: 1px solid var(--bookedz-ink);
+  border: 1px solid var(--dino-ink);
   border-radius: 12px;
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
   font-weight: 650;
   font-size: .875rem;
 }
@@ -722,7 +722,7 @@ svg {
 .calendar-hook p, .count-error {
   margin: 12px 0 0;
   font-size: .8rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .count-error {
@@ -732,7 +732,7 @@ svg {
 .count-error button {
   border: 0;
   background: transparent;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   text-decoration: underline;
 }
 
@@ -746,10 +746,10 @@ svg {
 .active-filter {
   min-height: 44px;
   padding: 7px 12px;
-  border: 1px solid var(--bookedz-control-border);
+  border: 1px solid var(--dino-control-border);
   border-radius: 99px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font-size: .85rem;
 }
 
@@ -758,7 +758,7 @@ svg {
 }
 
 button:focus-visible, input:focus-visible {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 3px;
 }
 
@@ -769,7 +769,7 @@ button:focus-visible, input:focus-visible {
 }
 
 .search-toolbar:has(.search-field input:focus-visible) {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 3px;
 }
 
@@ -810,14 +810,14 @@ button:focus-visible, input:focus-visible {
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 24px;
   cursor: pointer;
 }
 
 .close-panel:hover {
-  background: var(--bookedz-glass-hover);
-  color: var(--bookedz-ink);
+  background: var(--dino-glass-hover);
+  color: var(--dino-ink);
 }
 
 .date-segments {
@@ -825,7 +825,7 @@ button:focus-visible, input:focus-visible {
   gap: 2px;
   padding: 3px;
   border-radius: 6px;
-  background: var(--bookedz-canvas);
+  background: var(--dino-canvas);
 }
 
 .date-segments button {
@@ -836,7 +836,7 @@ button:focus-visible, input:focus-visible {
   border-radius: 4px;
   padding: 8px 6px;
   background: transparent;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font: inherit;
   font-size: .875rem;
   cursor: pointer;
@@ -854,8 +854,8 @@ button:focus-visible, input:focus-visible {
 }
 
 .date-segments button[aria-pressed="true"] {
-  background: var(--bookedz-surface);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-surface);
+  color: var(--dino-primary-dark);
   box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
   font-weight: 650;
 }
@@ -872,7 +872,7 @@ button:focus-visible, input:focus-visible {
   gap: 10px;
   min-height: 44px;
   padding: 6px 0;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   cursor: pointer;
 }
 
@@ -880,7 +880,7 @@ button:focus-visible, input:focus-visible {
   width: 16px;
   height: 16px;
   margin: 0;
-  accent-color: var(--bookedz-primary-dark);
+  accent-color: var(--dino-primary-dark);
 }
 
 .availability-row {
@@ -889,8 +889,8 @@ button:focus-visible, input:focus-visible {
   justify-content: space-between;
   gap: 16px;
   padding: 18px 0;
-  color: var(--bookedz-ink);
-  border-top: 1px solid var(--bookedz-border);
+  color: var(--dino-ink);
+  border-top: 1px solid var(--dino-border);
   cursor: pointer;
 }
 
@@ -902,7 +902,7 @@ button:focus-visible, input:focus-visible {
   height: 20px;
   margin: 0;
   border-radius: 20px;
-  background: var(--bookedz-muted);
+  background: var(--dino-muted);
   cursor: pointer;
 }
 
@@ -918,7 +918,7 @@ button:focus-visible, input:focus-visible {
 }
 
 .availability-switch:checked {
-  background: var(--bookedz-primary-dark);
+  background: var(--dino-primary-dark);
 }
 
 .availability-switch:checked::before {
@@ -929,12 +929,12 @@ button:focus-visible, input:focus-visible {
    white on light orange was 1.7:1 in dark mode) */
 
 .show-events {
-  border-radius: var(--bookedz-radius-control);
-  background: var(--bookedz-fill);
-  border-color: var(--bookedz-fill);
-  color: var(--bookedz-on-fill);
+  border-radius: var(--dino-radius-control);
+  background: var(--dino-fill);
+  border-color: var(--dino-fill);
+  color: var(--dino-on-fill);
   font-weight: 700;
-  box-shadow: var(--bookedz-button-shadow);
+  box-shadow: var(--dino-button-shadow);
 }
 
 /* wider screens: a compact drop-down under the filters button instead of a full-width sheet */
@@ -965,7 +965,7 @@ button:focus-visible, input:focus-visible {
   display: grid;
   gap: 6px;
   min-width: 0;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: .875rem;
 }
 
@@ -974,10 +974,10 @@ button:focus-visible, input:focus-visible {
   width: 100%;
   min-width: 0;
   padding: 10px 12px;
-  border: 1px solid var(--bookedz-control-border);
+  border: 1px solid var(--dino-control-border);
   border-radius: 6px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font: inherit;
 }
 </style>

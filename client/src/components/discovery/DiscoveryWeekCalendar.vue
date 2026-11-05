@@ -184,10 +184,10 @@ const range = computed(() => {
   flex-direction: column;
   min-height: 0;
   padding: 10px 14px 4px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 20px;
-  background: var(--bookedz-surface);
-  box-shadow: 5px 5px 0 var(--bookedz-teal);
+  background: var(--dino-surface);
+  box-shadow: 5px 5px 0 var(--dino-teal);
 }
 
 /* header */
@@ -202,7 +202,7 @@ const range = computed(() => {
 
 .week-head h2 {
   margin: 0;
-  font-family: var(--bookedz-body);
+  font-family: var(--dino-body);
   font-size: 15px;
   font-weight: 800;
 }
@@ -210,11 +210,11 @@ const range = computed(() => {
 .week-head p {
   margin: 2px 0 0;
   font-size: 12px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .week-head p a {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 700;
 }
 
@@ -230,18 +230,18 @@ const range = computed(() => {
   place-items: center;
   width: 36px;
   height: 36px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 50%;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
 }
 
 .week-nav button:hover:not(:disabled) {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .week-nav button:disabled {
-  color: var(--bookedz-disabled-ink);
+  color: var(--dino-disabled-ink);
   cursor: not-allowed;
 }
 
@@ -273,11 +273,11 @@ const range = computed(() => {
   align-items: center;
   gap: 8px;
   padding: 1px 8px;
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
 }
 
 .week-day.has-events {
-  background: color-mix(in srgb, var(--bookedz-orange-soft) 55%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-orange-soft) 55%, var(--dino-surface));
   border-radius: 12px;
   border-top-color: transparent;
 }
@@ -291,7 +291,7 @@ const range = computed(() => {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .week-label b {
@@ -300,20 +300,20 @@ const range = computed(() => {
   min-width: 22px;
   height: 22px;
   border-radius: 50%;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: 13px;
   letter-spacing: 0;
 }
 
 .week-label b.is-today {
-  background: var(--bookedz-fill);
-  color: var(--bookedz-on-fill);
+  background: var(--dino-fill);
+  color: var(--dino-on-fill);
 }
 
 .week-empty {
   margin: 0;
   font-size: 12px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 /* events inside a day */
@@ -341,27 +341,27 @@ const range = computed(() => {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font: inherit;
   font-size: 12px;
   text-align: left;
 }
 
 .week-events button:hover {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .week-swatch {
   flex: none;
   width: 16px;
   height: 16px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 5px;
 }
 
 .week-events time {
   flex: none;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 700;
 }
 

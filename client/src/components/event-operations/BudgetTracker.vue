@@ -714,13 +714,13 @@ function importScanned() {
 .budget-totals > div {
   min-width: 0;
   padding: .7rem .85rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: .8rem;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .budget-totals dt, .budget-totals dt label {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .78rem;
   font-weight: 600;
   margin-bottom: .2rem;
@@ -728,7 +728,7 @@ function importScanned() {
 
 .budget-totals dd {
   margin: 0;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: clamp(1rem, 2vw, 1.25rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -777,7 +777,7 @@ function importScanned() {
 .sheet .wheel-cell :deep(.wheel-trigger:hover),
 .sheet .wheel-cell :deep(.wheel-trigger:focus-visible),
 .sheet .wheel-cell :deep(.wheel-trigger[aria-expanded="true"]) {
-  border-color: var(--bookedz-border);
+  border-color: var(--dino-border);
 }
 
 .sheet {
@@ -790,8 +790,8 @@ function importScanned() {
 
 .sheet th {
   padding: .55rem .5rem;
-  border-bottom: 2px solid var(--bookedz-ink);
-  color: var(--bookedz-muted);
+  border-bottom: 2px solid var(--dino-ink);
+  color: var(--dino-muted);
   font-size: .76rem;
   font-weight: 700;
   text-align: left;
@@ -802,7 +802,7 @@ function importScanned() {
 
 .sheet td {
   padding: 0;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 .sheet .num {
@@ -834,7 +834,7 @@ function importScanned() {
   border: 2px solid transparent;
   border-radius: .5rem;
   background: transparent;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font: inherit;
 }
 
@@ -844,13 +844,13 @@ function importScanned() {
 }
 
 .cell:hover {
-  background: var(--bookedz-glass-hover);
+  background: var(--dino-glass-hover);
 }
 
 .cell:focus {
   outline: none;
-  border-color: var(--bookedz-fill);
-  background: var(--bookedz-surface);
+  border-color: var(--dino-fill);
+  background: var(--dino-surface);
 }
 
 .cell:disabled {
@@ -858,7 +858,7 @@ function importScanned() {
 }
 
 .add-row td {
-  background: color-mix(in srgb, var(--bookedz-teal) 18%, transparent);
+  background: color-mix(in srgb, var(--dino-teal) 18%, transparent);
   border-bottom: 0;
 }
 
@@ -922,9 +922,9 @@ function importScanned() {
   gap: .5rem;
   max-width: 100%;
   padding: .35rem .75rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 999px;
-  background: var(--bookedz-glass-solid);
+  background: var(--dino-glass-solid);
 }
 
 .category-chip .btn {
@@ -942,23 +942,23 @@ function importScanned() {
   height: 1rem;
   overflow: hidden;
   border-radius: 999px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .spend-bar-track.over {
-  outline: 2px solid var(--bookedz-danger);
+  outline: 2px solid var(--dino-danger);
   outline-offset: 2px;
 }
 
 .spend-bar-segment {
   flex: none;
   height: 100%;
-  background: color-mix(in srgb, var(--bookedz-primary-dark) var(--shade), var(--bookedz-surface));
-  transition: width var(--bookedz-motion-normal) ease;
+  background: color-mix(in srgb, var(--dino-primary-dark) var(--shade), var(--dino-surface));
+  transition: width var(--dino-motion-normal) ease;
 }
 
 .spend-bar-segment + .spend-bar-segment {
-  border-left: 2px solid var(--bookedz-surface);
+  border-left: 2px solid var(--dino-surface);
 }
 
 .spend-bar-limit {
@@ -967,7 +967,7 @@ function importScanned() {
   bottom: 0;
   width: 3px;
   transform: translateX(-50%);
-  background: var(--bookedz-danger);
+  background: var(--dino-danger);
 }
 
 @media (prefers-reduced-motion: reduce) {

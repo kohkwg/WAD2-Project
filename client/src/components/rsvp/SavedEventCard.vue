@@ -58,14 +58,14 @@ const eventPath = computed(() => `/events/${props.event.id}/rsvp`);
 .saved-event {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 20px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .saved-art {
   height: 140px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .saved-art :deep(svg) {
@@ -83,14 +83,14 @@ h3 {
 }
 
 h3 a {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   text-decoration: none;
   overflow-wrap: anywhere;
 }
 
 p {
   font-size: var(--text-small);
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   margin: 6px 0;
   overflow-wrap: anywhere;
 }
@@ -118,8 +118,8 @@ p {
   max-width: calc(100% - 84px);
   padding: 4px 10px;
   border-radius: 999px;
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
   font-size: var(--text-caption);
   font-weight: 700;
   line-height: 1.3;
@@ -134,12 +134,12 @@ p {
 }
 
 .is-closed .saved-badge {
-  background: var(--bookedz-surface);
-  color: var(--bookedz-muted);
-  border: 1px solid var(--bookedz-border);
+  background: var(--dino-surface);
+  color: var(--dino-muted);
+  border: 1px solid var(--dino-border);
 }
 
 .is-closed h3 a {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 </style>

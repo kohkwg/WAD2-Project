@@ -157,5 +157,5 @@ export function eventCalendar(event, now = Date.now()) {
   const start = Date.parse(event.startTime),
     end = Date.parse(event.endTime);
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Bookedz//Events//EN', 'BEGIN:VEVENT', `UID:${escapeIcs(event.id)}@bookedz`, `DTSTAMP:${stamp(now)}`, `DTSTART:${stamp(start)}`, `DTEND:${stamp(end)}`, `SUMMARY:${escapeIcs(event.title)}`, `LOCATION:${escapeIcs([event.venue?.name, event.venue?.address].filter(Boolean).join(', '))}`, `DESCRIPTION:${escapeIcs(event.description)}`, 'END:VEVENT', 'END:VCALENDAR', ''].join('\r\n');
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Dino//Events//EN', 'BEGIN:VEVENT', `UID:${escapeIcs(event.id)}@dino`, `DTSTAMP:${stamp(now)}`, `DTSTART:${stamp(start)}`, `DTEND:${stamp(end)}`, `SUMMARY:${escapeIcs(event.title)}`, `LOCATION:${escapeIcs([event.venue?.name, event.venue?.address].filter(Boolean).join(', '))}`, `DESCRIPTION:${escapeIcs(event.description)}`, 'END:VEVENT', 'END:VCALENDAR', ''].join('\r\n');
 }

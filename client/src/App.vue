@@ -67,7 +67,7 @@ watch(() => route.path, async () => {
 }
 
 .footer-home-link:focus-visible {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 4px;
 }
 </style>

@@ -257,9 +257,9 @@ onBeforeUnmount(() => sortables.forEach(sortable => sortable.destroy()));
 <style scoped>
 .task-column {
   height: 100%;
-  border-color: var(--bookedz-border) !important;
+  border-color: var(--dino-border) !important;
   border-radius: 1rem !important;
-  background: var(--bookedz-glass-solid);
+  background: var(--dino-glass-solid);
 }
 
 .task-editor {
@@ -268,15 +268,15 @@ onBeforeUnmount(() => sortables.forEach(sortable => sortable.destroy()));
 
 .task-card {
   box-shadow: none;
-  border-color: var(--bookedz-border);
+  border-color: var(--dino-border);
   border-radius: .85rem;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
 }
 
 .task-card:hover {
-  border-color: var(--bookedz-control-border);
-  box-shadow: var(--bookedz-glass-shadow);
+  border-color: var(--dino-control-border);
+  box-shadow: var(--dino-glass-shadow);
   transform: translateY(-1px);
 }
 
@@ -292,7 +292,7 @@ onBeforeUnmount(() => sortables.forEach(sortable => sortable.destroy()));
   justify-content: center;
   cursor: grab;
   touch-action: none;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 1.4rem;
   line-height: 1;
 }
@@ -300,15 +300,15 @@ onBeforeUnmount(() => sortables.forEach(sortable => sortable.destroy()));
 .task-text {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .task-editor {
   padding: clamp(1rem, 2vw, 1.4rem);
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1rem;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .task-column>h3 {
@@ -317,7 +317,7 @@ onBeforeUnmount(() => sortables.forEach(sortable => sortable.destroy()));
   align-items: center;
   gap: .5rem;
   margin-bottom: 1rem;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .task-count {
@@ -327,8 +327,8 @@ onBeforeUnmount(() => sortables.forEach(sortable => sortable.destroy()));
   place-items: center;
   padding: 0 .35rem;
   border-radius: 99px;
-  background: var(--bookedz-glass-active);
-  color: var(--bookedz-ink);
+  background: var(--dino-glass-active);
+  color: var(--dino-ink);
   font-size: .72rem;
   font-weight: 700;
 }

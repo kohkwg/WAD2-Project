@@ -480,10 +480,10 @@ onBeforeUnmount(() => {
   isolation: isolate;
   overflow: hidden;
   padding: 0;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 20px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 /* desktop: the pinned card ends 48px above the screen bottom (84px = 18px above + 48px below +
@@ -496,7 +496,7 @@ onBeforeUnmount(() => {
   aspect-ratio: 1.7 / 1;
   overflow: hidden;
   border-radius: 0;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .street-chip {
@@ -509,24 +509,24 @@ onBeforeUnmount(() => {
   min-height: 36px;
   max-width: calc(100% - 40px);
   padding: 6px 14px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 99px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font-size: 12px;
   font-weight: 600;
-  box-shadow: var(--bookedz-card-shadow);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .street-chip--action {
   min-height: 44px;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 700;
   cursor: pointer;
 }
 
 .street-chip--action:hover {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 /* + and − in one stack at the bottom right, above the map credits */
@@ -538,10 +538,10 @@ onBeforeUnmount(() => {
   bottom: 36px;
   display: grid;
   overflow: hidden;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .street-zoom button {
@@ -549,21 +549,21 @@ onBeforeUnmount(() => {
   height: 40px;
   border: 0;
   background: transparent;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: 20px;
   line-height: 1;
 }
 
 .street-zoom button + button {
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
 }
 
 .street-zoom button:hover:not(:disabled) {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .street-zoom button:disabled {
-  color: var(--bookedz-disabled-ink);
+  color: var(--dino-disabled-ink);
   cursor: not-allowed;
 }
 
@@ -578,12 +578,12 @@ onBeforeUnmount(() => {
   right: 76px;
   bottom: 20px;
   padding: 10px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font-size: 12px;
-  box-shadow: var(--bookedz-card-shadow);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .street-tile-error {
@@ -594,7 +594,7 @@ onBeforeUnmount(() => {
   min-height: 36px;
   border: 0;
   background: transparent;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   text-decoration: underline;
 }
 
@@ -602,14 +602,14 @@ onBeforeUnmount(() => {
   padding: 6px 10px;
   border: 0;
   border-radius: 8px;
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
   font-size: 12px;
   line-height: 1.35;
 }
 
 :deep(.street-tip::before) {
-  border-top-color: var(--bookedz-ink);
+  border-top-color: var(--dino-ink);
 }
 
 :deep(.street-marker) {
@@ -625,27 +625,27 @@ onBeforeUnmount(() => {
   place-items: center;
   width: 28px;
   height: 28px;
-  border: 2.5px solid var(--bookedz-surface);
+  border: 2.5px solid var(--dino-surface);
   border-radius: 50%;
-  background: var(--cat-hue, var(--bookedz-pink));
-  color: var(--bookedz-on-fill);
+  background: var(--cat-hue, var(--dino-pink));
+  color: var(--dino-on-fill);
   font-size: 13px;
   font-weight: 700;
   box-shadow: 0 2px 8px #1f293740;
-  transition: transform var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: transform var(--dino-motion-fast) var(--dino-ease);
 }
 
 :deep(.street-marker--cluster .street-pin) {
   width: 34px;
   height: 34px;
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
 }
 
 :deep(.street-marker--featured:not(.street-marker--cluster) .street-pin) {
   width: 32px;
   height: 32px;
-  background: var(--bookedz-primary);
+  background: var(--dino-primary);
   font-size: 15px;
 }
 
@@ -658,8 +658,8 @@ onBeforeUnmount(() => {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--bookedz-primary);
-  color: var(--bookedz-on-fill);
+  background: var(--dino-primary);
+  color: var(--dino-on-fill);
   font-size: 9px;
   font-style: normal;
 }
@@ -668,7 +668,7 @@ onBeforeUnmount(() => {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   box-shadow: 0 2px 8px #1f293740;
 }
 
@@ -689,13 +689,13 @@ onBeforeUnmount(() => {
 :deep(.street-marker--featured:not(.street-marker--cluster) .street-pin--art) {
   width: 40px;
   height: 40px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 :deep(.street-marker--cluster .street-pin--art) {
   width: 40px;
   height: 40px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   color: inherit;
 }
 
@@ -708,30 +708,30 @@ onBeforeUnmount(() => {
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
-  border: 2px solid var(--bookedz-surface);
+  border: 2px solid var(--dino-surface);
   border-radius: 99px;
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
 }
 
 :deep(.street-pin--place) {
-  background: var(--bookedz-forest);
+  background: var(--dino-forest);
 }
 
 :deep(.street-marker--selected .street-pin) {
   transform: scale(1.25);
-  box-shadow: 0 0 0 3px var(--bookedz-primary), 0 0 0 10px color-mix(in srgb, var(--bookedz-primary) 28%, transparent), 0 2px 8px #1f293740;
-  animation: pin-bounce 420ms var(--bookedz-ease-stamp);
+  box-shadow: 0 0 0 3px var(--dino-primary), 0 0 0 10px color-mix(in srgb, var(--dino-primary) 28%, transparent), 0 2px 8px #1f293740;
+  animation: pin-bounce 420ms var(--dino-ease-stamp);
 }
 
 /* with an event chosen, the other pins step back so its pin stands out */
 
 .has-selection :deep(.street-marker:not(.street-marker--selected)) {
   opacity: .55;
-  transition: opacity var(--bookedz-motion-normal) var(--bookedz-ease);
+  transition: opacity var(--dino-motion-normal) var(--dino-ease);
 }
 
 .has-selection :deep(.street-marker:not(.street-marker--selected):hover) {
@@ -767,13 +767,13 @@ onBeforeUnmount(() => {
 }
 
 :deep(.leaflet-control-attribution) {
-  background: var(--bookedz-surface);
-  color: var(--bookedz-muted);
+  background: var(--dino-surface);
+  color: var(--dino-muted);
   font-size: 10px;
 }
 
 :deep(.leaflet-control-attribution a) {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .street-expand {
@@ -786,15 +786,15 @@ onBeforeUnmount(() => {
   width: 40px;
   height: 40px;
   padding: 0;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .street-expand:hover {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .street-expand svg {

@@ -19,8 +19,8 @@
   .egc-start
 ) {
   transition-property: transform, translate, scale, box-shadow, border-color, background-color, color, opacity, filter !important;
-  transition-duration: var(--bookedz-motion-fast, 160ms) !important;
-  transition-timing-function: var(--bookedz-ease, cubic-bezier(.22, .61, .36, 1)) !important;
+  transition-duration: var(--dino-motion-fast, 160ms) !important;
+  transition-timing-function: var(--dino-ease, cubic-bezier(.22, .61, .36, 1)) !important;
 }
 
 /* 2. A lift for the clickable cards that had no hover movement */
@@ -33,18 +33,18 @@
   .category-shortcut:hover { transform: translateY(-1px); }
   .group-keen:hover { transform: scale(1.04); }
   /* Sidebar links: the icon nudges towards the page */
-  .side-link svg { transition: transform var(--bookedz-motion-fast, 160ms) var(--bookedz-ease, ease); }
+  .side-link svg { transition: transform var(--dino-motion-fast, 160ms) var(--dino-ease, ease); }
   .side-link:hover svg { transform: translateX(2px) scale(1.06); }
 }
 
 /* 3. Press feedback: cards and buttons settle a little under the pointer */
 :is(.discovery-event-row, .event-card, .group-card, .community-tile, .organiser-event-card, .recommendation-card, .dash-card:not(.dash-welcome), .rsvp-row):active {
   transform: translateY(0) scale(.985);
-  transition-duration: var(--bookedz-motion-feedback, 100ms) !important;
+  transition-duration: var(--dino-motion-feedback, 100ms) !important;
 }
 :is(.category-shortcut, .group-keen, .day-more, .group-slot-tab):active {
   transform: scale(.96);
-  transition-duration: var(--bookedz-motion-feedback, 100ms) !important;
+  transition-duration: var(--dino-motion-feedback, 100ms) !important;
 }
 
 /* 4. Pages arrive with a fade, and their first few blocks rise into place one after another.
@@ -55,7 +55,7 @@
 }
 .route-view > :not(.landing-page) > :not(.visually-hidden, .skip-link, script, style, template):nth-child(-n+4) {
   /* backwards, not both: once it ends the element's own hover movement works again */
-  animation: motion-rise 380ms var(--bookedz-ease, ease) backwards;
+  animation: motion-rise 380ms var(--dino-ease, ease) backwards;
 }
 .route-view > :not(.landing-page) > :nth-child(2) { animation-delay: 50ms; }
 .route-view > :not(.landing-page) > :nth-child(3) { animation-delay: 100ms; }

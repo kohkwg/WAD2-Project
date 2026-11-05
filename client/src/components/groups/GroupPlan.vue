@@ -538,9 +538,9 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   align-content: start;
   gap: 10px;
   padding: 14px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 16px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .group-slot-head {
@@ -552,14 +552,14 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
 
 .group-slot-title {
   margin: 0;
-  font: 600 1.05rem var(--bookedz-heading);
+  font: 600 1.05rem var(--dino-heading);
 }
 
 .group-slot-badge {
   padding: 3px 10px;
   border-radius: 99px;
-  background: var(--bookedz-teal-soft);
-  color: var(--bookedz-teal-ink);
+  background: var(--dino-teal-soft);
+  color: var(--dino-teal-ink);
   font-size: var(--text-caption);
   font-weight: 700;
 }
@@ -576,11 +576,11 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
 }
 
 .pop-in {
-  animation: chosen-in var(--bookedz-motion-normal, .24s) var(--bookedz-ease-stamp, ease-out);
+  animation: chosen-in var(--dino-motion-normal, .24s) var(--dino-ease-stamp, ease-out);
 }
 
 .group-keen {
-  transition: background-color var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease), border-color var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease), transform var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease);
+  transition: background-color var(--dino-motion-fast, .16s) var(--dino-ease, ease), border-color var(--dino-motion-fast, .16s) var(--dino-ease, ease), transform var(--dino-motion-fast, .16s) var(--dino-ease, ease);
 }
 
 .group-keen:active {
@@ -588,11 +588,11 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
 }
 
 .group-slot {
-  transition: border-color var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease), box-shadow var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease);
+  transition: border-color var(--dino-motion-normal, .24s) var(--dino-ease, ease), box-shadow var(--dino-motion-normal, .24s) var(--dino-ease, ease);
 }
 
 .group-slot:has(.group-slot-badge) {
-  border-color: color-mix(in srgb, var(--bookedz-teal-ink) 50%, var(--bookedz-border));
+  border-color: color-mix(in srgb, var(--dino-teal-ink) 50%, var(--dino-border));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -613,7 +613,7 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   align-items: flex-start;
   gap: 10px;
   padding: 8px 10px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
 }
 
@@ -638,15 +638,15 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
 }
 
 .group-keen {
-  border: 1px solid var(--bookedz-border);
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  border: 1px solid var(--dino-border);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
 }
 
 .group-keen.is-on {
-  border-color: var(--bookedz-teal-ink);
-  background: var(--bookedz-teal-soft);
-  color: var(--bookedz-teal-ink);
+  border-color: var(--dino-teal-ink);
+  background: var(--dino-teal-soft);
+  color: var(--dino-teal-ink);
 }
 
 .group-add {
@@ -659,9 +659,9 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
 .place-box {
   display: grid;
   overflow: hidden;
-  border: 1px solid var(--bookedz-control-border, var(--bookedz-border));
+  border: 1px solid var(--dino-control-border, var(--dino-border));
   border-radius: 16px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .place-box-field {
@@ -669,11 +669,11 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   align-items: center;
   gap: 8px;
   padding: 0 12px;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 .place-box-field:focus-within {
-  box-shadow: inset 0 -2px 0 var(--bookedz-primary);
+  box-shadow: inset 0 -2px 0 var(--dino-primary);
 }
 
 .place-box-icon {
@@ -681,7 +681,7 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   flex: none;
   width: 18px;
   height: 18px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .place-box-input {
@@ -690,23 +690,23 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   min-height: 46px;
   border: 0;
   background: transparent;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: 1rem;
   outline: none;
 }
 
 .place-box-input::placeholder {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .place-box-spin {
   flex: none;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .place-box-hint {
   padding: 8px 12px 4px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .78rem;
   font-weight: 600;
 }
@@ -726,11 +726,11 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
 }
 
 .place-row + .place-row {
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
 }
 
 .place-row:hover {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .place-row-copy {
@@ -744,7 +744,7 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
 }
 
 .place-row-meta {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .8rem;
   overflow-wrap: anywhere;
 }
@@ -753,18 +753,18 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   margin-right: 4px;
   padding: 0 6px;
   border-radius: 99px;
-  background: color-mix(in srgb, var(--bookedz-success) 16%, transparent);
-  color: var(--bookedz-success);
+  background: color-mix(in srgb, var(--dino-success) 16%, transparent);
+  color: var(--dino-success);
   font-weight: 700;
 }
 
 .place-row-typed {
-  background: color-mix(in srgb, var(--bookedz-primary) 6%, transparent);
+  background: color-mix(in srgb, var(--dino-primary) 6%, transparent);
 }
 
 .place-box-empty {
   padding: 14px 12px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .88rem;
 }
 
@@ -778,9 +778,9 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   display: flex;
   gap: 6px;
   padding: 4px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 99px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .group-slot-tab {
@@ -791,14 +791,14 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   border: 0;
   border-radius: 99px;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-weight: 700;
   font-size: .88rem;
 }
 
 .group-slot-tab[aria-selected='true'] {
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
 }
 
 .group-slot-dot {
@@ -807,7 +807,7 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   height: 8px;
   margin-left: 6px;
   border-radius: 50%;
-  background: var(--bookedz-success);
+  background: var(--dino-success);
   vertical-align: middle;
 }
 
@@ -833,7 +833,7 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   gap: 8px 12px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .group-when-copy {
@@ -847,14 +847,14 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
   display: grid;
   gap: 3px;
   padding: 14px 16px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 18px;
-  background: var(--bookedz-mango-soft, #fff1cc);
-  box-shadow: 4px 4px 0 var(--bookedz-ink);
+  background: var(--dino-mango-soft, #fff1cc);
+  box-shadow: 4px 4px 0 var(--dino-ink);
 }
 
 .group-the-plan-label {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-size: .72rem;
   font-weight: 800;
   letter-spacing: .06em;
@@ -862,8 +862,8 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
 }
 
 .group-the-plan-name {
-  font: 900 1.2rem/1.25 var(--bookedz-heading);
-  color: var(--bookedz-ink);
+  font: 900 1.2rem/1.25 var(--dino-heading);
+  color: var(--dino-ink);
   overflow-wrap: anywhere;
 }
 
@@ -875,15 +875,15 @@ const fromVenueOf = s => s.lat != null && s.lng != null ? fromVenue(s) : null;
 }
 
 :root[data-theme="dark"] .group-the-plan {
-  border-color: var(--bookedz-border);
-  box-shadow: 4px 4px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent);
+  border-color: var(--dino-border);
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--dino-teal) 60%, transparent);
 }
 
 /* no ideas yet: quick picks */
 
 .group-plan-error {
   margin: 0;
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
   font-size: .9rem;
 }
 

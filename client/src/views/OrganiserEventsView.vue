@@ -30,7 +30,7 @@ const errorAlert = ref(null);
 
 const resultsHeading = ref(null);
 
-const storageKey = 'bookedz-organiser-events-view-v1';
+const storageKey = 'dino-organiser-events-view-v1';
 
 let stored = {};
 try {
@@ -353,7 +353,7 @@ async function removeEvent(eventId) {
   max-width: 1120px;
   margin: 0 auto;
   padding: 12px 0 48px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .organiser-heading {
@@ -364,7 +364,7 @@ async function removeEvent(eventId) {
   gap: 20px;
   padding: 28px;
   border-radius: 24px;
-  background: linear-gradient(120deg, var(--bookedz-peach), var(--bookedz-mango));
+  background: linear-gradient(120deg, var(--dino-peach), var(--dino-mango));
   margin-bottom: 22px;
 }
 
@@ -378,9 +378,9 @@ async function removeEvent(eventId) {
 }
 
 .btn-primary {
-  background: var(--bookedz-primary);
-  border-color: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
+  background: var(--dino-primary);
+  border-color: var(--dino-primary);
+  color: var(--dino-on-action);
 }
 
 .organiser-heading .btn {
@@ -394,9 +394,9 @@ async function removeEvent(eventId) {
   gap: 14px;
   padding: 14px 18px;
   margin-bottom: 22px;
-  border: 1px solid color-mix(in srgb, var(--bookedz-yellow) 60%, var(--bookedz-border));
+  border: 1px solid color-mix(in srgb, var(--dino-yellow) 60%, var(--dino-border));
   border-radius: 16px;
-  background: color-mix(in srgb, var(--bookedz-yellow) 18%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-yellow) 18%, var(--dino-surface));
 }
 
 .pending-summary p {
@@ -411,7 +411,7 @@ async function removeEvent(eventId) {
   height: 25px;
   margin-right: 8px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--bookedz-yellow) 65%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-yellow) 65%, var(--dino-surface));
   font-weight: 700;
 }
 
@@ -436,11 +436,11 @@ async function removeEvent(eventId) {
 .event-search input {
   width: 100%;
   min-height: 44px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 13px;
   padding: 10px 14px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font-size: var(--text-small);
 }
 
@@ -456,19 +456,19 @@ async function removeEvent(eventId) {
 
 .event-tabs button {
   min-height: 44px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 24px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   padding: 8px 12px;
   font-size: var(--text-button);
   white-space: nowrap;
 }
 
 .event-tabs button[aria-selected=true] {
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
-  border-color: var(--bookedz-ink);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
+  border-color: var(--dino-ink);
 }
 
 .event-tabs span {
@@ -483,7 +483,7 @@ async function removeEvent(eventId) {
 .events-section-title>span {
   font-size: var(--text-small);
   font-weight: 400;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   margin-left: 5px;
 }
 
@@ -507,7 +507,7 @@ async function removeEvent(eventId) {
 .past-shortcut button {
   background: transparent;
   border: 0;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   text-decoration: underline;
   min-height: 44px;
   padding: 6px;
@@ -518,9 +518,9 @@ async function removeEvent(eventId) {
   max-width: 650px;
   margin: 24px auto;
   padding: 42px 22px;
-  border: 1px dashed var(--bookedz-border);
+  border: 1px dashed var(--dino-border);
   border-radius: 22px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   text-align: center;
 }
 
@@ -530,9 +530,9 @@ async function removeEvent(eventId) {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
   font-size: 1.8rem;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .empty-events h3 {
@@ -544,7 +544,7 @@ async function removeEvent(eventId) {
   font-size: var(--text-body);
   max-width: 390px;
   margin: 0 auto 20px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .empty-events .btn {
@@ -556,19 +556,19 @@ async function removeEvent(eventId) {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
   margin-top: 32px;
   padding-top: 18px;
 }
 
 .past-shortcut p {
   font-size: var(--text-small);
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   margin: 0;
 }
 
 .past-shortcut strong {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   margin-right: 8px;
 }
 
@@ -581,7 +581,7 @@ async function removeEvent(eventId) {
 }
 
 :deep(:focus-visible) {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 3px;
 }
 

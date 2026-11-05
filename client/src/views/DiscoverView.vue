@@ -19,7 +19,7 @@ import EventFilters from '@/components/EventFilters.vue';
 import SkeletonList from '@/components/ui/SkeletonList.vue';
 import BumpValue from '@/components/ui/BumpValue.vue';
 
-const BROWSING_STORAGE_KEY = 'bookedz-discover-browsing';
+const BROWSING_STORAGE_KEY = 'dino-discover-browsing';
 
 const MOBILE_QUERY = '(max-width: 991px)';
 
@@ -83,7 +83,7 @@ const visibleCount = ref(EVENTS_PER_PAGE);
 const weekOffset = ref(0);
 // desktop: enlarge the map and calendar, and show one event card per row instead of two
 
-const MAP_LARGE_KEY = 'bookedz-discover-map-large';
+const MAP_LARGE_KEY = 'dino-discover-map-large';
 
 const mapLarge = ref(false);
 try {
@@ -1104,7 +1104,7 @@ onBeforeUnmount(() => {
   padding: 26px var(--page-gutter) 40px;
   max-width: none;
   margin: 0 auto;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .discover-page:focus,
@@ -1209,25 +1209,25 @@ onBeforeUnmount(() => {
   padding: 9px 15px;
   border: 1px solid transparent;
   border-radius: 99px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: 12px;
-  transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease),
-    color var(--bookedz-motion-fast) var(--bookedz-ease),
-    transform var(--bookedz-motion-feedback) var(--bookedz-ease);
+  transition: background-color var(--dino-motion-fast) var(--dino-ease),
+    color var(--dino-motion-fast) var(--dino-ease),
+    transform var(--dino-motion-feedback) var(--dino-ease);
 }
 
 .category-shortcut:not(.cat-tint) {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .category-shortcut[aria-pressed='true'] {
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
-  animation: pop-once var(--bookedz-motion-slip) var(--bookedz-ease-stamp);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
+  animation: pop-once var(--dino-motion-slip) var(--dino-ease-stamp);
 }
 
 .category-shortcut:hover {
-  border-color: var(--bookedz-control-border);
+  border-color: var(--dino-control-border);
 }
 
 .category-shortcut:active {
@@ -1265,7 +1265,7 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 12px;
 }
 
@@ -1277,7 +1277,7 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr 1fr;
   padding: 2px;
   border-radius: 99px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .pane-switch button {
@@ -1289,15 +1289,15 @@ onBeforeUnmount(() => {
   border: 0;
   border-radius: 99px;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: 12px;
   font-weight: 600;
-  transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease),
-    color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: background-color var(--dino-motion-fast) var(--dino-ease),
+    color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .pane-switch button[aria-pressed='true'] {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .pane-thumb {
@@ -1307,9 +1307,9 @@ onBeforeUnmount(() => {
   left: 2px;
   width: calc(50% - 2px);
   border-radius: 99px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-tab-shadow);
-  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-tab-shadow);
+  transition: transform var(--dino-motion-normal) var(--dino-ease-stamp);
 }
 
 .pane-switch.is-map .pane-thumb {
@@ -1344,7 +1344,7 @@ onBeforeUnmount(() => {
 }
 
 .event-days {
-  transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: opacity var(--dino-motion-fast) var(--dino-ease);
 }
 
 .event-days.is-refreshing {
@@ -1359,20 +1359,20 @@ onBeforeUnmount(() => {
   gap: 12px;
   margin: 18px 0 8px;
   font-size: 12px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .empty-state {
   padding: 28px 16px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-muted);
+  background: var(--dino-surface);
+  color: var(--dino-muted);
   font-size: 14px;
 }
 
 .empty-state h2 {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: 18px;
 }
 

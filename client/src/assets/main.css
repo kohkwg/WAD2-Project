@@ -1,4 +1,4 @@
-/* bookedz visual system using the hawker glow palette. bootstrap 5 (mit): https://getbootstrap.com/.
+/* dino visual system using the hawker glow palette. bootstrap 5 (mit): https://getbootstrap.com/.
    nunito (sil ofl): local fonts/nunito-ofl.txt. dm sans (sil ofl): local fonts/dm-sans-ofl.txt.
    bricolage grotesque (sil ofl): local fonts/ofl.txt; retained shared heading face. */
 
@@ -24,34 +24,34 @@
 }
 
 :root {
-  --bookedz-canvas: #fff8f1;
-  --bookedz-cream: #fff8f1;
-  --bookedz-surface: #ffffff;
-  --bookedz-ink: #1f2937;
-  --bookedz-muted: #636975;
-  --bookedz-border: #e9ded3;
-  --bookedz-coral-dark: #9a3412;
-  --bookedz-mint: #92cfad;
-  --bookedz-yellow: #fde7b0;
-  --bookedz-peach: #ffe4d6;
-  --bookedz-mango: #fde7b0;
-  --bookedz-teal: #92cfad;
-  --bookedz-pink: #ec4899;
-  --bookedz-primary: #ff6b35;
-  --bookedz-primary-dark: #9a3412;
-  --bookedz-ink-soft: #636975;
-  --bookedz-body: 'DM Sans', system-ui, sans-serif;
-  --bookedz-radius-control: 14px;
-  --bookedz-radius-card: 20px;
-  --bookedz-motion-feedback: 100ms;
-  --bookedz-motion-fast: 160ms;
-  --bookedz-motion-normal: 240ms;
-  --bookedz-motion-slip: 250ms;
-  --bookedz-motion-reveal: 420ms;
-  --bookedz-ease: cubic-bezier(.22,.61,.36,1);
-  --bookedz-ease-stamp: cubic-bezier(.34,1.56,.64,1);
-  --bs-body-font-family: var(--bookedz-body);
-  --bookedz-heading: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
+  --dino-canvas: #fff8f1;
+  --dino-cream: #fff8f1;
+  --dino-surface: #ffffff;
+  --dino-ink: #1f2937;
+  --dino-muted: #636975;
+  --dino-border: #e9ded3;
+  --dino-coral-dark: #9a3412;
+  --dino-mint: #92cfad;
+  --dino-yellow: #fde7b0;
+  --dino-peach: #ffe4d6;
+  --dino-mango: #fde7b0;
+  --dino-teal: #92cfad;
+  --dino-pink: #ec4899;
+  --dino-primary: #ff6b35;
+  --dino-primary-dark: #9a3412;
+  --dino-ink-soft: #636975;
+  --dino-body: 'DM Sans', system-ui, sans-serif;
+  --dino-radius-control: 14px;
+  --dino-radius-card: 20px;
+  --dino-motion-feedback: 100ms;
+  --dino-motion-fast: 160ms;
+  --dino-motion-normal: 240ms;
+  --dino-motion-slip: 250ms;
+  --dino-motion-reveal: 420ms;
+  --dino-ease: cubic-bezier(.22,.61,.36,1);
+  --dino-ease-stamp: cubic-bezier(.34,1.56,.64,1);
+  --bs-body-font-family: var(--dino-body);
+  --dino-heading: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
   /* typography roles shared across pages and cards. */
   --text-page-title: clamp(2rem, 1.5rem + 2vw, 3rem);
   --text-section-title: clamp(1.375rem, 1.15rem + 1vw, 1.75rem);
@@ -61,53 +61,53 @@
   --text-small: 0.875rem;
   --text-caption: 0.75rem;
   --text-button: 0.875rem;
-  --bookedz-shadow: 0 12px 38px rgb(60 50 35 / 6%);
-  --bookedz-glass: rgb(255 255 255 / 84%);
-  --bookedz-glass-solid: #ffffff;
-  --bookedz-glass-border: rgb(255 255 255 / 92%);
-  --bookedz-glass-hover: #ffe4d6;
-  --bookedz-glass-active: #ffe4d6;
-  --bookedz-control-border: #e9ded3;
-  --bookedz-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 95%), 0 8px 28px rgb(52 51 74 / 8%);
-  --bookedz-search-shadow: 0 8px 24px rgb(52 51 74 / 6%);
-  --bookedz-danger: #a52b36;
-  --bs-body-color: var(--bookedz-ink);
-  --bs-body-bg: var(--bookedz-canvas);
-  --bs-secondary-color: var(--bookedz-muted);
+  --dino-shadow: 0 12px 38px rgb(60 50 35 / 6%);
+  --dino-glass: rgb(255 255 255 / 84%);
+  --dino-glass-solid: #ffffff;
+  --dino-glass-border: rgb(255 255 255 / 92%);
+  --dino-glass-hover: #ffe4d6;
+  --dino-glass-active: #ffe4d6;
+  --dino-control-border: #e9ded3;
+  --dino-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 95%), 0 8px 28px rgb(52 51 74 / 8%);
+  --dino-search-shadow: 0 8px 24px rgb(52 51 74 / 6%);
+  --dino-danger: #a52b36;
+  --bs-body-color: var(--dino-ink);
+  --bs-body-bg: var(--dino-canvas);
+  --bs-secondary-color: var(--dino-muted);
   --bs-secondary-rgb: 99,105,117;
   --bs-primary: #ff6b35;
   --bs-primary-rgb: 255,107,53;
-  --bs-border-color: var(--bookedz-border);
+  --bs-border-color: var(--dino-border);
   --bs-link-color: #9a3412;
   --bs-link-color-rgb: 154,52,18;
   --bs-link-hover-color: #9a3412;
   --bs-border-radius: .75rem;
   --bs-border-radius-lg: 1.25rem;
-  --bookedz-primary-hover: #ff6b35;
-  --bookedz-forest: #2f8a63;
-  --bookedz-success: #2f8a63;
-  --bookedz-hover: #ffe4d6;
-  --bookedz-muted-border: #e9ded3;
-  --bookedz-map-overlay: rgb(255 248 241 / 94%);
-  --bookedz-disabled-bg: #e9ded3;
-  --bookedz-disabled-ink: #636975;
-  --bookedz-card-shadow: 0 4px 20px rgb(20 184 166 / 12%);
-  --bookedz-focus-glow: 0 0 0 .2rem rgb(154 52 18 / 13%);
-  --bookedz-tab-shadow: 0 2px 6px rgb(68 55 27 / 4%);
-  --bookedz-button-shadow: 0 5px 12px rgb(77 46 35 / 10%);
-  --bookedz-map-shadow: 0 4px 20px rgb(52 79 67 / 5%);
-  --bookedz-preview-shadow: 0 18px 45px rgb(52 79 67 / 13%);
+  --dino-primary-hover: #ff6b35;
+  --dino-forest: #2f8a63;
+  --dino-success: #2f8a63;
+  --dino-hover: #ffe4d6;
+  --dino-muted-border: #e9ded3;
+  --dino-map-overlay: rgb(255 248 241 / 94%);
+  --dino-disabled-bg: #e9ded3;
+  --dino-disabled-ink: #636975;
+  --dino-card-shadow: 0 4px 20px rgb(20 184 166 / 12%);
+  --dino-focus-glow: 0 0 0 .2rem rgb(154 52 18 / 13%);
+  --dino-tab-shadow: 0 2px 6px rgb(68 55 27 / 4%);
+  --dino-button-shadow: 0 5px 12px rgb(77 46 35 / 10%);
+  --dino-map-shadow: 0 4px 20px rgb(52 79 67 / 5%);
+  --dino-preview-shadow: 0 18px 45px rgb(52 79 67 / 13%);
   /* fill tokens shared by the go together and motion components. */
-  --bookedz-fill: #ff6b35;
-  --bookedz-on-fill: #1f2937;
-  --bookedz-orange-soft: #ffe4d6;
-  --bookedz-teal-ink: #25684a;
-  --bookedz-teal-soft: #e4f4e0;
-  --bookedz-mango-soft: #fde7b0;
-  --bookedz-focus: #2f7d5c;
-  --bookedz-button-shadow-hover: 0 8px 22px rgb(255 107 53 / 42%);
-  --bookedz-neutral-shadow: 0 3px 10px rgb(31 41 55 / 8%);
-  --bookedz-neutral-shadow-hover: 0 7px 18px rgb(31 41 55 / 16%);
+  --dino-fill: #ff6b35;
+  --dino-on-fill: #1f2937;
+  --dino-orange-soft: #ffe4d6;
+  --dino-teal-ink: #25684a;
+  --dino-teal-soft: #e4f4e0;
+  --dino-mango-soft: #fde7b0;
+  --dino-focus: #2f7d5c;
+  --dino-button-shadow-hover: 0 8px 22px rgb(255 107 53 / 42%);
+  --dino-neutral-shadow: 0 3px 10px rgb(31 41 55 / 8%);
+  --dino-neutral-shadow-hover: 0 7px 18px rgb(31 41 55 / 16%);
 }
 
 html, body {
@@ -119,8 +119,8 @@ html {
 }
 
 body {
-  background: var(--bookedz-canvas);
-  font-family: var(--bookedz-body);
+  background: var(--dino-canvas);
+  font-family: var(--dino-body);
   font-size: var(--text-body);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -139,10 +139,10 @@ button, a, input, select, textarea, summary {
 }
 
 h1,h2,h3,h4,h5,.navbar-brand {
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   letter-spacing: -.015em;
   line-height: 1.15;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 h1,h2,h3 {
@@ -152,7 +152,7 @@ h1,h2,h3 {
 }
 
 h1, .page-title {
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: var(--text-page-title);
   font-weight: 700;
   line-height: 1.12;
@@ -160,14 +160,14 @@ h1, .page-title {
 }
 
 h2, .section-title {
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: var(--text-section-title);
   font-weight: 650;
   line-height: 1.25;
 }
 
 h3, .event-title {
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: var(--text-card-title);
   font-weight: 650;
   line-height: 1.3;
@@ -221,7 +221,7 @@ h3, .event-title {
 .app-shell {
   min-height: 100vh;
   padding-left: var(--sidebar-w);
-  transition: padding-left var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease);
+  transition: padding-left var(--dino-motion-normal, .24s) var(--dino-ease, ease);
 }
 
 @media(prefers-reduced-motion:reduce) {
@@ -274,11 +274,11 @@ h3, .event-title {
 /* Bootstrap overrides: cards, forms, buttons, badges, alerts and tables. */
 
 .card {
-  --bs-card-bg: var(--bookedz-surface);
-  --bs-card-border-color: var(--bookedz-border);
+  --bs-card-bg: var(--dino-surface);
+  --bs-card-border-color: var(--dino-border);
   --bs-card-cap-bg: transparent;
   border-radius: 1.25rem;
-  box-shadow: var(--bookedz-card-shadow);
+  box-shadow: var(--dino-card-shadow);
   overflow-wrap: anywhere;
 }
 
@@ -302,31 +302,31 @@ h3, .event-title {
 
 .form-control,.form-select {
   min-height: 46px;
-  border-color: var(--bookedz-control-border);
-  background-color: var(--bookedz-surface);
+  border-color: var(--dino-control-border);
+  background-color: var(--dino-surface);
   padding: .65rem .9rem;
 }
 
 .form-control:focus,.form-select:focus {
-  border-color: var(--bookedz-primary-dark);
-  box-shadow: var(--bookedz-focus-glow);
-  background-color: var(--bookedz-surface);
+  border-color: var(--dino-primary-dark);
+  box-shadow: var(--dino-focus-glow);
+  background-color: var(--dino-surface);
 }
 
 .form-check-input:checked {
-  background-color: var(--bookedz-primary);
-  border-color: var(--bookedz-primary);
+  background-color: var(--dino-primary);
+  border-color: var(--dino-primary);
 }
 
 .form-text {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .btn {
   min-height: 44px;
   border-radius: .75rem;
   padding: .6rem 1rem;
-  font-family: var(--bookedz-body);
+  font-family: var(--dino-body);
   font-weight: 600;
   font-size: var(--text-button);
   display: inline-flex;
@@ -341,43 +341,43 @@ h3, .event-title {
 }
 
 .btn-primary {
-  --bs-btn-color: var(--bookedz-on-action);
-  --bs-btn-hover-color: var(--bookedz-on-action);
-  --bs-btn-active-color: var(--bookedz-on-action);
-  --bs-btn-bg: var(--bookedz-primary);
-  --bs-btn-border-color: var(--bookedz-primary);
-  --bs-btn-hover-bg: var(--bookedz-primary-hover);
-  --bs-btn-hover-border-color: var(--bookedz-primary-hover);
-  --bs-btn-active-bg: var(--bookedz-primary-hover);
-  --bs-btn-active-border-color: var(--bookedz-primary-hover);
-  --bs-btn-disabled-bg: var(--bookedz-primary-dark);
-  --bs-btn-disabled-border-color: var(--bookedz-primary-dark);
+  --bs-btn-color: var(--dino-on-action);
+  --bs-btn-hover-color: var(--dino-on-action);
+  --bs-btn-active-color: var(--dino-on-action);
+  --bs-btn-bg: var(--dino-primary);
+  --bs-btn-border-color: var(--dino-primary);
+  --bs-btn-hover-bg: var(--dino-primary-hover);
+  --bs-btn-hover-border-color: var(--dino-primary-hover);
+  --bs-btn-active-bg: var(--dino-primary-hover);
+  --bs-btn-active-border-color: var(--dino-primary-hover);
+  --bs-btn-disabled-bg: var(--dino-primary-dark);
+  --bs-btn-disabled-border-color: var(--dino-primary-dark);
 }
 
 .btn-outline-primary {
-  --bs-btn-color: var(--bookedz-primary-dark);
-  --bs-btn-border-color: var(--bookedz-primary-dark);
-  --bs-btn-hover-bg: var(--bookedz-primary-dark);
-  --bs-btn-hover-border-color: var(--bookedz-primary-dark);
-  --bs-btn-active-bg: var(--bookedz-primary-dark);
-  --bs-btn-active-border-color: var(--bookedz-primary-dark);
+  --bs-btn-color: var(--dino-primary-dark);
+  --bs-btn-border-color: var(--dino-primary-dark);
+  --bs-btn-hover-bg: var(--dino-primary-dark);
+  --bs-btn-hover-border-color: var(--dino-primary-dark);
+  --bs-btn-active-bg: var(--dino-primary-dark);
+  --bs-btn-active-border-color: var(--dino-primary-dark);
 }
 
 .btn-outline-secondary {
-  --bs-btn-color: var(--bookedz-muted);
-  --bs-btn-border-color: var(--bookedz-control-border);
-  --bs-btn-hover-bg: var(--bookedz-hover);
-  --bs-btn-hover-border-color: var(--bookedz-control-border);
-  --bs-btn-hover-color: var(--bookedz-ink);
+  --bs-btn-color: var(--dino-muted);
+  --bs-btn-border-color: var(--dino-control-border);
+  --bs-btn-hover-bg: var(--dino-hover);
+  --bs-btn-hover-border-color: var(--dino-control-border);
+  --bs-btn-hover-color: var(--dino-ink);
 }
 
 .btn-outline-danger {
-  --bs-btn-color: var(--bookedz-danger);
-  --bs-btn-border-color: var(--bookedz-danger);
+  --bs-btn-color: var(--dino-danger);
+  --bs-btn-border-color: var(--dino-danger);
 }
 
 .btn-link {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .btn:disabled {
@@ -391,11 +391,11 @@ h3, .event-title {
 }
 
 .text-success {
-  color: var(--bookedz-success) !important;
+  color: var(--dino-success) !important;
 }
 
 .text-danger {
-  color: var(--bookedz-danger) !important;
+  color: var(--dino-danger) !important;
 }
 
 .alert {
@@ -404,7 +404,7 @@ h3, .event-title {
 }
 
 .table {
-  --bs-table-bg: var(--bookedz-surface);
+  --bs-table-bg: var(--dino-surface);
   vertical-align: middle;
 }
 
@@ -412,8 +412,8 @@ h3, .event-title {
   font-variant-numeric: tabular-nums;
   font-size: .8rem;
   font-weight: 650;
-  color: var(--bookedz-muted);
-  background: var(--bookedz-glass-solid);
+  color: var(--dino-muted);
+  background: var(--dino-glass-solid);
   padding: .85rem;
 }
 
@@ -424,7 +424,7 @@ h3, .event-title {
 
 .table-responsive {
   border-radius: 1rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
 }
 
 .keep-line-breaks {
@@ -435,7 +435,7 @@ h3, .event-title {
 .workspace-header {
   padding: 1.5rem 0 1.75rem;
   margin-bottom: 1.75rem;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 .workspace-header h1,.card-title {
@@ -456,14 +456,14 @@ h3, .event-title {
 }
 
 .tool-description {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   margin: 0;
   max-width: 65ch;
 }
 
 .workspace-panel {
-  background: var(--bookedz-surface);
-  border: 1px solid var(--bookedz-border);
+  background: var(--dino-surface);
+  border: 1px solid var(--dino-border);
   border-radius: 1.25rem;
   padding: 1.5rem;
 }
@@ -479,7 +479,7 @@ h3, .event-title {
 }
 
 :focus-visible {
-  outline: 3px solid var(--bookedz-focus);
+  outline: 3px solid var(--dino-focus);
   outline-offset: 4px;
 }
 
@@ -493,8 +493,8 @@ h3, .event-title {
   left: 1rem;
   z-index: 2000;
   padding: .6rem 1rem;
-  background: var(--bookedz-surface);
-  border: 2px solid var(--bookedz-primary-dark);
+  background: var(--dino-surface);
+  border: 2px solid var(--dino-primary-dark);
   border-radius: .75rem;
   transform: translateY(-180%);
 }
@@ -506,8 +506,8 @@ h3, .event-title {
 .app-navbar {
   position: relative;
   z-index: 100;
-  background: var(--bookedz-surface);
-  border-bottom: 1px solid var(--bookedz-border);
+  background: var(--dino-surface);
+  border-bottom: 1px solid var(--dino-border);
   min-height: 80px;
 }
 
@@ -521,7 +521,7 @@ h3, .event-title {
   align-items: center;
   gap: .5rem;
   font-size: 1.8rem;
-  color: var(--bookedz-ink) !important;
+  color: var(--dino-ink) !important;
   letter-spacing: -.07em;
   margin-right: 2rem;
 }
@@ -533,7 +533,7 @@ h3, .event-title {
 }
 
 .app-navbar .nav-link {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   border-radius: .65rem;
   padding: .5rem .7rem;
   font-size: .875rem;
@@ -541,8 +541,8 @@ h3, .event-title {
 }
 
 .app-navbar .nav-link.active {
-  color: var(--bookedz-primary-dark);
-  background: var(--bookedz-glass-active);
+  color: var(--dino-primary-dark);
+  background: var(--dino-glass-active);
   font-weight: 650;
 }
 
@@ -554,10 +554,10 @@ h3, .event-title {
   align-items: center;
   box-sizing: border-box;
   height: var(--footer-h);
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
   padding: 0;
-  color: var(--bookedz-muted);
-  background: var(--bookedz-glass-solid);
+  color: var(--dino-muted);
+  background: var(--dino-glass-solid);
   font-size: .75rem;
   line-height: 1.4;
 }
@@ -581,8 +581,8 @@ h3, .event-title {
 }
 
 .app-footer strong {
-  font-family: var(--bookedz-heading);
-  color: var(--bookedz-ink);
+  font-family: var(--dino-heading);
+  color: var(--dino-ink);
   font-size: 1.3rem;
   letter-spacing: -.04em;
 }
@@ -632,18 +632,18 @@ h3, .event-title {
 
 @media(hover:hover) {
   .btn:not(:disabled):hover {
-    box-shadow: var(--bookedz-neutral-shadow-hover);
+    box-shadow: var(--dino-neutral-shadow-hover);
     transform: translateY(-1px);
   }
   .btn-primary:not(:disabled):hover {
-    box-shadow: var(--bookedz-button-shadow-hover);
+    box-shadow: var(--dino-button-shadow-hover);
   }
 }
 
 .btn:active:not(:disabled) {
   transform: translateY(1px);
-  box-shadow: var(--bookedz-neutral-shadow);
-  transition-duration: var(--bookedz-motion-feedback);
+  box-shadow: var(--dino-neutral-shadow);
+  transition-duration: var(--dino-motion-feedback);
 }
 
 .btn:disabled,.btn.disabled {
@@ -660,151 +660,151 @@ h3, .event-title {
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bookedz-canvas: #1c1917;
-  --bookedz-cream: #1c1917;
-  --bookedz-surface: #292524;
-  --bookedz-ink: #fafaf9;
-  --bookedz-muted: #a8a29e;
-  --bookedz-ink-soft: #a8a29e;
-  --bookedz-border: #57534e;
-  --bookedz-control-border: #57534e;
-  --bookedz-muted-border: #57534e;
-  --bookedz-primary-dark: #ffb79a;
-  --bookedz-primary-hover: #ff8a5b;
-  --bookedz-coral-dark: #ffb79a;
-  --bookedz-peach: #4a2b1f;
-  --bookedz-mango: #5b4210;
-  --bookedz-teal: #7fc4a0;
-  --bookedz-pink: #f472b6;
-  --bookedz-primary: #ff8a5b;
-  --bookedz-mint: #7fc4a0;
-  --bookedz-yellow: #5b4210;
-  --bookedz-glass: rgb(41 37 36 / 88%);
-  --bookedz-glass-solid: #292524;
-  --bookedz-glass-border: rgb(255 255 255 / 14%);
-  --bookedz-glass-hover: #4a2b1f;
-  --bookedz-glass-active: #4a2b1f;
-  --bookedz-hover: #4a2b1f;
-  --bookedz-forest: #86d1a8;
-  --bookedz-success: #86d1a8;
-  --bookedz-map-overlay: rgb(41 37 36 / 94%);
-  --bookedz-disabled-bg: #57534e;
-  --bookedz-disabled-ink: #a8a29e;
-  --bookedz-danger: #ff9eaa;
-  --bookedz-on-action: #1c1917;
-  --bookedz-card-shadow: 0 4px 22px rgb(45 212 191 / 10%);
-  --bookedz-shadow: 0 12px 38px rgb(0 0 0 / 18%);
-  --bookedz-focus-glow: 0 0 0 .2rem rgb(255 183 154 / 22%);
-  --bookedz-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 6%), 0 8px 28px rgb(0 0 0 / 16%);
-  --bs-body-color: var(--bookedz-ink);
-  --bs-body-bg: var(--bookedz-canvas);
-  --bs-secondary-color: var(--bookedz-muted);
+  --dino-canvas: #1c1917;
+  --dino-cream: #1c1917;
+  --dino-surface: #292524;
+  --dino-ink: #fafaf9;
+  --dino-muted: #a8a29e;
+  --dino-ink-soft: #a8a29e;
+  --dino-border: #57534e;
+  --dino-control-border: #57534e;
+  --dino-muted-border: #57534e;
+  --dino-primary-dark: #ffb79a;
+  --dino-primary-hover: #ff8a5b;
+  --dino-coral-dark: #ffb79a;
+  --dino-peach: #4a2b1f;
+  --dino-mango: #5b4210;
+  --dino-teal: #7fc4a0;
+  --dino-pink: #f472b6;
+  --dino-primary: #ff8a5b;
+  --dino-mint: #7fc4a0;
+  --dino-yellow: #5b4210;
+  --dino-glass: rgb(41 37 36 / 88%);
+  --dino-glass-solid: #292524;
+  --dino-glass-border: rgb(255 255 255 / 14%);
+  --dino-glass-hover: #4a2b1f;
+  --dino-glass-active: #4a2b1f;
+  --dino-hover: #4a2b1f;
+  --dino-forest: #86d1a8;
+  --dino-success: #86d1a8;
+  --dino-map-overlay: rgb(41 37 36 / 94%);
+  --dino-disabled-bg: #57534e;
+  --dino-disabled-ink: #a8a29e;
+  --dino-danger: #ff9eaa;
+  --dino-on-action: #1c1917;
+  --dino-card-shadow: 0 4px 22px rgb(45 212 191 / 10%);
+  --dino-shadow: 0 12px 38px rgb(0 0 0 / 18%);
+  --dino-focus-glow: 0 0 0 .2rem rgb(255 183 154 / 22%);
+  --dino-glass-shadow: inset 0 1px 0 rgb(255 255 255 / 6%), 0 8px 28px rgb(0 0 0 / 16%);
+  --bs-body-color: var(--dino-ink);
+  --bs-body-bg: var(--dino-canvas);
+  --bs-secondary-color: var(--dino-muted);
   --bs-secondary-rgb: 168,162,158;
-  --bs-border-color: var(--bookedz-border);
+  --bs-border-color: var(--dino-border);
   --bs-link-color: #ffb79a;
   --bs-link-hover-color: #ffb79a;
   --bs-link-color-rgb: 255,183,154;
   --bs-primary: #ff8a5b;
   --bs-primary-rgb: 255,138,91;
   /* fill tokens shared by the go together and motion components. */
-  --bookedz-fill: #ff8a5b;
-  --bookedz-on-fill: #1c1917;
-  --bookedz-orange-soft: #4a2b1f;
-  --bookedz-teal-ink: #b9e8cd;
-  --bookedz-teal-soft: #1e3a2b;
-  --bookedz-mango-soft: #5b4210;
-  --bookedz-focus: #5eead4;
-  --bookedz-button-shadow: 0 4px 14px rgb(255 138 91 / 22%);
-  --bookedz-button-shadow-hover: 0 8px 24px rgb(255 138 91 / 36%);
-  --bookedz-neutral-shadow: 0 3px 10px rgb(0 0 0 / 28%);
-  --bookedz-neutral-shadow-hover: 0 7px 20px rgb(0 0 0 / 42%);
+  --dino-fill: #ff8a5b;
+  --dino-on-fill: #1c1917;
+  --dino-orange-soft: #4a2b1f;
+  --dino-teal-ink: #b9e8cd;
+  --dino-teal-soft: #1e3a2b;
+  --dino-mango-soft: #5b4210;
+  --dino-focus: #5eead4;
+  --dino-button-shadow: 0 4px 14px rgb(255 138 91 / 22%);
+  --dino-button-shadow-hover: 0 8px 24px rgb(255 138 91 / 36%);
+  --dino-neutral-shadow: 0 3px 10px rgb(0 0 0 / 28%);
+  --dino-neutral-shadow-hover: 0 7px 20px rgb(0 0 0 / 42%);
   /* soft dark look for the ticket pages (design-baseline.css and page components): big areas stay
      plain dark with a soft orange corner glow, edges are a clean orange, hard shadows are 45–50% */
-  --db-dark-hero: radial-gradient(42rem 22rem at 0% 0%, color-mix(in srgb, var(--bookedz-fill) 18%, transparent), transparent 70%), var(--bookedz-surface);
-  --db-dark-edge: color-mix(in srgb, var(--bookedz-fill) 75%, var(--bookedz-surface));
-  --db-dark-orange: color-mix(in srgb, var(--bookedz-fill) 45%, transparent);
-  --db-dark-teal: color-mix(in srgb, var(--bookedz-teal) 50%, transparent);
+  --db-dark-hero: radial-gradient(42rem 22rem at 0% 0%, color-mix(in srgb, var(--dino-fill) 18%, transparent), transparent 70%), var(--dino-surface);
+  --db-dark-edge: color-mix(in srgb, var(--dino-fill) 75%, var(--dino-surface));
+  --db-dark-orange: color-mix(in srgb, var(--dino-fill) 45%, transparent);
+  --db-dark-teal: color-mix(in srgb, var(--dino-teal) 50%, transparent);
 }
 
 :root {
-  --bookedz-on-action: #1f2937;
+  --dino-on-action: #1f2937;
 }
 
 :root[data-theme="dark"] .btn-primary {
-  --bs-btn-color: var(--bookedz-on-action);
-  --bs-btn-hover-color: var(--bookedz-on-action);
-  --bs-btn-active-color: var(--bookedz-on-action);
+  --bs-btn-color: var(--dino-on-action);
+  --bs-btn-hover-color: var(--dino-on-action);
+  --bs-btn-active-color: var(--dino-on-action);
 }
 
 :root[data-theme="dark"] .btn-outline-primary {
-  --bs-btn-hover-color: var(--bookedz-on-action);
-  --bs-btn-active-color: var(--bookedz-on-action);
+  --bs-btn-hover-color: var(--dino-on-action);
+  --bs-btn-active-color: var(--dino-on-action);
 }
 
 /* dark outline buttons: white text, a bright edge so they clearly read as buttons, a see-through
    fill so they still read on coloured heroes, and a warm hover; disabled ones stay dim */
 
 :root[data-theme="dark"] .btn-outline-secondary {
-  --bs-btn-color: var(--bookedz-ink);
-  --bs-btn-bg: color-mix(in srgb, var(--bookedz-surface) 55%, transparent);
-  --bs-btn-border-color: color-mix(in srgb, var(--bookedz-ink) 75%, var(--bookedz-surface));
-  --bs-btn-hover-bg: color-mix(in srgb, var(--bookedz-fill) 22%, var(--bookedz-surface));
-  --bs-btn-hover-border-color: var(--bookedz-fill);
-  --bs-btn-hover-color: var(--bookedz-ink);
-  --bs-btn-active-bg: color-mix(in srgb, var(--bookedz-fill) 30%, var(--bookedz-surface));
-  --bs-btn-active-border-color: var(--bookedz-fill);
-  --bs-btn-active-color: var(--bookedz-ink);
-  --bs-btn-disabled-color: var(--bookedz-muted);
+  --bs-btn-color: var(--dino-ink);
+  --bs-btn-bg: color-mix(in srgb, var(--dino-surface) 55%, transparent);
+  --bs-btn-border-color: color-mix(in srgb, var(--dino-ink) 75%, var(--dino-surface));
+  --bs-btn-hover-bg: color-mix(in srgb, var(--dino-fill) 22%, var(--dino-surface));
+  --bs-btn-hover-border-color: var(--dino-fill);
+  --bs-btn-hover-color: var(--dino-ink);
+  --bs-btn-active-bg: color-mix(in srgb, var(--dino-fill) 30%, var(--dino-surface));
+  --bs-btn-active-border-color: var(--dino-fill);
+  --bs-btn-active-color: var(--dino-ink);
+  --bs-btn-disabled-color: var(--dino-muted);
   --bs-btn-disabled-bg: transparent;
-  --bs-btn-disabled-border-color: var(--bookedz-control-border);
+  --bs-btn-disabled-border-color: var(--dino-control-border);
 }
 
 :root[data-theme="dark"] .text-success {
-  color: var(--bookedz-success) !important;
+  color: var(--dino-success) !important;
 }
 
 :root[data-theme="dark"] .text-danger {
-  color: var(--bookedz-danger) !important;
+  color: var(--dino-danger) !important;
 }
 
 :root[data-theme="dark"] .form-control,:root[data-theme="dark"] .form-select {
-  color: var(--bookedz-ink);
-  background-color: var(--bookedz-surface);
+  color: var(--dino-ink);
+  background-color: var(--dino-surface);
 }
 
 :root[data-theme="dark"] .form-control::placeholder {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   opacity: .85;
 }
 
 :root[data-theme="dark"] :is(.artwork-category,.category-chip,.pick-category,.availability-chip,.availability-chip--full,.going-count,.pick-waitlist-note) {
-  color: var(--bookedz-ink);
-  background: var(--bookedz-glass-solid);
-  border-color: var(--bookedz-border);
+  color: var(--dino-ink);
+  background: var(--dino-glass-solid);
+  border-color: var(--dino-border);
 }
 
 :root[data-theme="dark"] :is(.event-reason,.pick-reason) {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 :root[data-theme="dark"] .hosting-invitation {
-  background: var(--bookedz-glass-solid);
+  background: var(--dino-glass-solid);
 }
 
 :root[data-theme="dark"] .hosting-invitation p {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 :root[data-theme="dark"] .event-card,:root[data-theme="dark"] .recommendation-card {
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 :root[data-theme="dark"] .nav-sign-in:hover {
-  color: var(--bookedz-on-action);
+  color: var(--dino-on-action);
 }
 
 :root[data-theme="dark"] .step-number,:root[data-theme="dark"] .rsvp-state--success .state-mark {
-  color: var(--bookedz-on-action);
+  color: var(--dino-on-action);
 }
 
 /* event actions borrow a ticket's perforated edge; interaction supplies the motion. */
@@ -816,15 +816,15 @@ h3, .event-title {
   justify-content: center;
   min-height: 48px;
   padding: 12px 58px 12px 22px;
-  border: 1px solid var(--bookedz-primary);
+  border: 1px solid var(--dino-primary);
   border-radius: 14px 24px 24px 14px;
-  background: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
-  font-family: var(--bookedz-body);
+  background: var(--dino-primary);
+  color: var(--dino-on-action);
+  font-family: var(--dino-body);
   font-size: var(--text-button);
   font-weight: 600;
   text-decoration: none;
-  box-shadow: var(--bookedz-button-shadow);
+  box-shadow: var(--dino-button-shadow);
   transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease;
 }
 
@@ -851,8 +851,8 @@ h3, .event-title {
 }
 
 .event-cta:hover {
-  background: var(--bookedz-primary-hover);
-  color: var(--bookedz-on-action);
+  background: var(--dino-primary-hover);
+  color: var(--dino-on-action);
   transform: translateY(-2px);
 }
 
@@ -861,22 +861,22 @@ h3, .event-title {
 }
 
 .event-cta--secondary {
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
-  border-color: var(--bookedz-control-border);
-  box-shadow: var(--bookedz-neutral-shadow);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
+  border-color: var(--dino-control-border);
+  box-shadow: var(--dino-neutral-shadow);
 }
 
 .event-cta--secondary:hover {
-  background: var(--bookedz-glass-hover);
-  color: var(--bookedz-ink);
-  box-shadow: var(--bookedz-neutral-shadow-hover);
+  background: var(--dino-glass-hover);
+  color: var(--dino-ink);
+  box-shadow: var(--dino-neutral-shadow-hover);
 }
 
 .event-cta:disabled {
-  background: var(--bookedz-disabled-bg);
-  border-color: var(--bookedz-border);
-  color: var(--bookedz-disabled-ink);
+  background: var(--dino-disabled-bg);
+  border-color: var(--dino-border);
+  color: var(--dino-disabled-ink);
   box-shadow: none;
   transform: none;
   cursor: not-allowed;
@@ -904,8 +904,8 @@ h3, .event-title {
 }
 
 :root[data-theme="dark"] .text-bg-light {
-  background-color: var(--bookedz-glass-hover) !important;
-  color: var(--bookedz-ink) !important;
+  background-color: var(--dino-glass-hover) !important;
+  color: var(--dino-ink) !important;
 }
 
 /* Sticky footer: the main area grows, so the footer stays at the bottom of short pages. */
@@ -973,18 +973,18 @@ h3, .event-title {
 }
 
 .cat-tint {
-  background: color-mix(in srgb, var(--cat-hue, var(--bookedz-muted)) 20%, var(--bookedz-surface));
-  color: var(--bookedz-ink);
+  background: color-mix(in srgb, var(--cat-hue, var(--dino-muted)) 20%, var(--dino-surface));
+  color: var(--dino-ink);
 }
 
 [data-theme='dark'] .cat-tint {
-  background: color-mix(in srgb, var(--cat-hue, var(--bookedz-muted)) 30%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--cat-hue, var(--dino-muted)) 30%, var(--dino-surface));
 }
 
 /* page change: a short fade so navigation feels connected rather than a hard cut. */
 
 .route-view {
-  animation: route-in var(--bookedz-motion-normal) var(--bookedz-ease) both;
+  animation: route-in var(--dino-motion-normal) var(--dino-ease) both;
 }
 
 @keyframes route-in {
@@ -999,11 +999,11 @@ h3, .event-title {
 /* list changes: new items rise in, removed ones fade, the rest slide into place. */
 
 .list-fade-enter-active {
-  transition: opacity var(--bookedz-motion-normal) var(--bookedz-ease), transform var(--bookedz-motion-normal) var(--bookedz-ease);
+  transition: opacity var(--dino-motion-normal) var(--dino-ease), transform var(--dino-motion-normal) var(--dino-ease);
 }
 
 .list-fade-leave-active {
-  transition: opacity var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: opacity var(--dino-motion-fast) var(--dino-ease);
 }
 
 .list-fade-enter-from {
@@ -1016,14 +1016,14 @@ h3, .event-title {
 }
 
 .list-fade-move {
-  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease);
+  transition: transform var(--dino-motion-normal) var(--dino-ease);
 }
 
 /* a number that just changed gives a small nudge. */
 
 .value-bump {
   display: inline-block;
-  animation: value-bump var(--bookedz-motion-slip) var(--bookedz-ease-stamp);
+  animation: value-bump var(--dino-motion-slip) var(--dino-ease-stamp);
 }
 
 @keyframes value-bump {
@@ -1042,11 +1042,11 @@ h3, .event-title {
 
 @media (hover: hover) {
   .lift-on-hover {
-    transition: transform var(--bookedz-motion-fast) var(--bookedz-ease), box-shadow var(--bookedz-motion-fast) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease);
+    transition: transform var(--dino-motion-fast) var(--dino-ease), box-shadow var(--dino-motion-fast) var(--dino-ease), border-color var(--dino-motion-fast) var(--dino-ease);
   }
   .lift-on-hover:hover {
     transform: translateY(-2px);
-    box-shadow: var(--bookedz-card-shadow);
+    box-shadow: var(--dino-card-shadow);
   }
 }
 
@@ -1062,7 +1062,7 @@ h3, .event-title {
 /* cards and rows that load together rise in one after another (first eight; the rest follow at once). */
 
 .stagger-in > * {
-  animation: stagger-rise var(--bookedz-motion-normal) var(--bookedz-ease) both;
+  animation: stagger-rise var(--dino-motion-normal) var(--dino-ease) both;
 }
 
 .stagger-in > :nth-child(2) {
@@ -1107,7 +1107,7 @@ h3, .event-title {
 /* bars and panels that appear from the bottom edge slide up into place. */
 
 .slide-up-in {
-  animation: slide-up-in var(--bookedz-motion-normal) var(--bookedz-ease) both;
+  animation: slide-up-in var(--dino-motion-normal) var(--dino-ease) both;
 }
 
 @keyframes slide-up-in {
@@ -1124,12 +1124,12 @@ h3, .event-title {
 /* something that just appeared and needs attention glows once, then settles. */
 
 .attention-once {
-  animation: attention-once 1.2s var(--bookedz-ease) 300ms 1;
+  animation: attention-once 1.2s var(--dino-ease) 300ms 1;
 }
 
 @keyframes attention-once {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--bookedz-primary) 45%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--dino-primary) 45%, transparent);
   }
   70% {
     box-shadow: 0 0 0 12px transparent;
@@ -1142,7 +1142,7 @@ h3, .event-title {
 /* a control that was just turned on gives a small pop. */
 
 .pop-once {
-  animation: pop-once var(--bookedz-motion-slip) var(--bookedz-ease-stamp);
+  animation: pop-once var(--dino-motion-slip) var(--dino-ease-stamp);
 }
 
 @keyframes pop-once {
@@ -1160,7 +1160,7 @@ h3, .event-title {
 /* expanding details fade and slide down from the line above. */
 
 .reveal-down {
-  animation: reveal-down var(--bookedz-motion-normal) var(--bookedz-ease) both;
+  animation: reveal-down var(--dino-motion-normal) var(--dino-ease) both;
 }
 
 @keyframes reveal-down {

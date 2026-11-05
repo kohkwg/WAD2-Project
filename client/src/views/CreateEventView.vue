@@ -1425,7 +1425,7 @@ async function publish() {
           </div>
           <article class="preview-card">
             <div class="preview-art" :class="{ 'has-cover': form.coverImageUrl }"
-              :style="form.coverImageUrl ? { backgroundImage: `linear-gradient(180deg, transparent 35%, color-mix(in srgb, var(--bookedz-ink) 78%, transparent)), url('${form.coverImageUrl}')` } : undefined">
+              :style="form.coverImageUrl ? { backgroundImage: `linear-gradient(180deg, transparent 35%, color-mix(in srgb, var(--dino-ink) 78%, transparent)), url('${form.coverImageUrl}')` } : undefined">
               <span v-if="!form.coverImageUrl" class="preview-art-mark" aria-hidden="true">
               <svg viewBox="0 0 80 60"
                   fill="none" stroke="currentColor" stroke-width="2">
@@ -1467,14 +1467,14 @@ async function publish() {
 .create-heading {
   margin: 0 0 1rem;
   padding: 1.1rem clamp(1rem, 3vw, 1.75rem);
-  border-left: 5px solid var(--bookedz-primary-dark);
+  border-left: 5px solid var(--dino-primary-dark);
   border-radius: 0 20px 20px 0;
-  background: linear-gradient(120deg, var(--bookedz-peach), var(--bookedz-mango));
+  background: linear-gradient(120deg, var(--dino-peach), var(--dino-mango));
 }
 
 .create-heading :is(h1, h2) {
   margin: 0 0 .4rem;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: clamp(1.7rem, 3vw, 2.3rem);
   font-weight: 700;
   letter-spacing: -.035em;
@@ -1490,27 +1490,27 @@ async function publish() {
 .plan-offer {
   margin-top: 1.25rem;
   padding: 1rem;
-  border: 1px dashed var(--bookedz-control-border);
+  border: 1px dashed var(--dino-control-border);
   border-radius: 14px;
-  background: var(--bookedz-glass-solid);
+  background: var(--dino-glass-solid);
 }
 
 .plan-offer-copy {
   margin: 0 0 .75rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .875rem;
 }
 
 .plan-panel {
   margin-top: 1.5rem;
   padding: 1rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 14px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .plan-panel:focus-visible {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 2px;
 }
 
@@ -1580,10 +1580,10 @@ async function publish() {
   padding: .25rem;
   overflow-y: auto;
   list-style: none;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .title-suggestions li {
@@ -1599,7 +1599,7 @@ async function publish() {
 
 .title-suggestions li:hover,
 .title-suggestions li.active {
-  background: var(--bookedz-border);
+  background: var(--dino-border);
 }
 
 .title-suggestion-text {
@@ -1609,15 +1609,15 @@ async function publish() {
 
 .title-suggestion-kind {
   flex: none;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .78rem;
   font-weight: 700;
 }
 
 .create-event-page :deep(.card) {
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 20px;
-  box-shadow: var(--bookedz-card-shadow) !important;
+  box-shadow: var(--dino-card-shadow) !important;
 }
 
 .create-event-page :deep(.card-body) {
@@ -1628,8 +1628,8 @@ async function publish() {
 
 .create-event-page :deep(.card-footer) {
   padding: .85rem clamp(1rem, 3vw, 2rem);
-  border-color: var(--bookedz-border);
-  background: var(--bookedz-glass-solid) !important;
+  border-color: var(--dino-border);
+  background: var(--dino-glass-solid) !important;
   backdrop-filter: blur(14px);
 }
 
@@ -1646,31 +1646,31 @@ async function publish() {
 
 .create-event-page :deep(.form-control:focus),
 .create-event-page :deep(.form-select:focus) {
-  border-color: var(--bookedz-primary-dark);
-  box-shadow: var(--bookedz-focus-glow);
+  border-color: var(--dino-primary-dark);
+  box-shadow: var(--dino-focus-glow);
 }
 
 .create-event-page :deep(.btn-primary),
 .create-event-page :deep(.btn-success) {
-  background: var(--bookedz-primary);
-  border-color: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
+  background: var(--dino-primary);
+  border-color: var(--dino-primary);
+  color: var(--dino-on-action);
 }
 
 .create-event-page :deep(.btn-primary:hover),
 .create-event-page :deep(.btn-success:hover) {
-  background: var(--bookedz-primary-hover);
-  border-color: var(--bookedz-primary-hover);
+  background: var(--dino-primary-hover);
+  border-color: var(--dino-primary-hover);
 }
 
 .event-preview {
   position: sticky;
   top: 1rem;
   padding: 1rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1.25rem;
-  background: var(--bookedz-glass-solid);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-glass-solid);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .preview-heading {
@@ -1678,7 +1678,7 @@ async function publish() {
   align-items: center;
   gap: .55rem;
   margin: 0 0 .85rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .78rem;
   font-weight: 650;
 }
@@ -1687,15 +1687,15 @@ async function publish() {
   width: .5rem;
   height: .5rem;
   border-radius: 50%;
-  background: var(--bookedz-success);
-  box-shadow: 0 0 0 .25rem var(--bookedz-glass-active);
+  background: var(--dino-success);
+  box-shadow: 0 0 0 .25rem var(--dino-glass-active);
 }
 
 .preview-card {
   overflow: hidden;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1rem;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 /* same 16:9 crop as the event cards, so the preview shows what participants will see */
@@ -1706,7 +1706,7 @@ async function publish() {
   aspect-ratio: 16 / 9;
   place-items: center;
   overflow: hidden;
-  background: var(--bookedz-mango);
+  background: var(--dino-mango);
   background-position: center;
   background-size: cover;
 }
@@ -1717,7 +1717,7 @@ async function publish() {
 }
 
 .preview-art-mark {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-size: 3.3rem;
   line-height: 1;
 }
@@ -1730,15 +1730,15 @@ async function publish() {
   overflow: hidden;
   padding: .25rem .55rem;
   border-radius: 99px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   font-size: .72rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .preview-art.has-cover .preview-tag {
-  background: var(--bookedz-glass-solid);
+  background: var(--dino-glass-solid);
 }
 
 .preview-copy {
@@ -1747,14 +1747,14 @@ async function publish() {
 
 .preview-date {
   margin: 0 0 .35rem;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-size: .76rem;
   font-weight: 650;
 }
 
 .preview-copy h2 {
   margin: 0 0 .45rem;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: 1.1rem;
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -1764,7 +1764,7 @@ async function publish() {
   display: -webkit-box;
   overflow: hidden;
   margin: 0 0 .8rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .82rem;
   line-height: 1.45;
   -webkit-box-orient: vertical;
@@ -1777,18 +1777,18 @@ async function publish() {
   gap: .5rem;
   align-items: baseline;
   margin-top: .4rem;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: .78rem;
 }
 
 .preview-meta span:first-child {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-size: 1rem;
 }
 
 .preview-note {
   margin: .75rem 0 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .75rem;
   line-height: 1.4;
 }
@@ -1853,12 +1853,12 @@ async function publish() {
   width: min(100%, 32rem);
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 14px;
 }
 
 .cover-preview figcaption {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .85rem;
 }
 
@@ -1866,28 +1866,28 @@ async function publish() {
 
 .step-subheading {
   margin: 0 0 .75rem;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 650;
 }
 
 .venue-choice {
   margin-bottom: 1rem;
   padding: 1rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--bookedz-mint) 22%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-mint) 22%, var(--dino-surface));
 }
 
 .venue-choice-name {
   margin: 0;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 700;
   overflow-wrap: anywhere;
 }
 
 .venue-choice-meta {
   margin: .15rem 0 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .875rem;
   overflow-wrap: anywhere;
 }
@@ -1904,18 +1904,18 @@ async function publish() {
   place-items: center;
   width: 44px;
   height: 44px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 50%;
-  background: var(--bookedz-fill);
-  color: var(--bookedz-on-fill);
+  background: var(--dino-fill);
+  color: var(--dino-on-fill);
   cursor: pointer;
-  transition: transform var(--bookedz-motion-fast) var(--bookedz-ease-stamp);
+  transition: transform var(--dino-motion-fast) var(--dino-ease-stamp);
 }
 
 .question-add:disabled {
-  border-color: var(--bookedz-control-border);
-  background: var(--bookedz-glass-active);
-  color: var(--bookedz-muted);
+  border-color: var(--dino-control-border);
+  background: var(--dino-glass-active);
+  color: var(--dino-muted);
   cursor: not-allowed;
 }
 
@@ -1924,7 +1924,7 @@ async function publish() {
 }
 
 .question-options {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .8rem;
   overflow-wrap: anywhere;
 }
@@ -1940,9 +1940,9 @@ async function publish() {
 
 .question-composer {
   padding: 1rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 14px;
-  background: var(--bookedz-glass-solid);
+  background: var(--dino-glass-solid);
 }
 
 .question-summary {
@@ -1954,7 +1954,7 @@ async function publish() {
 }
 
 .question-text {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   overflow-wrap: anywhere;
 }
 
@@ -1962,16 +1962,16 @@ async function publish() {
   display: inline-flex;
   align-items: center;
   padding: .2rem .6rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 999px;
-  color: var(--bookedz-ink);
-  background: var(--bookedz-hover);
+  color: var(--dino-ink);
+  background: var(--dino-hover);
   font-size: .75rem;
   font-weight: 650;
 }
 
 .question-chip--required {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .question-reword {
@@ -1981,7 +1981,7 @@ async function publish() {
 
 .question-locked {
   flex: 0 0 auto;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .8rem;
 }
 
@@ -1989,8 +1989,8 @@ async function publish() {
   margin: 0 0 1rem;
   padding: .7rem .9rem;
   border-radius: 12px;
-  color: var(--bookedz-ink);
-  background: color-mix(in srgb, var(--bookedz-mint) 30%, var(--bookedz-surface));
+  color: var(--dino-ink);
+  background: color-mix(in srgb, var(--dino-mint) 30%, var(--dino-surface));
   font-size: .9rem;
 }
 
@@ -1999,9 +1999,9 @@ async function publish() {
 
 .create-event-page :deep(.btn-outline-primary),
 .create-event-page :deep(.btn-outline-secondary) {
-  --bs-btn-disabled-color: var(--bookedz-disabled-ink);
-  --bs-btn-disabled-bg: var(--bookedz-disabled-bg);
-  --bs-btn-disabled-border-color: var(--bookedz-border);
+  --bs-btn-disabled-color: var(--dino-disabled-ink);
+  --bs-btn-disabled-bg: var(--dino-disabled-bg);
+  --bs-btn-disabled-border-color: var(--dino-border);
   --bs-btn-disabled-opacity: 1;
 }
 
@@ -2025,23 +2025,23 @@ async function publish() {
   padding: 9px 15px;
   border: 1px solid transparent;
   border-radius: 99px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: 13px;
   cursor: pointer;
-  transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease), color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: background-color var(--dino-motion-fast) var(--dino-ease), color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .tag-chip:hover {
-  border-color: var(--bookedz-control-border);
+  border-color: var(--dino-control-border);
 }
 
 .btn-check:checked+.tag-chip {
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
 }
 
 .btn-check:focus-visible+.tag-chip {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 2px;
 }
 
@@ -2071,16 +2071,16 @@ async function publish() {
   gap: .15rem;
   min-height: 44px;
   padding: .8rem 1rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 14px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   cursor: pointer;
-  transition: border-color var(--bookedz-motion-fast) var(--bookedz-ease), background-color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: border-color var(--dino-motion-fast) var(--dino-ease), background-color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .event-mode-option:hover {
-  border-color: var(--bookedz-control-border);
+  border-color: var(--dino-control-border);
 }
 
 .event-mode-title {
@@ -2088,18 +2088,18 @@ async function publish() {
 }
 
 .event-mode-hint {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .82rem;
 }
 
 .btn-check:checked+.event-mode-option {
-  border-color: var(--bookedz-primary-dark);
-  background: color-mix(in srgb, var(--bookedz-mint) 22%, var(--bookedz-surface));
-  box-shadow: inset 0 0 0 1px var(--bookedz-primary-dark);
+  border-color: var(--dino-primary-dark);
+  background: color-mix(in srgb, var(--dino-mint) 22%, var(--dino-surface));
+  box-shadow: inset 0 0 0 1px var(--dino-primary-dark);
 }
 
 .btn-check:focus-visible+.event-mode-option {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 2px;
 }
 
@@ -2167,14 +2167,14 @@ async function publish() {
   min-height: 44px;
   margin: 0;
   padding: 0 1.1rem 0 2.2rem;
-  border: 2px solid var(--bookedz-control-border);
+  border: 2px solid var(--dino-control-border);
   border-radius: 12px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .publish-choice .choice-option:has(.form-check-input:checked) {
-  border-color: var(--bookedz-primary-dark);
-  background: color-mix(in srgb, var(--bookedz-primary-dark) 12%, var(--bookedz-surface));
+  border-color: var(--dino-primary-dark);
+  background: color-mix(in srgb, var(--dino-primary-dark) 12%, var(--dino-surface));
 }
 
 .publish-choice .choice-option .form-check-label {
@@ -2217,7 +2217,7 @@ async function publish() {
 }
 
 .step-subheading-note {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .85rem;
   font-weight: 500;
 }

@@ -28,14 +28,14 @@ const messages = {
 .rsvp-empty {
   text-align: center;
   padding: 48px 20px;
-  border: 1px dashed var(--bookedz-border);
+  border: 1px dashed var(--dino-border);
   border-radius: 22px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .rsvp-empty>span {
   font-size: 2.2rem;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 h3 {
@@ -44,7 +44,7 @@ h3 {
 
 p {
   font-size: var(--text-body);
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   max-width: 360px;
   margin: 0 auto 20px;
 }

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { createSeedData } from '../src/utils/mockData.js';
 
 // saved events are one journey: save on discover → the toast links to plans → saved,
-// a saved chip filters discover, and each saved card leads to an rsvp (docs/decisions.md, 5 november 2026).
+// a saved chip filters discover, and each saved card leads to an rsvp.
 
 // discover in live mode, with a small in-browser supabase stand-in: events_with_counts honours
 // .in('id', …) and user_event_preferences reflects saves made through the recommendations api.
@@ -198,7 +198,7 @@ test('Discover: signed-out visitors never see the Saved chip', async ({
 
 // plans runs in demo mode with seeded saves
 
-const STORE = 'bookedz-feature2-demo';
+const STORE = 'dino-feature2-demo';
 
 const NOW = Date.parse('2026-11-02T10:00:00Z');
 

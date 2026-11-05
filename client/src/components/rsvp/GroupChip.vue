@@ -36,10 +36,10 @@ const label = computed(() => {
   gap: 4px;
   margin-top: 4px;
   padding: 1px 8px;
-  border: 1.5px solid var(--bookedz-teal);
+  border: 1.5px solid var(--dino-teal);
   border-radius: 99px;
-  background: var(--bookedz-teal-soft);
-  color: var(--bookedz-teal-ink);
+  background: var(--dino-teal-soft);
+  color: var(--dino-teal-ink);
   font-size: .74rem;
   font-weight: 700;
   white-space: nowrap;

@@ -57,8 +57,8 @@ test('event page shows who hosts it in the banner', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   const hosts = page.locator('.event-hero .event-hosts');
   await expect(hosts).toContainText('Hosted by');
-  await expect(hosts).toContainText('Bookedz Demo Club');
-  await expect(hosts).toContainText('@bookedz_demo');
+  await expect(hosts).toContainText('Dino Demo Club');
+  await expect(hosts).toContainText('@dino_demo');
   await expect(page.locator('main')).toHaveCount(1);
   expect(errors).toEqual([]);
 });

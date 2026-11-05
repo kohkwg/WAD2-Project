@@ -28,7 +28,7 @@ const CURRENT_ORGANISER_ID = 'org1';
 
 // exported so other tabs can tell when the demo data changed (api.watcheventannouncements)
 
-export const STORAGE_KEY = 'bookedz-feature2-demo';
+export const STORAGE_KEY = 'dino-feature2-demo';
 
 function emptyOperations() {
   return {
@@ -443,7 +443,7 @@ export async function getEvent(eventId) {
 
 const DEMO_HOST_PROFILES = {
   org1: {
-    username: 'bookedz_demo',
+    username: 'dino_demo',
     bio: 'Workshops, socials and study jams around campus.'
   },
   org2: {

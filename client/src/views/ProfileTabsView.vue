@@ -76,8 +76,8 @@ async function leave() {
 }
 
 .account-heading h1 {
-  color: var(--bookedz-ink);
-  font: 700 clamp(2rem, 5vw, 3rem)/1.1 var(--bookedz-heading);
+  color: var(--dino-ink);
+  font: 700 clamp(2rem, 5vw, 3rem)/1.1 var(--dino-heading);
 }
 
 .account-heading a {

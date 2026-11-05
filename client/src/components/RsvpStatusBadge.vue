@@ -71,16 +71,16 @@ const symbol = computed(() => {
 
 <style scoped>
 .rsvp-status {
-  --status-tone: var(--bookedz-muted);
+  --status-tone: var(--dino-muted);
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 32px;
   padding: .4rem .75rem;
-  border: 1px solid color-mix(in srgb, var(--status-tone) 35%, var(--bookedz-border));
+  border: 1px solid color-mix(in srgb, var(--status-tone) 35%, var(--dino-border));
   border-radius: 12px;
-  color: var(--bookedz-ink);
-  background: color-mix(in srgb, var(--status-tone) 12%, var(--bookedz-surface));
+  color: var(--dino-ink);
+  background: color-mix(in srgb, var(--status-tone) 12%, var(--dino-surface));
   font-size: .8rem;
   font-weight: 650;
   line-height: 1.35;
@@ -94,19 +94,19 @@ const symbol = computed(() => {
 }
 
 .status-confirmed {
-  --status-tone: var(--bookedz-success);
+  --status-tone: var(--dino-success);
 }
 
 .status-pending,
 .status-waitlisted {
-  --status-tone: var(--bookedz-primary-dark);
+  --status-tone: var(--dino-primary-dark);
 }
 
 .status-offered {
-  --status-tone: var(--bookedz-forest);
+  --status-tone: var(--dino-forest);
 }
 
 .status-rejected {
-  --status-tone: var(--bookedz-danger);
+  --status-tone: var(--dino-danger);
 }
 </style>

@@ -71,7 +71,7 @@ export function createSeedData() {
   // org1 is the "logged in" organiser for the demo
   {
     id: 'org1',
-    name: 'Bookedz Demo Club',
+    name: 'Dino Demo Club',
     email: 'demo.club@demo.smu.edu.sg',
     interests: [],
     postalCode: '188065',

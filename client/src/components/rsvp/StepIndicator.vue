@@ -46,9 +46,9 @@ const percentDone = computed(() => (props.current - 1) / (props.steps.length - 1
 <style scoped>
 .creation-steps {
   padding: 1rem 1.1rem .8rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1rem;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .creation-steps ol {
@@ -62,7 +62,7 @@ const percentDone = computed(() => (props.current - 1) / (props.steps.length - 1
   min-width: 0;
   align-items: center;
   gap: .55rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .step-number {
@@ -71,10 +71,10 @@ const percentDone = computed(() => (props.current - 1) / (props.steps.length - 1
   width: 1.8rem;
   height: 1.8rem;
   place-items: center;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 50%;
-  background: var(--bookedz-canvas);
-  color: var(--bookedz-muted);
+  background: var(--dino-canvas);
+  color: var(--dino-muted);
   font-size: .78rem;
   font-weight: 650;
   transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease;
@@ -106,30 +106,30 @@ const percentDone = computed(() => (props.current - 1) / (props.steps.length - 1
 }
 
 .step-item.is-current {
-  background: var(--bookedz-peach);
+  background: var(--dino-peach);
   border-radius: 10px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 650;
 }
 
 .step-item.is-current .step-number {
   transform: scale(1.08);
-  border-color: var(--bookedz-primary);
-  background: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
+  border-color: var(--dino-primary);
+  background: var(--dino-primary);
+  color: var(--dino-on-action);
 }
 
 .step-item.is-complete .step-number {
-  border-color: var(--bookedz-success);
-  background: var(--bookedz-teal);
-  color: var(--bookedz-on-action);
+  border-color: var(--dino-success);
+  background: var(--dino-teal);
+  color: var(--dino-on-action);
 }
 
 .progress-track {
   height: .3rem;
   overflow: hidden;
   border-radius: 99px;
-  background: var(--bookedz-glass-active);
+  background: var(--dino-glass-active);
 }
 
 .progress-fill {
@@ -138,7 +138,7 @@ const percentDone = computed(() => (props.current - 1) / (props.steps.length - 1
   transform: scaleX(var(--step-progress));
   transform-origin: left;
   border-radius: inherit;
-  background: var(--bookedz-primary);
+  background: var(--dino-primary);
   transition: transform .35s cubic-bezier(.2, .7, .2, 1);
 }
 

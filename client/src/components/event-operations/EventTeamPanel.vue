@@ -328,9 +328,9 @@ const respond = (invite, accept) => mutate(() => api.respondToTeamInvite(invite.
 .event-team {
   min-width: 0;
   padding: 1.25rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1rem;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .team-heading {
@@ -356,9 +356,9 @@ const respond = (invite, accept) => mutate(() => api.respondToTeamInvite(invite.
 
 .team-list.team-notices li {
   padding: 1rem 1.25rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1rem;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .team-event-link {
@@ -368,11 +368,11 @@ const respond = (invite, accept) => mutate(() => api.respondToTeamInvite(invite.
 }
 
 .team-event-link:hover {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .team-event-link:focus-visible {
-  outline: 3px solid var(--bookedz-focus, var(--bookedz-primary-dark));
+  outline: 3px solid var(--dino-focus, var(--dino-primary-dark));
   outline-offset: 3px;
 }
 
@@ -419,7 +419,7 @@ h3 {
   justify-content: space-between;
   gap: .75rem;
   padding: .8rem 0;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 .team-list li>div:first-child {

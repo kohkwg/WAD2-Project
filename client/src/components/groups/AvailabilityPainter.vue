@@ -61,7 +61,7 @@ const inBest = iso => props.best && iso >= props.best.start && iso < props.best.
 
 const level = cell => props.memberCount ? cell.free.length / props.memberCount : 0;
 
-const heat = cell => `color-mix(in srgb, var(--bookedz-teal-ink) ${Math.round(level(cell) * 85)}%, var(--bookedz-surface))`;
+const heat = cell => `color-mix(in srgb, var(--dino-teal-ink) ${Math.round(level(cell) * 85)}%, var(--dino-surface))`;
 
 const shown = computed(() => props.cells[focusIndex.value] || null);
 
@@ -189,7 +189,7 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move));
   gap: 6px;
   padding: 10px;
   border-radius: 12px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .painter-head {
@@ -223,7 +223,7 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move));
 
 .painter-col-label {
   padding-bottom: 4px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .75rem;
   font-weight: 700;
   text-align: center;
@@ -234,7 +234,7 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move));
   min-width: 5.2em;
   margin-top: -0.55em;
   padding-right: 2px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .72rem;
   text-align: right;
 }
@@ -245,8 +245,8 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move));
   height: 22px;
   padding: 0;
   border: 0;
-  border-top: 1px solid var(--bookedz-border);
-  background: var(--bookedz-surface);
+  border-top: 1px solid var(--dino-border);
+  background: var(--dino-surface);
 }
 
 .painter-cell.is-half {
@@ -254,7 +254,7 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move));
 }
 
 .painter-cell:focus-visible {
-  outline: 2px solid var(--bookedz-primary);
+  outline: 2px solid var(--dino-primary);
   outline-offset: -2px;
   position: relative;
   z-index: 1;
@@ -263,12 +263,12 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move));
 .painter-cell--mine {
   touch-action: none;
   cursor: pointer;
-  transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: background-color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .painter-cell--mine.is-on {
-  background: var(--bookedz-primary);
-  animation: cell-pop var(--bookedz-motion-fast, .16s) var(--bookedz-ease-stamp, ease-out);
+  background: var(--dino-primary);
+  animation: cell-pop var(--dino-motion-fast, .16s) var(--dino-ease-stamp, ease-out);
 }
 
 @keyframes cell-pop {
@@ -287,32 +287,32 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move));
 .painter-cell--group {
   cursor: default;
   box-shadow: inset 2px 0 0 transparent, inset -2px 0 0 transparent;
-  transition: background-color var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease), box-shadow var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease);
+  transition: background-color var(--dino-motion-normal, .24s) var(--dino-ease, ease), box-shadow var(--dino-motion-normal, .24s) var(--dino-ease, ease);
 }
 
 .painter-cell--group.is-best {
-  box-shadow: inset 2px 0 0 var(--bookedz-primary), inset -2px 0 0 var(--bookedz-primary);
+  box-shadow: inset 2px 0 0 var(--dino-primary), inset -2px 0 0 var(--dino-primary);
 }
 
 .painter-cell--group.is-best-top {
-  box-shadow: inset 2px 0 0 var(--bookedz-primary), inset -2px 0 0 var(--bookedz-primary), inset 0 2px 0 var(--bookedz-primary);
+  box-shadow: inset 2px 0 0 var(--dino-primary), inset -2px 0 0 var(--dino-primary), inset 0 2px 0 var(--dino-primary);
 }
 
 .painter-cell--group.is-best-bottom {
-  box-shadow: inset 2px 0 0 var(--bookedz-primary), inset -2px 0 0 var(--bookedz-primary), inset 0 -2px 0 var(--bookedz-primary);
+  box-shadow: inset 2px 0 0 var(--dino-primary), inset -2px 0 0 var(--dino-primary), inset 0 -2px 0 var(--dino-primary);
 }
 
 .painter-cell--group.is-best-top.is-best-bottom {
-  box-shadow: inset 0 0 0 2px var(--bookedz-primary);
+  box-shadow: inset 0 0 0 2px var(--dino-primary);
 }
 
 .painter-grid > .painter-cell:nth-last-child(-n + 2) {
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 .painter-who {
   min-height: 1.4em;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   overflow-wrap: anywhere;
 }
 

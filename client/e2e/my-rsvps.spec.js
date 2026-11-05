@@ -3,18 +3,18 @@ import { setColorTheme } from './support/colorTheme.js';
 import { createSeedData } from '../src/utils/mockData.js';
 
 // these checks expect the expanded sidebar. from 992px the sidebar starts as an icon rail
-// unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
+// unless someone expanded it, so start from that remembered choice.
 test.beforeEach(async ({
   page
 }) => {
   await page.addInitScript(() => {
     try {
-      localStorage.setItem('bookedz-sidebar', 'expanded');
+      localStorage.setItem('dino-sidebar', 'expanded');
     } catch {/* storage blocked */}
   });
 });
 
-const STORE = 'bookedz-feature2-demo';
+const STORE = 'dino-feature2-demo';
 
 const NOW = Date.parse('2026-11-02T10:00:00Z');
 
@@ -122,7 +122,7 @@ test('cancellation keeps keyboard focus; directions and calendar actions work', 
   await next.getByRole('button', {
     name: 'Add to calendar'
   }).click();
-  expect((await download).suggestedFilename()).toBe('bookedz-event.ics');
+  expect((await download).suggestedFilename()).toBe('dino-event.ics');
   const cancel = page.getByRole('button', {
     name: 'Cancel RSVP for Board games together',
     exact: true

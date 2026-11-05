@@ -210,10 +210,10 @@ const descriptionToShow = computed(() => {
 <style scoped>
 .event-summary {
   overflow: hidden;
-  border: 1px solid var(--bookedz-border);
-  border-radius: var(--bookedz-radius-card, 24px);
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  border: 1px solid var(--dino-border);
+  border-radius: var(--dino-radius-card, 24px);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .event-cover {
@@ -223,7 +223,7 @@ const descriptionToShow = computed(() => {
   aspect-ratio: 1 / 1;
   border-radius: 16px;
   overflow: hidden;
-  background: var(--bookedz-mint);
+  background: var(--dino-mint);
 }
 
 .event-cover img {
@@ -264,10 +264,10 @@ const descriptionToShow = computed(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: .35rem .75rem;
-  border: 1px solid var(--bookedz-glass-border);
+  border: 1px solid var(--dino-glass-border);
   border-radius: 999px;
-  color: var(--bookedz-ink);
-  background: var(--bookedz-glass);
+  color: var(--dino-ink);
+  background: var(--dino-glass);
   font-size: .8rem;
   font-weight: 700;
 }
@@ -286,8 +286,8 @@ const descriptionToShow = computed(() => {
 .event-title {
   margin: 0 0 .6rem;
   min-width: 0;
-  color: var(--bookedz-ink);
-  font: 600 clamp(1.65rem, 3vw, 2.25rem)/1.04 var(--bookedz-heading);
+  color: var(--dino-ink);
+  font: 600 clamp(1.65rem, 3vw, 2.25rem)/1.04 var(--dino-heading);
   letter-spacing: -.04em;
 }
 
@@ -296,7 +296,7 @@ const descriptionToShow = computed(() => {
   gap: .55rem;
   align-items: center;
   margin: 0 0 1rem;
-  color: var(--bookedz-ink-soft);
+  color: var(--dino-ink-soft);
   font-size: .95rem;
   font-weight: 600;
 }
@@ -313,8 +313,8 @@ const descriptionToShow = computed(() => {
   width: 28px;
   height: 28px;
   border-radius: 9px;
-  background: var(--bookedz-glass-hover);
-  color: var(--bookedz-forest);
+  background: var(--dino-glass-hover);
+  color: var(--dino-forest);
   font-size: 1.2rem;
 }
 
@@ -322,34 +322,34 @@ const descriptionToShow = computed(() => {
   margin-bottom: .9rem;
   padding: .85rem 1rem;
   border-radius: 15px;
-  background: color-mix(in srgb, var(--bookedz-yellow) 20%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-yellow) 20%, var(--dino-surface));
 }
 
 .venue-label {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .8rem;
   font-weight: 650;
 }
 
 .venue-name {
   margin: .15rem 0 0;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 750;
 }
 
 .venue-name span {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .venue-address {
   margin: .15rem 0 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .9rem;
 }
 
 .venue-hidden-note {
   margin: .35rem 0 0;
-  color: var(--bookedz-ink-soft);
+  color: var(--dino-ink-soft);
   font-size: .85rem;
   font-weight: 600;
 }
@@ -380,7 +380,7 @@ const descriptionToShow = computed(() => {
   gap: .55rem;
   min-width: 112px;
   padding: .55rem .7rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 13px;
 }
 
@@ -390,14 +390,14 @@ const descriptionToShow = computed(() => {
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  color: var(--bookedz-forest);
-  background: var(--bookedz-mint);
+  color: var(--dino-forest);
+  background: var(--dino-mint);
   font-size: 1.15rem;
 }
 
 .fact-icon--coral {
-  color: var(--bookedz-on-action);
-  background: var(--bookedz-primary-dark);
+  color: var(--dino-on-action);
+  background: var(--dino-primary-dark);
 }
 
 .event-fact strong,
@@ -411,19 +411,19 @@ const descriptionToShow = computed(() => {
 }
 
 .event-fact small {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .72rem;
 }
 
 .event-summary :deep(.badge) {
   margin-bottom: .35rem;
-  color: var(--bookedz-ink);
-  background: var(--bookedz-glass-hover) !important;
-  border-color: var(--bookedz-border) !important;
+  color: var(--dino-ink);
+  background: var(--dino-glass-hover) !important;
+  border-color: var(--dino-border) !important;
 }
 
 .event-summary :deep(.keep-line-breaks) {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .94rem;
   line-height: 1.55;
 }

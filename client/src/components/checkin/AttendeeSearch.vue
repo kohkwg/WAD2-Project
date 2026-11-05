@@ -101,18 +101,18 @@ onMounted(load);
 <style scoped>
 :deep(.form-control) {
   min-height: 44px;
-  border-color: var(--bookedz-border,#e9ded3);
+  border-color: var(--dino-border,#e9ded3);
   border-radius: 12px;
 }
 
 :deep(.list-group) {
-  border: 1px solid var(--bookedz-border,#e9ded3);
+  border: 1px solid var(--dino-border,#e9ded3);
   border-radius: 14px;
   overflow: hidden;
 }
 
 :deep(.list-group-item) {
-  border-color: var(--bookedz-border,#e9ded3);
+  border-color: var(--dino-border,#e9ded3);
   gap: .75rem;
   padding: .75rem;
 }

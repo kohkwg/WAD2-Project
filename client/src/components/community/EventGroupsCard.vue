@@ -103,14 +103,14 @@ const initials = (name = '') => name.split(/\s+/).map(part => part[0]).join('').
   display: grid;
   gap: 14px;
   padding: 16px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 24px;
-  background: var(--bookedz-surface);
-  box-shadow: 6px 6px 0 var(--bookedz-teal);
+  background: var(--dino-surface);
+  box-shadow: 6px 6px 0 var(--dino-teal);
 }
 
 :root[data-theme="dark"] .event-groups-card {
-  border-color: var(--bookedz-border);
+  border-color: var(--dino-border);
   box-shadow: 6px 6px 0 var(--db-dark-teal);
 }
 
@@ -150,20 +150,20 @@ const initials = (name = '') => name.split(/\s+/).map(part => part[0]).join('').
 .egc-countdown {
   padding: 2px 10px;
   border-radius: 99px;
-  background: var(--bookedz-mango-soft);
-  color: var(--bookedz-ink);
+  background: var(--dino-mango-soft);
+  color: var(--dino-ink);
   font-size: .74rem;
   font-weight: 800;
 }
 
 .egc-countdown.is-soon {
-  background: var(--bookedz-fill);
-  color: var(--bookedz-on-fill);
+  background: var(--dino-fill);
+  color: var(--dino-on-fill);
 }
 
 .egc-title {
   margin: 0;
-  font: 900 1.2rem/1.25 var(--bookedz-heading);
+  font: 900 1.2rem/1.25 var(--dino-heading);
   overflow-wrap: anywhere;
 }
 
@@ -191,10 +191,10 @@ const initials = (name = '') => name.split(/\s+/).map(part => part[0]).join('').
   place-items: center;
   width: 30px;
   height: 30px;
-  border: 2px solid var(--bookedz-surface);
+  border: 2px solid var(--dino-surface);
   border-radius: 50%;
-  background: var(--bookedz-orange-soft);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-orange-soft);
+  color: var(--dino-primary-dark);
   font-size: .68rem;
   font-weight: 800;
 }
@@ -204,8 +204,8 @@ const initials = (name = '') => name.split(/\s+/).map(part => part[0]).join('').
 }
 
 .egc-more {
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
 }
 
 /* a scroll row clips what grows past its edge, so leave room for the hover lift, tilt and larger shadow */
@@ -238,17 +238,17 @@ const initials = (name = '') => name.split(/\s+/).map(part => part[0]).join('').
   justify-self: start;
   min-height: 40px;
   padding: 6px 14px;
-  border: 2px dashed var(--bookedz-control-border);
+  border: 2px dashed var(--dino-control-border);
   border-radius: 99px;
   background: transparent;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 700;
   font-size: .88rem;
 }
 
 .egc-start:hover {
-  border-color: var(--bookedz-fill);
-  background: var(--bookedz-orange-soft);
+  border-color: var(--dino-fill);
+  background: var(--dino-orange-soft);
 }
 
 /* phones and tablets (md and below): a tighter card so more fits on the screen; buttons stay at
@@ -259,7 +259,7 @@ const initials = (name = '') => name.split(/\s+/).map(part => part[0]).join('').
     gap: 10px;
     padding: 12px;
     border-radius: 20px;
-    box-shadow: 4px 4px 0 var(--bookedz-teal);
+    box-shadow: 4px 4px 0 var(--dino-teal);
   }
   :root[data-theme="dark"] .event-groups-card {
     box-shadow: 4px 4px 0 var(--db-dark-teal);

@@ -8,8 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:unit": "NODE_ENV=test node --test src/utils/__tests__/*.test.js src/utils/__tests__/waitlistScore.spec.js",
-    "test:e2e": "playwright test",
-    "test:e2e:live": "playwright test -c playwright.live.config.mjs"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",

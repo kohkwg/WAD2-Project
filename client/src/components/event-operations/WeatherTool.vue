@@ -240,22 +240,22 @@ function cancelSwitch() {
 .forecast-condition {
   font-size: clamp(1.4rem, 3vw, 1.8rem);
   font-weight: 700;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   margin-bottom: .75rem;
 }
 
 .venue-address {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   overflow-wrap: anywhere;
 }
 
 .forecast-details {
   max-width: 56rem;
   padding: 1rem 1.2rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1rem;
-  background: var(--bookedz-glass-solid);
-  color: var(--bookedz-muted);
+  background: var(--dino-glass-solid);
+  color: var(--dino-muted);
 }
 
 .forecast-details summary {
@@ -263,24 +263,24 @@ function cancelSwitch() {
   align-items: center;
   min-height: 44px;
   cursor: pointer;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 650;
 }
 
 .weather-grid .workspace-panel, section > .workspace-panel {
   padding: clamp(1rem, 2vw, 1.4rem);
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1rem;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .weather-grid > .workspace-panel:first-child {
-  border-inline-start: 4px solid var(--bookedz-primary-dark);
+  border-inline-start: 4px solid var(--dino-primary-dark);
 }
 
 .weather-grid .section-heading {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 700;
 }
 
@@ -289,8 +289,8 @@ function cancelSwitch() {
 }
 
 .area-select:focus, :deep(.form-select:focus) {
-  border-color: var(--bookedz-primary-dark);
-  box-shadow: var(--bookedz-focus-glow);
+  border-color: var(--dino-primary-dark);
+  box-shadow: var(--dino-focus-glow);
 }
 
 .area-select + .btn, .switch-ready .btn, .tool-heading .btn {
@@ -299,9 +299,9 @@ function cancelSwitch() {
 
 .switch-ready {
   padding: .9rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: .85rem;
-  background: var(--bookedz-glass-solid);
+  background: var(--dino-glass-solid);
 }
 
 .switch-ready p {

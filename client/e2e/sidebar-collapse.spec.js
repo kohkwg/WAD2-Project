@@ -10,7 +10,7 @@ test('sidebar starts as an icon rail on laptops and desktops and remembers an ex
     height: 800
   });
   await page.goto('/discover');
-  await page.evaluate(() => localStorage.removeItem('bookedz-sidebar'));
+  await page.evaluate(() => localStorage.removeItem('dino-sidebar'));
   await page.reload();
   const nav = page.getByRole('navigation', {
     name: 'Main navigation'
@@ -60,7 +60,7 @@ test('below 992px the sidebar stays a closed drawer whatever was remembered', as
 }) => {
   await page.goto('/discover');
   for (const stored of ['collapsed', 'expanded']) {
-    await page.evaluate(value => localStorage.setItem('bookedz-sidebar', value), stored);
+    await page.evaluate(value => localStorage.setItem('dino-sidebar', value), stored);
     for (const width of [375, 575, 768, 991]) {
       await page.setViewportSize({
         width,
@@ -88,7 +88,7 @@ test('collapse toggle sits on the divider at the sidebar edge and labels itself 
     height: 800
   });
   await page.goto('/discover');
-  await page.evaluate(() => localStorage.removeItem('bookedz-sidebar'));
+  await page.evaluate(() => localStorage.removeItem('dino-sidebar'));
   await page.reload();
   const toggle = page.locator('.sidebar-collapse');
   const centred = () => page.evaluate(() => {

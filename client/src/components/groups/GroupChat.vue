@@ -155,14 +155,14 @@ async function remove(comment) {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--bookedz-orange-soft);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-orange-soft);
+  color: var(--dino-primary-dark);
   font-size: .7rem;
   font-weight: 700;
 }
 
 .chat-in-enter-active {
-  transition: opacity var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease), transform var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease);
+  transition: opacity var(--dino-motion-normal, .24s) var(--dino-ease, ease), transform var(--dino-motion-normal, .24s) var(--dino-ease, ease);
 }
 
 .chat-in-enter-from {
@@ -171,7 +171,7 @@ async function remove(comment) {
 }
 
 .chat-in-leave-active {
-  transition: opacity var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease);
+  transition: opacity var(--dino-motion-fast, .16s) var(--dino-ease, ease);
 }
 
 .chat-in-leave-to {
@@ -195,7 +195,7 @@ async function remove(comment) {
 
 .group-chat-error {
   margin: 0;
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
   font-size: .9rem;
 }
 </style>

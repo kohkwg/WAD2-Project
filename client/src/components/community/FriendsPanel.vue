@@ -288,9 +288,9 @@ const respond = (person, accept) => mutate(person.id, () => friends.respondToReq
 <style scoped>
 .friends-panel {
   padding: clamp(1rem, 4vw, 2rem);
-  border: 1px solid var(--bookedz-border);
-  border-radius: var(--bookedz-radius-card);
-  background: var(--bookedz-surface);
+  border: 1px solid var(--dino-border);
+  border-radius: var(--dino-radius-card);
+  background: var(--dino-surface);
 }
 
 .friends-heading {
@@ -303,7 +303,7 @@ const respond = (person, accept) => mutate(person.id, () => friends.respondToReq
 }
 
 .friends-heading h2, h3 {
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
 }
 
 h3 {
@@ -313,7 +313,7 @@ h3 {
 .friend-section {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
   min-width: 0;
 }
 
@@ -342,7 +342,7 @@ h3 {
   justify-content: space-between;
   gap: 1rem;
   padding: .85rem 0;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 .friend-list li > div:first-child {
@@ -369,7 +369,7 @@ h3 {
 
 .friends-demo {
   margin: 0 0 .5rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .82rem;
 }
 

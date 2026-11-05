@@ -5,7 +5,7 @@ test.beforeEach(async ({
   page
 }) => {
   await page.goto('/discover');
-  await page.waitForFunction(() => Object.keys(localStorage).some(key => key.startsWith('bookedz-notification-state-v1:')));
+  await page.waitForFunction(() => Object.keys(localStorage).some(key => key.startsWith('dino-notification-state-v1:')));
   await page.evaluate(async () => {
     const {
       clearToasts
@@ -68,9 +68,9 @@ test('background event decisions and announcement edits appear without opening t
 }) => {
   async function changeStatus(status) {
     await page.evaluate(status => {
-      const db = JSON.parse(localStorage.getItem('bookedz-feature2-demo'));
+      const db = JSON.parse(localStorage.getItem('dino-feature2-demo'));
       db.rsvps.find(row => row.id === 'r11').status = status;
-      localStorage.setItem('bookedz-feature2-demo', JSON.stringify(db));
+      localStorage.setItem('dino-feature2-demo', JSON.stringify(db));
       window.dispatchEvent(new Event('focus'));
     }, status);
   }
@@ -87,7 +87,7 @@ test('background event decisions and announcement edits appear without opening t
     hasText: /declined or removed/
   })).toBeVisible();
   await page.evaluate(() => {
-    const db = JSON.parse(localStorage.getItem('bookedz-feature2-demo'));
+    const db = JSON.parse(localStorage.getItem('dino-feature2-demo'));
     const eventId = db.rsvps.find(row => row.id === 'r3').eventId;
     db.feature4.announcements.push({
       id: 'test-notice',
@@ -97,18 +97,18 @@ test('background event decisions and announcement edits appear without opening t
       createdAt: new Date().toISOString(),
       updatedAt: null
     });
-    localStorage.setItem('bookedz-feature2-demo', JSON.stringify(db));
+    localStorage.setItem('dino-feature2-demo', JSON.stringify(db));
     window.dispatchEvent(new Event('focus'));
   });
   await expect(page.locator('.toast-item').filter({
     hasText: /New announcement.*bring a jacket/
   })).toBeVisible();
   await page.evaluate(() => {
-    const db = JSON.parse(localStorage.getItem('bookedz-feature2-demo'));
+    const db = JSON.parse(localStorage.getItem('dino-feature2-demo'));
     const post = db.feature4.announcements.find(post => post.id === 'test-notice');
     post.body = '[TEST] bring a coat';
     post.updatedAt = new Date().toISOString();
-    localStorage.setItem('bookedz-feature2-demo', JSON.stringify(db));
+    localStorage.setItem('dino-feature2-demo', JSON.stringify(db));
     window.dispatchEvent(new Event('focus'));
   });
   await expect(page.locator('.toast-item').filter({

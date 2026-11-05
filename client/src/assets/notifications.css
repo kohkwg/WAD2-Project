@@ -40,6 +40,6 @@ span.dismissible-notice {
 
 .notice-close:focus-visible {
   opacity: 1;
-  outline: 3px solid var(--bookedz-focus, var(--bookedz-primary-dark));
+  outline: 3px solid var(--dino-focus, var(--dino-primary-dark));
   outline-offset: -4px;
 }

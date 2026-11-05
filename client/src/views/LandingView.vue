@@ -115,7 +115,7 @@ function signedIn() {
   justify-content: center;
   gap: 10px;
   min-height: 40vh;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 @media (max-width: 767px) {

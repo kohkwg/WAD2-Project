@@ -144,9 +144,9 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
 .organiser-event-card {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 20px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   min-width: 0;
 }
 
@@ -155,7 +155,7 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
 }
 
 .just-created {
-  border-color: var(--bookedz-success);
+  border-color: var(--dino-success);
 }
 
 .card-date {
@@ -165,7 +165,7 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
   gap: 8px;
   padding: 15px;
   border-radius: 19px 19px 0 0;
-  background: color-mix(in srgb, var(--bookedz-mint) 70%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-mint) 70%, var(--dino-surface));
 }
 
 .card-date>div {
@@ -176,7 +176,7 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
 }
 
 .card-date strong {
-  font: 650 1.8rem/1 var(--bookedz-heading);
+  font: 650 1.8rem/1 var(--dino-heading);
 }
 
 .card-date>div>span {
@@ -188,17 +188,17 @@ const capacityPercent = computed(() => props.event.capacity > 0 ? Math.max(0, Ma
   font-weight: 650;
   padding: 4px 7px;
   border-radius: 12px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   white-space: nowrap;
 }
 
 .event-state-drafts .card-date {
-  background: color-mix(in srgb, var(--bookedz-yellow) 28%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-yellow) 28%, var(--dino-surface));
 }
 
 .event-state-past .card-date,
 .event-state-cancelled .card-date {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .event-card-copy {
@@ -214,7 +214,7 @@ h3 {
 
 .event-meta {
   font-size: var(--text-small);
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   margin: 6px 0;
   overflow-wrap: anywhere;
 }
@@ -222,24 +222,24 @@ h3 {
 .capacity-copy {
   font-size: var(--text-small);
   margin: 14px 0 6px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .capacity-copy strong {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .capacity-track {
   height: 5px;
   border-radius: 10px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
   overflow: hidden;
 }
 
 .capacity-track span {
   display: block;
   height: 100%;
-  background: var(--bookedz-success);
+  background: var(--dino-success);
 }
 
 .event-statuses {
@@ -254,18 +254,18 @@ h3 {
   display: inline-block;
   padding: 4px 7px;
   border-radius: 9px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
   font-size: var(--text-caption);
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .pending-pill {
-  background: color-mix(in srgb, var(--bookedz-yellow) 35%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-yellow) 35%, var(--dino-surface));
 }
 
 .draft-note {
   font-size: var(--text-small);
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   margin: 14px 0 8px;
 }
 
@@ -302,9 +302,9 @@ h3 {
 }
 
 .event-card-actions>.btn-primary {
-  background: var(--bookedz-primary);
-  border-color: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
+  background: var(--dino-primary);
+  border-color: var(--dino-primary);
+  color: var(--dino-on-action);
 }
 
 .event-more {
@@ -320,7 +320,7 @@ h3 {
   cursor: pointer;
   min-width: 44px;
   min-height: 44px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 10px;
   font-size: var(--text-button);
 }
@@ -339,10 +339,10 @@ h3 {
   width: 235px;
   max-width: 75vw;
   padding: 12px;
-  background: var(--bookedz-surface);
-  border: 1px solid var(--bookedz-border);
+  background: var(--dino-surface);
+  border: 1px solid var(--dino-border);
   border-radius: 14px;
-  box-shadow: var(--bookedz-shadow);
+  box-shadow: var(--dino-shadow);
 }
 
 .event-menu>a,
@@ -351,7 +351,7 @@ h3 {
   align-items: center;
   min-height: 44px;
   padding: 8px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: var(--text-button);
   text-decoration: none;
   background: transparent;
@@ -361,15 +361,15 @@ h3 {
 }
 
 .event-menu>a:hover {
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .delete-event {
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
 }
 
 .delete-event:hover,.delete-event:focus-visible {
-  background: color-mix(in srgb,var(--bookedz-danger) 15%,transparent);
+  background: color-mix(in srgb,var(--dino-danger) 15%,transparent);
 }
 
 .event-menu p {
@@ -406,7 +406,7 @@ h3 {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   overflow: hidden;
 }
 

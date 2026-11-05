@@ -12,7 +12,7 @@ export function useDiscoveryMotion(target) {
   onMounted(() => {
     const root = toValue(target);
     if (!root) return;
-    const revealDuration = parseFloat(getComputedStyle(root).getPropertyValue('--bookedz-motion-reveal')) / 1000 || .65;
+    const revealDuration = parseFloat(getComputedStyle(root).getPropertyValue('--dino-motion-reveal')) / 1000 || .65;
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference)', context => {
       const seen = new WeakSet();

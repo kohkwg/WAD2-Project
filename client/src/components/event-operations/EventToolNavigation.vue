@@ -158,9 +158,9 @@ watch(() => route.fullPath, () => close(Boolean(nav.value?.contains(document.act
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: .5rem;
   padding: .45rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1rem;
-  background: var(--bookedz-glass-solid);
+  background: var(--dino-glass-solid);
   position: sticky;
   top: var(--topbar-h, 0px);
   z-index: 20;
@@ -182,7 +182,7 @@ watch(() => route.fullPath, () => close(Boolean(nav.value?.contains(document.act
   border: 1px solid transparent;
   border-radius: .75rem;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   text-align: left;
 }
 
@@ -194,19 +194,19 @@ watch(() => route.fullPath, () => close(Boolean(nav.value?.contains(document.act
 .tool-group-caption {
   display: block;
   font-size: .78rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   overflow-wrap: anywhere;
 }
 
 .tool-group-trigger.active {
-  border-color: var(--bookedz-border);
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-tab-shadow);
-  color: var(--bookedz-primary-dark);
+  border-color: var(--dino-border);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-tab-shadow);
+  color: var(--dino-primary-dark);
 }
 
 .tool-group-trigger:hover, .tool-group-links a:hover {
-  background: var(--bookedz-glass-hover);
+  background: var(--dino-glass-hover);
 }
 
 .tool-chevron {
@@ -218,10 +218,10 @@ watch(() => route.fullPath, () => close(Boolean(nav.value?.contains(document.act
   inset: calc(100% + .5rem) 0 auto;
   min-width: 0;
   padding: .35rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: .85rem;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .tool-group-links a {
@@ -232,7 +232,7 @@ watch(() => route.fullPath, () => close(Boolean(nav.value?.contains(document.act
   padding: .55rem .7rem;
   border-radius: .6rem;
   text-decoration: none;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   overflow-wrap: anywhere;
 }
 
@@ -242,12 +242,12 @@ watch(() => route.fullPath, () => close(Boolean(nav.value?.contains(document.act
 
 .tool-group-links a span {
   font-size: .75rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .tool-group-links a[aria-current="page"] {
-  background: var(--bookedz-glass-active);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-glass-active);
+  color: var(--dino-primary-dark);
 }
 
 @media (max-width: 575.98px) {

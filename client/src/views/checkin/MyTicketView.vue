@@ -147,7 +147,7 @@ onUnmounted(() => {
   padding: 1.2rem 1.25rem;
   margin-bottom: 1rem;
   border-radius: 22px 22px 8px 8px;
-  background: var(--bookedz-cream,#fff8f1);
+  background: var(--dino-cream,#fff8f1);
   text-align: left;
 }
 
@@ -163,7 +163,7 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   padding: 1.5rem 1rem 1.25rem;
-  border: 1px solid var(--bookedz-border,#e9ded3);
+  border: 1px solid var(--dino-border,#e9ded3);
   border-radius: 8px 8px 22px 22px;
   background: #fff;
   flex-direction: column;
@@ -176,18 +176,18 @@ onUnmounted(() => {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--bookedz-cream,#fff8f1);
+  background: var(--dino-cream,#fff8f1);
   content: '';
 }
 
 .ticket-stock:before {
   left: -12px;
-  border-right: 1px solid var(--bookedz-border,#e9ded3);
+  border-right: 1px solid var(--dino-border,#e9ded3);
 }
 
 .ticket-stock:after {
   right: -12px;
-  border-left: 1px solid var(--bookedz-border,#e9ded3);
+  border-left: 1px solid var(--dino-border,#e9ded3);
 }
 
 .ticket-page :deep(.qr-code) {

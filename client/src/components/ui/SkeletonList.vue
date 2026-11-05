@@ -49,9 +49,9 @@ defineProps({
   gap: 12px;
   align-items: center;
   padding: 10px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 13px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .skeleton-list--card .skeleton-item {
@@ -99,9 +99,9 @@ defineProps({
 
 .skeleton-block {
   display: block;
-  background: linear-gradient(90deg, var(--bookedz-hover) 0%, color-mix(in srgb, var(--bookedz-hover) 45%, var(--bookedz-surface)) 50%, var(--bookedz-hover) 100%);
+  background: linear-gradient(90deg, var(--dino-hover) 0%, color-mix(in srgb, var(--dino-hover) 45%, var(--dino-surface)) 50%, var(--dino-hover) 100%);
   background-size: 200% 100%;
-  animation: skeleton-shimmer 1.4s var(--bookedz-ease) infinite;
+  animation: skeleton-shimmer 1.4s var(--dino-ease) infinite;
   animation-delay: var(--skeleton-delay, 0ms);
 }
 

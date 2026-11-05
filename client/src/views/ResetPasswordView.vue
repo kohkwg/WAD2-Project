@@ -116,27 +116,27 @@ async function submit() {
 
 .reset-title {
   margin-bottom: 1.25rem;
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: 1.75rem;
   letter-spacing: -.03em;
 }
 
 .reset-note {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .auth-link {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: .2em;
 }
 
 .auth-card {
-  border: 1px solid var(--bookedz-border, #e9ded3);
+  border: 1px solid var(--dino-border, #e9ded3);
   border-radius: 24px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-shadow);
 }
 
 :deep(.form-control) {

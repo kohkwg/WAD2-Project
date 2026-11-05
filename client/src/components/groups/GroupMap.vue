@@ -96,7 +96,7 @@ onUnmounted(() => {
 <style scoped>
 .group-map {
   height: 280px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 16px;
   overflow: hidden;
 }
@@ -109,11 +109,11 @@ onUnmounted(() => {
   border: 2px solid #fff;
   border-radius: 50%;
   box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
-  font: 700 .8rem/1 var(--bookedz-body, system-ui);
+  font: 700 .8rem/1 var(--dino-body, system-ui);
 }
 
 .group-map :deep(.group-pin) {
-  animation: pin-drop var(--bookedz-motion-slip, .25s) var(--bookedz-ease-stamp, ease-out) both;
+  animation: pin-drop var(--dino-motion-slip, .25s) var(--dino-ease-stamp, ease-out) both;
 }
 
 @keyframes pin-drop {
@@ -146,7 +146,7 @@ onUnmounted(() => {
 }
 
 .group-map :deep(.group-pin--chosen) {
-  background: var(--bookedz-primary);
+  background: var(--dino-primary);
   color: #fff;
 }
 </style>

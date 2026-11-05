@@ -33,7 +33,6 @@ coverage
 /client/playwright-report/
 /client/test-results/
 # Saved sign-in sessions for the live e2e suite (contain auth tokens)
-/client/e2e-live/.auth/
 
 # nyc test coverage
 .nyc_output
@@ -158,7 +157,8 @@ dist
 .cursorignore
 .windsurfrules
 .aider*
-# Share the root AGENTS.md; machine-specific additions remain local.
+# Agent instruction files stay local.
+AGENTS.md
 AGENTS.local.md
 AGENTS.override.md
 CLAUDE.md
@@ -166,10 +166,9 @@ GEMINI.md
 CODEX.md
 .graphifyignore
 
-# Private reference material and planning; public handoffs live directly in docs/.
+# Private reference material and planning
 /docs/local/
-/docs/resources/IS216_Bookedz_Codex_Project_Handoff.md
-/docs/resources/README.md
+/docs/resources/
 /docs/superpowers/
 
 # yarn v3
@@ -187,7 +186,6 @@ vite.config.ts.timestamp-*
 .vite/
 
 # Local Restricted course documents and derived knowledge graph
-/docs/resources/project/
 /graphify-out/
 _test/src/App.vue
 _test/src/main.js

@@ -123,7 +123,7 @@ export function venueCheckInUrl(eventId, secret) {
 // crypto.randomuuid() needs a secure context (https or localhost), same as the camera.
 // ============================================================================
 
-const DEVICE_KEY = 'bookedz-device-id';
+const DEVICE_KEY = 'dino-device-id';
 
 export function getDeviceId() {
   try {

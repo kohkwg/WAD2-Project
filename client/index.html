@@ -7,7 +7,7 @@
     <script>
       // apply the saved/system scheme before styles arrive to avoid a light flash.
       try {
-        const saved = localStorage.getItem('bookedz-color-theme');
+        const saved = localStorage.getItem('dino-color-theme');
         const theme = saved === 'light' || saved === 'dark' ? saved : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         document.documentElement.dataset.theme = theme;
         document.documentElement.dataset.bsTheme = theme;

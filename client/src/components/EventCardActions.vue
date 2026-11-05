@@ -95,7 +95,7 @@ const action = computed(() => {
   justify-content: center;
   min-height: 42px;
   padding: 9px 14px;
-  border: 1px solid var(--bookedz-primary-dark);
+  border: 1px solid var(--dino-primary-dark);
   border-radius: 6px;
   font: inherit;
   font-size: var(--text-button);
@@ -105,23 +105,23 @@ const action = computed(() => {
 }
 
 .card-action--view {
-  color: var(--bookedz-primary-dark);
-  background: var(--bookedz-surface);
+  color: var(--dino-primary-dark);
+  background: var(--dino-surface);
 }
 
 .card-action--view:hover {
-  background: var(--bookedz-glass-active);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-glass-active);
+  color: var(--dino-primary-dark);
 }
 
 .card-action--rsvp {
-  background: var(--bookedz-primary);
-  color: var(--bookedz-on-action);
+  background: var(--dino-primary);
+  color: var(--dino-on-action);
 }
 
 .card-action--rsvp:hover {
   filter: brightness(.94);
-  color: var(--bookedz-on-action);
+  color: var(--dino-on-action);
 }
 
 .registration-status {
@@ -154,7 +154,7 @@ const action = computed(() => {
 }
 
 .card-action:focus-visible {
-  outline: 2px solid var(--bookedz-primary-dark);
+  outline: 2px solid var(--dino-primary-dark);
   outline-offset: 3px;
 }
 
@@ -167,7 +167,7 @@ const action = computed(() => {
   min-height: 44px;
   padding: 10px 14px;
   border-radius: 6px;
-  font-family: var(--bookedz-body);
+  font-family: var(--dino-body);
   font-size: var(--text-button);
   font-weight: 600;
   line-height: 1.4;

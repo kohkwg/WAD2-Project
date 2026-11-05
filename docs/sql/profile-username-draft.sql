@@ -3,7 +3,7 @@
 -- Existing accounts keep a NULL username until they choose one. No identity changes.
 begin;
 
-alter table public.profiles add column username text;
+alter table public.profiles add column if not exists username text;
 alter table public.profiles add constraint profiles_username_format
   check (username is null or (username = lower(username) and username ~ '^[a-z0-9_]{3,20}$'));
 alter table public.profiles add constraint profiles_username_unique unique (username);

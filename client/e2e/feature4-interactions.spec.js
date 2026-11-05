@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const STORE = 'bookedz-feature2-demo';
+const STORE = 'dino-feature2-demo';
 
 const ENDPOINT = '**/v2/real-time/api/two-hr-forecast*';
 
@@ -49,7 +49,7 @@ async function failStorage(page) {
   await page.evaluate(() => {
     window.__originalSetItem = Storage.prototype.setItem;
     Storage.prototype.setItem = function (key, value) {
-      if (key === 'bookedz-feature2-demo') throw new DOMException('Storage full', 'QuotaExceededError');
+      if (key === 'dino-feature2-demo') throw new DOMException('Storage full', 'QuotaExceededError');
       return window.__originalSetItem.call(this, key, value);
     };
   });

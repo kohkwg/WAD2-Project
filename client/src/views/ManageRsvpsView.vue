@@ -620,9 +620,9 @@ async function demoExpireOffers() {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 650;
-  text-decoration-color: var(--bookedz-border);
+  text-decoration-color: var(--dino-border);
   text-underline-offset: 4px;
 }
 
@@ -632,15 +632,15 @@ async function demoExpireOffers() {
   justify-content: space-between;
   gap: 1rem;
   padding: 1.35rem clamp(1rem, 3vw, 1.8rem);
-  border: 1px solid var(--bookedz-border);
-  border-left: 5px solid var(--bookedz-primary);
+  border: 1px solid var(--dino-border);
+  border-left: 5px solid var(--dino-primary);
   border-radius: 20px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .rsvp-heading h1 {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: clamp(1.55rem, 3vw, 2.25rem);
   font-weight: 700;
   letter-spacing: -.04em;
@@ -648,7 +648,7 @@ async function demoExpireOffers() {
 }
 
 .rsvp-kicker {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 700;
   font-size: .85rem;
 }
@@ -657,7 +657,7 @@ async function demoExpireOffers() {
   display: flex;
   flex-wrap: wrap;
   gap: .3rem .75rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .9rem;
 }
 
@@ -670,7 +670,7 @@ async function demoExpireOffers() {
 
 .guestlist-stamp {
   flex: 0 0 auto;
-  color: var(--bookedz-primary);
+  color: var(--dino-primary);
   font-size: 2.25rem;
   line-height: 1;
   transform: rotate(15deg);
@@ -707,14 +707,14 @@ async function demoExpireOffers() {
 
 .capacity-title p {
   margin: .1rem 0 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .84rem;
 }
 
 .capacity-title>strong {
   flex: 0 0 auto;
-  color: var(--bookedz-primary-dark);
-  font: 700 2rem/1 var(--bookedz-heading);
+  color: var(--dino-primary-dark);
+  font: 700 2rem/1 var(--dino-heading);
   letter-spacing: -.05em;
 }
 
@@ -729,9 +729,9 @@ async function demoExpireOffers() {
   height: 13px;
   overflow: hidden;
   margin: 1rem 0 .9rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 99px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .capacity-segment {
@@ -746,16 +746,16 @@ async function demoExpireOffers() {
 
 .capacity-segment--confirmed {
   z-index: 3;
-  background: var(--bookedz-primary);
+  background: var(--dino-primary);
 }
 
 .capacity-segment--offered {
   z-index: 2;
-  background: var(--bookedz-yellow);
+  background: var(--dino-yellow);
 }
 
 .capacity-segment--available {
-  background: var(--bookedz-mint);
+  background: var(--dino-mint);
 }
 
 .capacity-legend {
@@ -771,12 +771,12 @@ async function demoExpireOffers() {
   display: inline-flex;
   align-items: center;
   gap: .4rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .78rem;
 }
 
 .capacity-legend strong {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-variant-numeric: tabular-nums;
 }
 
@@ -787,25 +787,25 @@ async function demoExpireOffers() {
 }
 
 .legend-dot--confirmed {
-  background: var(--bookedz-primary);
+  background: var(--dino-primary);
 }
 
 .legend-dot--offered {
-  background: var(--bookedz-yellow);
+  background: var(--dino-yellow);
 }
 
 .legend-dot--available {
-  background: var(--bookedz-mint);
-  border: 1px solid var(--bookedz-muted-border);
+  background: var(--dino-mint);
+  border: 1px solid var(--dino-muted-border);
 }
 
 .group-summary {
   margin: 0 0 .6rem;
   padding: .5rem .8rem;
-  border: 1.5px solid var(--bookedz-teal);
+  border: 1.5px solid var(--dino-teal);
   border-radius: 14px;
-  background: var(--bookedz-teal-soft);
-  color: var(--bookedz-teal-ink);
+  background: var(--dino-teal-soft);
+  color: var(--dino-teal-ink);
 }
 
 .status-tabs {
@@ -813,9 +813,9 @@ async function demoExpireOffers() {
   flex-wrap: wrap;
   gap: .35rem;
   padding: .45rem;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 16px 16px 0 0;
-  background: var(--bookedz-glass-solid);
+  background: var(--dino-glass-solid);
 }
 
 /* style the status buttons in this page */
@@ -828,48 +828,48 @@ async function demoExpireOffers() {
   min-height: 44px;
   border: 1px solid transparent;
   border-radius: 11px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-weight: 650;
   white-space: nowrap;
 }
 
 .status-tabs .nav-link {
-  transition: color var(--bookedz-motion-fast) var(--bookedz-ease), background-color var(--bookedz-motion-fast) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: color var(--dino-motion-fast) var(--dino-ease), background-color var(--dino-motion-fast) var(--dino-ease), box-shadow var(--dino-motion-normal) var(--dino-ease), border-color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .status-tabs .nav-link:hover {
-  color: var(--bookedz-ink);
-  background: var(--bookedz-glass-hover);
+  color: var(--dino-ink);
+  background: var(--dino-glass-hover);
 }
 
 .status-tabs .nav-link.active {
-  color: var(--bookedz-primary-dark);
-  border-color: var(--bookedz-border);
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-tab-shadow);
+  color: var(--dino-primary-dark);
+  border-color: var(--dino-border);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-tab-shadow);
 }
 
 .tab-count {
-  color: var(--bookedz-ink);
-  background: var(--bookedz-hover);
+  color: var(--dino-ink);
+  background: var(--dino-hover);
 }
 
 .rsvp-list-panel {
   min-height: 120px;
   padding: clamp(.8rem, 2vw, 1.3rem);
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-top: 0;
   border-radius: 0 0 16px 16px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 :deep(.table) {
   --bs-table-bg: transparent;
-  --bs-table-striped-bg: var(--bookedz-glass-solid);
+  --bs-table-striped-bg: var(--dino-glass-solid);
 }
 
 :deep(.table thead th) {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .82rem;
   font-weight: 700;
   white-space: nowrap;
@@ -884,7 +884,7 @@ async function demoExpireOffers() {
 }
 
 :deep(.alert) {
-  border-color: var(--bookedz-border);
+  border-color: var(--dino-border);
 }
 
 @media (max-width: 767.98px) {
@@ -938,8 +938,8 @@ async function demoExpireOffers() {
   flex-wrap: wrap;
   margin-bottom: 10px;
   padding: 10px 12px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 </style>

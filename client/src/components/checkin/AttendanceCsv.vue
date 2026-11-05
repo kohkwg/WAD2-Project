@@ -149,7 +149,7 @@ async function onFileChosen(e) {
 
 <style scoped>
 .card {
-  border: 1px solid var(--bookedz-border,#e9ded3);
+  border: 1px solid var(--dino-border,#e9ded3);
   border-radius: 18px;
   background: #ffffff;
 }
@@ -164,9 +164,9 @@ async function onFileChosen(e) {
 }
 
 .card .btn-outline-primary {
-  --bs-btn-color: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-border-color: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-hover-bg: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-hover-border-color: var(--bookedz-coral-dark,#9a3412);
+  --bs-btn-color: var(--dino-coral-dark,#9a3412);
+  --bs-btn-border-color: var(--dino-coral-dark,#9a3412);
+  --bs-btn-hover-bg: var(--dino-coral-dark,#9a3412);
+  --bs-btn-hover-border-color: var(--dino-coral-dark,#9a3412);
 }
 </style>

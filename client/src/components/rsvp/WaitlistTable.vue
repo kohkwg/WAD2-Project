@@ -97,15 +97,15 @@ function percent(value) {
 
 <style scoped>
 h2 {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 700;
   letter-spacing: -.025em;
 }
 
 .list-group-item {
   padding: .9rem 1rem;
-  border-color: var(--bookedz-border);
-  background: var(--bookedz-surface);
+  border-color: var(--dino-border);
+  background: var(--dino-surface);
 }
 
 .offer-item {
@@ -120,38 +120,38 @@ h2 {
   flex: 0 0 auto;
   max-width: 100%;
   padding: .5rem .7rem;
-  color: var(--bookedz-ink);
-  background: var(--bookedz-yellow) !important;
+  color: var(--dino-ink);
+  background: var(--dino-yellow) !important;
   white-space: normal;
   text-align: center;
 }
 
 .table {
   --bs-table-bg: transparent;
-  --bs-table-striped-bg: var(--bookedz-glass-solid);
+  --bs-table-striped-bg: var(--dino-glass-solid);
   margin-bottom: 0;
 }
 
 .table thead th {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .82rem;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .table-responsive {
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 12px;
 }
 
 .progress {
   min-width: 4rem;
   border-radius: 99px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
 }
 
 .progress-bar {
-  background: var(--bookedz-primary-dark);
+  background: var(--dino-primary-dark);
 }
 
 @media (max-width: 767.98px) {
@@ -189,10 +189,10 @@ h2 {
     display: grid;
     gap: 0;
     padding: .6rem .85rem;
-    border: 1px solid var(--bookedz-border);
+    border: 1px solid var(--dino-border);
     border-radius: 15px;
-    background: var(--bookedz-surface);
-    box-shadow: var(--bookedz-card-shadow);
+    background: var(--dino-surface);
+    box-shadow: var(--dino-card-shadow);
   }
   .table td {
     display: grid;
@@ -200,7 +200,7 @@ h2 {
     align-items: center;
     gap: .6rem;
     padding: .55rem 0;
-    border-bottom: 1px solid var(--bookedz-border);
+    border-bottom: 1px solid var(--dino-border);
     white-space: normal;
   }
   .table td:last-child {
@@ -208,7 +208,7 @@ h2 {
   }
   .table td::before {
     content: attr(data-label);
-    color: var(--bookedz-muted);
+    color: var(--dino-muted);
     font-size: .74rem;
     font-weight: 700;
   }
@@ -217,12 +217,12 @@ h2 {
     display: block;
     padding: .2rem 0 .5rem;
     border: 0;
-    color: var(--bookedz-primary-dark);
+    color: var(--dino-primary-dark);
   }
   .table td[data-label="Rank"]::before {
     content: 'Waitlist position';
     display: block;
-    color: var(--bookedz-muted);
+    color: var(--dino-muted);
   }
   .table td[data-label="Name"] {
     display: block;
@@ -232,7 +232,7 @@ h2 {
     content: none;
   }
   .table td[data-label="Name"] .fw-semibold {
-    color: var(--bookedz-ink);
+    color: var(--dino-ink);
     font-size: 1rem;
   }
   .table td[data-label="Name"] .small {

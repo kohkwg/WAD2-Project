@@ -87,8 +87,8 @@ async function closeToast(id, event) {
   gap: 10px;
   padding: 10px 52px 10px 14px;
   border-radius: 14px;
-  background: var(--bookedz-ink);
-  color: var(--bookedz-surface);
+  background: var(--dino-ink);
+  color: var(--dino-surface);
   font-size: .9rem;
   font-weight: 600;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .22);
@@ -96,7 +96,7 @@ async function closeToast(id, event) {
 }
 
 .toast-item--error {
-  background: var(--bookedz-danger);
+  background: var(--dino-danger);
   color: #fff;
 }
 
@@ -126,12 +126,12 @@ async function closeToast(id, event) {
 }
 
 .toast-item:focus-within {
-  outline: 3px solid var(--bookedz-primary);
+  outline: 3px solid var(--dino-primary);
   outline-offset: -3px;
 }
 
 .toast-item--sad {
-  border-left: 4px solid var(--bookedz-primary);
+  border-left: 4px solid var(--dino-primary);
 }
 
 .toast-action {
@@ -139,14 +139,14 @@ async function closeToast(id, event) {
   padding: 4px 12px;
   border: 0;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--bookedz-surface) 18%, transparent);
+  background: color-mix(in srgb, var(--dino-surface) 18%, transparent);
   color: inherit;
   font: inherit;
   font-weight: 700;
 }
 
 .toast-action:hover {
-  background: color-mix(in srgb, var(--bookedz-surface) 28%, transparent);
+  background: color-mix(in srgb, var(--dino-surface) 28%, transparent);
 }
 
 .toast-close {
@@ -170,7 +170,7 @@ async function closeToast(id, event) {
 }
 
 .toast-enter-active, .toast-leave-active {
-  transition: opacity var(--bookedz-motion-normal) var(--bookedz-ease), transform var(--bookedz-motion-normal) var(--bookedz-ease);
+  transition: opacity var(--dino-motion-normal) var(--dino-ease), transform var(--dino-motion-normal) var(--dino-ease);
 }
 
 .toast-enter-from {
@@ -184,7 +184,7 @@ async function closeToast(id, event) {
 }
 
 .toast-move {
-  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease);
+  transition: transform var(--dino-motion-normal) var(--dino-ease);
 }
 
 @media (max-width: 575px) {

@@ -49,7 +49,7 @@ const triedSubmit = ref(false);
 // (localstorage), so a refresh does not reset it. it slows down someone guessing in the form;
 // it cannot stop someone calling supabase directly, which has its own rate limits.
 
-const LOCK_KEY = 'bookedz-signin-lock';
+const LOCK_KEY = 'dino-signin-lock';
 
 const MAX_FAILS = 3;
 
@@ -394,13 +394,13 @@ async function submit() {
 
 .auth-kicker {
   margin: 0 0 .9rem;
-  color: var(--bookedz-ink-soft, #636975);
+  color: var(--dino-ink-soft, #636975);
   font-size: .9rem;
 }
 
 .auth-title {
-  color: var(--bookedz-ink, #1f2937);
-  font-family: var(--bookedz-heading);
+  color: var(--dino-ink, #1f2937);
+  font-family: var(--dino-heading);
   font-size: clamp(2.5rem, 5vw, 4.2rem);
   line-height: 1.02;
   letter-spacing: -.045em;
@@ -409,28 +409,28 @@ async function submit() {
 .auth-copy {
   max-width: 34ch;
   margin: 1.25rem 0 0;
-  color: var(--bookedz-ink-soft, #636975);
+  color: var(--dino-ink-soft, #636975);
   font-size: 1.05rem;
   line-height: 1.6;
 }
 
 /* theme tokens: a fixed light card stayed light in dark mode, hiding the (white) labels.
-   --bookedz-peach is the palette's #ffe4d6 in light mode and its dark equivalent in dark mode. */
+   --dino-peach is the palette's #ffe4d6 in light mode and its dark equivalent in dark mode. */
 
 .auth-browse {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   margin-top: 1rem;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 600;
 }
 
 .auth-card {
-  border: 1px solid var(--bookedz-border, #e9ded3);
+  border: 1px solid var(--dino-border, #e9ded3);
   border-radius: 24px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-shadow);
 }
 
 .field-error, .field-ok, .field-note {
@@ -441,7 +441,7 @@ async function submit() {
 }
 
 .field-error {
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
 }
 
 .field-list {
@@ -449,11 +449,11 @@ async function submit() {
 }
 
 .field-ok {
-  color: var(--bookedz-success);
+  color: var(--dino-success);
 }
 
 .field-note {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 /* forgot password has only one field, so trim the empty space under it (width and position stay put). */
@@ -477,7 +477,7 @@ async function submit() {
 
 .auth-forgot {
   margin: -.25rem 0 1rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .9rem;
 }
 
@@ -486,7 +486,7 @@ async function submit() {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: .2em;
@@ -495,7 +495,7 @@ async function submit() {
 .auth-tabs {
   padding: .3rem;
   border-radius: 14px;
-  background: var(--bookedz-peach);
+  background: var(--dino-peach);
 }
 
 :deep(.form-control.is-invalid) {
@@ -520,34 +520,34 @@ async function submit() {
 .auth-tabs .nav-link {
   width: 100%;
   border-radius: 11px;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .auth-tabs .nav-link.active {
-  color: var(--bookedz-on-action);
-  background: var(--bookedz-primary);
+  color: var(--dino-on-action);
+  background: var(--dino-primary);
 }
 
 :deep(.form-control) {
   min-height: 46px;
-  border-color: var(--bookedz-border, #e9ded3);
+  border-color: var(--dino-border, #e9ded3);
   border-radius: 12px;
 }
 
 :deep(.form-control:focus) {
-  border-color: var(--bookedz-primary, #ff6b35);
+  border-color: var(--dino-primary, #ff6b35);
   box-shadow: 0 0 0 .2rem rgba(233, 114, 92, .18);
 }
 
 :deep(.btn-primary) {
   min-height: 46px;
-  border-color: var(--bookedz-primary);
+  border-color: var(--dino-primary);
   border-radius: 12px;
-  background: var(--bookedz-primary);
+  background: var(--dino-primary);
 }
 
 :deep(:focus-visible) {
-  outline: 3px solid var(--bookedz-focus);
+  outline: 3px solid var(--dino-focus);
   outline-offset: 3px;
 }
 

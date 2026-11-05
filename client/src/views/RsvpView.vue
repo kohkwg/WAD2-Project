@@ -697,13 +697,13 @@ async function submitRsvp() {
   align-items: center;
   min-height: 44px;
   padding: 0 1rem;
-  border: 1px solid var(--bookedz-control-border);
+  border: 1px solid var(--dino-control-border);
   border-radius: 999px;
-  color: var(--bookedz-ink);
-  background: var(--bookedz-surface);
+  color: var(--dino-ink);
+  background: var(--dino-surface);
   font-weight: 650;
   text-decoration: none;
-  transition: background-color var(--bookedz-motion-fast) ease;
+  transition: background-color var(--dino-motion-fast) ease;
 }
 
 .rsvp-sticky {
@@ -717,8 +717,8 @@ async function submitRsvp() {
   justify-content: space-between;
   gap: 12px;
   padding: 10px 16px max(10px, env(safe-area-inset-bottom));
-  border-top: 1px solid var(--bookedz-border);
-  background: color-mix(in srgb, var(--bookedz-surface) 96%, transparent);
+  border-top: 1px solid var(--dino-border);
+  background: color-mix(in srgb, var(--dino-surface) 96%, transparent);
   box-shadow: 0 -6px 18px rgba(0,0,0,.08);
 }
 
@@ -729,7 +729,7 @@ async function submitRsvp() {
 }
 
 .rsvp-sticky-note {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: var(--text-caption);
 }
 
@@ -738,8 +738,8 @@ async function submitRsvp() {
 }
 
 .rsvp-jump:hover {
-  color: var(--bookedz-ink);
-  background: var(--bookedz-glass-hover);
+  color: var(--dino-ink);
+  background: var(--dino-glass-hover);
 }
 
 /* the panel is only focused as the shortcut's target; its own controls keep their focus rings */
@@ -751,17 +751,17 @@ async function submitRsvp() {
 .waitlist-note {
   margin: 1rem 0 0;
   padding-top: 1rem;
-  border-top: 1px solid var(--bookedz-border);
-  color: var(--bookedz-ink);
+  border-top: 1px solid var(--dino-border);
+  color: var(--dino-ink);
   font-weight: 650;
 }
 
 .rsvp-state--team {
-  background: linear-gradient(145deg, var(--bookedz-surface), color-mix(in srgb, var(--bookedz-yellow) 30%, var(--bookedz-surface)));
+  background: linear-gradient(145deg, var(--dino-surface), color-mix(in srgb, var(--dino-yellow) 30%, var(--dino-surface)));
 }
 
 .required-mark {
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
   font-size: .85em;
   font-weight: 600;
 }
@@ -769,7 +769,7 @@ async function submitRsvp() {
 /* bootstrap's validation red is 4.46:1 on the light card; the theme's danger token passes in both themes */
 
 .rsvp-form .invalid-feedback {
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
 }
 
 .choice-group {
@@ -786,10 +786,10 @@ async function submitRsvp() {
   min-height: 44px;
   margin: 0;
   padding: 0 1.1rem 0 .9rem;
-  border: 1px solid var(--bookedz-control-border);
+  border: 1px solid var(--dino-control-border);
   border-radius: 12px;
-  background: var(--bookedz-surface);
-  transition: border-color var(--bookedz-motion-fast) ease, background-color var(--bookedz-motion-fast) ease;
+  background: var(--dino-surface);
+  transition: border-color var(--dino-motion-fast) ease, background-color var(--dino-motion-fast) ease;
 }
 
 .choice-option .form-check-input {
@@ -813,16 +813,16 @@ async function submitRsvp() {
 /* the whole pill selects the option */
 
 .choice-option:hover {
-  background: var(--bookedz-glass-hover);
+  background: var(--dino-glass-hover);
 }
 
 .choice-option:has(.form-check-input:checked) {
-  border-color: var(--bookedz-primary-dark);
-  background: color-mix(in srgb, var(--bookedz-primary-dark) 12%, var(--bookedz-surface));
+  border-color: var(--dino-primary-dark);
+  background: color-mix(in srgb, var(--dino-primary-dark) 12%, var(--dino-surface));
 }
 
 .choice-option:has(.form-check-input[aria-invalid="true"]) {
-  border-color: var(--bookedz-danger);
+  border-color: var(--dino-danger);
 }
 
 .rsvp-back {
@@ -830,11 +830,11 @@ async function submitRsvp() {
   align-items: center;
   min-height: 44px;
   width: fit-content;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-weight: 650;
-  text-decoration-color: var(--bookedz-border);
+  text-decoration-color: var(--dino-border);
   text-underline-offset: 4px;
-  transition: transform var(--bookedz-motion-fast) ease;
+  transition: transform var(--dino-motion-fast) ease;
 }
 
 .rsvp-back:hover {
@@ -842,7 +842,7 @@ async function submitRsvp() {
 }
 
 .participant-rsvp {
-  --rsvp-panel: var(--bookedz-surface);
+  --rsvp-panel: var(--dino-surface);
   align-items: start;
 }
 
@@ -852,10 +852,10 @@ async function submitRsvp() {
 
 .participant-rsvp :deep(.card) {
   overflow: hidden;
-  border: 1px solid var(--bookedz-border);
-  border-radius: var(--bookedz-radius-card, 24px);
+  border: 1px solid var(--dino-border);
+  border-radius: var(--dino-radius-card, 24px);
   background: var(--rsvp-panel);
-  box-shadow: var(--bookedz-card-shadow);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .participant-rsvp :deep(.card-body) {
@@ -873,14 +873,14 @@ async function submitRsvp() {
   gap: 1rem;
   padding-bottom: 1.15rem;
   margin-bottom: 1.25rem;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 /* decorative only: a plain icon, not a filled tile that looks pressable */
 
 .form-spark {
   flex: 0 0 auto;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .rsvp-state {
@@ -889,12 +889,12 @@ async function submitRsvp() {
 }
 
 .rsvp-state--signin {
-  background: linear-gradient(145deg, var(--bookedz-surface), var(--bookedz-mint));
+  background: linear-gradient(145deg, var(--dino-surface), var(--dino-mint));
 }
 
 .rsvp-state--success {
-  border-color: var(--bookedz-success) !important;
-  background: linear-gradient(145deg, var(--bookedz-surface), var(--bookedz-mint));
+  border-color: var(--dino-success) !important;
+  background: linear-gradient(145deg, var(--dino-surface), var(--dino-mint));
   animation: confirmation-arrive 520ms cubic-bezier(.2,.8,.2,1) both;
 }
 
@@ -905,15 +905,15 @@ async function submitRsvp() {
   height: 46px;
   margin-bottom: 1rem;
   border-radius: 15px;
-  color: var(--bookedz-ink);
-  background: var(--bookedz-yellow);
+  color: var(--dino-ink);
+  background: var(--dino-yellow);
   font-size: 1.4rem;
   font-weight: 800;
 }
 
 .rsvp-state--success .state-mark {
-  color: var(--bookedz-on-action);
-  background: var(--bookedz-success);
+  color: var(--dino-on-action);
+  background: var(--dino-success);
 }
 
 .rsvp-next {
@@ -923,8 +923,8 @@ async function submitRsvp() {
   margin: .4rem 0 1rem;
   padding: .9rem 1rem;
   border-radius: 14px;
-  color: var(--bookedz-ink);
-  background: color-mix(in srgb, var(--bookedz-mint) 32%, var(--bookedz-surface));
+  color: var(--dino-ink);
+  background: color-mix(in srgb, var(--dino-mint) 32%, var(--dino-surface));
 }
 
 .rsvp-next p {
@@ -939,8 +939,8 @@ async function submitRsvp() {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  color: var(--bookedz-surface);
-  background: var(--bookedz-forest);
+  color: var(--dino-surface);
+  background: var(--dino-forest);
   font-size: .75rem;
   font-weight: 800;
 }
@@ -951,17 +951,17 @@ async function submitRsvp() {
 
 .participant-rsvp :deep(.form-control) {
   min-height: 45px;
-  border-color: var(--bookedz-border);
+  border-color: var(--dino-border);
   border-radius: 11px;
 }
 
 .participant-rsvp :deep(.form-control:focus) {
-  border-color: var(--bookedz-primary-dark);
-  box-shadow: var(--bookedz-focus-glow);
+  border-color: var(--dino-primary-dark);
+  box-shadow: var(--dino-focus-glow);
 }
 
 .participant-rsvp :deep(:focus-visible) {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 3px;
 }
 

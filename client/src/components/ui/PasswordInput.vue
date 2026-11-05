@@ -85,12 +85,12 @@ const shown = ref(false);
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   translate: 0 -50%;
 }
 
 .password-eye:hover {
-  color: var(--bookedz-ink);
-  background: var(--bookedz-hover);
+  color: var(--dino-ink);
+  background: var(--dino-hover);
 }
 </style>

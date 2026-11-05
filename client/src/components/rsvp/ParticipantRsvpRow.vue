@@ -83,9 +83,9 @@ function datePart(event, part) {
   align-items: center;
   gap: 18px;
   padding: 20px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 18px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
   margin-bottom: 12px;
 }
 
@@ -96,7 +96,7 @@ function datePart(event, part) {
   align-items: center;
   justify-content: center;
   border-radius: 13px;
-  background: var(--bookedz-hover);
+  background: var(--dino-hover);
   padding: 10px 5px;
 }
 
@@ -118,14 +118,14 @@ function datePart(event, part) {
 }
 
 .row-copy h3 a {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   text-decoration: none;
   overflow-wrap: anywhere;
 }
 
 .row-copy p {
   font-size: var(--text-small);
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   margin: 0 0 8px;
   overflow-wrap: anywhere;
 }

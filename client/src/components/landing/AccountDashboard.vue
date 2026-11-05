@@ -606,10 +606,10 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   flex-wrap: wrap;
   gap: 16px;
   padding: clamp(1rem, 3vw, 1.2rem) clamp(1.1rem, 3vw, 1.8rem);
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: var(--db-r);
-  background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 70%);
-  box-shadow: 0 6px 0 var(--bookedz-mango);
+  background: linear-gradient(120deg, var(--dino-orange-soft), var(--dino-mango-soft) 70%);
+  box-shadow: 0 6px 0 var(--dino-mango);
 }
 
 .dash-hero::after {
@@ -620,7 +620,7 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   translate: -50% -50%;
   font-size: clamp(3rem, 7vw, 4.5rem);
   line-height: 1;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   opacity: .16;
   pointer-events: none;
 }
@@ -648,12 +648,12 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   flex: none;
   width: 56px;
   height: 56px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 50%;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-primary-dark);
-  font: 700 1.2rem var(--bookedz-heading);
-  animation: pop-once var(--bookedz-motion-slip) var(--bookedz-ease-stamp);
+  background: var(--dino-surface);
+  color: var(--dino-primary-dark);
+  font: 700 1.2rem var(--dino-heading);
+  animation: pop-once var(--dino-motion-slip) var(--dino-ease-stamp);
 }
 
 .dino-face {
@@ -678,7 +678,7 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 }
 
 .celebrate .dash-avatar {
-  animation: avatar-hop 900ms var(--bookedz-ease-stamp) both;
+  animation: avatar-hop 900ms var(--dino-ease-stamp) both;
 }
 
 .dash-burst {
@@ -693,14 +693,14 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   top: -.5em;
   width: 1em;
   text-align: center;
-  color: var(--bookedz-primary);
+  color: var(--dino-primary);
   font-size: .95rem;
   opacity: 0;
-  animation: avatar-burst 900ms var(--bookedz-ease) 180ms both;
+  animation: avatar-burst 900ms var(--dino-ease) 180ms both;
 }
 
 .dash-burst span:nth-child(even) {
-  color: var(--bookedz-yellow);
+  color: var(--dino-yellow);
   font-size: .75rem;
 }
 
@@ -732,7 +732,7 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 
 .dash-greeting {
   margin: 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .9rem;
   font-weight: 500;
 }
@@ -747,9 +747,9 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 .dash-demo {
   margin: 0;
   padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--bookedz-yellow) 60%, var(--bookedz-border));
+  border: 1px solid color-mix(in srgb, var(--dino-yellow) 60%, var(--dino-border));
   border-radius: 14px;
-  background: color-mix(in srgb, var(--bookedz-yellow) 18%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-yellow) 18%, var(--dino-surface));
   font-size: .95rem;
 }
 
@@ -766,7 +766,7 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 
 .dash-hosting-tag {
   margin: 0;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-size: .7rem;
   font-weight: 800;
   letter-spacing: .06em;
@@ -780,7 +780,7 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 
 .dash-welcome-title {
   margin: 0;
-  font: 900 1.4rem var(--bookedz-heading);
+  font: 900 1.4rem var(--dino-heading);
 }
 
 .dash-section {
@@ -796,27 +796,27 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   gap: 10px;
   min-width: 0;
   font-size: .8rem;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .dash-dot {
   flex: none;
   width: 14px;
   height: 14px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: 50%;
-  background: var(--bookedz-fill);
+  background: var(--dino-fill);
 }
 
 .dash-section-title {
   margin: 0;
-  font: 900 1.25rem var(--bookedz-heading);
-  color: var(--bookedz-ink);
+  font: 900 1.25rem var(--dino-heading);
+  color: var(--dino-ink);
   white-space: nowrap;
 }
 
 .dash-eyebrow {
-  color: var(--bookedz-success);
+  color: var(--dino-success);
   font-size: .7rem;
   font-weight: 800;
   letter-spacing: .05em;
@@ -828,14 +828,14 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   flex: 1;
   min-width: 12px;
   height: 2px;
-  background: var(--bookedz-border);
+  background: var(--dino-border);
 }
 
 .dash-more {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font: inherit;
   font-weight: 800;
   white-space: nowrap;
@@ -860,11 +860,11 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 }
 
 .dash-key .is-going, .dash-day-item.is-going {
-  --kind: var(--bookedz-success);
+  --kind: var(--dino-success);
 }
 
 .dash-key .is-hosting, .dash-day-item.is-hosting {
-  --kind: var(--bookedz-primary-dark);
+  --kind: var(--dino-primary-dark);
 }
 
 .dash-key i {
@@ -876,10 +876,10 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   align-content: start;
   gap: 8px;
   padding: 20px;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
   border-radius: var(--db-r);
-  background: var(--bookedz-surface);
-  box-shadow: 0 6px 0 var(--bookedz-teal);
+  background: var(--dino-surface);
+  box-shadow: 0 6px 0 var(--dino-teal);
 }
 
 .dash-next {
@@ -892,7 +892,7 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 .dash-next-art {
   border-radius: 18px;
   overflow: hidden;
-  border: 2px solid var(--bookedz-ink);
+  border: 2px solid var(--dino-ink);
 }
 
 .dash-next-art :deep(svg) {
@@ -909,7 +909,7 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 
 .dash-next-title {
   margin: 0;
-  font: 900 clamp(1.4rem, 2.6vw, 1.9rem) var(--bookedz-heading);
+  font: 900 clamp(1.4rem, 2.6vw, 1.9rem) var(--dino-heading);
   overflow-wrap: anywhere;
 }
 
@@ -921,12 +921,12 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 }
 
 .dash-when {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
   font-weight: 700;
 }
 
 .dash-where {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 .dash-when svg, .dash-where svg {
@@ -947,16 +947,16 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   gap: 10px;
   min-height: 44px;
   padding: 8px 12px;
-  border: 2px dashed var(--bookedz-control-border);
+  border: 2px dashed var(--dino-control-border);
   border-radius: 14px;
-  background: var(--bookedz-mango-soft);
-  color: var(--bookedz-ink);
+  background: var(--dino-mango-soft);
+  color: var(--dino-ink);
   text-decoration: none;
 }
 
 .dash-slide-group:hover {
-  color: var(--bookedz-ink);
-  background: var(--bookedz-hover);
+  color: var(--dino-ink);
+  background: var(--dino-hover);
 }
 
 .dash-actions {
@@ -985,14 +985,14 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 }
 
 .btn-primary {
-  border-color: var(--bookedz-ink);
+  border-color: var(--dino-ink);
 }
 
 .dash-todo {
   gap: 0;
   padding: 6px 18px;
-  border-color: var(--bookedz-border);
-  box-shadow: 0 4px 0 var(--bookedz-border);
+  border-color: var(--dino-border);
+  box-shadow: 0 4px 0 var(--dino-border);
 }
 
 .dash-todo > p {
@@ -1005,7 +1005,7 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   justify-content: space-between;
   gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid var(--bookedz-border);
+  border-bottom: 1px solid var(--dino-border);
 }
 
 .dash-todo-row:last-child {
@@ -1023,13 +1023,13 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 }
 
 .dash-todo-copy > span {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: var(--text-small);
   overflow-wrap: anywhere;
 }
 
 .dash-todo-copy > .is-hot {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .dash-todo-row .btn {
@@ -1050,13 +1050,13 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   padding: 2px 6px;
   border: 0;
   background: none;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .8rem;
   font-weight: 700;
 }
 
 .dash-decline:hover:not(:disabled) {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   text-decoration: underline;
 }
 
@@ -1069,13 +1069,13 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 .dash-day {
   min-height: 120px;
   padding: 10px 12px;
-  border: 2px solid var(--bookedz-border);
+  border: 2px solid var(--dino-border);
   border-radius: 16px;
 }
 
 .dash-day.is-today {
-  border-color: var(--bookedz-fill);
-  background: var(--bookedz-surface);
+  border-color: var(--dino-fill);
+  background: var(--dino-surface);
 }
 
 .dash-day-head {
@@ -1086,7 +1086,7 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 }
 
 .dash-day-head span {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .68rem;
   font-weight: 800;
   letter-spacing: .06em;
@@ -1098,12 +1098,12 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 }
 
 .is-today .dash-day-head span, .is-today .dash-day-head strong {
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .dash-free {
   margin: 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .8rem;
 }
 
@@ -1117,7 +1117,7 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   gap: 1px;
   padding-left: 8px;
   border-left: 3px solid var(--kind);
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   font-size: .78rem;
   line-height: 1.25;
   text-decoration: none;
@@ -1132,8 +1132,8 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 }
 
 .dash-day-item:hover {
-  color: var(--bookedz-ink);
-  background: var(--bookedz-hover);
+  color: var(--dino-ink);
+  background: var(--dino-hover);
 }
 
 .dash-picks {
@@ -1147,17 +1147,17 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  border: 2px solid var(--bookedz-border);
+  border: 2px solid var(--dino-border);
   border-radius: 16px;
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
   text-decoration: none;
-  transition: background-color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: background-color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .dash-pick:hover {
-  background: var(--bookedz-hover);
-  color: var(--bookedz-ink);
+  background: var(--dino-hover);
+  color: var(--dino-ink);
 }
 
 .dash-tile {
@@ -1184,25 +1184,25 @@ const hasTop = computed(() => Boolean(nextEvent.value) || attention.value.length
 }
 
 :root[data-theme="dark"] .dash-hero {
-  border-color: var(--bookedz-fill);
-  box-shadow: 0 6px 0 color-mix(in srgb, var(--bookedz-mango) 60%, transparent);
+  border-color: var(--dino-fill);
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--dino-mango) 60%, transparent);
 }
 
 :root[data-theme="dark"] .dash-hero::after {
-  color: var(--bookedz-fill);
+  color: var(--dino-fill);
 }
 
 :root[data-theme="dark"] .dash-card:not(.dash-todo) {
-  border-color: var(--bookedz-border);
-  box-shadow: 0 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent);
+  border-color: var(--dino-border);
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--dino-teal) 60%, transparent);
 }
 
 :root[data-theme="dark"] .btn-primary {
-  border-color: var(--bookedz-fill);
+  border-color: var(--dino-fill);
 }
 
 :root[data-theme="dark"] .dash-hero .dash-greeting {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 @media (hover: hover) {

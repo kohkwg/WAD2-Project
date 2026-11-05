@@ -21,7 +21,7 @@ export function useUserNotifications() {
   let channel;
   let busy = false;
   let rerun = false;
-  const storageKey = () => `bookedz-notification-state-v1:${api.USING_SUPABASE ? 'live' : 'demo'}:${userId}`;
+  const storageKey = () => `dino-notification-state-v1:${api.USING_SUPABASE ? 'live' : 'demo'}:${userId}`;
   function save() {
     try {
       // keep only ids and comparison values, not messages, names or announcement text
@@ -75,7 +75,7 @@ export function useUserNotifications() {
     wakeTimer = setTimeout(refresh, 250);
   }
   function onStorage(event) {
-    if (event.key === 'bookedz-feature2-demo') wake();
+    if (event.key === 'dino-feature2-demo') wake();
   }
   async function refresh() {
     if (!active || document.hidden) return;

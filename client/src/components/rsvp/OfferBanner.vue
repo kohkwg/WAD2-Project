@@ -51,23 +51,23 @@ const isExpired = computed(() => !(Date.parse(props.rsvp.offerExpiresAt) > props
 .offer-banner {
   margin-bottom: 1rem;
   padding: 1.3rem 1.5rem;
-  border: 1px solid color-mix(in srgb, var(--bookedz-primary-dark) 30%, var(--bookedz-border));
+  border: 1px solid color-mix(in srgb, var(--dino-primary-dark) 30%, var(--dino-border));
   border-radius: 18px;
-  color: var(--bookedz-ink);
-  background: var(--bookedz-mango);
+  color: var(--dino-ink);
+  background: var(--dino-mango);
 }
 
 .offer-eyebrow {
   font-size: var(--text-caption);
   font-weight: 700;
   margin: 0 0 8px;
-  color: var(--bookedz-primary-dark);
+  color: var(--dino-primary-dark);
 }
 
 .offer-expired {
-  border-color: var(--bookedz-border, #e9ded3);
-  color: var(--bookedz-muted);
-  background: var(--bookedz-glass-solid);
+  border-color: var(--dino-border, #e9ded3);
+  color: var(--dino-muted);
+  background: var(--dino-glass-solid);
 }
 
 .offer-banner button {
@@ -83,7 +83,7 @@ const isExpired = computed(() => !(Date.parse(props.rsvp.offerExpiresAt) > props
 }
 
 :deep(:focus-visible) {
-  outline: 3px solid var(--bookedz-primary-dark);
+  outline: 3px solid var(--dino-primary-dark);
   outline-offset: 3px;
 }
 </style>

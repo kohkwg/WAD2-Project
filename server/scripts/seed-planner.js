@@ -3,8 +3,7 @@
 //                     pnpm seed:planner --reset   remove everything it made
 //
 // it never creates users and needs no login: it uses the secret key, so it only has to
-// know which two existing accounts own the events. by default it takes the project's
-// development test accounts from client/e2e-live/accounts.mjs:
+// know which two existing accounts own the events. give them with the flags or variables below:
 //   organiser account    owns "your" past events (programme and tasks), so sign in as
 //                        this one to see the planner use your own history
 //   participant account  owns the other organiser's events (the planner can only see
@@ -190,17 +189,11 @@ async function reset(owners) {
 // test accounts listed in the repo. returns emails (never printed) and where each came from.
 
 async function chooseAccounts() {
-  let defaults = {};
-  try {
-    ({
-      ACCOUNTS: defaults
-    } = await import("../../client/e2e-live/accounts.mjs"));
-  } catch {
-    // not in this checkout: the flags or variables must be given
-  }
+  // the accounts come from the flags or variables below
+  const defaults = {};
   const own = flag("own-email") || env.SEED_PLANNER_OWN_EMAIL || defaults.organiser;
   const community = flag("community-email") || env.SEED_PLANNER_COMMUNITY_EMAIL || defaults.participant;
-  const source = (explicit, fallback) => explicit ? "your override" : fallback ? "client/e2e-live/accounts.mjs" : "missing";
+  const source = (explicit, fallback) => explicit ? "your override" : fallback ? "the accounts file" : "missing";
   console.log(`Accounts: organiser events -> ${source(flag("own-email") || env.SEED_PLANNER_OWN_EMAIL, defaults.organiser)}, other organiser's events -> ${source(flag("community-email") || env.SEED_PLANNER_COMMUNITY_EMAIL, defaults.participant)}`);
   return {
     own,

@@ -177,14 +177,14 @@ async function join() {
   align-content: start;
   gap: 12px;
   padding: 18px;
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 20px;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .group-card.is-joined {
-  border-color: color-mix(in srgb, var(--bookedz-primary) 45%, var(--bookedz-border));
+  border-color: color-mix(in srgb, var(--dino-primary) 45%, var(--dino-border));
 }
 
 .group-head {
@@ -205,8 +205,8 @@ async function join() {
   place-items: center;
   flex: none;
   border-radius: 50%;
-  background: var(--bookedz-orange-soft);
-  color: var(--bookedz-primary-dark);
+  background: var(--dino-orange-soft);
+  color: var(--dino-primary-dark);
   font-weight: 700;
 }
 
@@ -244,27 +244,27 @@ async function join() {
   width: 28px;
   height: 28px;
   font-size: .7rem;
-  border: 2px solid var(--bookedz-surface);
+  border: 2px solid var(--dino-surface);
 }
 
 .group-badge {
   flex: none;
   padding: 3px 10px;
   border-radius: 99px;
-  background: var(--bookedz-hover);
-  color: var(--bookedz-muted);
+  background: var(--dino-hover);
+  color: var(--dino-muted);
   font-size: var(--text-caption);
   font-weight: 700;
 }
 
 .group-badge--host {
-  background: var(--bookedz-mango-soft);
-  color: var(--bookedz-ink);
+  background: var(--dino-mango-soft);
+  color: var(--dino-ink);
 }
 
 .group-badge--in {
-  background: var(--bookedz-teal-soft);
-  color: var(--bookedz-teal-ink);
+  background: var(--dino-teal-soft);
+  color: var(--dino-teal-ink);
 }
 
 /* chips keep their own height with the text centred, even if the row is stretched */
@@ -286,22 +286,22 @@ async function join() {
   padding: 2px 9px;
   border: 1.5px solid transparent;
   border-radius: 99px;
-  background: color-mix(in srgb, var(--bookedz-fill) 18%, var(--bookedz-surface));
-  color: var(--bookedz-ink);
+  background: color-mix(in srgb, var(--dino-fill) 18%, var(--dino-surface));
+  color: var(--dino-ink);
   font-size: .74rem;
   font-weight: 700;
 }
 
 .group-rule.is-friend {
-  border-color: var(--bookedz-teal);
-  background: var(--bookedz-teal-soft);
-  color: var(--bookedz-teal-ink);
+  border-color: var(--dino-teal);
+  background: var(--dino-teal-soft);
+  color: var(--dino-teal-ink);
 }
 
 .group-rule.is-alert {
-  border-color: var(--bookedz-fill);
-  background: var(--bookedz-orange-soft);
-  color: var(--bookedz-primary-dark);
+  border-color: var(--dino-fill);
+  background: var(--dino-orange-soft);
+  color: var(--dino-primary-dark);
 }
 
 .group-card.is-compact {
@@ -324,13 +324,13 @@ async function join() {
   gap: 12px;
   padding: 10px;
   border-radius: 14px;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   text-decoration: none;
-  transition: transform var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: transform var(--dino-motion-fast) var(--dino-ease);
 }
 
 .group-event:hover {
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
 }
 
 .group-event:hover .group-event-go {
@@ -342,7 +342,7 @@ async function join() {
   height: 56px;
   overflow: hidden;
   border-radius: 10px;
-  background: var(--bookedz-surface);
+  background: var(--dino-surface);
 }
 
 .group-event-art :deep(svg) {
@@ -362,8 +362,8 @@ async function join() {
 
 .group-event-go {
   font-size: 1.5rem;
-  color: var(--bookedz-primary-dark);
-  transition: transform var(--bookedz-motion-fast) var(--bookedz-ease);
+  color: var(--dino-primary-dark);
+  transition: transform var(--dino-motion-fast) var(--dino-ease);
 }
 
 .group-foot {
@@ -406,7 +406,7 @@ async function join() {
   gap: 10px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--bookedz-teal-soft);
+  background: var(--dino-teal-soft);
 }
 
 .group-rsvp-prompt .btn {
@@ -415,12 +415,12 @@ async function join() {
 
 .group-rsvp-done {
   margin: 0;
-  color: var(--bookedz-teal-ink);
+  color: var(--dino-teal-ink);
 }
 
 .group-error {
   margin: 0;
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
   font-size: .9rem;
 }
 
@@ -437,7 +437,7 @@ async function join() {
     align-items: stretch;
     gap: 8px;
     padding-top: 10px;
-    border-top: 1.5px dashed var(--bookedz-control-border);
+    border-top: 1.5px dashed var(--dino-control-border);
   }
   .group-card.is-compact .group-actions {
     display: grid;

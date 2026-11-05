@@ -14,7 +14,7 @@ begin
   if owner_id is null or participant_id is null then raise exception 'Development test accounts are required'; end if;
   insert into auth.users(id, instance_id, aud, role, email, raw_user_meta_data, raw_app_meta_data, created_at, updated_at)
   values(extra_id,'00000000-0000-0000-0000-000000000000','authenticated','authenticated',
-    'bookedz-test-'||extra_id||'@example.invalid','{"full_name":"[TEST] rolled-back waitlist participant"}','{}',now(),now());
+    'dino-test-'||extra_id||'@example.invalid','{"full_name":"[TEST] rolled-back waitlist participant"}','{}',now(),now());
   perform set_config('request.jwt.claim.sub',owner_id::text,true);
   perform set_config('request.jwt.claims',jsonb_build_object('sub',owner_id,'role','authenticated')::text,true);
   event_id := public.create_event_with_details(gen_random_uuid(),jsonb_build_object(

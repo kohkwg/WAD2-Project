@@ -108,9 +108,9 @@ async function remove() {
 .delete-account {
   margin-top: 1.5rem;
   padding: clamp(1.1rem, 4vw, 2rem);
-  border: 1px solid var(--bookedz-border);
-  border-radius: var(--bookedz-radius-card);
-  background: var(--bookedz-surface);
+  border: 1px solid var(--dino-border);
+  border-radius: var(--dino-radius-card);
+  background: var(--dino-surface);
 }
 
 .delete-head {
@@ -122,26 +122,26 @@ async function remove() {
 
 .delete-title {
   margin: 0;
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: 1.2rem;
   font-weight: 650;
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
 }
 
 .delete-copy {
   margin: .25rem 0 0;
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .9rem;
 }
 
 .delete-dialog {
   width: min(92vw, 30rem);
   padding: 1.75rem;
-  border: 1px solid var(--bookedz-border);
-  border-radius: var(--bookedz-radius-card);
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
-  box-shadow: var(--bookedz-shadow);
+  border: 1px solid var(--dino-border);
+  border-radius: var(--dino-radius-card);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
+  box-shadow: var(--dino-shadow);
 }
 
 .delete-dialog::backdrop {
@@ -159,10 +159,10 @@ async function remove() {
 
 .delete-dialog-title {
   margin: 0 0 .25rem;
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: 1.35rem;
   font-weight: 650;
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
 }
 
 .delete-list {
@@ -171,13 +171,13 @@ async function remove() {
 }
 
 .delete-note {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
   font-size: .9rem;
   margin-bottom: .5rem !important;
 }
 
 .field-error {
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
   font-size: .875rem;
 }
 

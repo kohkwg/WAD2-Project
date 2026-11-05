@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const NOW = '2026-10-16T04:00:00.000Z';
 
-const STORE = 'bookedz-feature2-demo';
+const STORE = 'dino-feature2-demo';
 
 const EVENT_ID = 'e-weather-demo';
 test.beforeEach(async ({

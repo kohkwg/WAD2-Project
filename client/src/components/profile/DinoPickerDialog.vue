@@ -97,11 +97,11 @@ defineExpose({ open, close });
   max-height: 96vh;
   padding: 1.25rem;
   overflow: visible;
-  border: 1px solid var(--bookedz-border);
-  border-radius: var(--bookedz-radius-card);
-  background: var(--bookedz-surface);
-  color: var(--bookedz-ink);
-  box-shadow: var(--bookedz-shadow);
+  border: 1px solid var(--dino-border);
+  border-radius: var(--dino-radius-card);
+  background: var(--dino-surface);
+  color: var(--dino-ink);
+  box-shadow: var(--dino-shadow);
 }
 
 .dino-dialog::backdrop {
@@ -110,7 +110,7 @@ defineExpose({ open, close });
 
 .dino-dialog-title {
   margin: 0 0 .85rem;
-  font-family: var(--bookedz-heading);
+  font-family: var(--dino-heading);
   font-size: 1.3rem;
   font-weight: 650;
 }
@@ -132,17 +132,17 @@ defineExpose({ open, close });
   padding: .4rem;
   border: 2px solid transparent;
   border-radius: 14px;
-  background: var(--bookedz-orange-soft, var(--bookedz-glass-active));
+  background: var(--dino-orange-soft, var(--dino-glass-active));
   cursor: pointer;
-  transition: transform var(--bookedz-motion-fast) var(--bookedz-ease), border-color var(--bookedz-motion-fast) var(--bookedz-ease);
+  transition: transform var(--dino-motion-fast) var(--dino-ease), border-color var(--dino-motion-fast) var(--dino-ease);
 }
 
 .dino-tile:nth-child(3n+2) {
-  background: color-mix(in srgb, var(--bookedz-mint) 35%, var(--bookedz-surface));
+  background: color-mix(in srgb, var(--dino-mint) 35%, var(--dino-surface));
 }
 
 .dino-tile:nth-child(3n) {
-  background: var(--bookedz-teal-soft, #e7f3ee);
+  background: var(--dino-teal-soft, #e7f3ee);
 }
 
 .dino-tile img {
@@ -160,7 +160,7 @@ defineExpose({ open, close });
 }
 
 .dino-tile:has(input:focus-visible) {
-  outline: 3px solid var(--bookedz-focus);
+  outline: 3px solid var(--dino-focus);
   outline-offset: 2px;
 }
 
@@ -185,7 +185,7 @@ defineExpose({ open, close });
 
 .dino-error {
   margin: .75rem 0 0;
-  color: var(--bookedz-danger);
+  color: var(--dino-danger);
   font-size: .875rem;
 }
 

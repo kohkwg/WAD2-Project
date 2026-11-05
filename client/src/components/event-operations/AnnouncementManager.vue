@@ -146,10 +146,10 @@ function date(value) {
 .announcement-editor {
   max-width: 56rem;
   padding: clamp(1rem, 2vw, 1.4rem);
-  border: 1px solid var(--bookedz-border);
+  border: 1px solid var(--dino-border);
   border-radius: 1rem;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
 }
 
 .announcement-editor .btn,
@@ -160,32 +160,32 @@ function date(value) {
 .announcement-entry {
   padding: 1.1rem 1.15rem !important;
   margin-bottom: .75rem;
-  border: 1px solid var(--bookedz-border) !important;
+  border: 1px solid var(--dino-border) !important;
   border-radius: .95rem;
-  background: var(--bookedz-surface);
-  box-shadow: var(--bookedz-card-shadow);
+  background: var(--dino-surface);
+  box-shadow: var(--dino-card-shadow);
   transition: border-color .18s ease, transform .18s ease;
 }
 
 .announcement-entry:first-of-type {
-  border-top: 1px solid var(--bookedz-border);
+  border-top: 1px solid var(--dino-border);
 }
 
 .announcement-entry:hover {
-  border-color: var(--bookedz-control-border) !important;
+  border-color: var(--dino-control-border) !important;
   transform: translateY(-1px);
 }
 
 .post-body {
   margin-bottom: .65rem;
-  color: var(--bookedz-ink);
+  color: var(--dino-ink);
   line-height: 1.65;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .announcement-entry time {
-  color: var(--bookedz-muted);
+  color: var(--dino-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {

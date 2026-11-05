@@ -161,12 +161,12 @@ onMounted(async () => {
   padding: 1.15rem 1.25rem;
   margin-bottom: 1rem;
   border-radius: 22px;
-  background: var(--bookedz-cream,#fff8f1);
+  background: var(--dino-cream,#fff8f1);
 }
 
 .checkin-card {
   padding: 1.25rem;
-  border: 1px solid var(--bookedz-border,#e9ded3);
+  border: 1px solid var(--dino-border,#e9ded3);
   border-radius: 22px;
   background: #ffffff;
 }
@@ -186,8 +186,8 @@ onMounted(async () => {
 }
 
 .self-checkin-page .btn-primary {
-  --bs-btn-bg: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-border-color: var(--bookedz-coral-dark,#9a3412);
+  --bs-btn-bg: var(--dino-coral-dark,#9a3412);
+  --bs-btn-border-color: var(--dino-coral-dark,#9a3412);
   --bs-btn-color: #fff;
   --bs-btn-hover-bg: #9a3412;
   --bs-btn-hover-border-color: #9a3412;
@@ -195,9 +195,9 @@ onMounted(async () => {
 }
 
 .self-checkin-page .btn-outline-primary {
-  --bs-btn-color: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-border-color: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-hover-bg: var(--bookedz-coral-dark,#9a3412);
-  --bs-btn-hover-border-color: var(--bookedz-coral-dark,#9a3412);
+  --bs-btn-color: var(--dino-coral-dark,#9a3412);
+  --bs-btn-border-color: var(--dino-coral-dark,#9a3412);
+  --bs-btn-hover-bg: var(--dino-coral-dark,#9a3412);
+  --bs-btn-hover-border-color: var(--dino-coral-dark,#9a3412);
 }
 </style>
