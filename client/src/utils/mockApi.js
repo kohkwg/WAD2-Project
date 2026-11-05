@@ -287,6 +287,20 @@ function canSeeGroup(db, group, token) {
   return group.group.visibility !== 'private' || isGroupMember(db, group) || Boolean(myGroupRsvp(db, group))
     || Boolean(myInvite(db, group)) || areFriends(db, group.organiserId, CURRENT_USER_ID) || Boolean(token && token === group.group.inviteToken)
 }
+// Getting into a group RSVPs you to its event too, following the event's own rules
+// (confirmed, waitlisted or pending approval). Nothing happens if you already have an RSVP,
+// or if the event is open-join and full. Returns the event RSVP status, or null.
+function ensureEventRsvp(db, group, userId) {
+  const target = db.events.find((e) => e.id === group.group?.eventId)
+  if (!target || target.status !== 'published') return null
+  const existing = db.rsvps.find((r) => r.eventId === target.id && r.userId === userId && ACTIVE_STATUSES.includes(r.status))
+  if (existing) return existing.status
+  const status = joinOutcome(target, spotsTaken(db, target.id))
+  if (status === 'full') return null
+  db.rsvps.push({ id: newId('r'), eventId: target.id, userId, status, answers: {}, viaGroup: group.id, createdAt: new Date().toISOString(), offerExpiresAt: null })
+  return status
+}
+const hasEventRsvp = (db, eventId, userId) => db.rsvps.some((r) => r.eventId === eventId && asPerson(r.userId) === asPerson(userId) && ACTIVE_STATUSES.includes(r.status))
 
 function groupView(db, group) {
   const counted = withCounts(db, group)
@@ -398,6 +412,7 @@ export async function createGroup({ eventId, note = '', capacity = 4, joinMode =
   const errors = groupErrors({ eventId, note, capacity, visibility }, official)
   if (errors.length) throw new Error(errors[0].message)
   const target = official.find((e) => e.id === eventId)
+  if (!hasEventRsvp(db, eventId, CURRENT_USER_ID)) throw new Error('RSVP to this event first, then start a group for it.')
   const group = { ...groupEventData(target, { note, capacity, joinMode, visibility }), id: newId('g'), organiserId: CURRENT_ORGANISER_ID, status: 'published', createdAt: new Date().toISOString() }
   db.events.push(group)
   // Quick add: invite the friends ticked in the form
@@ -422,12 +437,11 @@ export async function joinGroup({ id, token, message = '' }) {
   if (invite) return respondGroupInvite(invite.id, true)
   const user = await getUser()
   const rsvp = await createRsvp({ eventId: id, name: user.name, email: user.email, answers: {} })
-  if (note) {
-    const fresh = loadDb()
-    const row = fresh.rsvps.find((r) => r.id === rsvp.id)
-    if (row) { row.message = note; saveDb(fresh) }
-    rsvp.message = note
-  }
+  const fresh = loadDb()
+  const row = fresh.rsvps.find((r) => r.id === rsvp.id)
+  if (row && note) { row.message = note; rsvp.message = note }
+  if (rsvp.status === 'confirmed') rsvp.eventRsvpStatus = ensureEventRsvp(fresh, findGroup(fresh, id), CURRENT_USER_ID)
+  saveDb(fresh)
   return rsvp
 }
 
@@ -461,6 +475,7 @@ export async function respondGroupInvite(inviteId, accept) {
     }
   }
   invite.status = 'accepted'
+  rsvp.eventRsvpStatus = ensureEventRsvp(db, group, CURRENT_USER_ID)
   saveDb(db)
   return rsvp
 }
@@ -887,6 +902,8 @@ export async function approveRsvp(rsvpId) {
 
   const event = findEvent(db, rsvp.eventId)
   rsvp.status = spotsTaken(db, event.id) < event.capacity ? 'confirmed' : 'waitlisted'
+  // Approved into a group: RSVP them to the event too
+  if (isGroup(event) && rsvp.status === 'confirmed') ensureEventRsvp(db, event, rsvp.userId)
   saveDb(db)
   return rsvp
 }

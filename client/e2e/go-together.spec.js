@@ -22,8 +22,13 @@ test('join a group, get the event RSVP prompt, plan lunch and chat', async ({ pa
   await expect(card).toContainText('Anyone can join')
   await card.getByRole('button', { name: 'Join group' }).click()
   await expect(card).toContainText('You’re in')
-  await expect(card.getByText(/RSVP to Intro to Vue Workshop so you have a spot/)).toBeVisible()
-  await expect(card.getByRole('link', { name: 'Request a spot' })).toHaveAttribute('href', '/events/e2/rsvp#rsvp')
+  // Joining RSVPd Alex to the event (it needs the organiser's approval, so it's pending)
+  await expect(card).toContainText('You’re waiting for the organiser to approve your RSVP')
+  await expect(page.getByText(/You joined the group and RSVP’d to Intro to Vue Workshop/)).toBeVisible()
+  // Now going to Intro to Vue, Alex can start a group for it: it's in Your events
+  await expect(page.getByRole('region', { name: /Your events/ })).toContainText('Intro to Vue Workshop')
+  // Event teams are not in Community
+  await expect(page.getByRole('heading', { name: 'Your event teams' })).toHaveCount(0)
 
   await card.getByRole('link', { name: /Open group/ }).click()
   await expect(page).toHaveURL(/\/groups\/grp2$/)
@@ -56,11 +61,21 @@ test('join a group, get the event RSVP prompt, plan lunch and chat', async ({ pa
   await expect(page.getByText('See you there')).toBeVisible()
 })
 
-test('start a private group from an event page and open it by invite link', async ({ page }) => {
+test('only people going can start a group; start a friends-only one and open it by invite link', async ({ page }) => {
+  // Not RSVPd to Pottery Basics: no Start a group on its page
   await page.goto('/events/e5/rsvp')
-  await page.getByRole('region', { name: 'Go together' }).getByRole('link', { name: 'Start a group' }).click()
+  const box = page.getByRole('region', { name: 'Go together' })
+  await expect(box).toContainText('Joining a group RSVPs you to the event too')
+  await expect(box.getByRole('link', { name: 'Start a group' })).toHaveCount(0)
+  // The dropdown only lists events Alex has RSVPd to
+  await page.goto('/community')
+  await expect(page.getByRole('region', { name: /Your events/ })).toContainText('Career Fair Prep Talk')
+  await page.getByRole('button', { name: 'Start a group' }).first().click()
   const dialog = page.getByRole('dialog', { name: 'Start a group' })
-  await expect(dialog.getByLabel('Event', { exact: true })).toHaveValue('e5')
+  const options = await dialog.getByLabel('Event you’re going to').locator('option:not([disabled])').allTextContents()
+  expect(options).toContain('Career Fair Prep Talk')
+  expect(options).not.toContain('Pottery Basics')
+  await dialog.getByLabel('Event you’re going to').selectOption({ label: 'Career Fair Prep Talk' })
   await dialog.getByLabel(/Note/).fill('Who wants to try the wheel?')
   await dialog.getByRole('radio', { name: /^Friends only/ }).check()
   // Quick add: tick a friend to invite
@@ -121,6 +136,9 @@ test('invites, join messages, host settings and deleting a group', async ({ page
   await expect(requests).toContainText('SCIS year 2')
   await requests.getByRole('button', { name: 'Accept' }).click()
   await expect(page.getByRole('list', { name: 'Requests to join' })).toHaveCount(0)
+  // Approving her into the group RSVPd Farah to the Career Fair talk too
+  const farahRsvp = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).rsvps.find((r) => r.eventId === 'e4' && r.userId === 'u6')?.status, STORE)
+  expect(['confirmed', 'waitlisted', 'pending']).toContain(farahRsvp)
   await page.locator('.group-bar').getByRole('button', { name: 'Settings' }).click()
   const settings = page.getByRole('region', { name: 'Group settings' })
   await settings.getByLabel('Spots', { exact: true }).fill('2')

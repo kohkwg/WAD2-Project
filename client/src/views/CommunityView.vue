@@ -1,9 +1,8 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { getEvents, getGroups, getGroupInvites, respondGroupInvite, getGroupNotices, dismissGroupNotice } from '../utils/api.js'
+import { getMyRsvps, getGroups, getGroupInvites, respondGroupInvite, getGroupNotices, dismissGroupNotice } from '../utils/api.js'
 import { subscribeSocialUpdates } from '../utils/profileSocial.js'
-import EventTeamPanel from '../components/event-operations/EventTeamPanel.vue'
 import FriendsPanel from '../components/community/FriendsPanel.vue'
 import '../assets/design-baseline.css'
 import EventGroupsCard from '../components/community/EventGroupsCard.vue'
@@ -21,7 +20,8 @@ import { formatEventTime } from '../utils/helpers.js'
 const route = useRoute()
 const router = useRouter()
 const groups = ref([])
-const events = ref([])
+const events = ref([]) // your upcoming RSVP'd events
+const ACTIVE = ['confirmed', 'pending', 'waitlisted', 'offered']
 const loading = ref(true)
 const error = ref('')
 const filter = ref('all')
@@ -42,12 +42,15 @@ async function load() {
   error.value = ''
   try {
     const [groupList, eventList, inviteList, noticeList] = await Promise.all([
-      getGroups(), getEvents(), getGroupInvites().catch(() => []), getGroupNotices().catch(() => []),
+      getGroups(), getMyRsvps().catch(() => []), getGroupInvites().catch(() => []), getGroupNotices().catch(() => []),
     ])
     groups.value = groupList
     invites.value = inviteList
     notices.value = noticeList
-    events.value = eventList.filter((e) => isOfficialEvent(e) && e.status === 'published' && new Date(e.startTime) > new Date())
+    // Upcoming events you've RSVP'd to: the "Your events" strip, and the only events you can start a group for
+    events.value = eventList
+      .filter((r) => ACTIVE.includes(r.status) && r.event && isOfficialEvent(r.event) && (!r.event.status || r.event.status === 'published') && new Date(r.event.startTime) > new Date())
+      .map((r) => ({ ...r.event, myRsvpStatus: r.status }))
   } catch (e) {
     error.value = e.message
   } finally {
@@ -77,7 +80,13 @@ onMounted(async () => {
 onBeforeUnmount(() => { clearInterval(refreshTimer); window.removeEventListener('focus', load); stopSocial() })
 
 function openComposer(eventId = '') {
-  composerFor.value = events.value.some((e) => e.id === eventId) ? eventId : ''
+  // Groups are started by people going to the event; from an event page without an RSVP, say so
+  if (eventId && !events.value.some((e) => e.id === eventId)) {
+    toast('RSVP to that event first, then you can start a group for it.', { tone: 'error' })
+    if (route.query.start) router.replace({ query: { ...route.query, start: undefined } })
+    return
+  }
+  composerFor.value = eventId
 }
 function closeComposer() {
   composerFor.value = null
@@ -142,6 +151,13 @@ const byEvent = computed(() => {
   }
   return [...map.values()].sort((a, b) => new Date(a.event?.startTime || a.groups[0].startTime) - new Date(b.event?.startTime || b.groups[0].startTime))
 })
+const rsvpLabel = { confirmed: 'Going', pending: 'Waiting for approval', waitlisted: 'On the waitlist', offered: 'Spot offered' }
+const groupCount = (eventId) => groups.value.filter((g) => (g.eventId || g.event?.id) === eventId).length
+function showEventGroups(eventId) {
+  filter.value = 'all'
+  query.value = ''
+  nextTick(() => document.getElementById(`event-row-${eventId}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+}
 </script>
 
 <template>
@@ -150,10 +166,10 @@ const byEvent = computed(() => {
       <div class="community-hero-copy">
         <p class="community-eyebrow">Community</p>
         <h1 class="page-title m-0">Go together</h1>
-        <p class="community-lede">Going to an event? Join a group heading there, or start one: public for everyone, or just for your friends.</p>
+        <p class="community-lede">Going to an event? Start a group for it, public or just for friends. Joining someone’s group RSVPs you to the event too.</p>
       </div>
       <div class="community-hero-actions">
-        <button type="button" class="btn btn-primary" @click="openComposer()">Start a group</button>
+        <button type="button" class="btn btn-primary" :disabled="loading" @click="openComposer()">Start a group</button>
       </div>
     </header>
 
@@ -183,6 +199,25 @@ const byEvent = computed(() => {
       </TransitionGroup>
     </section>
 
+    <!-- Your events: what you've RSVP'd to, with a way to start or find a group for each -->
+    <section v-if="events.length" class="community-mine" aria-labelledby="my-events-title">
+      <h2 id="my-events-title" class="community-section-title">Your events <span class="community-count">{{ events.length }}</span></h2>
+      <ul class="list-unstyled m-0 community-mine-list">
+        <li v-for="event in events" :key="event.id">
+          <article class="community-tile community-event-tile">
+            <span class="community-tile-when">{{ countdownLabel(event.startTime) }}</span>
+            <RouterLink :to="`/events/${event.id}/rsvp`" class="community-tile-title">{{ event.title }}</RouterLink>
+            <span class="community-tile-meta">{{ formatEventTime(event) }}</span>
+            <span class="community-tile-chip">{{ rsvpLabel[event.myRsvpStatus] }} · {{ groupCount(event.id) }} {{ groupCount(event.id) === 1 ? 'group' : 'groups' }}</span>
+            <span class="community-event-actions">
+              <button type="button" class="btn btn-primary btn-sm" @click="openComposer(event.id)">Start a group</button>
+              <button v-if="groupCount(event.id)" type="button" class="btn btn-outline-secondary btn-sm" @click="showEventGroups(event.id)">See groups</button>
+            </span>
+          </article>
+        </li>
+      </ul>
+    </section>
+
     <!-- Your groups: quick tiles for what you host or are in -->
     <section v-if="mine.length" class="community-mine" aria-labelledby="mine-title">
       <h2 id="mine-title" class="community-section-title">Your groups</h2>
@@ -200,7 +235,6 @@ const byEvent = computed(() => {
 
     <div class="community-layout">
     <div class="community-main">
-      <EventTeamPanel class="mb-4" :updates="socialUpdates" />
       <div class="community-tools">
         <div class="community-filters" role="group" aria-label="Show groups">
           <button v-for="f in FILTERS" :key="f.key" type="button" class="community-filter" :aria-pressed="filter === f.key" @click="filter = f.key">
@@ -218,13 +252,13 @@ const byEvent = computed(() => {
         <button type="button" class="btn btn-outline-secondary" @click="load">Try again</button>
       </div>
       <TransitionGroup v-else-if="visible.length" tag="div" name="list-fade" class="community-feed stagger-in">
-        <EventGroupsCard v-for="item in byEvent" :key="item.key" :event="item.event" :groups="item.groups" @changed="load" @start="openComposer" />
+        <EventGroupsCard v-for="item in byEvent" :id="`event-row-${item.key}`" :key="item.key" :event="item.event" :groups="item.groups" :can-start="events.some((e) => e.id === item.key)" @changed="load" @start="openComposer" />
       </TransitionGroup>
       <div v-else class="community-empty" role="status">
         <h2 class="section-title">{{ query || filter !== 'all' ? 'No groups match' : 'No groups yet' }}</h2>
         <p>{{ filter === 'hosting' ? 'You aren’t hosting any groups.' : filter === 'joined' ? 'You haven’t joined any groups yet.' : 'Be the first: pick an event and ask who wants to come.' }}</p>
         <div class="d-flex flex-wrap gap-2 justify-content-center">
-          <button type="button" class="btn btn-primary" @click="openComposer()">Start a group</button>
+          <button type="button" class="btn btn-primary" :disabled="loading" @click="openComposer()">Start a group</button>
           <button v-if="query || filter !== 'all'" type="button" class="btn btn-outline-secondary" @click="query = ''; filter = 'all'">Show all groups</button>
         </div>
       </div>
@@ -281,6 +315,11 @@ const byEvent = computed(() => {
 .community-tile-when { justify-self: start; padding: 1px 8px; border-radius: 99px; background: var(--bookedz-mango-soft); font-size: .72rem; font-weight: 800; }
 .community-tile-title { font-family: var(--bookedz-heading); overflow-wrap: anywhere; }
 .community-tile-meta { color: var(--bookedz-muted); font-size: .82rem; }
+.community-event-tile { box-shadow: 4px 4px 0 var(--bookedz-teal); }
+.community-event-tile .community-tile-title { color: var(--bookedz-ink); text-decoration: none; }
+.community-event-tile .community-tile-title:hover { text-decoration: underline; }
+.community-event-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.community-event-actions .btn { min-height: 36px; }
 .community-tile-chip { justify-self: start; margin-top: 2px; padding: 2px 9px; border: 1.5px solid var(--bookedz-control-border); border-radius: 99px; font-size: .74rem; font-weight: 700; }
 .community-tile.is-alert .community-tile-chip { border-color: var(--bookedz-fill); background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); }
 @media (prefers-reduced-motion: reduce) { .community-tile { transition: none; } .community-tile:hover { transform: none; } }

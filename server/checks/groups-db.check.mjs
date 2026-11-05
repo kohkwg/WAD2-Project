@@ -67,6 +67,12 @@ await asUser(DAN);
 const official = (await query(`insert into public.events(title,status,starts_at,ends_at,capacity) values ('[TEST] Jazz night','published',date_trunc('hour', now())+interval '2 days',date_trunc('hour', now())+interval '2 days 2 hours',50) returning id, starts_at, ends_at`))[0];
 await query("insert into public.event_interests(event_id, interest_id) select $1, id from public.interests where slug = 'music'", [official.id]);
 await admin();
+// Only people with an RSVP can start a group; Hana RSVPs (after checking that rule)
+await asUser(HOST);
+await rejects('select public.create_group($1,$2,$3,$4,$5)', [official.id, '', 4, 'open', 'public'], /RSVP to this event first/);
+await query('select public.register_for_event($1)', [official.id]);
+await admin();
+const eventRsvp = async (userId) => (await query('select status from public.registrations where event_id = $1 and user_id = $2', [official.id, userId]))[0]?.status;
 const create = (args) => query('select public.create_group($1,$2,$3,$4,$5) as id', args).then((r) => r[0].id);
 const view = async (id, token = null) => (await query('select public.group_view($1,$2) as v', [id, token]))[0].v;
 const list = async () => (await query('select public.group_list() as l'))[0].l;
@@ -207,6 +213,28 @@ await test('availability: 15-minute cells inside each three-hour side; leavers s
   expect(!p.availability[CARA] && p.members.length === 2, 'Cara left, so her times no longer count');
   await asUser(DAN);
   await rejects('select public.set_group_availability($1,$2,$3)', [pub, 'before', []], /Join the group/);
+});
+
+await test('getting into a group RSVPs you to its event (join, invite, approval)', async () => {
+  await admin();
+  // Bob joined the public open group earlier; Cara joined it through register_for_event
+  expect(await eventRsvp(BOB) === 'confirmed', 'open join RSVPd Bob to the event');
+  expect(await eventRsvp(CARA) === 'confirmed', 'Cara too');
+  // Dan organises the event, so the private group's approval didn't RSVP him to it
+  expect(await eventRsvp(DAN) === undefined, 'organisers are not RSVPd to their own event');
+  // Approval path: Cara cancels her event RSVP, asks to join an approval group, the host approves
+  await query("update public.registrations set status = 'cancelled' where event_id = $1 and user_id = $2", [official.id, CARA]);
+  await asUser(HOST);
+  const ap = await create([official.id, '', 4, 'approval', 'public']);
+  await asUser(CARA);
+  expect((await query('select status from public.join_group($1)', [ap]))[0].status === 'pending', 'request pending');
+  await admin();
+  expect(await eventRsvp(CARA) === 'cancelled', 'a pending request doesn’t RSVP yet');
+  await asUser(HOST);
+  await query("update public.registrations set status = 'confirmed' where event_id = $1 and user_id = $2", [ap, CARA]);
+  await admin();
+  expect(await eventRsvp(CARA) === 'confirmed', 'approval RSVPd Cara again');
+  await query('delete from public.events where id = $1', [ap]);
 });
 
 await test('friends only: the host’s friends see it, others need the link; quick add invites friends only', async () => {

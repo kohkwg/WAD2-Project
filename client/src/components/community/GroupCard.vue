@@ -40,7 +40,7 @@ async function join() {
   try {
     const rsvp = await joinGroup({ id: props.group.id })
     justJoined.value = true
-    toast(rsvp?.status === 'pending' ? 'Request sent to the host' : 'You joined the group')
+    toast(rsvp?.status === 'pending' ? 'Request sent to the host' : rsvp?.eventRsvpStatus && !props.group.myEventStatus ? `You joined the group and RSVP’d to ${event.value?.title || 'the event'}` : 'You joined the group')
     emit('changed')
   } catch (e) {
     error.value = e.message
