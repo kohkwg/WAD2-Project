@@ -1,189 +1,426 @@
 <script setup>
-import BackLink from '../components/ui/BackLink.vue'
-import '../assets/design-baseline.css'
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
-import * as api from '../utils/api.js'
-import { formatEventTime } from '../utils/helpers.js'
-import { hasPlace, venuePendingText } from '../utils/venueReveal.js'
-import EventToolNavigation from '../components/event-operations/EventToolNavigation.vue'
-import TaskBoard from '../components/event-operations/TaskBoard.vue'
-import AnnouncementManager from '../components/event-operations/AnnouncementManager.vue'
-import BudgetTracker from '../components/event-operations/BudgetTracker.vue'
-import WeatherTool from '../components/event-operations/WeatherTool.vue'
-import { TASK_STATUSES } from '../utils/feature4.js'
-import { defineAsyncComponent } from 'vue'
-// Tools from other features are loaded only when their tab opens (they subscribe/fetch on mount).
-const EventTeamPanel = defineAsyncComponent(() => import('../components/event-operations/EventTeamPanel.vue'))
-const EventEditor = defineAsyncComponent(() => import('./CreateEventView.vue'))
-const StaffStationView = defineAsyncComponent(() => import('./checkin/StaffStationView.vue'))
-const VenueQrView = defineAsyncComponent(() => import('./checkin/VenueQrView.vue'))
-const AttendanceDashboardView = defineAsyncComponent(() => import('./checkin/AttendanceDashboardView.vue'))
-const FloorPlanEditor = defineAsyncComponent(() => import('../editor.vue'))
-const GuestList = defineAsyncComponent(() => import('./ManageRsvpsView.vue'))
+import BackLink from '../components/ui/BackLink.vue';
+import '../assets/design-baseline.css';
+import { computed, defineAsyncComponent, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
+import * as api from '../utils/api.js';
+import { formatEventTime } from '../utils/helpers.js';
+import { hasPlace, venuePendingText } from '../utils/venueReveal.js';
+import EventToolNavigation from '../components/event-operations/EventToolNavigation.vue';
+import TaskBoard from '../components/event-operations/TaskBoard.vue';
+import AnnouncementManager from '../components/event-operations/AnnouncementManager.vue';
+import BudgetTracker from '../components/event-operations/BudgetTracker.vue';
+import WeatherTool from '../components/event-operations/WeatherTool.vue';
+import { TASK_STATUSES } from '../utils/feature4.js';
+// load these components when their tabs are first opened
 
-const route = useRoute()
-const router = useRouter()
-const coreTabs = ['tasks', 'announcements', 'budget', 'weather']
-// Check-in, venue QR, attendance and floor plan need the live database, so they only exist there.
-const tabs = api.USING_SUPABASE ? ['rsvps', 'edit', 'team', ...coreTabs, 'check-in', 'venue-qr', 'attendance', 'floor-plan'] : ['rsvps', 'edit', 'team', ...coreTabs]
-const TAB_LABELS = { rsvps: 'Guest list', team: 'Event team', edit: 'Edit event', tasks: 'Tasks', announcements: 'Announcements', budget: 'Budget', weather: 'Weather', 'check-in': 'Check-in station', 'venue-qr': 'Venue QR', attendance: 'Attendance', 'floor-plan': 'Floor plan' }
-const TAB_HINTS = { rsvps: 'Approve and manage RSVPs', team: 'Helpers and co-organisers', edit: 'Event details', tasks: 'Plan the work', announcements: 'Tell attendees', budget: 'Track costs', weather: 'Venue plan', 'check-in': 'Scan arrivals', 'venue-qr': 'Entrance display', attendance: 'Live arrivals', 'floor-plan': 'Layout and programme' }
-const toolGroups = [
-  { id: 'general', label: 'General', hint: 'Details and updates', ids: ['rsvps', 'edit', 'team', 'announcements'] },
-  { id: 'planning', label: 'Planning', hint: 'Tasks, costs and layout', ids: ['tasks', 'budget', 'floor-plan'] },
-  { id: 'on-the-day', label: 'On the day', hint: 'Venue and arrivals', ids: ['weather', 'check-in', 'venue-qr', 'attendance'] },
-].map(group => ({ ...group, tabs: group.ids.filter(id => tabs.includes(id)).map(id => ({ id, label: TAB_LABELS[id], hint: TAB_HINTS[id] })) }))
-const activeTab = computed(() => tabs.includes(route.query.tab) ? route.query.tab : 'rsvps')
-const teamVisited = ref(false)
-watch(activeTab, tab => { if (tab === 'team') teamVisited.value = true }, { immediate: true })
-watch(() => route.params.id, () => { teamVisited.value = activeTab.value === 'team' })
-const editVisited = ref(false)
-watch(activeTab, tab => { if (tab === 'edit') editVisited.value = true }, { immediate: true })
-watch(() => route.params.id, () => { editVisited.value = activeTab.value === 'edit' })
-const workspace = ref(null)
-const loading = ref(false)
-const loadError = ref('')
-const publishState = ref('published') // 'published' | 'draft' | 'cancelled' | 'completed'
-const publishing = ref(false)
-const publishError = ref('')
-const canTogglePublish = computed(() => ['published', 'draft'].includes(publishState.value))
+const EventTeamPanel = defineAsyncComponent(() => import('../components/event-operations/EventTeamPanel.vue'));
+
+const EventEditor = defineAsyncComponent(() => import('./CreateEventView.vue'));
+
+const StaffStationView = defineAsyncComponent(() => import('./checkin/StaffStationView.vue'));
+
+const VenueQrView = defineAsyncComponent(() => import('./checkin/VenueQrView.vue'));
+
+const AttendanceDashboardView = defineAsyncComponent(() => import('./checkin/AttendanceDashboardView.vue'));
+
+const FloorPlanEditor = defineAsyncComponent(() => import('../editor.vue'));
+
+const GuestList = defineAsyncComponent(() => import('./ManageRsvpsView.vue'));
+
+const route = useRoute();
+
+const router = useRouter();
+
+const coreTabs = ['tasks', 'announcements', 'budget', 'weather'];
+// these tools need a live database connection
+
+const tabs = api.USING_SUPABASE ? ['rsvps', 'edit', 'team', ...coreTabs, 'check-in', 'venue-qr', 'attendance', 'floor-plan'] : ['rsvps', 'edit', 'team', ...coreTabs];
+
+const TAB_LABELS = {
+  rsvps: 'Guest list',
+  team: 'Event team',
+  edit: 'Edit event',
+  tasks: 'Tasks',
+  announcements: 'Announcements',
+  budget: 'Budget',
+  weather: 'Weather',
+  'check-in': 'Check-in station',
+  'venue-qr': 'Venue QR',
+  attendance: 'Attendance',
+  'floor-plan': 'Floor plan'
+};
+
+const TAB_HINTS = {
+  rsvps: 'Approve and manage RSVPs',
+  team: 'Helpers and co-organisers',
+  edit: 'Event details',
+  tasks: 'Plan the work',
+  announcements: 'Tell attendees',
+  budget: 'Track costs',
+  weather: 'Venue plan',
+  'check-in': 'Scan arrivals',
+  'venue-qr': 'Entrance display',
+  attendance: 'Live arrivals',
+  'floor-plan': 'Layout and programme'
+};
+
+const toolGroups = [{
+  id: 'general',
+  label: 'General',
+  hint: 'Details and updates',
+  ids: ['rsvps', 'edit', 'team', 'announcements']
+}, {
+  id: 'planning',
+  label: 'Planning',
+  hint: 'Tasks, costs and layout',
+  ids: ['tasks', 'budget', 'floor-plan']
+}, {
+  id: 'on-the-day',
+  label: 'On the day',
+  hint: 'Venue and arrivals',
+  ids: ['weather', 'check-in', 'venue-qr', 'attendance']
+}].map(group => ({
+  ...group,
+  tabs: group.ids.filter(id => tabs.includes(id)).map(id => ({
+    id,
+    label: TAB_LABELS[id],
+    hint: TAB_HINTS[id]
+  }))
+}));
+
+const activeTab = computed(() => tabs.includes(route.query.tab) ? route.query.tab : 'rsvps');
+
+const teamVisited = ref(false);
+
+watch(activeTab, tab => {
+  if (tab === 'team') teamVisited.value = true;
+}, {
+  immediate: true
+});
+
+watch(() => route.params.id, () => {
+  teamVisited.value = activeTab.value === 'team';
+});
+
+const editVisited = ref(false);
+
+watch(activeTab, tab => {
+  if (tab === 'edit') editVisited.value = true;
+}, {
+  immediate: true
+});
+
+watch(() => route.params.id, () => {
+  editVisited.value = activeTab.value === 'edit';
+});
+
+const workspace = ref(null);
+
+const loading = ref(false);
+
+const loadError = ref('');
+
+const publishState = ref('published'); // 'published' | 'draft' | 'cancelled' | 'completed'
+
+const publishing = ref(false);
+
+const publishError = ref('');
+
+const canTogglePublish = computed(() => ['published', 'draft'].includes(publishState.value));
+
 async function togglePublish() {
-  if (publishing.value || !canTogglePublish.value) return
-  const publish = publishState.value !== 'published'
-  if (!publish && !window.confirm('Unpublish this event? It disappears from Discover and its public page until you publish it again. Existing RSVPs are kept.')) return
-  const ticket = epoch
-  publishing.value = true; publishError.value = ''
+  if (publishing.value || !canTogglePublish.value) return;
+  const publish = publishState.value !== 'published';
+  if (!publish && !window.confirm('Unpublish this event? It disappears from Discover and its public page until you publish it again. Existing RSVPs are kept.')) return;
+  const ticket = epoch;
+  publishing.value = true;
+  publishError.value = '';
   try {
-    const updated = await api.setEventPublished(String(route.params.id), publish)
-    if (ticket === epoch) publishState.value = updated.status || (publish ? 'published' : 'draft')
+    const updated = await api.setEventPublished(String(route.params.id), publish);
+    if (ticket === epoch) publishState.value = updated.status || (publish ? 'published' : 'draft');
   } catch (error) {
-    if (ticket === epoch) publishError.value = error.message || 'Could not change publish status. Please try again.'
-  } finally { if (ticket === epoch) publishing.value = false }
+    if (ticket === epoch) publishError.value = error.message || 'Could not change publish status. Please try again.';
+  } finally {
+    if (ticket === epoch) publishing.value = false;
+  }
 }
-const forecast = ref(null)
-const areas = ref([])
-const weatherLoading = ref(false)
-const weatherError = ref('')
-const areasError = ref('')
-const pending = reactive({ tasks: false, announcements: false, budget: false, weather: false })
-const errors = reactive({ tasks: '', announcements: '', budget: '', weather: '' })
-const successes = reactive({ tasks: '', announcements: '', budget: '', weather: '' })
-const retries = reactive({ tasks: null, announcements: null, budget: null, weather: null })
-const retryVersions = { tasks: 0, announcements: 0, budget: 0, weather: 0 }
-const canManage = computed(() => Boolean(workspace.value?.event.isMine || workspace.value?.event.canManage || (!api.USING_SUPABASE && workspace.value?.event.organiserId === api.CURRENT_ORGANISER_ID)))
-let epoch = 0
-let weatherRequest = 0
-const createRequestIds = new WeakMap()
+
+const forecast = ref(null);
+
+const areas = ref([]);
+
+const weatherLoading = ref(false);
+
+const weatherError = ref('');
+
+const areasError = ref('');
+
+const pending = reactive({
+  tasks: false,
+  announcements: false,
+  budget: false,
+  weather: false
+});
+
+const errors = reactive({
+  tasks: '',
+  announcements: '',
+  budget: '',
+  weather: ''
+});
+
+const successes = reactive({
+  tasks: '',
+  announcements: '',
+  budget: '',
+  weather: ''
+});
+
+const retries = reactive({
+  tasks: null,
+  announcements: null,
+  budget: null,
+  weather: null
+});
+
+const retryVersions = {
+  tasks: 0,
+  announcements: 0,
+  budget: 0,
+  weather: 0
+};
+
+const canManage = computed(() => Boolean(workspace.value?.event.isMine || workspace.value?.event.canManage || !api.USING_SUPABASE && workspace.value?.event.organiserId === api.CURRENT_ORGANISER_ID));
+
+let epoch = 0;
+
+let weatherRequest = 0;
+
+const createRequestIds = new WeakMap();
 
 function createRequestId(action) {
-  if (!createRequestIds.has(action)) createRequestIds.set(action, crypto.randomUUID())
-  return createRequestIds.get(action)
+  if (!createRequestIds.has(action)) createRequestIds.set(action, crypto.randomUUID());
+  return createRequestIds.get(action);
 }
 
 watch(() => route.query.tab, tab => {
-  if (!tabs.includes(tab)) router.replace({ path: route.path, query: { ...route.query, tab: 'rsvps' }, hash: route.hash })
-}, { immediate: true })
+  if (!tabs.includes(tab)) router.replace({
+    path: route.path,
+    query: {
+      ...route.query,
+      tab: 'rsvps'
+    },
+    hash: route.hash
+  });
+}, {
+  immediate: true
+});
+
 async function load() {
-  const ticket = ++epoch
-  weatherRequest++; workspace.value = null; forecast.value = null; loading.value = true; loadError.value = ''; weatherError.value = ''; areasError.value = ''; weatherLoading.value = false
-  coreTabs.forEach(tab => { pending[tab] = false; errors[tab] = ''; successes[tab] = ''; retries[tab] = null })
-  try { const result = await api.getEventOperations(String(route.params.id)); if (ticket === epoch) { workspace.value = result; publishState.value = result.event.status || 'published'; publishError.value = '' } }
-  catch (error) { if (ticket === epoch) loadError.value = error.message || 'Could not load this event.' }
-  finally { if (ticket === epoch) loading.value = false }
+  const ticket = ++epoch;
+  // ignore any older weather request when loading another event
+  weatherRequest++;
+  workspace.value = null;
+  forecast.value = null;
+  loading.value = true;
+  loadError.value = '';
+  weatherError.value = '';
+  areasError.value = '';
+  weatherLoading.value = false;
+  coreTabs.forEach(tab => {
+    pending[tab] = false;
+    errors[tab] = '';
+    successes[tab] = '';
+    retries[tab] = null;
+  });
+  try {
+    const result = await api.getEventOperations(String(route.params.id));
+    if (ticket === epoch) {
+      workspace.value = result;
+      publishState.value = result.event.status || 'published';
+      publishError.value = '';
+    }
+  } catch (error) {
+    if (ticket === epoch) loadError.value = error.message || 'Could not load this event.';
+  } finally {
+    if (ticket === epoch) loading.value = false;
+  }
 }
-watch(() => route.params.id, load, { immediate: true })
-watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => { if (tab === 'weather' && eventId && canManage.value && hasPlace(workspace.value.event)) refreshWeather() })
-onBeforeUnmount(() => { epoch++; weatherRequest++ })
+
+watch(() => route.params.id, load, {
+  immediate: true
+});
+
+watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => {
+  if (tab === 'weather' && eventId && canManage.value && hasPlace(workspace.value.event)) refreshWeather();
+});
+// ignore unfinished requests after leaving this page
+
+onBeforeUnmount(() => {
+  epoch++;
+  weatherRequest++;
+});
 
 async function refreshEditedEvent() {
-  const ticket = epoch
+  const ticket = epoch;
   try {
-    const result = await api.getEventOperations(String(route.params.id))
+    const result = await api.getEventOperations(String(route.params.id));
     if (ticket === epoch) {
-      workspace.value.event = result.event
-      workspace.value.announcements = result.announcements
-      publishState.value = result.event.status || publishState.value
-      publishError.value = ''
+      workspace.value.event = result.event;
+      workspace.value.announcements = result.announcements;
+      publishState.value = result.event.status || publishState.value;
+      publishError.value = '';
     }
   } catch {
-    if (ticket === epoch) publishError.value = 'Changes saved. Refresh the page to update the workspace summary.'
+    if (ticket === epoch) publishError.value = 'Changes saved. Refresh the page to update the workspace summary.';
   }
 }
 
 async function mutate(tool, action, operation, apply, message) {
-  if (pending[tool] || !canManage.value) return
-  const ticket = epoch
-  const retryVersion = retryVersions[tool]
-  const eventId = String(route.params.id)
-  pending[tool] = true; errors[tool] = ''; successes[tool] = ''; retries[tool] = null
+  if (pending[tool] || !canManage.value) return;
+  const ticket = epoch;
+  const retryVersion = retryVersions[tool];
+  const eventId = String(route.params.id);
+  pending[tool] = true;
+  errors[tool] = '';
+  successes[tool] = '';
+  retries[tool] = null;
   try {
-    const result = await operation(eventId)
-    if (ticket !== epoch) return
-    apply(result); action.done?.(); successes[tool] = message
+    const result = await operation(eventId);
+    if (ticket !== epoch) return;
+    apply(result);
+    action.done?.();
+    successes[tool] = message;
   } catch (error) {
-    if (ticket === epoch) { action.failed?.(); errors[tool] = error.message || 'Could not save. Please try again.'; retries[tool] = () => { if (retryVersions[tool] === retryVersion) mutate(tool, action, operation, apply, message) } }
-  } finally { if (ticket === epoch) pending[tool] = false }
+    if (ticket === epoch) {
+      action.failed?.();
+      errors[tool] = error.message || 'Could not save. Please try again.';
+      retries[tool] = () => {
+        if (retryVersions[tool] === retryVersion) mutate(tool, action, operation, apply, message);
+      };
+    }
+  } finally {
+    if (ticket === epoch) pending[tool] = false;
+  }
 }
+
 function cancelDestructiveAction(tool) {
-  retryVersions[tool]++
-  retries[tool] = null
-  errors[tool] = ''
-  successes[tool] = ''
+  retryVersions[tool]++;
+  retries[tool] = null;
+  errors[tool] = '';
+  successes[tool] = '';
 }
+
 function saveTask(action, mode) {
-  const input = mode === 'create' && api.USING_SUPABASE ? { ...action.input, requestId: createRequestId(action) } : action.input
+  const input = mode === 'create' && api.USING_SUPABASE ? {
+    ...action.input,
+    requestId: createRequestId(action)
+  } : action.input;
   mutate('tasks', action, id => mode === 'create' ? api.createTask(id, input) : mode === 'update' ? api.updateTask(id, action.id, action.input) : api.deleteTask(id, action.id), result => {
-    workspace.value.tasks = mode === 'delete' ? workspace.value.tasks.filter(task => task.id !== action.id) : mode === 'create' ? [...workspace.value.tasks, result] : workspace.value.tasks.map(task => task.id === result.id ? result : task)
-    // deleteTask reindexes the saved columns; keep the visible snapshot identical.
+    workspace.value.tasks = mode === 'delete' ? workspace.value.tasks.filter(task => task.id !== action.id) : mode === 'create' ? [...workspace.value.tasks, result] : workspace.value.tasks.map(task => task.id === result.id ? result : task);
+    // keep task positions in the same order as the saved board
     if (mode === 'delete') {
       for (const status of TASK_STATUSES) {
-        workspace.value.tasks.filter(task => task.status === status)
-          .sort((a, b) => a.position - b.position)
-          .forEach((task, index) => { task.position = index })
+        workspace.value.tasks.filter(task => task.status === status).sort((a, b) => a.position - b.position).forEach((task, index) => {
+          task.position = index;
+        });
       }
     }
-  }, mode === 'delete' ? 'Task deleted.' : 'Task saved.')
+  }, mode === 'delete' ? 'Task deleted.' : 'Task saved.');
 }
-function saveBoard(action) { mutate('tasks', action, id => api.saveTaskBoard(id, action.input), tasks => { workspace.value.tasks = tasks }, 'Task board saved.') }
+
+function saveBoard(action) {
+  mutate('tasks', action, id => api.saveTaskBoard(id, action.input), tasks => {
+    workspace.value.tasks = tasks;
+  }, 'Task board saved.');
+}
+
 function saveAnnouncement(action, mode) {
-  const requestId = mode === 'create' && api.USING_SUPABASE ? createRequestId(action) : null
+  const requestId = mode === 'create' && api.USING_SUPABASE ? createRequestId(action) : null;
   mutate('announcements', action, id => mode === 'create' ? api.createAnnouncement(id, action.body, requestId) : mode === 'update' ? api.updateAnnouncement(id, action.id, action.body) : api.deleteAnnouncement(id, action.id), result => {
-    workspace.value.announcements = mode === 'delete' ? workspace.value.announcements.filter(post => post.id !== action.id) : mode === 'create' ? [result, ...workspace.value.announcements] : workspace.value.announcements.map(post => post.id === result.id ? result : post)
-  }, mode === 'delete' ? 'Announcement deleted.' : 'Announcement saved.')
+    workspace.value.announcements = mode === 'delete' ? workspace.value.announcements.filter(post => post.id !== action.id) : mode === 'create' ? [result, ...workspace.value.announcements] : workspace.value.announcements.map(post => post.id === result.id ? result : post);
+  }, mode === 'delete' ? 'Announcement deleted.' : 'Announcement saved.');
 }
-function saveLimit(action) { mutate('budget', action, id => api.saveBudgetLimit(id, action.input), () => { workspace.value.budget.limitCents = action.input }, 'Budget limit saved.') }
+
+function saveLimit(action) {
+  mutate('budget', action, id => api.saveBudgetLimit(id, action.input), () => {
+    workspace.value.budget.limitCents = action.input;
+  }, 'Budget limit saved.');
+}
+
 function saveItem(action) {
-  const input = action.input.id || !api.USING_SUPABASE ? action.input : { ...action.input, requestId: createRequestId(action) }
-  mutate('budget', action, id => api.saveBudgetItem(id, input), item => { workspace.value.budget.items = action.input.id ? workspace.value.budget.items.map(row => row.id === item.id ? item : row) : [...workspace.value.budget.items, item] }, 'Expense saved.')
+  const input = action.input.id || !api.USING_SUPABASE ? action.input : {
+    ...action.input,
+    requestId: createRequestId(action)
+  };
+  mutate('budget', action, id => api.saveBudgetItem(id, input), item => {
+    workspace.value.budget.items = action.input.id ? workspace.value.budget.items.map(row => row.id === item.id ? item : row) : [...workspace.value.budget.items, item];
+  }, 'Expense saved.');
 }
-function deleteItem(action) { mutate('budget', action, id => api.deleteBudgetItem(id, action.id), () => { workspace.value.budget.items = workspace.value.budget.items.filter(item => item.id !== action.id) }, 'Expense deleted.') }
-function saveCategory(action) { mutate('budget', action, id => api.createBudgetCategory(id, action.name), categories => { workspace.value.budgetCategories = categories }, 'Category added.') }
+
+function deleteItem(action) {
+  mutate('budget', action, id => api.deleteBudgetItem(id, action.id), () => {
+    workspace.value.budget.items = workspace.value.budget.items.filter(item => item.id !== action.id);
+  }, 'Expense deleted.');
+}
+
+function saveCategory(action) {
+  mutate('budget', action, id => api.createBudgetCategory(id, action.name), categories => {
+    workspace.value.budgetCategories = categories;
+  }, 'Category added.');
+}
+
 function deleteCategory(action) {
-  mutate('budget', action, id => api.deleteBudgetCategory(id, action.name), ({ categories, items }) => { workspace.value.budgetCategories = categories; workspace.value.budget.items = items }, 'Category deleted. Its expenses moved to Other.')
+  mutate('budget', action, id => api.deleteBudgetCategory(id, action.name), ({
+    categories,
+    items
+  }) => {
+    workspace.value.budgetCategories = categories;
+    workspace.value.budget.items = items;
+  }, 'Category deleted. Its expenses moved to Other.');
 }
+
 async function refreshWeather() {
-  const ticket = ++weatherRequest
-  const page = epoch
-  const eventId = String(route.params.id)
-  weatherLoading.value = true; weatherError.value = ''; areasError.value = ''; forecast.value = null; areas.value = []
-  let snapshot
-  try { snapshot = await api.getEventWeather(eventId) }
-  catch (error) {
+  const ticket = ++weatherRequest;
+  const page = epoch;
+  const eventId = String(route.params.id);
+  weatherLoading.value = true;
+  weatherError.value = '';
+  areasError.value = '';
+  forecast.value = null;
+  areas.value = [];
+  let snapshot;
+  try {
+    snapshot = await api.getEventWeather(eventId);
+  } catch (error) {
     if (ticket === weatherRequest && page === epoch) {
-      weatherError.value = error.message || 'Weather could not be loaded.'
-      weatherLoading.value = false
+      weatherError.value = error.message || 'Weather could not be loaded.';
+      weatherLoading.value = false;
     }
-    return
+    return;
   }
-  if (ticket !== weatherRequest || page !== epoch) return
-  forecast.value = snapshot.forecast
-  areas.value = snapshot.areas
-  areasError.value = areas.value.length ? '' : 'Forecast areas are unavailable. Refresh to retry.'
-  weatherLoading.value = false
+  if (ticket !== weatherRequest || page !== epoch) return;
+  forecast.value = snapshot.forecast;
+  areas.value = snapshot.areas;
+  areasError.value = areas.value.length ? '' : 'Forecast areas are unavailable. Refresh to retry.';
+  weatherLoading.value = false;
 }
-function saveArea(action) { mutate('weather', action, id => api.setForecastArea(id, action.input), area => { workspace.value.forecastAreaOverride = area; refreshWeather() }, 'Forecast area saved.') }
-function switchVenue(action) { mutate('weather', action, id => api.confirmBackupVenueSwitch(id), result => { workspace.value.event = result.event; workspace.value.announcements = [result.announcement, ...workspace.value.announcements.filter(post => post.id !== result.announcement.id)]; refreshWeather() }, 'Backup venue is now active. The public venue update has been saved.') }
+
+function saveArea(action) {
+  mutate('weather', action, id => api.setForecastArea(id, action.input), area => {
+    workspace.value.forecastAreaOverride = area;
+    refreshWeather();
+  }, 'Forecast area saved.');
+}
+
+function switchVenue(action) {
+  mutate('weather', action, id => api.confirmBackupVenueSwitch(id), result => {
+    workspace.value.event = result.event;
+    workspace.value.announcements = [result.announcement, ...workspace.value.announcements.filter(post => post.id !== result.announcement.id)];
+    refreshWeather();
+  }, 'Backup venue is now active. The public venue update has been saved.');
+}
 </script>
 
 <template>
@@ -226,41 +463,282 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 </template>
 
 <style scoped>
-.workspace-publish { order: 2; display: inline-flex; align-items: center; gap: .6rem; margin-left: auto; }
-/* Unpublish sits on the coloured header, so give it a solid face and full-strength text */
-.workspace-publish .btn.workspace-unpublish { --bs-btn-bg: var(--bookedz-surface); --bs-btn-color: var(--bookedz-ink); --bs-btn-border-color: var(--bookedz-ink); --bs-btn-hover-bg: var(--bookedz-hover); --bs-btn-hover-color: var(--bookedz-ink); --bs-btn-hover-border-color: var(--bookedz-ink); --bs-btn-active-bg: var(--bookedz-hover); --bs-btn-active-color: var(--bookedz-ink); --bs-btn-active-border-color: var(--bookedz-ink); --bs-btn-disabled-bg: var(--bookedz-surface); --bs-btn-disabled-color: var(--bookedz-muted); --bs-btn-disabled-border-color: var(--bookedz-control-border); border-width: 2px; font-weight: 700; }
-.workspace-back { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .5rem; color: var(--bookedz-muted); font-weight: 600; text-decoration: none; }
-.workspace-header { padding: clamp(1.15rem, 3vw, 2rem); margin-bottom: 1.25rem; border: 1px solid var(--bookedz-border); border-radius: 1.25rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
-.workspace-title-row { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .7rem 1rem; }
-.workspace-title-copy { min-width: 0; }
-.workspace-eyebrow { margin: 0 0 .35rem; color: var(--bookedz-primary-dark); font-size: .78rem; font-weight: 700; }
-.workspace-header h1 { margin: 0; color: var(--bookedz-ink); font-size: clamp(1.55rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: -.04em; overflow-wrap: anywhere; }
-.workspace-mode { display: inline-flex; align-items: center; min-height: 30px; padding: .25rem .65rem; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-glass-solid); color: var(--bookedz-muted); font-size: .75rem; font-weight: 650; white-space: nowrap; }
-.workspace-mode--success { border-color: var(--bookedz-success); color: var(--bookedz-success); }
-/* Event time, active venue and venue address share the row equally (stacked on small screens) */
-.workspace-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-top: 1.25rem; }
-.overview-item { display: grid; align-content: start; gap: .25rem; min-width: 0; padding: .8rem .9rem; border-radius: .85rem; background: var(--bookedz-glass-solid); }
-.overview-label { color: var(--bookedz-muted); font-size: .74rem; font-weight: 650; }
-.overview-item strong { color: var(--bookedz-ink); font-size: .9rem; overflow-wrap: anywhere; }
-/* Keep the overview and buttons above the header's decorative star so it never sits behind text */
-.workspace-overview, .workspace-link-groups { position: relative; z-index: 1; }
-.workspace-link-groups { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.25rem; padding-top: 1rem; margin-top: 1rem; border-top: 1px solid var(--bookedz-border); }
-.workspace-primary-links, .workspace-quick-links { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; }
-.workspace-primary-links { flex: 1 1 100%; }
-.workspace-primary-links .btn { min-height: 44px; }
-.workspace-save-note, .workspace-quick-links > span { color: var(--bookedz-muted); font-size: .8rem; }
-.workspace-quick-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--bookedz-primary-dark); font-size: .84rem; font-weight: 600; text-decoration: none; }
-.workspace-quick-links a:hover, .workspace-back:hover { text-decoration: underline; }
-.tool-feedback:empty { display: none; }
-.tool-feedback .alert { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
-.tool-feedback .btn { min-height: 44px; }
-:deep(.tool-heading) { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 1rem; padding: .2rem 0 1rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--bookedz-border); }
-:deep(.tool-heading h2) { margin: 0; color: var(--bookedz-ink); font-size: clamp(1.45rem, 2.5vw, 1.8rem); font-weight: 700; letter-spacing: -.035em; }
-:deep(.tool-description) { max-width: 44rem; margin: .35rem 0 0; color: var(--bookedz-muted); }
-:deep(.tool-heading .btn) { min-height: 44px; }
-:deep(.workspace-panel) { padding: clamp(1rem, 2vw, 1.35rem); border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
-:deep(.section-heading) { color: var(--bookedz-ink); font-weight: 700; }
-@media (max-width: 767.98px) { .workspace-overview { grid-template-columns: 1fr; } .workspace-quick-links { width: 100%; } }
-@media (max-width: 575.98px) { .workspace-link-groups { align-items: stretch; } .workspace-primary-links { align-items: stretch; } .workspace-primary-links .btn { width: 100%; } }
+.workspace-publish {
+  order: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  margin-left: auto;
 
+}
+
+/* unpublish sits on the coloured header, so give it a solid face and full-strength text */
+.workspace-publish .btn.workspace-unpublish {
+  --bs-btn-bg: var(--bookedz-surface);
+  --bs-btn-color: var(--bookedz-ink);
+  --bs-btn-border-color: var(--bookedz-ink);
+  --bs-btn-hover-bg: var(--bookedz-hover);
+  --bs-btn-hover-color: var(--bookedz-ink);
+  --bs-btn-hover-border-color: var(--bookedz-ink);
+  --bs-btn-active-bg: var(--bookedz-hover);
+  --bs-btn-active-color: var(--bookedz-ink);
+  --bs-btn-active-border-color: var(--bookedz-ink);
+  --bs-btn-disabled-bg: var(--bookedz-surface);
+  --bs-btn-disabled-color: var(--bookedz-muted);
+  --bs-btn-disabled-border-color: var(--bookedz-control-border);
+  border-width: 2px;
+  font-weight: 700;
+
+}
+
+.workspace-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 .5rem;
+  color: var(--bookedz-muted);
+  font-weight: 600;
+  text-decoration: none;
+
+}
+
+.workspace-header {
+  padding: clamp(1.15rem, 3vw, 2rem);
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--bookedz-border);
+  border-radius: 1.25rem;
+  background: var(--bookedz-surface);
+  box-shadow: var(--bookedz-card-shadow);
+
+}
+
+.workspace-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: .7rem 1rem;
+
+}
+
+.workspace-title-copy {
+  min-width: 0;
+
+}
+
+.workspace-eyebrow {
+  margin: 0 0 .35rem;
+  color: var(--bookedz-primary-dark);
+  font-size: .78rem;
+  font-weight: 700;
+
+}
+
+.workspace-header h1 {
+  margin: 0;
+  color: var(--bookedz-ink);
+  font-size: clamp(1.55rem, 3vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: -.04em;
+  overflow-wrap: anywhere;
+
+}
+
+.workspace-mode {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: .25rem .65rem;
+  border: 1px solid var(--bookedz-border);
+  border-radius: 99px;
+  background: var(--bookedz-glass-solid);
+  color: var(--bookedz-muted);
+  font-size: .75rem;
+  font-weight: 650;
+  white-space: nowrap;
+
+}
+
+.workspace-mode--success {
+  border-color: var(--bookedz-success);
+  color: var(--bookedz-success);
+
+}
+
+/* event time, active venue and venue address share the row equally (stacked on small screens) */
+.workspace-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+  margin-top: 1.25rem;
+
+}
+
+.overview-item {
+  display: grid;
+  align-content: start;
+  gap: .25rem;
+  min-width: 0;
+  padding: .8rem .9rem;
+  border-radius: .85rem;
+  background: var(--bookedz-glass-solid);
+
+}
+
+.overview-label {
+  color: var(--bookedz-muted);
+  font-size: .74rem;
+  font-weight: 650;
+
+}
+
+.overview-item strong {
+  color: var(--bookedz-ink);
+  font-size: .9rem;
+  overflow-wrap: anywhere;
+
+}
+
+/* keep the overview and buttons above the header's decorative star so it never sits behind text */
+.workspace-overview, .workspace-link-groups {
+  position: relative;
+  z-index: 1;
+
+}
+
+.workspace-link-groups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem 1.25rem;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--bookedz-border);
+
+}
+
+.workspace-primary-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem .9rem;
+
+}
+
+.workspace-primary-links {
+  flex: 1 1 100%;
+
+}
+
+.workspace-primary-links .btn {
+  min-height: 44px;
+
+}
+
+.workspace-save-note {
+  color: var(--bookedz-muted);
+  font-size: .8rem;
+
+}
+
+.workspace-back:hover {
+  text-decoration: underline;
+
+}
+
+.tool-feedback:empty {
+  display: none;
+
+}
+
+.tool-feedback .alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+
+}
+
+.tool-feedback .btn {
+  min-height: 44px;
+
+}
+
+:deep(.tool-heading) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+  padding: .2rem 0 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--bookedz-border);
+
+}
+
+:deep(.tool-heading h2) {
+  margin: 0;
+  color: var(--bookedz-ink);
+  font-size: clamp(1.45rem, 2.5vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: -.035em;
+
+}
+
+:deep(.tool-description) {
+  max-width: 44rem;
+  margin: .35rem 0 0;
+  color: var(--bookedz-muted);
+
+}
+
+:deep(.tool-heading .btn) {
+  min-height: 44px;
+
+}
+
+:deep(.workspace-panel) {
+  padding: clamp(1rem, 2vw, 1.35rem);
+  border: 1px solid var(--bookedz-border);
+  border-radius: 1rem;
+  background: var(--bookedz-surface);
+  box-shadow: var(--bookedz-card-shadow);
+
+}
+
+:deep(.section-heading) {
+  color: var(--bookedz-ink);
+  font-weight: 700;
+
+}
+
+@media (max-width: 767.98px) {
+  .workspace-overview {
+    grid-template-columns: 1fr;
+
+  }
+
+
+}
+
+@media (max-width: 575.98px) {
+  .workspace-link-groups {
+    align-items: stretch;
+
+  }
+
+  .workspace-primary-links {
+    align-items: stretch;
+
+  }
+
+  .workspace-primary-links .btn {
+    width: 100%;
+
+  }
+
+
+}
 </style>
