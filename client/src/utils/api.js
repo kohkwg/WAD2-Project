@@ -53,6 +53,8 @@ export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
 // Online events: { hasLink, revealAt, url } (url only for the organiser, or confirmed attendees
 // once revealAt has passed); null for physical events. The link is saved with createEvent/updateEvent.
 export const getEventOnlineAccess = (eventId) => backend.getEventOnlineAccess(eventId)
+// The organiser and co-organisers shown in the event page's "Hosted by" card (public profile fields)
+export const getEventHosts = (eventId) => backend.getEventHosts(eventId)
 // Physical events may have no venue yet (venuePending, shown as "Venue to be announced"), or keep
 // a chosen venue hidden until venueRevealAt; the event's organisers get it as hiddenVenue. Saved
 // with createEvent/updateEvent (form.venueRevealAt). The event page calls this at the reveal time

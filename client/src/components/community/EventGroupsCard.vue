@@ -74,7 +74,11 @@ const initials = (name = '') => name.split(/\s+/).map((part) => part[0]).join(''
 .egc-mini { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 2px solid var(--bookedz-surface); border-radius: 50%; background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); font-size: .68rem; font-weight: 800; }
 .egc-mini + .egc-mini { margin-left: -9px; }
 .egc-more { background: var(--bookedz-ink); color: var(--bookedz-surface); }
-.egc-groups { display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 10px; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; }
+/* A scrolling row clips whatever pokes past its edges, so it leaves room for a card's hover lift and
+   bigger shadow (otherwise the right border and shadow get cut off) */
+.egc-groups { display: flex; gap: 12px; overflow-x: auto; padding: 6px 14px 16px 4px; scroll-padding-left: 4px; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; }
+/* Inside the row a card lifts without tilting, so its corners stay inside the row */
+@media (hover: hover) { .event-groups-card .egc-groups :deep(.group-card:hover) { transform: translate(-2px, -3px); } }
 .egc-slide { flex: 0 0 min(340px, 84%); scroll-snap-align: start; display: flex; }
 .egc-slide > :deep(.group-card) { width: 100%; }
 .egc-groups:has(> .egc-slide:only-child) .egc-slide { flex-basis: 100%; }

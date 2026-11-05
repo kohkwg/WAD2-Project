@@ -952,3 +952,20 @@ user's writes; hiding and un-hiding; Go together waiting; and the release. `onli
 needs the temporary loader described above. Browser behaviour (the timed reveal, organiser and
 participant views, announcement wording) was checked with a throwaway demo-mode script, not a
 committed spec.
+
+## Event page "Hosted by" line (event_hosts)
+
+The event page's banner shows who hosts the event, under the time: a chip per host (the organiser
+first, then any co-organisers) with their chosen dino (or photo, or initials), name and @username. Live mode reads them from `public.event_hosts` (migration
+`20261105180000_event_hosts.sql`), which returns public profile fields only (no postcode or
+location) and answers only for events the asker could already see. Helpers are not listed.
+Demo mode gives the two demo clubs a fixed handle and bio.
+
+```bash
+node server/checks/event-hosts-db.check.mjs <tmp>/node_modules/@electric-sql/pglite/dist/index.js
+```
+
+Five checks: a logged-out visitor sees the organiser then co-organisers; only public fields come
+back; helpers are left out; a draft is hidden from others but shown to its organiser; an unknown
+event returns nothing. Before the migration is applied, the page leaves the line out instead of
+showing an error. Checked by hand in demo mode at 1280px and 375px, light and dark.

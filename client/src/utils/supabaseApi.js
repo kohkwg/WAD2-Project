@@ -297,6 +297,18 @@ export async function getEvent(eventId) {
   return event
 }
 
+// Who hosts an event: [{ id, name, username, bio, avatarKey, role: 'organiser' | 'co-organiser' }],
+// public profile fields only (event_hosts). Empty when the function isn't on the database yet, so
+// the event page simply leaves the card out.
+export async function getEventHosts(eventId) {
+  const { data, error } = await supabase.rpc('event_hosts', { p_event_id: eventId })
+  if (error) {
+    if (['PGRST202', '42883'].includes(error.code)) return []
+    throw new Error(friendlyMessage(error))
+  }
+  return Array.isArray(data) ? data : []
+}
+
 // { venue, backupVenue, isOutdoor } from event_hidden_venues, or null when nothing is hidden or
 // this user isn't one of the event's organisers
 async function hiddenVenueOf(eventId) {

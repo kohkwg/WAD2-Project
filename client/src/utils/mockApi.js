@@ -358,6 +358,29 @@ export async function getEvent(eventId) {
   return withCounts(db, findEvent(db, eventId))
 }
 
+// Who hosts an event (the "Hosted by" card): its organiser, then any co-organisers. Public profile
+// fields only, like the live event_hosts function. The demo clubs have no saved handle or bio, so
+// they get fixed ones here.
+const DEMO_HOST_PROFILES = {
+  org1: { username: 'bookedz_demo', bio: 'Workshops, socials and study jams around campus.' },
+  org2: { username: 'campus_societies', bio: 'Sports, arts and everything in between.' },
+}
+export async function getEventHosts(eventId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = db.events.find((e) => e.id === eventId)
+  if (!event) return []
+  const ids = [event.organiserId, ...(event.coOrganiserIds || []).filter((id) => id !== event.organiserId)]
+  return ids.map((id) => db.users.find((u) => u.id === id)).filter(Boolean).map((user) => ({
+    id: user.id,
+    name: user.name,
+    username: user.username || DEMO_HOST_PROFILES[user.id]?.username || null,
+    bio: user.bio || DEMO_HOST_PROFILES[user.id]?.bio || null,
+    avatarKey: null,
+    role: user.id === event.organiserId ? 'organiser' : 'co-organiser',
+  }))
+}
+
 export async function setEventPublished(eventId, published) {
   await fakeDelay()
   const db = loadFreshDb()

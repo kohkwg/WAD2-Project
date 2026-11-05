@@ -13,6 +13,7 @@ import VenueMap from '../components/VenueMap.vue'
 import ShowHideButton from '../components/ui/ShowHideButton.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import EventGroups from '../components/community/EventGroups.vue'
+import EventHosts from '../components/rsvp/EventHosts.vue'
 import OnlineEventLink from '../components/rsvp/OnlineEventLink.vue'
 import { isGroup } from '../utils/groups.js'
 import { isEventFull } from '../utils/onlineEvents.js'
@@ -257,6 +258,10 @@ async function submitRsvp() {
     <!-- public context and updates come first in both DOM and mobile reading order. -->
     <div class="col-lg-8 order-1 event-public-details">
       <EventSummary v-if="event" :event="event" heading-tag="h1">
+        <!-- "Hosted by" the organiser and co-organisers, in the banner under the time -->
+        <template #hosts>
+          <EventHosts :event-id="eventId" />
+        </template>
         <!-- online events: one card in the "where" spot, green with the link once this viewer can open it -->
         <template #online-venue>
           <OnlineEventLink :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />
