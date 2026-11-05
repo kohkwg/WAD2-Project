@@ -455,12 +455,35 @@ async function showPane(pane) {
   }
 }
 
-function selectMapEvent(event, { scroll = true } = {}) {
+// Row clicks pass { scroll: false, toggle: true }: they open the card, or close it if it's already open
+function selectMapEvent(event, { scroll = true, toggle = false } = {}) {
+  if (toggle && selectedEventId.value === event.id) {
+    selectedEventId.value = null
+    return
+  }
+
   selectedEventId.value = event.id
 
   if (scroll && smallScreen.value) {
     showPane('map')
   }
+}
+
+// The open card also closes on a click outside the cards and the map/calendar (which pick events
+// themselves), or on Escape while focus is inside it (focus goes back to its thumbnail)
+function closeOpenCard(event) {
+  if (selectedEventId.value && !event.target.closest?.('.discovery-event-row, .discovery-map-column')) {
+    selectedEventId.value = null
+  }
+}
+
+function closeOpenCardOnEscape(event) {
+  if (event.key !== 'Escape' || !selectedEventId.value || !event.target.closest?.('.discovery-event-row.is-selected')) {
+    return
+  }
+
+  event.target.closest('.discovery-event-row').querySelector('.row-cover')?.focus()
+  selectedEventId.value = null
 }
 
 async function showList() {
@@ -686,6 +709,8 @@ onMounted(() => {
   smallMedia = window.matchMedia(MOBILE_QUERY)
   updateSmallScreen()
   smallMedia.addEventListener('change', updateSmallScreen)
+  document.addEventListener('click', closeOpenCard)
+  document.addEventListener('keydown', closeOpenCardOnEscape)
 
   rowObserver = new ResizeObserver(updateRowFade)
 
@@ -725,6 +750,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   smallMedia?.removeEventListener('change', updateSmallScreen)
+  document.removeEventListener('click', closeOpenCard)
+  document.removeEventListener('keydown', closeOpenCardOnEscape)
   rowObserver?.disconnect()
   clearInterval(clockTimer)
   stopAuth?.()

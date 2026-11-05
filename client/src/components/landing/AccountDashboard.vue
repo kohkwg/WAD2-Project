@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import '../../assets/design-baseline.css'
 import EventArtwork from '../EventArtwork.vue'
 import { getMyEventTeams } from '../../utils/eventTeam.js'
 import { USING_SUPABASE, getGroups, getGroupInvites, respondGroupInvite, getOrganiserEvents } from '@/utils/api'
@@ -278,6 +279,8 @@ const groupTitle = (g) => g.event?.title || 'Group'
 .dash-hero > * { position: relative; z-index: 1; }
 .dash-hero-copy { flex: 1 1 220px; min-width: 0; }
 .dash-hero-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Outline buttons on the coloured hero: a solid card-coloured fill and an ink edge (see design-baseline.css slim headers) */
+.dash-hero .btn-outline-secondary { --bs-btn-bg: var(--bookedz-surface); --bs-btn-color: var(--bookedz-ink); --bs-btn-border-color: var(--bookedz-ink); --bs-btn-hover-bg: color-mix(in srgb, var(--bookedz-fill) 18%, var(--bookedz-surface)); --bs-btn-hover-color: var(--bookedz-ink); --bs-btn-hover-border-color: var(--bookedz-fill); }
 .dash-avatar { overflow: hidden; display: grid; place-items: center; flex: none; width: 88px; height: 88px; border: 2px solid var(--bookedz-ink); border-radius: 50%; background: var(--bookedz-surface); color: var(--bookedz-primary-dark); font: 700 1.5rem var(--bookedz-heading); animation: pop-once var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
 .dino-face { width: 100%; height: 100%; object-fit: contain; }
 /* A dino shows whole, not cropped to the circle */
@@ -305,10 +308,12 @@ const groupTitle = (g) => g.event?.title || 'Group'
 .dash-attention-actions .btn { min-height: 40px; border-width: 2px; border-radius: 99px; }
 
 .dash-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
-.dash-card { display: grid; align-content: start; gap: 8px; padding: 20px; border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: var(--bookedz-surface); box-shadow: 6px 6px 0 var(--bookedz-teal); }
+.dash-card { display: flex; flex-direction: column; gap: 8px; padding: 20px; border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: var(--bookedz-surface); box-shadow: 6px 6px 0 var(--bookedz-teal); }
 .dash-next { box-shadow: 6px 6px 0 var(--bookedz-mango); }
 .dash-next-title { margin: 0; font: 700 1.15rem var(--bookedz-heading); overflow-wrap: anywhere; }
 .dash-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
+/* Each card's buttons sit at its bottom, so cards side by side line up */
+.dash-card > .dash-actions { margin-top: auto; padding-top: 6px; }
 .dash-actions .btn, .dash-hero-actions .btn { min-height: 44px; border-width: 2px; border-radius: 99px; }
 .dash-actions .btn-sm { min-height: 40px; }
 .btn-primary { border-color: var(--bookedz-ink); }
@@ -327,12 +332,14 @@ const groupTitle = (g) => g.event?.title || 'Group'
 .dash-carousel-nav .btn { min-width:44px; min-height:44px; border-width:2px; border-radius:99px; }
 .dash-carousel { display:flex; gap:16px; overflow-x:auto; padding:4px 4px 12px; scroll-snap-type:x mandatory; scrollbar-width:thin; }
 .dash-carousel:focus-visible { outline:3px solid var(--bookedz-focus); outline-offset:2px; border-radius:var(--db-r); }
-.dash-slide { flex:0 0 min(100%, 640px); scroll-snap-align:start; display:grid; grid-template-columns:180px minmax(0,1fr); align-items:center; gap:1.5rem; padding:16px; border:2px solid var(--bookedz-control-border); border-radius:20px; }
+.dash-slide { flex:0 0 min(100%, 640px); scroll-snap-align:start; display:grid; grid-template-columns:180px minmax(0,1fr); align-items:stretch; gap:1.5rem; padding:16px; border:2px solid var(--bookedz-control-border); border-radius:20px; }
 .dash-slide-group { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; padding:8px 12px; border:2px dashed var(--bookedz-control-border); border-radius:14px; background:var(--bookedz-mango-soft); color:var(--bookedz-ink); text-decoration:none; }
 .dash-slide-group:hover { color:var(--bookedz-ink); background:var(--bookedz-hover); }
-.dash-next-art { border-radius:18px; overflow:hidden; }
+.dash-next-art { align-self:center; border-radius:18px; overflow:hidden; }
 .dash-next-art :deep(svg) { display:block; width:100%; height:180px; }
-.dash-next-copy { min-width:0; display:grid; gap:.5rem; }
+.dash-next-copy { min-width:0; display:flex; flex-direction:column; gap:.5rem; }
+/* The buttons sit at the bottom of every slide, so they line up across the carousel */
+.dash-next-copy > .dash-actions { margin-top:auto; }
 .dash-countdown { margin:0; color:var(--bookedz-primary-dark); font-size:.8rem; font-weight:750; }
 .dash-next .dash-next-title { font-size:clamp(1.3rem,2.5vw,1.8rem); }
 .dash-saved-art { flex:none; width:48px; height:48px; border-radius:10px; overflow:hidden; }
@@ -340,13 +347,18 @@ const groupTitle = (g) => g.event?.title || 'Group'
 .dash-saved .dash-row-main { flex:1; }
 
 
-:global(:root[data-theme="dark"]) .dash-hero { border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill); }
-:global(:root[data-theme="dark"]) :is(.dash-card, .dash-attention-item) { border-color: var(--bookedz-border); }
-:global(:root[data-theme="dark"]) .dash-card { box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
-:global(:root[data-theme="dark"]) .dash-next { box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-mango) 60%, transparent); }
-:global(:root[data-theme="dark"]) .dash-attention-item { box-shadow: 4px 4px 0 color-mix(in srgb, var(--bookedz-pink) 55%, transparent); }
-:global(:root[data-theme="dark"]) .btn-primary { border-color: var(--bookedz-fill); }
-:global(:root[data-theme="dark"]) .dash-hero .dash-greeting { color: var(--bookedz-ink); }
+/* Dark mode: the soft tokens from design-baseline.css, like the other ticket pages */
+:root[data-theme="dark"] .dash-hero { background: var(--db-dark-hero); border-color: var(--db-dark-edge); box-shadow: 6px 6px 0 var(--db-dark-orange); }
+:root[data-theme="dark"] .dash-card, :root[data-theme="dark"] .dash-attention-item { border-color: var(--bookedz-border); }
+:root[data-theme="dark"] .dash-card { box-shadow: 6px 6px 0 var(--db-dark-teal); }
+:root[data-theme="dark"] .dash-next { box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-mango) 45%, transparent); }
+:root[data-theme="dark"] .dash-attention-item { box-shadow: 4px 4px 0 color-mix(in srgb, var(--bookedz-pink) 30%, transparent); }
+/* Rows that open something get a bright edge and the same warm hover as the buttons */
+:root[data-theme="dark"] .dash-row, :root[data-theme="dark"] .dash-slide-group { border-color: color-mix(in srgb, var(--bookedz-ink) 60%, var(--bookedz-surface)); }
+:root[data-theme="dark"] .dash-row:hover, :root[data-theme="dark"] .dash-slide-group:hover { background: color-mix(in srgb, var(--bookedz-fill) 22%, var(--bookedz-surface)); border-color: var(--bookedz-fill); }
+:root[data-theme="dark"] .dash-chip { background: color-mix(in srgb, var(--bookedz-fill) 30%, var(--bookedz-surface)); }
+:root[data-theme="dark"] .btn-primary { border-color: var(--bookedz-fill); }
+:root[data-theme="dark"] .dash-hero .dash-greeting { color: var(--bookedz-ink); }
 
 @media (hover: hover) {
   .dash-attention-item:hover { transform: translate(-2px, -3px) rotate(-.4deg); }

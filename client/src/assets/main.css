@@ -205,12 +205,25 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
   --bookedz-button-shadow-hover: 0 8px 24px rgb(255 138 91 / 36%);
   --bookedz-neutral-shadow: 0 3px 10px rgb(0 0 0 / 28%);
   --bookedz-neutral-shadow-hover: 0 7px 20px rgb(0 0 0 / 42%);
-
+  /* Soft dark look for the ticket pages (design-baseline.css and page components): big areas stay
+     plain dark with a soft orange corner glow, edges are a clean orange, hard shadows are 45–50% */
+  --db-dark-hero: radial-gradient(42rem 22rem at 0% 0%, color-mix(in srgb, var(--bookedz-fill) 18%, transparent), transparent 70%), var(--bookedz-surface);
+  --db-dark-edge: color-mix(in srgb, var(--bookedz-fill) 75%, var(--bookedz-surface));
+  --db-dark-orange: color-mix(in srgb, var(--bookedz-fill) 45%, transparent);
+  --db-dark-teal: color-mix(in srgb, var(--bookedz-teal) 50%, transparent);
 }
 :root { --bookedz-on-action: #1f2937; }
 :root[data-theme="dark"] .btn-primary { --bs-btn-color: var(--bookedz-on-action); --bs-btn-hover-color: var(--bookedz-on-action); --bs-btn-active-color: var(--bookedz-on-action); }
 :root[data-theme="dark"] .btn-outline-primary { --bs-btn-hover-color: var(--bookedz-on-action); --bs-btn-active-color: var(--bookedz-on-action); }
-:root[data-theme="dark"] .btn-outline-secondary { --bs-btn-color: var(--bookedz-muted); --bs-btn-border-color: var(--bookedz-control-border); --bs-btn-hover-bg: var(--bookedz-hover); --bs-btn-hover-color: var(--bookedz-ink); }
+/* Dark outline buttons: white text, a bright edge so they clearly read as buttons, a see-through
+   fill so they still read on coloured heroes, and a warm hover; disabled ones stay dim */
+:root[data-theme="dark"] .btn-outline-secondary {
+  --bs-btn-color: var(--bookedz-ink); --bs-btn-bg: color-mix(in srgb, var(--bookedz-surface) 55%, transparent);
+  --bs-btn-border-color: color-mix(in srgb, var(--bookedz-ink) 75%, var(--bookedz-surface));
+  --bs-btn-hover-bg: color-mix(in srgb, var(--bookedz-fill) 22%, var(--bookedz-surface)); --bs-btn-hover-border-color: var(--bookedz-fill); --bs-btn-hover-color: var(--bookedz-ink);
+  --bs-btn-active-bg: color-mix(in srgb, var(--bookedz-fill) 30%, var(--bookedz-surface)); --bs-btn-active-border-color: var(--bookedz-fill); --bs-btn-active-color: var(--bookedz-ink);
+  --bs-btn-disabled-color: var(--bookedz-muted); --bs-btn-disabled-bg: transparent; --bs-btn-disabled-border-color: var(--bookedz-control-border);
+}
 :root[data-theme="dark"] .text-success { color: var(--bookedz-success) !important; }
 :root[data-theme="dark"] .text-danger { color: var(--bookedz-danger) !important; }
 :root[data-theme="dark"] .form-control,:root[data-theme="dark"] .form-select { color: var(--bookedz-ink); background-color: var(--bookedz-surface); }

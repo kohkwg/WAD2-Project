@@ -41,6 +41,13 @@ Never reset a branch that holds unmerged work, and never force-push `dev`.
 components, motion and accessibility. In short:
 
 - Use the `--bookedz-*` tokens and check both light and dark themes; keep System/Light/Dark.
+  For the dark look use the soft tokens in `main.css` (`--db-dark-hero`, `--db-dark-edge`,
+  `--db-dark-orange`, `--db-dark-teal`), not solid orange or 60% shadows.
+- In a component's `<style scoped>`, write dark rules as `:root[data-theme="dark"] .card { … }`.
+  Don't wrap only the prefix in `:global(…)`: Vue keeps just the part inside it, so
+  `:global(:root[data-theme="dark"]) .card` styles the page root instead of the card. Don't end
+  such a rule with `:is(…)` either (Vue then scopes `:root`); list the selectors instead. To make
+  a rule truly global, wrap the whole selector: `:global(:root[data-theme="dark"] .card)`.
 - Show the event, time, venue and what the person can do before decoration. Use real RSVP,
   capacity and budget values, never invented numbers.
 - Motion uses the installed GSAP, Motion for Vue, Lenis and CSS. It responds to the person,
