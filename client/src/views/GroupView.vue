@@ -51,6 +51,8 @@ const isHost = computed(() => group.value?.myStatus === 'host')
 const isMember = computed(() => isHost.value || group.value?.myStatus === 'confirmed')
 const full = computed(() => group.value?.spotsLeft <= 0)
 const people = computed(() => (group.value ? [{ ...group.value.host, host: true }, ...group.value.members] : []))
+import { useMyDino } from '@/lib/myDino'
+const { dinoFor } = useMyDino()
 const initials = (name) => name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()
 const inviteUrl = computed(() => (group.value?.inviteToken ? `${location.origin}${router.resolve(`/g/${group.value.inviteToken}`).href}` : ''))
 const eventRsvpLabel = computed(() => (event.value?.requiresApproval ? 'Request a spot' : event.value?.spotsLeft > 0 ? 'RSVP' : 'Join waitlist'))
@@ -127,7 +129,7 @@ const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 
 
     <template v-else-if="group">
       <header class="group-hero slide-up-in">
-        <span class="group-avatar" aria-hidden="true">{{ initials(group.host.name) }}</span>
+        <span class="group-avatar" aria-hidden="true"><img v-if="dinoFor(group.host.id)" class="dino-face" :src="dinoFor(group.host.id)" alt="">{{ dinoFor(group.host.id) ? '' : initials(group.host.name) }}</span>
         <div class="min-w-0">
           <h1 class="page-title m-0">{{ isHost ? 'Your group' : `${group.host.name}’s group` }}</h1>
           <p class="text-meta text-secondary m-0">
@@ -161,7 +163,7 @@ const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 
         </div>
         <TransitionGroup tag="ul" name="person-in" class="list-unstyled m-0 group-people">
           <li v-for="person in people" :key="person.id" class="group-person">
-            <span class="group-mini" aria-hidden="true">{{ initials(person.name) }}</span>
+            <span class="group-mini" aria-hidden="true"><img v-if="dinoFor(person.id)" class="dino-face" :src="dinoFor(person.id)" alt="">{{ dinoFor(person.id) ? '' : initials(person.name) }}</span>
             <span>{{ person.name }}<span v-if="person.host" class="text-caption text-secondary"> · host</span></span>
           </li>
         </TransitionGroup>
@@ -234,6 +236,8 @@ const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 
 .group-hero { display: flex; align-items: center; gap: 14px; }
 .min-w-0 { min-width: 0; flex: 1; }
 .group-avatar,.group-mini { display: inline-grid; place-items: center; flex: none; border-radius: 50%; background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); font-weight: 700; }
+.dino-face { width: 100%; height: 100%; object-fit: contain; }
+.group-avatar,.group-mini { overflow: hidden; }
 .group-avatar { width: 56px; height: 56px; font-size: 1.1rem; }
 .group-mini { width: 32px; height: 32px; font-size: .75rem; }
 .group-badge { flex: none; padding: 3px 10px; border-radius: 99px; background: var(--bookedz-hover); color: var(--bookedz-muted); font-size: var(--text-caption); font-weight: 700; }

@@ -47,6 +47,8 @@ onBeforeUnmount(() => stopListening())
 
 const name = computed(() => profile.value?.name || session.value?.email?.split('@')[0] || 'there')
 const firstName = computed(() => name.value.split(/\s+/)[0])
+import { useMyDino } from '@/lib/myDino'
+const { mySrc: myDinoSrc } = useMyDino()
 const initials = computed(() => name.value.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase())
 const now = Date.now()
 const upcoming = computed(() => rsvps.value.filter((r) => ['confirmed', 'pending', 'waitlisted', 'offered'].includes(r.status) && new Date(r.event?.endTime || r.event?.startTime) > now))
@@ -88,7 +90,7 @@ function signedIn() {
 
     <section v-else class="account" aria-labelledby="account-title">
       <header class="account-head">
-        <span class="account-avatar" aria-hidden="true">{{ initials }}</span>
+        <span class="account-avatar" aria-hidden="true"><img v-if="myDinoSrc" class="dino-face" :src="myDinoSrc" alt="">{{ myDinoSrc ? '' : initials }}</span>
         <div class="min-w-0">
           <p class="account-greeting">{{ greeting }},</p>
           <h1 id="account-title" class="page-title m-0">{{ firstName }}</h1>
@@ -154,7 +156,8 @@ function signedIn() {
 .landing-checking { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 40vh; color: var(--bookedz-muted); }
 .account { max-width: 880px; margin: 0 auto; display: grid; gap: 18px; }
 .account-head { display: flex; align-items: center; gap: 16px; }
-.account-avatar { display: grid; place-items: center; flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); font: 700 1.4rem var(--bookedz-heading); animation: pop-once var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
+.dino-face { width: 100%; height: 100%; object-fit: contain; }
+.account-avatar { overflow: hidden; display: grid; place-items: center; flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); font: 700 1.4rem var(--bookedz-heading); animation: pop-once var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
 .min-w-0 { min-width: 0; }
 .account-greeting { margin: 0; color: var(--bookedz-muted); }
 .account-email { margin: 2px 0 0; color: var(--bookedz-muted); overflow-wrap: anywhere; }
