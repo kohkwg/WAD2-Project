@@ -15,10 +15,10 @@ test('demo account sees its summary, and Bookedz logos return home', async ({ pa
   await expect(page.locator('.hero-map, .discovery-hero')).toHaveCount(0)
   await expect(page.locator('main')).toHaveCount(1)
   for (const scheme of ['light', 'dark']) {
-    await page.getByLabel('Color theme').selectOption(scheme)
+    await page.evaluate(async value => { const { setTheme } = await import('/src/lib/theme.js'); setTheme(value) }, scheme)
     for (const width of [375, 575, 768, 1280]) {
       await page.setViewportSize({ width, height: 900 })
-      await expect(page.locator('.account-links').getByRole('link', { name: 'Discover events' })).toBeVisible()
+      await expect(page.locator('.dash-hero-actions').getByRole('link', { name: 'Discover events' })).toBeVisible()
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
       if (width === 375 || width === 1280) await page.screenshot({ path: testInfo.outputPath(`landing-${scheme}-${width}.png`) })
     }
@@ -66,7 +66,7 @@ test('signed-out live visitors get the sign-in form on the landing page', async 
   await page.getByRole('button',{name:'Log in',exact:true}).click()
   await expect(page.getByLabel('Name',{exact:true})).toHaveCount(0)
   for (const scheme of ['light','dark']) {
-    await page.getByLabel('Color theme').selectOption(scheme)
+    await page.evaluate(async value => { const { setTheme } = await import('/src/lib/theme.js'); setTheme(value) }, scheme)
     for (const width of [375,575,768,1280]) {
       await page.setViewportSize({width,height:900})
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)

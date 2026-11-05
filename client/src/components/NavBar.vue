@@ -204,6 +204,9 @@ function resetDemo() {
 .nav-profile--demo:hover { background: transparent; color: var(--bookedz-muted); }
 .nav-avatar-dino { width: 100%; height: 100%; object-fit: contain; }
 .nav-avatar { display: grid; overflow: hidden; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--bookedz-glass-active); color: var(--bookedz-primary-dark); }
+/* A dino shows whole, not cropped to the circle */
+.nav-avatar:has(.nav-avatar-dino) { overflow: visible; background: none; }
+.nav-avatar-dino { transform: scale(1.3); }
 .nav-account-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
 .nav-auth-error { flex-basis: 100%; margin: 0; color: var(--bookedz-danger); font-size: .875rem; text-align: right; }
 .navbar-toggler { width: 44px; height: 44px; padding: 9px; border-color: var(--bookedz-control-border); border-radius: 12px; color: var(--bookedz-ink); }

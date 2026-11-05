@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import RsvpView from '../views/RsvpView.vue'
 import MyRsvpsView from '../views/MyRsvpsView.vue'
 import OrganiserEventsView from '../views/OrganiserEventsView.vue'
-import ManageRsvpsView from '../views/ManageRsvpsView.vue'
 import ManageEventView from '../views/ManageEventView.vue'
 import { USING_SUPABASE, getCurrentUser } from '../utils/api.js'
 import { feature1Routes } from './feature1Routes'
@@ -60,7 +59,8 @@ const router = createRouter({
     { path: '/organiser/events', component: OrganiserEventsView, meta: { title: 'My Events' } },
     { path: '/organiser/events/new', component: () => import('../views/NewEventView.vue'), meta: { title: 'Create event' } },
     { path: '/j/:token', redirect: to => `/g/${to.params.token}` },
-    { path: '/organiser/events/:id/rsvps', component: ManageRsvpsView, meta: { title: 'Manage RSVPs' } },
+    // The guest list now lives in Manage event; older links keep their ?status filter
+    { path: '/organiser/events/:id/rsvps', redirect: (to) => ({ path: `/organiser/events/${to.params.id}/manage`, query: { ...to.query, tab: 'rsvps' } }) },
     { path: '/organiser/events/:id/manage', component: ManageEventView, meta: { title: 'Manage event' } },
     // Editing moved into Manage event; older links and bookmarks still land there
     { path: '/organiser/events/:id/edit', redirect: (to) => ({ path: `/organiser/events/${to.params.id}/manage`, query: { tab: 'edit' } }) },

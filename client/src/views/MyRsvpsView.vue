@@ -264,7 +264,7 @@ async function cancel(rsvpId) {
   <div class="my-rsvps-page">
     <header class="rsvps-heading">
       <div><h1 class="page-title">My RSVPs</h1><p>Your plans, saved favourites and good times to come.</p></div>
-      <span class="header-star" aria-hidden="true">✳</span>
+      <span class="header-star" aria-hidden="true">★</span>
     </header>
     <SkeletonList v-if="loading" class="mt-4" :count="3" label="Loading your RSVPs…" />
     <template v-else>
