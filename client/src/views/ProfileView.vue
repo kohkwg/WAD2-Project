@@ -13,6 +13,7 @@ import PasswordInput from '@/components/ui/PasswordInput.vue';
 import DeleteAccount from '@/components/profile/DeleteAccount.vue';
 import DinoPickerDialog from '@/components/profile/DinoPickerDialog.vue';
 import { dinoById } from '@/lib/dinos';
+import { themePreference, setTheme } from '@/lib/theme';
 defineProps({
   embedded: {
     type: Boolean,
@@ -56,6 +57,8 @@ const dinoSaving = ref(false);
 const dinoError = ref('');
 
 const dinoDialog = ref(null);
+
+const THEME_OPTIONS = [{ id: 'light', label: 'Light' }, { id: 'dark', label: 'Dark' }];
 // username checking
 
 const usernameError = ref('');
@@ -923,6 +926,25 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
+      <div class="profile-block">
+        <fieldset class="profile-theme">
+          <legend class="profile-block-title">Theme</legend>
+          <div class="theme-options">
+            <template v-for="option in THEME_OPTIONS" :key="option.id">
+              <input
+                :id="`theme-${option.id}`"
+                type="radio"
+                class="btn-check"
+                name="profile-theme"
+                :value="option.id"
+                :checked="themePreference === option.id"
+                @change="setTheme(option.id)"
+              />
+              <label :for="`theme-${option.id}`" class="btn btn-outline-secondary btn-sm">{{ option.label }}</label>
+            </template>
+          </div>
+        </fieldset>
+      </div>
     </form>
 
     <div
@@ -1139,7 +1161,38 @@ onBeforeUnmount(() => {
 /* the last block sits on the card's own padding, so the bottom gap matches the top */
 
 .profile-form > .profile-block:last-child {
+  /* same space above (line to row) as below (row to card edge), so the row is vertically centred */
+  padding-top: clamp(1.1rem, 4vw, 2rem);
   padding-bottom: 0;
+}
+
+.profile-theme {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.profile-theme .profile-block-title {
+  float: none;
+  width: auto;
+}
+
+.theme-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.theme-options .btn-check:checked + .btn {
+  border-color: #267a56;
+  background: #267a56;
+  color: #fff;
+}
+
+.theme-options .btn-check:focus-visible + .btn {
+  outline: 3px solid var(--bookedz-focus);
+  outline-offset: 2px;
 }
 
 .profile-block-title {

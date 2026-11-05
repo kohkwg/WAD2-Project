@@ -4,7 +4,6 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import dinoMark from '@/assets/brand/dino-mark.png';
 import donutO from '@/assets/brand/dino-donut-o.png';
 import { dinoById } from '@/lib/dinos';
-import { themePreference, setTheme } from '../lib/theme.js';
 import { USING_SUPABASE, getCurrentUser, onAuthChange, signOut, resetDemoData } from '../utils/api.js';
 
 const SIDEBAR_KEY = 'bookedz-sidebar';
@@ -23,25 +22,6 @@ const ICONS = {
   rsvps: 'M4 6.5h16V20H4zM4 11h16M8 3.5v5M16 3.5v5',
   events: 'M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4zM14 6v12'
 };
-// icons for the light and dark themes.
-
-const THEME_ICONS = {
-  light: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41',
-  dark: 'M12 3a9 9 0 1 0 9 9A9 9 0 0 1 12 3Z'
-};
-// set the next theme when the theme button is clicked: light and dark swap.
-
-const THEME_CYCLE = {
-  light: {
-    label: 'Light',
-    next: 'dark'
-  },
-  dark: {
-    label: 'Dark',
-    next: 'light'
-  }
-};
-
 const route = useRoute();
 
 const router = useRouter();
@@ -131,23 +111,6 @@ function toggleSidebar() {
   } catch {
     // private mode: not remembered
   }
-}
-
-// theme button: switches between light and dark
-
-const themeLabel = computed(() => THEME_CYCLE[themePreference.value].label);
-
-const themeIconPath = computed(() => THEME_ICONS[themePreference.value]);
-
-// change the theme: light ⇄ dark.
-
-const themeCycleLabel = computed(() => {
-  const now = THEME_CYCLE[themePreference.value];
-  return `Theme: ${now.label}. Switch to ${THEME_CYCLE[now.next].label}`;
-});
-
-function cycleTheme() {
-  setTheme(THEME_CYCLE[themePreference.value].next);
 }
 
 // listen for sign-in and sign-out changes.
@@ -320,47 +283,6 @@ function resetDemo() {
           <path :d="ICONS.collapse" /></svg>
         </button>
       </div>
-
-      <ul class="sidebar-links sidebar-links--secondary">
-        <li>
-          <!-- collapsed rail only: one button switching between light and dark.
-               the button below covers every other layout -->
-          <button
-            type="button"
-            class="side-link sidebar-theme-cycle"
-            :data-label="`Theme: ${themeLabel}`"
-            :aria-label="themeCycleLabel"
-            @click="cycleTheme"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path :d="themeIconPath" /></svg>
-          </button>
-
-          <!-- expanded: the icon and "theme" switch between light and dark -->
-          <div class="theme-control sidebar-theme">
-            <button
-              type="button"
-              class="sidebar-theme-toggle"
-              :aria-label="themeCycleLabel"
-              @click="cycleTheme"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path :d="themeIconPath" />
-              </svg>
-              <span>Theme</span>
-              <span class="sidebar-theme-state">{{ themeLabel }}</span>
-            </button>
-          </div>
-        </li>
-      </ul>
 
       <div v-if="USING_SUPABASE && hasSession" class="sidebar-account">
         <RouterLink to="/profile" class="nav-profile" aria-label="Your profile">
@@ -597,11 +519,6 @@ function resetDemo() {
 .sidebar-divider {
   flex: 0 0 auto;
   margin-top: 6px;
-  border-top: 1px solid var(--bookedz-border);
-}
-
-.sidebar-links--secondary {
-  padding-top: 8px;
 }
 
 .side-link {
@@ -762,69 +679,7 @@ function resetDemo() {
   min-width: 0;
 }
 
-/* theme button in the sidebar */
-
-.theme-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  margin: 0;
-  color: var(--bookedz-muted);
-}
-
-.theme-control svg {
-  width: 18px;
-  height: 18px;
-}
-
-.sidebar-theme {
-  display: flex;
-  gap: 4px;
-  min-height: 48px;
-  padding: 0 12px 0 0;
-  font-size: 0.875rem;
-}
-
-/* icon + "theme" is one button filling the row, styled like the links above */
-
-.sidebar-theme-toggle {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  min-height: 48px;
-  padding: 0 8px 0 16px;
-  border: 0;
-  border-radius: 14px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  transition: background-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.sidebar-theme-toggle:hover {
-  background: var(--bookedz-glass-hover);
-  color: var(--bookedz-ink);
-}
-
-.sidebar-theme svg {
-  flex: 0 0 22px;
-  width: 22px;
-  height: 22px;
-}
-
-.sidebar-theme-state {
-  margin-left: auto;
-  color: var(--bookedz-muted);
-  font-size: 0.8125rem;
-}
-
-.sidebar-account :focus-visible,
-.sidebar-theme-toggle:focus-visible {
+.sidebar-account :focus-visible {
   outline: 3px solid var(--bookedz-primary-dark);
   outline-offset: 2px;
 }
@@ -1031,13 +886,6 @@ function resetDemo() {
   display: none;
 }
 
-.sidebar-theme-cycle {
-  display: none;
-  width: 100%;
-  border: 0;
-  background: transparent;
-}
-
 @media (min-width: 992px) {
   /* top stays auto: the static position is the divider line,
      and the -50% shift centres it there */
@@ -1170,12 +1018,6 @@ function resetDemo() {
   }
   .is-collapsed .sidebar-collapse svg {
     transform: rotate(180deg);
-  }
-  .is-collapsed .sidebar-theme {
-    display: none;
-  }
-  .is-collapsed .sidebar-theme-cycle {
-    display: flex;
   }
   .is-collapsed .sidebar-account .nav-profile {
     justify-content: center;
