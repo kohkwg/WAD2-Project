@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
 
+// These checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// unless someone expanded it (docs/decisions.md, 5 November), so start from that remembered choice.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { try { localStorage.setItem('bookedz-sidebar', 'expanded') } catch { /* storage blocked */ } }) })
+
 // The landing hero with search and the island map was removed (DESIGN.md, Landing), so these
 // hero journeys are skipped; the same filters are covered on Discover.
 test.skip('landing search, interest shortcuts and card navigation retain browsing state', async ({ page }, testInfo) => {

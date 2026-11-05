@@ -3,7 +3,7 @@
 The single source of truth for how Bookedz looks, reads and behaves. If the app and
 this document disagree, one of them is wrong: fix the app or update this document in
 the same change. Backend, registration, weather and privacy rules live in
-[decisions](../../decisions.md); image and font licences live in [assets](assets.md).
+[decisions](../decisions.md); image and font licences live in [assets](assets.md).
 
 This document replaces the former `design-system.md`, `design-review.md` and
 `implementation-plan.md` (4 November 2026). Their dated evidence is summarised in
@@ -159,12 +159,14 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 
 - **Navigation:** sidebar on desktop, a floating frosted top bar where needed, a bottom tab
   bar on phones for signed-in and demo users. Personal links follow the session; Discover
-  is public. The menu closes on route change or Escape. From 992px a **Collapse sidebar**
-  button (a round chevron on the sidebar's right edge, on the divider line, labelled "Collapse" /
-  "Expand" on hover or focus) turns it into a 76px icon rail (Discover, Community, My
-  RSVPs, My Events, Theme, account); each icon's name shows as a tooltip on hover or
-  keyboard focus, and the page widens with it. The choice is saved as `bookedz-sidebar`; until
-  someone chooses, it starts collapsed below 1200px and expanded above.
+  is public. The menu closes on route change or Escape. Below 992px the sidebar is a drawer
+  opened from ☰ (phones also have the bottom tab bar). From 992px (Bootstrap lg, xl and xxl) it
+  **starts as a 76px icon rail** (Discover, Community, My RSVPs, My Events, Theme, account);
+  each icon's name shows as a tooltip on hover or keyboard focus. The **Expand sidebar** button
+  (a round chevron on the sidebar's right edge, on the divider line, labelled "Expand" /
+  "Collapse" on hover or focus) opens the full 240px sidebar, which pushes the page over rather
+  than covering it. The choice is saved as `bookedz-sidebar` and remembered on reload; there is
+  no expand on hover.
 - **Theme:** Auto (follows the OS) / Light / Dark, saved as `bookedz-color-theme`. The collapsed desktop rail shows one icon button that cycles Auto → Light → Dark.
   Bootstrap's `data-bs-theme`, native controls, map tiles and the browser colour follow it.
 - **Breakpoints:** phones below 768px (Bootstrap md), tablets 768 to 991px, desktop 992px
@@ -182,6 +184,19 @@ see an account summary: greeting and name, email, counts (going, all upcoming RS
 a waitlist offer if one is open, their next confirmed plan, their interests, and links to
 Discover, My RSVPs and Community (plus Sign out in the live app). The demo account always
 sees the summary, with a note that it is a sample account stored in this browser.
+
+**Signed-out motion (5 November):** `useLandingMotion.js` (GSAP, ScrollTrigger, SplitText,
+DrawSVG) reveals the headline word by word, draws the squiggle under "see you there." and
+assembles the hero scene, then fades or staggers each section in once as it scrolls into
+view. From 768px the hero has gentle scroll parallax; with a mouse, the hero card leans
+toward the pointer and feature cards lift on hover. The hero card (`LandingNextUp.vue`, Motion
+for Vue) opens on Dino and shuffles through up to four real upcoming official events, with
+pause and next buttons; it pauses on hover, focus, off-screen or in a background tab, and
+starts paused with reduced motion. Clicking a hero dino makes it hop and say hi (pointer-only
+decoration). The landing nav tightens once scrolled and a pill marks the section in view.
+Every loop is finite, focus finishes any reveal it lands in, the sign-in form never animates,
+and reduced motion shows everything in place. Signing in from the form plays a short avatar
+hop and sparkle burst on the account summary.
 
 ### Discover (`/discover`)
 Order: search → category chips (with result count and sort) → timeline beside a OneMap
@@ -302,9 +317,16 @@ ease-out for most movement and a stamp ease only for one-off feedback.
 - **Bars from the edge:** the phone RSVP bar slides up (`.slide-up-in`); the bulk approve
   bar eases in.
 - **Press feedback:** buttons and chips settle slightly when pressed.
-- **GSAP** handles scoped entrances and section reveals; **Lenis** smooth scrolling only for
+- **GSAP** handles scoped entrances and section reveals (on the signed-out landing also
+  SplitText for the headline and DrawSVG for its squiggle); **Lenis** smooth scrolling only for
   desktop wheel input outside forms, maps, editors and dialogs; **Motion for Vue** springs
-  map previews.
+  map previews, the landing hero card's shuffle and the landing dino hop.
+- **Placement vs motion:** where GSAP animates an element, its resting tilt or offset uses the
+  CSS `rotate`/`translate` properties (GSAP folds them in), hover effects use `translate`,
+  `rotate` and `scale` rather than `transform`, and anything else animating it sits on a
+  wrapper or child element.
+- **Loops** stop by themselves or have pause controls, and pause off-screen and in background
+  tabs. Keyboard focus finishes any reveal it lands in.
 - Motion answers the user or shows what changed. It never blocks an action or hides data,
   and everything turns off with `prefers-reduced-motion`.
 
@@ -353,6 +375,7 @@ config), never against someone's live dev server.
 | 25 Oct | Profile and Discover owner refinement (Aishani) | `f1-profile-design.spec.js` in both themes at four widths |
 | 3 Nov | Map beside timeline, Hawker Glow tokens, OneMap street map | Discover workspace, state and browse unit tests; manual check at four widths |
 | 4 Nov | Site polish, responsive UI, Gregory's Discover cleanup, design consistency pass | Targeted unit tests and Discover/RSVP/organiser browser specs; remaining failures pre-date these changes |
+| 5 Nov | Signed-out landing motion (Denzel) | Headless Chromium on an owned demo server at 375/575/768/991/1280px, light and dark, reduced motion and keyboard; `landing-page.spec.js` 3/3. Sign-in celebration not verified |
 
 **Known limits:** Safari and real iOS devices, physical camera and GPS, native view
 transitions in unsupported browsers, and signed-in hosted write flows are verified
@@ -361,6 +384,13 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **5 Nov 2026:** The sidebar starts as the icon rail at every laptop and desktop width and only
+  expands when someone asks; the choice is remembered (Denzel).
+- **5 Nov 2026:** The signed-out landing page moves (Denzel): word-by-word headline with a drawn
+  squiggle, an assembling hero with parallax and a pointer-tilted card that shuffles real
+  upcoming events, dinos that hop, scroll reveals, feature-card hover, a section pill in the
+  landing nav and an avatar celebration after signing in. The landing nav now sticks below
+  the app top bar on desktop.
 - **5 Nov 2026:** Discover keeps Vivienne's ticket pass, with more space between rows and days.
   Dark mode on every ticket page, Discover and the event RSVP, sign-in and ticket pages
   included, keeps big areas plain and accents clean: a dark hero with a soft orange

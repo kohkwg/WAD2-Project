@@ -22,11 +22,12 @@ const isOnDiscover = computed(() => route.path === '/discover')
 const isMyEvents = computed(() => route.path.startsWith('/organiser/events') && route.path !== '/organiser/events/new')
 // Phones get a bottom tab bar for signed-in (and demo) users, except on bare invite pages
 const showBottomTabs = computed(() => hasSession.value && !route.path.startsWith('/j/'))
-// Laptops and desktops: the sidebar collapses to an icon rail. The choice is remembered;
-// until someone picks, it starts collapsed below 1200px. main.css reads data-sidebar for the width.
+// Laptops and desktops (992px and up): the sidebar starts as an icon rail and only expands when
+// someone uses the toggle; that choice is remembered. Below 992px it is a drawer and this has no
+// effect. main.css reads data-sidebar for the width.
 const SIDEBAR_KEY = 'bookedz-sidebar'
 const readSidebar = () => { try { return localStorage.getItem(SIDEBAR_KEY) } catch { return null } }
-const collapsed = ref(readSidebar() ? readSidebar() === 'collapsed' : typeof window !== 'undefined' && window.innerWidth < 1200)
+const collapsed = ref(readSidebar() !== 'expanded')
 watch(collapsed, (value) => { document.documentElement.dataset.sidebar = value ? 'collapsed' : 'expanded' }, { immediate: true })
 function toggleSidebar() {
   collapsed.value = !collapsed.value

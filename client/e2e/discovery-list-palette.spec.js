@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
 
+// These checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// unless someone expanded it (docs/decisions.md, 5 November), so start from that remembered choice.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { try { localStorage.setItem('bookedz-sidebar', 'expanded') } catch { /* storage blocked */ } }) })
+
 const palette = {
   light: ['#fff8f1','#ffffff','#1f2937','#636975','#ff6b35','#9a3412','#ffe4d6','#fde7b0','#14b8a6','#ec4899','#e9ded3'],
   dark: ['#1c1917','#292524','#fafaf9','#a8a29e','#ff8a5b','#ffb79a','#4a2b1f','#5b4210','#2dd4bf','#f472b6','#57534e'],

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { createSeedData } from '../src/utils/mockData.js'
 
 // Saved events are one journey: save on Discover → the toast links to My RSVPs → Saved,
-// a Saved chip filters Discover, and each saved card leads to an RSVP (decisions.md, 5 November 2026).
+// a Saved chip filters Discover, and each saved card leads to an RSVP (docs/decisions.md, 5 November 2026).
 
 // Discover in live mode, with a small in-browser Supabase stand-in: events_with_counts honours
 // .in('id', …) and user_event_preferences reflects saves made through the recommendations API.

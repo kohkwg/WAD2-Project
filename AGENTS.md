@@ -2,9 +2,9 @@
 
 ## Read first
 
-Read [README](README.md), [decisions](decisions.md), [status/timeline](status.md)
-and [testing](docs/testing.md) before editing. These replace the dated handoffs
-and merge/Feature 4 reports. Original supplied resources remain unchanged/local
+Read [README](README.md), [decisions](docs/decisions.md), [status/timeline](docs/status.md),
+[testing](docs/testing.md) and [contributing](docs/contributing.md) before editing. These
+replace the dated handoffs and merge/Feature 4 reports. Original supplied resources remain unchanged/local
 under `docs/resources/`; normal clones do not require Restricted PDFs, private
 notes, generated graphs or installed skills to build/test.
 
@@ -14,8 +14,8 @@ UI), Denzel (F4 organiser operations/weather), Timothy (F5 backend/auth/database
 infrastructure), Vivienne (F6 venues/floor plans/programme).
 
 Denzel authorised Feature 4 work on 16 October and reviewed frontend fixes on
-17 October. Preserve README's change history and library credits;
-teammates retain their contributions. Dated approvals in decisions.md are not
+17 October. Preserve the [change history](docs/changelog.md) and README's library credits;
+teammates retain their contributions. Dated approvals in docs/decisions.md are not
 blanket permission for later Git/cloud mutations.
 
 ## Contracts
@@ -31,13 +31,13 @@ blanket permission for later Git/cloud mutations.
 - Feature 4 uses focused components, owner-only private tools, exact integer SGD
   cents, public announcements and one-way NEA-authorised venue switching. The
   trusted commit RPC is service-role-only; manual weather area is display-only.
-  Detailed adopted behaviour is in decisions.md; source owns exact API signatures.
+  Detailed adopted behaviour is in docs/decisions.md; source owns exact API signatures.
 - F6 plan/programme writes use actual organiser roles, account-linked placements
   remain team-only, and the current bucket supports public finished images.
   Do not represent public R2 objects as private storage.
 - Express 5/CommonJS handles health, recommendations and signed image uploads;
   server scripts load `.env`. Supabase migrations and the Edge Function are deployed
-  to Bookerz as recorded in status.md; verify hosted history before new SQL work.
+  to Bookerz as recorded in docs/status.md; verify hosted history before new SQL work.
 - Use props down/events up, stable IDs, computed display state and guarded async
   route/lifecycle work. Preserve drafts, retry/cancel semantics, keyboard access,
   focus, reduced motion and responsive reflow.
@@ -63,8 +63,9 @@ blanket permission for later Git/cloud mutations.
   For docs check paths, anchors, whitespace and resource preservation. Report actual
   results; Node now runs waitlist tests, and neither package has a lint script.
 - Update decisions for actual human decisions, status for dated delivery/evidence,
-  testing for changed commands, and README change history and library credits for library
-  changes. Don't create another handoff or duplicate historical report by default.
+  testing for changed commands, the change history (docs/changelog.md) for authorship,
+  and README's credits for library changes. Keep the README a submission-ready overview,
+  not a log. Don't create another handoff or duplicate historical report by default.
 
 ## Optional local tools
 
