@@ -9,6 +9,11 @@ the [README](../README.md#credits-and-licences). Original supplied material stay
 
 ## Decision log, newest first
 
+5 November 2026 — Denzel, signed-out navigation: no empty top bar holding only Sign in. From 992px
+Sign in sits at the bottom of the sidebar, where the account appears once signed in; smaller screens
+keep it in the top bar beside the menu button. Any sign-in link opens the home page at its sign-in
+section, and signing in returns to the page the person came from.
+
 5 November 2026 — Denzel, Discover search suggestions: suggest event titles, venues, categories
 and keywords (including from descriptions) as people type, worked out in the browser from the
 events Discover already reads, with no new dependency, table or Express route. Typo correction,

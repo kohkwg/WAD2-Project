@@ -38,6 +38,23 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — signed-out Sign in placement and return
+
+In live mode the top bar is now hidden from 992px for signed-out visitors too, with Sign in at the
+bottom of the sidebar (icon only on the collapsed rail). `/login` and the router's sign-in guard now
+open `/#join-dino`, and the Sign in links pass the current page as `redirect`.
+
+Evidence: new `signed-out-sign-in.spec.js` 3/3 and `community-public.spec.js` pass on an owned demo
+server (5198), using a mocked account. Headless Chromium on the live app, signed out (5195): Discover
+at 1280px has no top bar and shows the sidebar Sign in; a real event's "Sign in to RSVP" reaches
+`/?redirect=…#join-dino` with the email field focused and the form in view; screenshots checked; no
+page errors. `landing-page.spec.js`'s old `/login` URL check was updated. Still failing, none at a
+step this changes: `landing-page` "Your next plan" (no such heading on the dashboard now),
+`design-polish` live navigation ("Create event" link), and 5 `navbar-account` cases (the retired theme
+drop-down and others); not compared against an untouched copy. Not done: a real sign-in returning to
+the page (human-only; covered by the mock), an email-confirmation sign-up, which stays on the sign-in
+form rather than returning, dark theme for the new sidebar button, full suites, a build, commit or push.
+
 ### 5 November — Discover search suggestions
 
 Typing two or more characters in the Discover search box now lists up to six suggestions: event

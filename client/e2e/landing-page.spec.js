@@ -86,5 +86,5 @@ test('signed-out live visitors get the sign-in form on the landing page', async 
 
 test('old /login links open the landing page and keep where to go next', async ({ page }) => {
   await page.goto('/login?redirect=/my-rsvps')
-  await expect(page).toHaveURL(/:\d+\/\?redirect=(%2F|\/)my-rsvps$/)
+  await expect(page).toHaveURL(/:\d+\/\?redirect=(%2F|\/)my-rsvps#join-dino$/)
 })

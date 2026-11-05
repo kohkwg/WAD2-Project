@@ -12,6 +12,10 @@ the day their status entry gives.
 
 ## 5 November 2026
 
+On 5 November 2026, at Denzel's request, we moved the signed-out Sign in button from an otherwise
+empty top bar into the sidebar on laptops and desktops, and made every sign-in route open the home
+page's sign-in section and return to the previous page afterwards (`NavBar.vue`, `router/index.js`).
+
 On 5 November 2026, at Denzel's request, we added search suggestions to Discover
 (`lib/searchSuggestions.js`, with the list in Aishani's `EventFilters.vue` and its wiring in
 `DiscoverView.vue`), and changed the live search so text containing a comma or bracket still matches.

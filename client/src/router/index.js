@@ -45,7 +45,7 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: () => import('../views/LandingView.vue'), meta: { title: 'Welcome' } },
     // Signing in happens on the landing page; /login links keep working
-    { path: '/login', redirect: to => ({ path: '/', query: to.query }) },
+    { path: '/login', redirect: to => ({ path: '/', query: to.query, hash: '#join-dino' }) },
     // Opened from the password-reset email; public, because the link signs them in itself
     { path: '/reset-password', component: () => import('../views/ResetPasswordView.vue'), meta: { title: 'Reset password' } },
     { path: '/events', redirect: to => ({ path: '/discover', query: to.query, hash: to.hash }) },
@@ -114,7 +114,7 @@ router.beforeEach(async (to) => {
   const user = await getCurrentUser()
   // Discovery and event pages stay public, except check-in pages that are marked requiresAuth
   if (!to.meta.requiresAuth && (to.path === '/discover' || to.path === '/community' || /^\/groups\/[^/]+\/?$/.test(to.path) || to.path === '/events' || to.path.startsWith('/events/'))) return true
-  if (!user) return { path: '/', query: { redirect: to.fullPath } }
+  if (!user) return { path: '/', query: { redirect: to.fullPath }, hash: '#join-dino' }
   return true
 })
 

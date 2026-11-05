@@ -16,6 +16,7 @@ import {
 const SIDEBAR_KEY = 'bookedz-sidebar'
 // SVG shapes used for the navigation icons.
 const ICONS = {
+  signIn: 'M10 17l5-5-5-5M15 12H3M15 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4',
   collapse: 'M14.5 7 9.5 12l5 5',
   // A door with an arrow leaving it, inside a circle
   signOut:
@@ -51,6 +52,8 @@ const menuOpen = ref(false)
 const menuToggle = ref(null)
 const user = ref(null)
 const signingOut = ref(false)
+// Opens the sign-in section of the home page, then returns here once signed in
+const signInLink = computed(() => ({ path: '/', query: { redirect: route.fullPath }, hash: '#join-dino' }))
 const authError = ref('')
 
 // Show the user's avatar and account name.
@@ -364,6 +367,15 @@ function resetDemo() {
         <p v-if="authError" v-dismissible class="nav-auth-error" role="alert">{{ authError }}</p>
       </div>
 
+      <!-- Signed out from 992px: the top bar is hidden there, so Sign in sits where the account would.
+           Smaller screens keep it in the top bar beside the menu button. -->
+      <div v-else-if="USING_SUPABASE && route.path !== '/'" class="sidebar-account sidebar-account--signed-out">
+        <RouterLink :to="signInLink" class="side-link sidebar-sign-in" data-label="Sign in" active-class="" exact-active-class="">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.signIn" /></svg>
+          <span class="side-label">Sign in</span>
+        </RouterLink>
+      </div>
+
       <!-- Demo mode has no profile page, but still says whose data is on screen. -->
       <div v-else-if="!USING_SUPABASE && user" class="sidebar-account">
         <p class="nav-profile nav-profile--demo m-0">
@@ -382,7 +394,7 @@ function resetDemo() {
       class="app-topbar"
       :class="{
         'has-tabs': showBottomTabs,
-        'app-topbar--minimal': USING_SUPABASE && (hasSession || route.path === '/'),
+        'app-topbar--minimal': USING_SUPABASE,
       }"
     >
       <!-- Own icon: Bootstrap's .navbar-toggler-icon only has an image inside a .navbar
@@ -411,7 +423,7 @@ function resetDemo() {
       <div class="nav-account">
         <RouterLink
           v-if="USING_SUPABASE && !hasSession && route.path !== '/'"
-          to="/#join-dino"
+          :to="signInLink"
           class="nav-sign-in"
         >
           Sign in
@@ -613,6 +625,24 @@ function resetDemo() {
   margin-top: auto;
   padding-top: 18px;
   border-top: 1px solid var(--bookedz-border);
+}
+
+/* Same fill as the top bar's Sign in button */
+.side-link.sidebar-sign-in {
+  background: var(--bookedz-primary);
+  color: var(--bookedz-on-action);
+  font-weight: 650;
+}
+
+.side-link.sidebar-sign-in:hover {
+  background: var(--bookedz-primary-hover);
+  color: #fff;
+}
+
+@media (max-width: 991.98px) {
+  .sidebar-account--signed-out {
+    display: none;
+  }
 }
 
 .sidebar-account .nav-profile {
