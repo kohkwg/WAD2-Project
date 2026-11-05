@@ -45,8 +45,11 @@ watch(() => [route.params.id, route.params.token], () => load(), { immediate: tr
 // Live: pick up others joining, marking times and suggesting spots every 20 s and on focus
 const refresh = () => { if (!document.hidden && group.value && !busy.value) load({ quiet: true }) }
 let timer
-onMounted(() => { timer = setInterval(refresh, 20000); window.addEventListener('focus', refresh) })
-onBeforeUnmount(() => { clearInterval(timer); window.removeEventListener('focus', refresh) })
+// Every 45 s while visible, and on returning to the tab at most every 20 s (keeps database load low)
+let lastRefresh = Date.now()
+const refreshOnFocus = () => { if (Date.now() - lastRefresh > 20000) { lastRefresh = Date.now(); refresh() } }
+onMounted(() => { timer = setInterval(() => { lastRefresh = Date.now(); refresh() }, 45000); window.addEventListener('focus', refreshOnFocus) })
+onBeforeUnmount(() => { clearInterval(timer); window.removeEventListener('focus', refreshOnFocus) })
 
 const event = computed(() => group.value?.event)
 const isHost = computed(() => group.value?.myStatus === 'host')
