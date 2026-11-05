@@ -1,182 +1,386 @@
-import test from 'node:test'
-import assert from 'node:assert/strict'
-import { createEventWith, createRsvpWith, expireOffersNow } from '../supabaseApi.js'
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createEventWith, createRsvpWith, expireOffersNow } from '../supabaseApi.js';
 
 function clientWithExistingRsvp(existing) {
-  const calls = []
+  const calls = [];
   return {
     calls,
     rpc(name, args) {
-      calls.push({ kind: 'rpc', name, args })
-      return Promise.resolve({ data: null, error: { message: 'You already have an RSVP for this event' } })
+      calls.push({
+        kind: 'rpc',
+        name,
+        args
+      });
+      return Promise.resolve({
+        data: null,
+        error: {
+          message: 'You already have an RSVP for this event'
+        }
+      });
     },
     from(table) {
-      const query = { table, filters: [], operation: 'select' }
-      query.select = (columns) => { query.columns = columns; return query }
-      query.eq = (column, value) => { query.filters.push([column, value]); return query }
-      query.in = (column, values) => { query.filters.push([column, values]); return query }
-      query.update = (payload) => { query.operation = 'update'; query.payload = payload; return query }
+      const query = {
+        table,
+        filters: [],
+        operation: 'select'
+      };
+      query.select = columns => {
+        query.columns = columns;
+        return query;
+      };
+      query.eq = (column, value) => {
+        query.filters.push([column, value]);
+        return query;
+      };
+      query.in = (column, values) => {
+        query.filters.push([column, values]);
+        return query;
+      };
+      query.update = payload => {
+        query.operation = 'update';
+        query.payload = payload;
+        return query;
+      };
       query.maybeSingle = () => {
-        calls.push({ kind: 'query', table, filters: query.filters, columns: query.columns })
-        return Promise.resolve({ data: existing, error: null })
-      }
+        calls.push({
+          kind: 'query',
+          table,
+          filters: query.filters,
+          columns: query.columns
+        });
+        return Promise.resolve({
+          data: existing,
+          error: null
+        });
+      };
       query.then = (resolve, reject) => {
-        calls.push({ kind: 'query', table, filters: query.filters, operation: query.operation, payload: query.payload })
-        return Promise.resolve({ data: null, error: null }).then(resolve, reject)
-      }
-      return query
-    },
-  }
+        calls.push({
+          kind: 'query',
+          table,
+          filters: query.filters,
+          operation: query.operation,
+          payload: query.payload
+        });
+        return Promise.resolve({
+          data: null,
+          error: null
+        }).then(resolve, reject);
+      };
+      return query;
+    }
+  };
 }
-
 test('live event creation sends the full normalized event to one idempotent RPC', async () => {
-  const calls = []
+  const calls = [];
   const client = {
     rpc(name, args) {
-      calls.push({ name, args })
-      return Promise.resolve({ data: 'event-1', error: null })
+      calls.push({
+        name,
+        args
+      });
+      return Promise.resolve({
+        data: 'event-1',
+        error: null
+      });
     },
-    from() { assert.fail('Event creation must not make partial table writes') },
-  }
+    from() {
+      assert.fail('Event creation must not make partial table writes');
+    }
+  };
   const eventData = {
     requestId: 'd3edb13b-9022-4c2d-95fb-34774f34339e',
-    title: 'Acoustic Night', description: 'Live music',
-    startTime: '2026-12-01T10:00:00.000Z', endTime: '2026-12-01T12:00:00.000Z',
-    capacity: 30, requiresApproval: true, isOutdoor: true,
-    venue: { name: 'Campus Green', address: '1 College Road', postal: '123456', lat: 1.3, lng: 103.8, sourceId: 12 },
-    backupVenue: { name: 'Hall', address: '2 College Road', postal: '123457', lat: 1.31, lng: 103.81 },
+    title: 'Acoustic Night',
+    description: 'Live music',
+    startTime: '2026-12-01T10:00:00.000Z',
+    endTime: '2026-12-01T12:00:00.000Z',
+    capacity: 30,
+    requiresApproval: true,
+    isOutdoor: true,
+    venue: {
+      name: 'Campus Green',
+      address: '1 College Road',
+      postal: '123456',
+      lat: 1.3,
+      lng: 103.8,
+      sourceId: 12
+    },
+    backupVenue: {
+      name: 'Hall',
+      address: '2 College Road',
+      postal: '123457',
+      lat: 1.31,
+      lng: 103.81
+    },
     tags: ['music', 'arts'],
-    questions: [{ id: 'temporary-question-id', text: 'Dietary needs?', type: 'text', required: true }],
-  }
-
-  const created = await createEventWith(client, eventData)
-
-  assert.deepEqual(created, { id: 'event-1' })
+    questions: [{
+      id: 'temporary-question-id',
+      text: 'Dietary needs?',
+      type: 'text',
+      required: true
+    }]
+  };
+  const created = await createEventWith(client, eventData);
+  assert.deepEqual(created, {
+    id: 'event-1'
+  });
   assert.deepEqual(calls, [{
     name: 'create_event_with_details',
     args: {
       p_request_id: eventData.requestId,
       p_event: {
-        title: 'Acoustic Night', description: 'Live music',
-        startTime: '2026-12-01T10:00:00.000Z', endTime: '2026-12-01T12:00:00.000Z',
-        capacity: 30, hideCapacity: false, requiresApproval: true, isOnline: false, isOutdoor: true,
-        venue: { name: 'Campus Green', address: '1 College Road', postal: '123456', lat: 1.3, lng: 103.8 },
-        backupVenue: { name: 'Hall', address: '2 College Road', postal: '123457', lat: 1.31, lng: 103.81 },
+        title: 'Acoustic Night',
+        description: 'Live music',
+        startTime: '2026-12-01T10:00:00.000Z',
+        endTime: '2026-12-01T12:00:00.000Z',
+        capacity: 30,
+        hideCapacity: false,
+        requiresApproval: true,
+        isOnline: false,
+        isOutdoor: true,
+        venue: {
+          name: 'Campus Green',
+          address: '1 College Road',
+          postal: '123456',
+          lat: 1.3,
+          lng: 103.8
+        },
+        backupVenue: {
+          name: 'Hall',
+          address: '2 College Road',
+          postal: '123457',
+          lat: 1.31,
+          lng: 103.81
+        },
         onlineLink: null,
         tags: ['music', 'arts'],
-        questions: [{ text: 'Dietary needs?', type: 'text', required: true }],
-      },
-    },
-  }])
-})
-
+        questions: [{
+          text: 'Dietary needs?',
+          type: 'text',
+          required: true
+        }]
+      }
+    }
+  }]);
+});
 test('an online event is created without venues, with its link and hidden capacity in the same RPC', async () => {
-  let payload
-  const client = { rpc: async (_name, args) => { payload = args.p_event; return { data: 'event-online', error: null } } }
+  let payload;
+  const client = {
+    rpc: async (_name, args) => {
+      payload = args.p_event;
+      return {
+        data: 'event-online',
+        error: null
+      };
+    }
+  };
   await createEventWith(client, {
     requestId: 'd3edb13b-9022-4c2d-95fb-34774f34339e',
-    title: 'Online talk', description: '', startTime: '2026-12-01T10:00:00.000Z', endTime: '2026-12-01T12:00:00.000Z',
-    capacity: 50, hideCapacity: true, requiresApproval: false, isOnline: true, isOutdoor: true,
-    venue: { name: 'Left over from a draft', address: 'x', postal: '', lat: 1, lng: 103 }, backupVenue: null,
-    onlineLink: { url: 'https://zoom.us/j/1', revealAt: '2026-12-01T09:45:00.000Z' },
-    tags: ['others'], questions: [],
-  })
-  assert.equal(payload.isOnline, true)
-  assert.equal(payload.hideCapacity, true)
-  assert.equal(payload.isOutdoor, false)
-  assert.equal(payload.venue, null)
-  assert.equal(payload.backupVenue, null)
-  assert.deepEqual(payload.onlineLink, { url: 'https://zoom.us/j/1', revealAt: '2026-12-01T09:45:00.000Z' })
-  assert.equal('venueRevealAt' in payload, false)
-})
-
+    title: 'Online talk',
+    description: '',
+    startTime: '2026-12-01T10:00:00.000Z',
+    endTime: '2026-12-01T12:00:00.000Z',
+    capacity: 50,
+    hideCapacity: true,
+    requiresApproval: false,
+    isOnline: true,
+    isOutdoor: true,
+    venue: {
+      name: 'Left over from a draft',
+      address: 'x',
+      postal: '',
+      lat: 1,
+      lng: 103
+    },
+    backupVenue: null,
+    onlineLink: {
+      url: 'https://zoom.us/j/1',
+      revealAt: '2026-12-01T09:45:00.000Z'
+    },
+    tags: ['others'],
+    questions: []
+  });
+  assert.equal(payload.isOnline, true);
+  assert.equal(payload.hideCapacity, true);
+  assert.equal(payload.isOutdoor, false);
+  assert.equal(payload.venue, null);
+  assert.equal(payload.backupVenue, null);
+  assert.deepEqual(payload.onlineLink, {
+    url: 'https://zoom.us/j/1',
+    revealAt: '2026-12-01T09:45:00.000Z'
+  });
+  assert.equal('venueRevealAt' in payload, false);
+});
 test('a physical event can be created with its venue to be announced, or hidden until a time', async () => {
-  const payloads = []
-  const client = { rpc: async (_name, args) => { payloads.push(args.p_event); return { data: 'event-x', error: null } } }
+  const payloads = [];
+  const client = {
+    rpc: async (_name, args) => {
+      payloads.push(args.p_event);
+      return {
+        data: 'event-x',
+        error: null
+      };
+    }
+  };
   const base = {
-    requestId: 'd3edb13b-9022-4c2d-95fb-34774f34339e', title: 'Secret supper', description: '',
-    startTime: '2026-12-01T10:00:00.000Z', endTime: '2026-12-01T12:00:00.000Z', capacity: 20, requiresApproval: false,
-    tags: ['food'], questions: [],
-  }
-  // No venue: no rain plan either, even if the form still had one switched on
-  await createEventWith(client, { ...base, venue: null, isOutdoor: true, backupVenue: { name: 'Hall', address: '2', postal: '', lat: 1, lng: 103 }, venueRevealAt: '2026-11-30T10:00:00.000Z' })
-  assert.equal(payloads[0].venue, null)
-  assert.equal(payloads[0].isOutdoor, false)
-  assert.equal(payloads[0].backupVenue, null)
-  assert.equal('venueRevealAt' in payloads[0], false) // nothing to hide, so the key isn't sent
-  // Chosen and hidden: the venue goes to the RPC, which keeps it out of the public venues table
-  const venue = { name: 'Rooftop', address: '1 Road', postal: '', lat: 1.3, lng: 103.8 }
-  await createEventWith(client, { ...base, venue, isOutdoor: false, backupVenue: null, venueRevealAt: '2026-11-30T10:00:00.000Z' })
-  assert.deepEqual(payloads[1].venue, { ...venue, postal: null })
-  assert.equal(payloads[1].venueRevealAt, '2026-11-30T10:00:00.000Z')
-})
-
+    requestId: 'd3edb13b-9022-4c2d-95fb-34774f34339e',
+    title: 'Secret supper',
+    description: '',
+    startTime: '2026-12-01T10:00:00.000Z',
+    endTime: '2026-12-01T12:00:00.000Z',
+    capacity: 20,
+    requiresApproval: false,
+    tags: ['food'],
+    questions: []
+  };
+  // no venue: no rain plan either, even if the form still had one switched on
+  await createEventWith(client, {
+    ...base,
+    venue: null,
+    isOutdoor: true,
+    backupVenue: {
+      name: 'Hall',
+      address: '2',
+      postal: '',
+      lat: 1,
+      lng: 103
+    },
+    venueRevealAt: '2026-11-30T10:00:00.000Z'
+  });
+  assert.equal(payloads[0].venue, null);
+  assert.equal(payloads[0].isOutdoor, false);
+  assert.equal(payloads[0].backupVenue, null);
+  assert.equal('venueRevealAt' in payloads[0], false); // nothing to hide, so the key isn't sent
+  // chosen and hidden: the venue goes to the rpc, which keeps it out of the public venues table
+  const venue = {
+    name: 'Rooftop',
+    address: '1 Road',
+    postal: '',
+    lat: 1.3,
+    lng: 103.8
+  };
+  await createEventWith(client, {
+    ...base,
+    venue,
+    isOutdoor: false,
+    backupVenue: null,
+    venueRevealAt: '2026-11-30T10:00:00.000Z'
+  });
+  assert.deepEqual(payloads[1].venue, {
+    ...venue,
+    postal: null
+  });
+  assert.equal(payloads[1].venueRevealAt, '2026-11-30T10:00:00.000Z');
+});
 test('live event creation requires a UUID request ID before calling Supabase', async () => {
-  const client = { rpc() { assert.fail('Invalid request IDs must not reach Supabase') } }
-  await assert.rejects(createEventWith(client, { title: 'No key' }), /valid request ID/i)
-})
-
+  const client = {
+    rpc() {
+      assert.fail('Invalid request IDs must not reach Supabase');
+    }
+  };
+  await assert.rejects(createEventWith(client, {
+    title: 'No key'
+  }), /valid request ID/i);
+});
 test('a retried RSVP returns the already committed active registration after a lost response', async () => {
   const existing = {
-    id: 'registration-1', event_id: 'event-1', user_id: 'user-1', status: 'confirmed',
-    created_at: '2026-10-22T00:00:00Z', offer_expires_at: null,
-    registration_answers: [{ question_id: 'question-1', answer: 'yes' }],
-  }
-  const client = clientWithExistingRsvp(existing)
-
+    id: 'registration-1',
+    event_id: 'event-1',
+    user_id: 'user-1',
+    status: 'confirmed',
+    created_at: '2026-10-22T00:00:00Z',
+    offer_expires_at: null,
+    registration_answers: [{
+      question_id: 'question-1',
+      answer: 'yes'
+    }]
+  };
+  const client = clientWithExistingRsvp(existing);
   const result = await createRsvpWith(client, 'user-1', {
-    eventId: 'event-1', name: '', answers: { 'question-1': 'yes' },
-  })
-
+    eventId: 'event-1',
+    name: '',
+    answers: {
+      'question-1': 'yes'
+    }
+  });
   assert.deepEqual(result, {
-    id: 'registration-1', eventId: 'event-1', userId: 'user-1', status: 'confirmed',
-    createdAt: '2026-10-22T00:00:00Z', offerExpiresAt: null,
-    answers: { 'question-1': 'yes' },
-  })
-  assert.deepEqual(client.calls[1].filters, [
-    ['event_id', 'event-1'], ['user_id', 'user-1'],
-    ['status', ['pending', 'confirmed', 'waitlisted', 'offered']],
-  ])
-})
-
+    id: 'registration-1',
+    eventId: 'event-1',
+    userId: 'user-1',
+    status: 'confirmed',
+    createdAt: '2026-10-22T00:00:00Z',
+    offerExpiresAt: null,
+    answers: {
+      'question-1': 'yes'
+    }
+  });
+  assert.deepEqual(client.calls[1].filters, [['event_id', 'event-1'], ['user_id', 'user-1'], ['status', ['pending', 'confirmed', 'waitlisted', 'offered']]]);
+});
 test('RSVP retry reconciliation does not mask other registration errors', async () => {
   const client = {
-    rpc: async () => ({ data: null, error: { message: 'Registration has closed' } }),
-    from() { assert.fail('Only duplicate RSVP errors should trigger a readback') },
-  }
-  await assert.rejects(
-    createRsvpWith(client, 'user-1', { eventId: 'event-1', name: '', answers: {} }),
-    /Registration has closed/,
-  )
-})
-
+    rpc: async () => ({
+      data: null,
+      error: {
+        message: 'Registration has closed'
+      }
+    }),
+    from() {
+      assert.fail('Only duplicate RSVP errors should trigger a readback');
+    }
+  };
+  await assert.rejects(createRsvpWith(client, 'user-1', {
+    eventId: 'event-1',
+    name: '',
+    answers: {}
+  }), /Registration has closed/);
+});
 test('RSVP retry does not report success when persisted answers differ from the retry', async () => {
   const client = clientWithExistingRsvp({
-    id: 'registration-1', event_id: 'event-1', user_id: 'user-1', status: 'confirmed',
-    created_at: '2026-10-22T00:00:00Z', offer_expires_at: null,
-    registration_answers: [{ question_id: 'question-1', answer: 'yes' }],
-  })
-
-  await assert.rejects(
-    createRsvpWith(client, 'user-1', {
-      eventId: 'event-1', name: '', answers: { 'question-1': 'no' },
-    }),
-    /You already have an RSVP for this event/,
-  )
-})
-
+    id: 'registration-1',
+    event_id: 'event-1',
+    user_id: 'user-1',
+    status: 'confirmed',
+    created_at: '2026-10-22T00:00:00Z',
+    offer_expires_at: null,
+    registration_answers: [{
+      question_id: 'question-1',
+      answer: 'yes'
+    }]
+  });
+  await assert.rejects(createRsvpWith(client, 'user-1', {
+    eventId: 'event-1',
+    name: '',
+    answers: {
+      'question-1': 'no'
+    }
+  }), /You already have an RSVP for this event/);
+});
 test('live mode refuses the demo-only offer expiry action', async () => {
-  await assert.rejects(expireOffersNow('event-1'), /only available in demo mode/i)
-})
-
+  await assert.rejects(expireOffersNow('event-1'), /only available in demo mode/i);
+});
 test('event cover URL travels in the same atomic create RPC', async () => {
-  let payload
-  const client = {rpc: async (_name,args) => {payload=args.p_event;return {data:'event-cover-id',error:null}}}
+  let payload;
+  const client = {
+    rpc: async (_name, args) => {
+      payload = args.p_event;
+      return {
+        data: 'event-cover-id',
+        error: null
+      };
+    }
+  };
   await createEventWith(client, {
-    requestId:'d3edb13b-9022-4c2d-95fb-34774f34339e',
-    title:'Cover event',description:'',startTime:'2026-12-01T10:00:00Z',endTime:'2026-12-01T11:00:00Z',
-    capacity:5,tags:['arts'],questions:[],venue:null,backupVenue:null,
-    coverImageUrl:'https://example.com/covers/test.png',
-  })
-  assert.equal(payload.coverImageUrl,'https://example.com/covers/test.png')
-})
+    requestId: 'd3edb13b-9022-4c2d-95fb-34774f34339e',
+    title: 'Cover event',
+    description: '',
+    startTime: '2026-12-01T10:00:00Z',
+    endTime: '2026-12-01T11:00:00Z',
+    capacity: 5,
+    tags: ['arts'],
+    questions: [],
+    venue: null,
+    backupVenue: null,
+    coverImageUrl: 'https://example.com/covers/test.png'
+  });
+  assert.equal(payload.coverImageUrl, 'https://example.com/covers/test.png');
+});

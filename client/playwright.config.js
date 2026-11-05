@@ -1,6 +1,6 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test';
 
-// Playwright: https://playwright.dev/ (Apache-2.0). Local demo contexts only.
+// playwright: https://playwright.dev/ (apache-2.0). local demo contexts only.
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -8,19 +8,31 @@ export default defineConfig({
   retries: 0,
   workers: 2,
   timeout: 30_000,
-  expect: { timeout: 7_000 },
-  reporter: [['list'], ['html', { open: 'never' }]],
+  expect: {
+    timeout: 7_000
+  },
+  reporter: [['list'], ['html', {
+    open: 'never'
+  }]],
   use: {
     baseURL: 'http://127.0.0.1:5173',
     timezoneId: 'Asia/Singapore',
     trace: 'retain-on-failure',
-    screenshot: 'only-on-failure',
+    screenshot: 'only-on-failure'
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [{
+    name: 'chromium',
+    use: {
+      ...devices['Desktop Chrome']
+    }
+  }],
   webServer: {
     command: 'node node_modules/vite/bin/vite.js --host 127.0.0.1 --strictPort',
-    env: { VITE_USE_MOCK: 'true', VITE_FEATURE4_TEST_SEED: 'true' },
+    env: {
+      VITE_USE_MOCK: 'true',
+      VITE_FEATURE4_TEST_SEED: 'true'
+    },
     url: 'http://127.0.0.1:5173',
-    reuseExistingServer: !process.env.CI,
-  },
-})
+    reuseExistingServer: !process.env.CI
+  }
+});

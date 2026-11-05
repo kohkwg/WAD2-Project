@@ -1,64 +1,144 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '@playwright/test';
 
-// These checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
-// unless someone expanded it (docs/decisions.md, 5 November), so start from that remembered choice.
-test.beforeEach(async ({ page }) => { await page.addInitScript(() => { try { localStorage.setItem('bookedz-sidebar', 'expanded') } catch { /* storage blocked */ } }) })
-
-test.beforeEach(async ({ page }) => { await page.route('**/*.supabase.co/**', route => route.abort()) })
-
-test('theme defaults to the system, persists overrides and follows system changes', async ({ page }, testInfo) => {
-  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' })
-  await page.goto('/discover')
-  const theme = page.getByRole('combobox', { name: 'Color theme', exact: true })
-  await expect(theme).toHaveValue('system')
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await expect(page.getByRole('heading', { name: 'Discover events' })).toBeVisible()
-  await page.screenshot({ path: testInfo.outputPath('dark-discovery.png') })
-  await theme.selectOption('light')
-  await page.reload()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
-  await expect(theme).toHaveValue('light')
-  await theme.selectOption('system')
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await page.emulateMedia({ colorScheme: 'light' })
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
-})
-
-test('category choices disclose on demand and survive smooth view changes', async ({ page }) => {
-  await page.goto('/discover')
-  const categories = page.getByRole('group', { name: 'Filter by category. Select one or more.' })
-  await expect(categories).toHaveCount(0)
-  await page.getByRole('button', { name: 'Filters', exact: true }).click()
-  await expect(categories).toBeVisible()
-  await categories.getByRole('button', { name: 'Tech', exact: true }).click()
-  await page.getByRole('button', { name: /^Filters/ }).click()
-  await expect(categories).toHaveCount(0)
-  await page.getByRole('button', { name: 'Map', exact: true }).click()
-  await expect(page.getByRole('region', { name: 'Explore events on the Singapore map' })).toBeVisible()
-  await expect(page.getByRole('button', { name: /^Filters/ })).toContainText('1')
-  await page.getByRole('button', { name: 'List', exact: true }).click()
-  await expect(page.getByRole('button', { name: /^Filters/ })).toContainText('1')
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-})
-
-test('creation preview responds to drafts and step navigation preserves them', async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: 1280, height: 900 })
-  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' })
-  await page.goto('/organiser/events/new?template=official')
-  await page.getByLabel('Event title', { exact: true }).fill('[TEST] Evening on the island')
-  await expect(page.locator('.preview-copy h2')).toHaveText('[TEST] Evening on the island')
-  await page.getByLabel('Starts', { exact: true }).fill('2030-11-10T10:00')
-  await page.getByLabel('Ends', { exact: true }).fill('2030-11-10T12:00')
-  await page.getByLabel('Capacity', { exact: true }).fill('30')
-  await page.locator('label[for="tag-music"]').click()
-  await expect(page.locator('#tag-music')).toBeChecked()
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
-  await page.screenshot({ path: testInfo.outputPath('create-studio-dark.png') })
-  await page.getByRole('button', { name: 'Next', exact: true }).click()
-  await expect(page.locator('#venue-search')).toBeVisible()
-  await page.getByRole('button', { name: 'Back', exact: true }).click()
-  await expect(page.getByLabel('Event title', { exact: true })).toHaveValue('[TEST] Evening on the island')
-  await page.setViewportSize({ width: 375, height: 900 })
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  await page.screenshot({ path: testInfo.outputPath('create-studio-mobile.png') })
-})
+// these checks use the theme dropdown in the expanded sidebar; from 992px the sidebar starts as an icon rail
+// unless someone expanded it (docs/decisions.md, 5 november), so start from that remembered choice.
+test.beforeEach(async ({
+  page
+}) => {
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('bookedz-sidebar', 'expanded');
+    } catch {/* storage blocked */}
+  });
+});
+test.beforeEach(async ({
+  page
+}) => {
+  await page.route('**/*.supabase.co/**', route => route.abort());
+});
+test('theme defaults to the system, persists overrides and follows system changes', async ({
+  page
+}, testInfo) => {
+  await page.emulateMedia({
+    colorScheme: 'dark',
+    reducedMotion: 'reduce'
+  });
+  await page.goto('/discover');
+  const theme = page.getByRole('combobox', {
+    name: 'Color theme',
+    exact: true
+  });
+  await expect(theme).toHaveValue('system');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.getByRole('heading', {
+    name: 'Discover events'
+  })).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath('dark-discovery.png')
+  });
+  await theme.selectOption('light');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(theme).toHaveValue('light');
+  await theme.selectOption('system');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.emulateMedia({
+    colorScheme: 'light'
+  });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
+test('category choices disclose on demand and survive smooth view changes', async ({
+  page
+}) => {
+  await page.goto('/discover');
+  const categories = page.getByRole('group', {
+    name: 'Filter by category. Select one or more.'
+  });
+  await expect(categories).toHaveCount(0);
+  await page.getByRole('button', {
+    name: 'Filters',
+    exact: true
+  }).click();
+  await expect(categories).toBeVisible();
+  await categories.getByRole('button', {
+    name: 'Tech',
+    exact: true
+  }).click();
+  await page.getByRole('button', {
+    name: /^Filters/
+  }).click();
+  await expect(categories).toHaveCount(0);
+  await page.getByRole('button', {
+    name: 'Map',
+    exact: true
+  }).click();
+  await expect(page.getByRole('region', {
+    name: 'Explore events on the Singapore map'
+  })).toBeVisible();
+  await expect(page.getByRole('button', {
+    name: /^Filters/
+  })).toContainText('1');
+  await page.getByRole('button', {
+    name: 'List',
+    exact: true
+  }).click();
+  await expect(page.getByRole('button', {
+    name: /^Filters/
+  })).toContainText('1');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+test('creation preview responds to drafts and step navigation preserves them', async ({
+  page
+}, testInfo) => {
+  await page.setViewportSize({
+    width: 1280,
+    height: 900
+  });
+  await page.emulateMedia({
+    reducedMotion: 'reduce',
+    colorScheme: 'dark'
+  });
+  await page.goto('/organiser/events/new?template=official');
+  await page.getByLabel('Event title', {
+    exact: true
+  }).fill('[TEST] Evening on the island');
+  await expect(page.locator('.preview-copy h2')).toHaveText('[TEST] Evening on the island');
+  await page.getByLabel('Starts', {
+    exact: true
+  }).fill('2030-11-10T10:00');
+  await page.getByLabel('Ends', {
+    exact: true
+  }).fill('2030-11-10T12:00');
+  await page.getByLabel('Capacity', {
+    exact: true
+  }).fill('30');
+  await page.locator('label[for="tag-music"]').click();
+  await expect(page.locator('#tag-music')).toBeChecked();
+  await page.evaluate(() => window.scrollTo({
+    top: 0,
+    behavior: 'instant'
+  }));
+  await page.screenshot({
+    path: testInfo.outputPath('create-studio-dark.png')
+  });
+  await page.getByRole('button', {
+    name: 'Next',
+    exact: true
+  }).click();
+  await expect(page.locator('#venue-search')).toBeVisible();
+  await page.getByRole('button', {
+    name: 'Back',
+    exact: true
+  }).click();
+  await expect(page.getByLabel('Event title', {
+    exact: true
+  })).toHaveValue('[TEST] Evening on the island');
+  await page.setViewportSize({
+    width: 375,
+    height: 900
+  });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({
+    path: testInfo.outputPath('create-studio-mobile.png')
+  });
+});

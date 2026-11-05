@@ -41,6 +41,122 @@ because `:global(…)` dropped the rest of their selector. We changed `main.css`
 `StartGroupDialog.vue`, `EventGroupsCard.vue`, `GroupCard.vue`, `OrganiserEventCard.vue`,
 `DiscoverView.vue` and `DiscoveryEventRow.vue`; teammates keep authorship of their files.
 
+At the user's request, we expanded the readability pass across 335 first-party code files:
+329 formatted and six Python files already readable. Expanded JavaScript, Vue attributes
+and CSS, added spacing and lowercased ordinary comment prose; tooling directives, attribution,
+URLs and code references are preserved. Source/config/tests and the existing Edge Function
+were included; assets, secrets, lockfiles, supplied resources and SQL migrations were excluded.
+Pre-existing uncommitted work was snapshotted before formatting and retained. Each contributor
+keeps authorship of their feature. A local grouped review index, originals and formatting-only
+diffs are in `/tmp/wad2-readability-review/`; this is not a functional rewrite.
+
+At the user's request, we formatted TaskBoard, WeatherTool and EventTeamPanel: expanded dense
+JavaScript, long attributes and CSS, added spacing and simple lowercase comments. Task ordering,
+weather eligibility, permissions, drafts, retries and styling are unchanged. Denzel and the
+other original contributors retain authorship; README library credits are preserved.
+
+At the user's request, we formatted ConfirmationDialog, AnnouncementFeed and AnnouncementManager:
+expanded dense JavaScript, long template attributes and CSS, added spacing and lowercased
+comments. Modal focus, live refresh, drafts, retries, actions and styling are unchanged;
+Denzel retains authorship of the event-operation components.
+
+At the user's request, we formatted `BumpValue.vue`, `BackLink.vue` and `SkeletonList.vue`:
+expanded dense JavaScript, long attributes and loading-placeholder CSS, added spacing and
+lowercased comments. Animation, navigation, loading states and styling are unchanged;
+original contributors retain authorship.
+
+At the user's request, we formatted a three-file organiser-controls batch:
+`OrganiserEventCard.vue`, `EventToolNavigation.vue` and `ShowHideButton.vue`. Expanded
+JavaScript, long attributes and CSS, added spacing and lowercase comments. Existing
+feature owners retain authorship; links, confirmation, keyboard handling and styling
+are unchanged.
+
+At the user's request to review three files per batch, we formatted `AddressSearch.vue`,
+`AnnounceChangesDialog.vue` and `CountUp.vue`: expanded JavaScript, long attributes and CSS,
+added spacing and simple lowercase comments. Search, save/announce retries, animation,
+labels and styling are unchanged; original feature owners retain authorship.
+
+At the user's request, we formatted `StepIndicator.vue`: expanded long attributes and CSS,
+added spacing and simplified comments into lowercase. Progress calculation, backwards step
+navigation, labels and styling are unchanged; Gregory retains feature authorship.
+
+At the user's request, we formatted `OnlineEventLink.vue`: expanded CSS and timer cleanup,
+added spacing/braces and simplified comments into lowercase. Meeting-link access, reveal
+timing, labels and styling are unchanged; feature owners retain authorship.
+
+At the user's request, we resumed the structural review with `RsvpEmptyState.vue`:
+expanded props, markup and CSS, added spacing and a simple lowercase comment.
+Messages, links and styling are unchanged; Gregory retains feature authorship.
+
+At the user's request, we removed the public RSVP page's sticky, internally scrolling right
+column and moved its venue-map toggle into a separate card below the description/details,
+before Go together. Map loading remains on demand and online/hidden venues stay excluded.
+
+At the user's request, we swapped the event details card (description, venue and cover) with
+the public announcements on the RSVP page. `EventSummary.vue` supports an optional details
+target and after-header slot; `RsvpView.vue` places details under the RSVP card and announcements
+under the banner. Create-event summaries keep their original placement.
+
+At the user's request, we added account-wide update notifications and paused the structural
+review. `App.vue` starts `useUserNotifications.js`; `userNotifications.js` compares account-scoped
+snapshots. The existing `ToastHost.vue` now appears at the top right with the existing cheerful,
+curious or sad dino artwork, a close button and optional View update link. `useToast.js` defaults
+to ten seconds, cleans up timers and clears notices on account switches; explicit undo durations
+are preserved. Added focused unit/browser tests. Existing feature authorship and dino artwork
+credits remain with the team; no dependencies, migrations or hosted writes were added.
+
+At the user's request, we formatted `SavedEventCard.vue`: expanded props, long attributes
+and CSS, added spacing and simplified comments into lowercase. Saved-event labels, bookmark
+actions, links and styling are unchanged; feature owners retain authorship.
+
+At the user's request, we formatted `ParticipantRsvpRow.vue`: expanded props, template
+attributes and CSS, added spacing and simple lowercase comments. Ticket/cancellation actions,
+labels, date formatting and styling are unchanged; Gregory retains feature authorship.
+
+At the user's request, we formatted `NextEventCard.vue`: expanded props, long attributes
+and CSS, added spacing and a short lowercase comment. Content, ticket links, directions,
+calendar actions and styling are unchanged; Gregory retains feature authorship.
+
+At the user's request, we formatted `OfferBanner.vue`: expanded CSS, added spacing and
+simplified comments into lowercase. Countdown and offer actions are unchanged; Gregory
+retains feature authorship.
+
+At the user's request, we formatted `RsvpStatusBadge.vue`: expanded icon attributes and CSS,
+added spacing and simplified comments into lowercase, correcting the fallback explanation
+to match the existing pending style. Labels, icons and colours are unchanged.
+
+At the user's request, we formatted `GroupChip.vue`: expanded props, template attributes
+and CSS, added spacing and simplified comments into lowercase. Labels and group visibility
+behaviour are unchanged; Huxley retains authorship of the groups feature.
+
+At the user's request, we spaced out `WaitlistTable.vue`: expanded CSS properties, separated
+props from emitted events and simplified comments into lowercase. Scoring, ranking, actions
+and appearance are unchanged; Gregory retains feature authorship.
+
+At the user's request, we formatted `RsvpTable.vue`: expanded JavaScript, long attributes
+and CSS, added spacing and simplified comments into lowercase. Props, emitted actions,
+confirmation controls and styling are unchanged; Gregory retains feature authorship.
+
+At the user's request, we formatted `ManageRsvpsView.vue` for page-by-page review:
+expanded JavaScript, long template attributes and CSS, added spacing and replaced long
+historical comments with simple lowercase explanations. Registration and waitlist logic,
+child components and API contracts are unchanged. Gregory retains authorship of the feature.
+
+At the user's request, we spaced out `ManageEventView.vue`: expanded JavaScript formatting,
+added gaps between top-level declarations, split long tag attributes and expanded CSS declarations.
+
+At the user's request, we began a structure-only pass informed by their OneDrive Vue
+examples. In `ManageEventView.vue`, we expanded the workspace load/reset and unmount
+code and simplified comments. No template or style declarations changed.
+
+At the user's request, we cleaned up `ManageEventView.vue`: removed unused workspace quick-link
+styles, consolidated Vue imports and lowercased comment prose. Denzel and the other feature
+owners retain authorship of their workspace code.
+
+At the user's request, we cleaned up `OrganiserEventsView.vue`: removed unused organiser-kicker,
+view-memory and direct-header-button mobile styles, and lowercased comments. Feature owners
+retain authorship of their organiser code.
+
 On 5 November 2026, at Denzel's request, Discover's map stopped showing a pop-up card: choosing an
 event highlights its pin (halo, other pins dimmed) and zooms to its area, and View event and RSVP
 moved into the chosen event card, which also appears under the map on phones. We changed

@@ -15,6 +15,7 @@ import WeatherTool from '../components/event-operations/WeatherTool.vue';
 import { TASK_STATUSES } from '../utils/feature4.js';
 // load these components when their tabs are first opened
 
+
 const EventTeamPanel = defineAsyncComponent(() => import('../components/event-operations/EventTeamPanel.vue'));
 
 const EventEditor = defineAsyncComponent(() => import('./CreateEventView.vue'));
@@ -38,7 +39,8 @@ const router = useRouter();
 const coreTabs = ['tasks', 'announcements', 'budget', 'weather'];
 // these tools need a live database connection
 
-const tabs = api.USING_SUPABASE ? ['rsvps', 'edit', 'team', ...coreTabs, 'check-in', 'venue-qr', 'attendance', 'floor-plan'] : ['rsvps', 'edit', 'team', ...coreTabs];
+
+const tabs = api.USING_SUPABASE ? ['rsvps', 'edit', 'team', ...coreTabs, 'check-in', 'venue-qr', 'attendance', 'floor-plan', 'programme'] : ['rsvps', 'edit', 'team', ...coreTabs];
 
 const TAB_LABELS = {
   rsvps: 'Guest list',
@@ -51,7 +53,8 @@ const TAB_LABELS = {
   'check-in': 'Check-in station',
   'venue-qr': 'Venue QR',
   attendance: 'Attendance',
-  'floor-plan': 'Floor plan'
+  'floor-plan': 'Floor plan',
+  programme: 'Programme'
 };
 
 const TAB_HINTS = {
@@ -65,7 +68,8 @@ const TAB_HINTS = {
   'check-in': 'Scan arrivals',
   'venue-qr': 'Entrance display',
   attendance: 'Live arrivals',
-  'floor-plan': 'Layout and programme'
+  'floor-plan': 'Venue layout',
+  programme: 'Run of show'
 };
 
 const toolGroups = [{
@@ -76,8 +80,8 @@ const toolGroups = [{
 }, {
   id: 'planning',
   label: 'Planning',
-  hint: 'Tasks, costs and layout',
-  ids: ['tasks', 'budget', 'floor-plan']
+  hint: 'Tasks, costs, layout and run of show',
+  ids: ['tasks', 'budget', 'floor-plan', 'programme']
 }, {
   id: 'on-the-day',
   label: 'On the day',
@@ -125,6 +129,7 @@ const loading = ref(false);
 const loadError = ref('');
 
 const publishState = ref('published'); // 'published' | 'draft' | 'cancelled' | 'completed'
+
 
 const publishing = ref(false);
 
@@ -259,6 +264,7 @@ watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => {
   if (tab === 'weather' && eventId && canManage.value && hasPlace(workspace.value.event)) refreshWeather();
 });
 // ignore unfinished requests after leaving this page
+
 
 onBeforeUnmount(() => {
   epoch++;
@@ -430,37 +436,151 @@ function switchVenue(action) {
 <div class="design-baseline">
   <BackLink :to="back" class="workspace-back">← Back</BackLink>
   <p v-if="loading" class="my-5 text-center" role="status">Loading event workspace…</p>
-  <div v-dismissible v-else-if="loadError" class="alert alert-danger mt-3" role="alert">{{ loadError }} <button type="button" class="btn btn-sm btn-outline-danger" @click="load">Retry event</button></div>
-  <div v-dismissible v-else-if="workspace && !canManage" class="alert alert-danger mt-3" role="alert">Only this event’s organisers can use these tools.</div>
+  <div
+    v-dismissible
+    v-else-if="loadError"
+    class="alert alert-danger mt-3"
+    role="alert">{{ loadError }} <button type="button" class="btn btn-sm btn-outline-danger" @click="load">Retry event</button></div>
+  <div
+    v-dismissible
+    v-else-if="workspace && !canManage"
+    class="alert alert-danger mt-3"
+    role="alert">Only this event’s organisers can use these tools.</div>
   <template v-else-if="workspace">
     <header class="workspace-header mt-3">
-      <div class="workspace-title-row"><div class="workspace-title-copy"><p class="workspace-eyebrow">Organiser workspace</p><h1>{{ workspace.event.title }}</h1></div><span class="workspace-mode">{{ api.USING_SUPABASE ? 'Live workspace' : 'Demo workspace' }}</span></div>
+      <div class="workspace-title-row">
+        <div class="workspace-title-copy">
+          <p class="workspace-eyebrow">Organiser workspace</p>
+          <h1>{{ workspace.event.title }}</h1></div>
+        <span class="workspace-mode">{{ api.USING_SUPABASE ? 'Live workspace' : 'Demo workspace' }}</span></div>
       <div class="workspace-overview">
-        <div class="overview-item"><span class="overview-label">Event time</span><strong>{{ formatEventTime(workspace.event) }}</strong></div>
-        <div class="overview-item"><span class="overview-label">Active venue</span><strong>{{ workspace.event.hiddenVenue?.venue?.name || workspace.event.venue?.name || 'Venue not set' }}</strong><span v-if="workspace.event.venueRevealAt" class="workspace-mode">{{ venuePendingText(workspace.event).replace('Venue revealed', 'Hidden until revealed') }}</span><span v-if="workspace.event.usingBackup" class="workspace-mode workspace-mode--success">Backup active</span></div>
-        <div class="overview-item"><span class="overview-label">Venue address</span><strong>{{ workspace.event.hiddenVenue?.venue?.address || workspace.event.venue?.address || (workspace.event.isOnline ? 'Online event' : 'Address not set') }}</strong></div>
+        <div class="overview-item">
+          <span class="overview-label">Event time</span>
+          <strong>{{ formatEventTime(workspace.event) }}</strong></div>
+        <div class="overview-item">
+          <span class="overview-label">Active venue</span>
+          <strong>{{ workspace.event.hiddenVenue?.venue?.name || workspace.event.venue?.name || 'Venue not set' }}</strong>
+          <span v-if="workspace.event.venueRevealAt" class="workspace-mode">{{ venuePendingText(workspace.event).replace('Venue revealed', 'Hidden until revealed') }}</span>
+          <span v-if="workspace.event.usingBackup" class="workspace-mode workspace-mode--success">Backup active</span></div>
+        <div class="overview-item">
+          <span class="overview-label">Venue address</span>
+          <strong>{{ workspace.event.hiddenVenue?.venue?.address || workspace.event.venue?.address || (workspace.event.isOnline ? 'Online event' : 'Address not set') }}</strong></div>
       </div>
       <div class="workspace-link-groups">
-        <div class="workspace-primary-links"><RouterLink class="btn event-cta" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink><span class="workspace-publish"><span v-if="publishState === 'draft'" class="workspace-mode">Unpublished</span><span v-else-if="publishState !== 'published'" class="workspace-mode">{{ publishState[0].toUpperCase() + publishState.slice(1) }}</span><button v-if="canTogglePublish" type="button" class="btn" :class="publishState === 'published' ? 'btn-outline-secondary workspace-unpublish' : 'btn-primary'" :disabled="publishing" @click="togglePublish">{{ publishing ? 'Saving…' : publishState === 'published' ? 'Unpublish' : 'Publish' }}</button></span><span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>
+        <div class="workspace-primary-links">
+          <RouterLink class="btn event-cta" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink>
+          <span class="workspace-publish">
+            <span v-if="publishState === 'draft'" class="workspace-mode">Unpublished</span>
+            <span v-else-if="publishState !== 'published'" class="workspace-mode">{{ publishState[0].toUpperCase() + publishState.slice(1) }}</span>
+            <button
+              v-if="canTogglePublish"
+              type="button"
+              class="btn"
+              :class="publishState === 'published' ? 'btn-outline-secondary workspace-unpublish' : 'btn-primary'"
+              :disabled="publishing"
+              @click="togglePublish">{{ publishing ? 'Saving…' : publishState === 'published' ? 'Unpublish' : 'Publish' }}</button></span>
+          <span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>
         <p v-dismissible v-if="publishError" class="text-danger mb-0" role="alert">{{ publishError }}</p>
       </div>
     </header>
     <EventToolNavigation :groups="toolGroups" :active-tab="activeTab" />
     <div class="tool-feedback" aria-live="polite">
-      <div v-dismissible v-if="errors[activeTab]" class="alert alert-danger" role="alert">{{ errors[activeTab] }} <button v-if="retries[activeTab]" type="button" class="btn btn-sm btn-outline-danger" :disabled="pending[activeTab]" @click="retries[activeTab]()">Retry save</button></div>
-      <p v-if="pending[activeTab]" role="status" class="text-secondary">Saving…</p><p v-dismissible v-else-if="successes[activeTab]" role="status" class="text-success">{{ successes[activeTab] }}</p>
+      <div
+        v-dismissible
+        v-if="errors[activeTab]"
+        class="alert alert-danger"
+        role="alert">{{ errors[activeTab] }} <button
+          v-if="retries[activeTab]"
+          type="button"
+          class="btn btn-sm btn-outline-danger"
+          :disabled="pending[activeTab]"
+          @click="retries[activeTab]()">Retry save</button></div>
+      <p v-if="pending[activeTab]" role="status" class="text-secondary">Saving…</p>
+      <p
+        v-dismissible
+        v-else-if="successes[activeTab]"
+        role="status"
+        class="text-success">{{ successes[activeTab] }}</p>
     </div>
     <GuestList v-if="activeTab === 'rsvps'" :key="'rsvps-' + workspace.event.id" embedded />
-    <EventEditor v-if="editVisited" v-show="activeTab === 'edit'" :key="'edit-' + workspace.event.id" embedded @saved="refreshEditedEvent" />
-    <EventTeamPanel v-if="teamVisited" v-show="activeTab === 'team'" :visible="activeTab === 'team'" :key="'team-' + workspace.event.id" :event-id="String(workspace.event.id)" />
-    <TaskBoard v-show="activeTab === 'tasks'" :key="'tasks-' + workspace.event.id" :tasks="workspace.tasks" :pending="pending.tasks" :action-error="errors.tasks" @create="saveTask($event, 'create')" @update="saveTask($event, 'update')" @delete="saveTask($event, 'delete')" @save-board="saveBoard" @cancel-action="cancelDestructiveAction('tasks')" />
-    <AnnouncementManager v-show="activeTab === 'announcements'" :key="'posts-' + workspace.event.id" :posts="workspace.announcements" :pending="pending.announcements" :action-error="errors.announcements" @create="saveAnnouncement($event, 'create')" @update="saveAnnouncement($event, 'update')" @delete="saveAnnouncement($event, 'delete')" @cancel-action="cancelDestructiveAction('announcements')" />
-    <BudgetTracker v-show="activeTab === 'budget'" :key="'budget-' + workspace.event.id" :budget="workspace.budget" :custom-categories="workspace.budgetCategories || []" :pending="pending.budget" :action-error="errors.budget" @save-limit="saveLimit" @save-item="saveItem" @delete-item="deleteItem" @save-category="saveCategory" @delete-category="deleteCategory" @cancel-action="cancelDestructiveAction('budget')" />
-    <WeatherTool v-show="activeTab === 'weather'" :key="'weather-' + workspace.event.id" :event="workspace.event" :forecast="forecast" :areas="areas" :area-override="workspace.forecastAreaOverride" :loading="weatherLoading" :pending="pending.weather" :action-error="errors.weather" :error="weatherError" :areas-error="areasError" @refresh="refreshWeather" @save-area="saveArea" @switch-venue="switchVenue" @cancel-action="cancelDestructiveAction('weather')" />
+    <EventEditor
+      v-if="editVisited"
+      v-show="activeTab === 'edit'"
+      :key="'edit-' + workspace.event.id"
+      embedded
+      @saved="refreshEditedEvent" />
+    <EventTeamPanel
+      v-if="teamVisited"
+      v-show="activeTab === 'team'"
+      :visible="activeTab === 'team'"
+      :key="'team-' + workspace.event.id"
+      :event-id="String(workspace.event.id)" />
+    <TaskBoard
+      v-show="activeTab === 'tasks'"
+      :key="'tasks-' + workspace.event.id"
+      :tasks="workspace.tasks"
+      :pending="pending.tasks"
+      :action-error="errors.tasks"
+      @create="saveTask($event, 'create')"
+      @update="saveTask($event, 'update')"
+      @delete="saveTask($event, 'delete')"
+      @save-board="saveBoard"
+      @cancel-action="cancelDestructiveAction('tasks')" />
+    <AnnouncementManager
+      v-show="activeTab === 'announcements'"
+      :key="'posts-' + workspace.event.id"
+      :posts="workspace.announcements"
+      :pending="pending.announcements"
+      :action-error="errors.announcements"
+      @create="saveAnnouncement($event, 'create')"
+      @update="saveAnnouncement($event, 'update')"
+      @delete="saveAnnouncement($event, 'delete')"
+      @cancel-action="cancelDestructiveAction('announcements')" />
+    <BudgetTracker
+      v-show="activeTab === 'budget'"
+      :key="'budget-' + workspace.event.id"
+      :budget="workspace.budget"
+      :custom-categories="workspace.budgetCategories || []"
+      :pending="pending.budget"
+      :action-error="errors.budget"
+      @save-limit="saveLimit"
+      @save-item="saveItem"
+      @delete-item="deleteItem"
+      @save-category="saveCategory"
+      @delete-category="deleteCategory"
+      @cancel-action="cancelDestructiveAction('budget')" />
+    <WeatherTool
+      v-show="activeTab === 'weather'"
+      :key="'weather-' + workspace.event.id"
+      :event="workspace.event"
+      :forecast="forecast"
+      :areas="areas"
+      :area-override="workspace.forecastAreaOverride"
+      :loading="weatherLoading"
+      :pending="pending.weather"
+      :action-error="errors.weather"
+      :error="weatherError"
+      :areas-error="areasError"
+      @refresh="refreshWeather"
+      @save-area="saveArea"
+      @switch-venue="switchVenue"
+      @cancel-action="cancelDestructiveAction('weather')" />
     <StaffStationView v-if="activeTab === 'check-in'" :event-id="String(workspace.event.id)" embedded />
     <VenueQrView v-else-if="activeTab === 'venue-qr'" :event-id="String(workspace.event.id)" embedded />
-    <AttendanceDashboardView v-else-if="activeTab === 'attendance'" :event-id="String(workspace.event.id)" embedded />
-    <FloorPlanEditor v-else-if="activeTab === 'floor-plan'" :event-id="String(workspace.event.id)" embedded />
+    <AttendanceDashboardView
+      v-else-if="activeTab === 'attendance'"
+      :event-id="String(workspace.event.id)"
+      embedded />
+    <FloorPlanEditor
+      v-else-if="activeTab === 'floor-plan'"
+      :event-id="String(workspace.event.id)"
+      section="floor"
+      embedded />
+    <FloorPlanEditor
+      v-else-if="activeTab === 'programme'"
+      :event-id="String(workspace.event.id)"
+      section="programme"
+      embedded />
   </template>
 </div>
 </template>
@@ -472,10 +592,10 @@ function switchVenue(action) {
   align-items: center;
   gap: .6rem;
   margin-left: auto;
-
 }
 
 /* unpublish sits on the coloured header, so give it a solid face and full-strength text */
+
 .workspace-publish .btn.workspace-unpublish {
   --bs-btn-bg: var(--bookedz-surface);
   --bs-btn-color: var(--bookedz-ink);
@@ -491,7 +611,6 @@ function switchVenue(action) {
   --bs-btn-disabled-border-color: var(--bookedz-control-border);
   border-width: 2px;
   font-weight: 700;
-
 }
 
 .workspace-back {
@@ -502,7 +621,6 @@ function switchVenue(action) {
   color: var(--bookedz-muted);
   font-weight: 600;
   text-decoration: none;
-
 }
 
 .workspace-header {
@@ -512,7 +630,6 @@ function switchVenue(action) {
   border-radius: 1.25rem;
   background: var(--bookedz-surface);
   box-shadow: var(--bookedz-card-shadow);
-
 }
 
 .workspace-title-row {
@@ -521,12 +638,10 @@ function switchVenue(action) {
   align-items: start;
   justify-content: space-between;
   gap: .7rem 1rem;
-
 }
 
 .workspace-title-copy {
   min-width: 0;
-
 }
 
 .workspace-eyebrow {
@@ -534,7 +649,6 @@ function switchVenue(action) {
   color: var(--bookedz-primary-dark);
   font-size: .78rem;
   font-weight: 700;
-
 }
 
 .workspace-header h1 {
@@ -544,7 +658,6 @@ function switchVenue(action) {
   font-weight: 700;
   letter-spacing: -.04em;
   overflow-wrap: anywhere;
-
 }
 
 .workspace-mode {
@@ -559,22 +672,20 @@ function switchVenue(action) {
   font-size: .75rem;
   font-weight: 650;
   white-space: nowrap;
-
 }
 
 .workspace-mode--success {
   border-color: var(--bookedz-success);
   color: var(--bookedz-success);
-
 }
 
 /* event time, active venue and venue address share the row equally (stacked on small screens) */
+
 .workspace-overview {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: .75rem;
   margin-top: 1.25rem;
-
 }
 
 .overview-item {
@@ -585,28 +696,25 @@ function switchVenue(action) {
   padding: .8rem .9rem;
   border-radius: .85rem;
   background: var(--bookedz-glass-solid);
-
 }
 
 .overview-label {
   color: var(--bookedz-muted);
   font-size: .74rem;
   font-weight: 650;
-
 }
 
 .overview-item strong {
   color: var(--bookedz-ink);
   font-size: .9rem;
   overflow-wrap: anywhere;
-
 }
 
 /* keep the overview and buttons above the header's decorative star so it never sits behind text */
+
 .workspace-overview, .workspace-link-groups {
   position: relative;
   z-index: 1;
-
 }
 
 .workspace-link-groups {
@@ -618,7 +726,6 @@ function switchVenue(action) {
   padding-top: 1rem;
   margin-top: 1rem;
   border-top: 1px solid var(--bookedz-border);
-
 }
 
 .workspace-primary-links {
@@ -626,33 +733,27 @@ function switchVenue(action) {
   flex-wrap: wrap;
   align-items: center;
   gap: .5rem .9rem;
-
 }
 
 .workspace-primary-links {
   flex: 1 1 100%;
-
 }
 
 .workspace-primary-links .btn {
   min-height: 44px;
-
 }
 
 .workspace-save-note {
   color: var(--bookedz-muted);
   font-size: .8rem;
-
 }
 
 .workspace-back:hover {
   text-decoration: underline;
-
 }
 
 .tool-feedback:empty {
   display: none;
-
 }
 
 .tool-feedback .alert {
@@ -661,12 +762,10 @@ function switchVenue(action) {
   align-items: center;
   justify-content: space-between;
   gap: .75rem;
-
 }
 
 .tool-feedback .btn {
   min-height: 44px;
-
 }
 
 :deep(.tool-heading) {
@@ -678,7 +777,6 @@ function switchVenue(action) {
   padding: .2rem 0 1rem;
   margin-bottom: 1.25rem;
   border-bottom: 1px solid var(--bookedz-border);
-
 }
 
 :deep(.tool-heading h2) {
@@ -687,19 +785,16 @@ function switchVenue(action) {
   font-size: clamp(1.45rem, 2.5vw, 1.8rem);
   font-weight: 700;
   letter-spacing: -.035em;
-
 }
 
 :deep(.tool-description) {
   max-width: 44rem;
   margin: .35rem 0 0;
   color: var(--bookedz-muted);
-
 }
 
 :deep(.tool-heading .btn) {
   min-height: 44px;
-
 }
 
 :deep(.workspace-panel) {
@@ -708,40 +803,28 @@ function switchVenue(action) {
   border-radius: 1rem;
   background: var(--bookedz-surface);
   box-shadow: var(--bookedz-card-shadow);
-
 }
 
 :deep(.section-heading) {
   color: var(--bookedz-ink);
   font-weight: 700;
-
 }
 
 @media (max-width: 767.98px) {
   .workspace-overview {
     grid-template-columns: 1fr;
-
   }
-
-
 }
 
 @media (max-width: 575.98px) {
   .workspace-link-groups {
     align-items: stretch;
-
   }
-
   .workspace-primary-links {
     align-items: stretch;
-
   }
-
   .workspace-primary-links .btn {
     width: 100%;
-
   }
-
-
 }
 </style>

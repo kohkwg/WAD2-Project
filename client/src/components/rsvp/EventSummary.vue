@@ -1,46 +1,73 @@
 <script setup>
-import { ref, computed, useId, watch } from 'vue'
-import { formatEventTime, formatAddress } from '../../utils/helpers.js'
-import { isStillHidden, venuePendingText } from '../../utils/venueReveal.js'
-import EventArtwork from '../EventArtwork.vue'
-import BumpValue from '../ui/BumpValue.vue'
+import { ref, computed, useId, watch } from 'vue';
+import { formatEventTime, formatAddress } from '../../utils/helpers.js';
+import { isStillHidden, venuePendingText } from '../../utils/venueReveal.js';
+import EventArtwork from '../EventArtwork.vue';
+import BumpValue from '../ui/BumpValue.vue';
 
 // read-only card with an event's key details.
-// used on the RSVP page and the "review" step of create event.
-// anything placed between <EventSummary> ... </EventSummary> appears at the bottom (the <slot>).
+// used on the rsvp page and the "review" step of create event.
+// anything placed between <eventsummary> ... </eventsummary> appears at the bottom (the <slot>).
+
 const props = defineProps({
   event: Object,
-  headingTag: { type: String, default: 'h2', validator: value => ['h1', 'h2', 'h3'].includes(value) },
-})
+  detailsTarget: {
+    default: null
+  },
+  headingTag: {
+    type: String,
+    default: 'h2',
+    validator: value => ['h1', 'h2', 'h3'].includes(value)
+  }
+});
 
-const failedCover = ref('')
-const coverCategory = computed(() => props.event?.category || props.event?.tags?.[0] || '')
+const failedCover = ref('');
+
+const coverCategory = computed(() => props.event?.category || props.event?.tags?.[0] || '');
 // the cover already shows the category, so the tag row lists only the others.
-const otherTags = computed(() => (props.event?.tags || []).filter(tag => tag.toLowerCase() !== coverCategory.value.toLowerCase()))
-const coverSource = computed(() => props.event?.image_url || props.event?.coverImageUrl || '')
-const showFullDescription = ref(false)
-const descriptionId = useId()
-watch(() => props.event?.id, () => { showFullDescription.value = false })
-const SHORT_LENGTH = 160
+
+const otherTags = computed(() => (props.event?.tags || []).filter(tag => tag.toLowerCase() !== coverCategory.value.toLowerCase()));
+
+const coverSource = computed(() => props.event?.image_url || props.event?.coverImageUrl || '');
+
+const showFullDescription = ref(false);
+
+const descriptionId = useId();
+
+watch(() => props.event?.id, () => {
+  showFullDescription.value = false;
+});
+
+const SHORT_LENGTH = 160;
 // participants of a hidden-capacity event get no numbers (capacity null), only whether it's full
-const hasCapacity = computed(() => props.event?.capacity != null && props.event?.capacity !== '')
-const hiddenAndFull = computed(() => Boolean(props.event?.hideCapacity) && props.event?.capacity == null && props.event?.spotsLeft === 0)
 
-// a venue hidden from participants, as its organisers see it: on the event page (hiddenVenue)
+const hasCapacity = computed(() => props.event?.capacity != null && props.event?.capacity !== '');
+
+const hiddenAndFull = computed(() => Boolean(props.event?.hideCapacity) && props.event?.capacity == null && props.event?.spotsLeft === 0);
+
+// a venue hidden from participants, as its organisers see it: on the event page (hiddenvenue)
 // or in create event's review (the form's venue with a reveal time still to come)
-const hiddenFromPublic = computed(() => {
-  const event = props.event
-  if (event?.hiddenVenue?.venue) return { venue: event.hiddenVenue.venue, when: venuePendingText(event).replace('Venue revealed on ', '') }
-  if (!event?.venuePending && event?.venue && isStillHidden(event.venueRevealAt)) return { venue: event.venue, when: venuePendingText(event).replace('Venue revealed on ', '') }
-  return null
-})
 
-const isLong = computed(() => (props.event.description || '').length > SHORT_LENGTH)
+const hiddenFromPublic = computed(() => {
+  const event = props.event;
+  if (event?.hiddenVenue?.venue) return {
+    venue: event.hiddenVenue.venue,
+    when: venuePendingText(event).replace('Venue revealed on ', '')
+  };
+  if (!event?.venuePending && event?.venue && isStillHidden(event.venueRevealAt)) return {
+    venue: event.venue,
+    when: venuePendingText(event).replace('Venue revealed on ', '')
+  };
+  return null;
+});
+
+const isLong = computed(() => (props.event.description || '').length > SHORT_LENGTH);
+
 const descriptionToShow = computed(() => {
-  const text = props.event.description || ''
-  if (!isLong.value || showFullDescription.value) return text
-  return text.slice(0, SHORT_LENGTH) + '…'
-})
+  const text = props.event.description || '';
+  if (!isLong.value || showFullDescription.value) return text;
+  return text.slice(0, SHORT_LENGTH) + '…';
+});
 </script>
 
 <template>
@@ -53,34 +80,54 @@ const descriptionToShow = computed(() => {
           <component :is="headingTag" class="event-title">{{ event.title || 'Untitled event' }}</component>
         </div>
         <div class="event-header-meta">
-          <p class="event-time"><span class="detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"
+          <p class="event-time">
+          <span class="detail-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="1.6">
                 <circle cx="12" cy="12" r="8" />
                 <path d="M12 7v5l3 2" />
               </svg></span>{{ formatEventTime(event) }}</p>
           <div class="event-facts" aria-label="Event details">
             <!-- a hidden capacity reaches participants without numbers: only "full" when it is -->
-            <div v-if="hiddenAndFull" class="event-fact"><span class="fact-icon fact-icon--coral"
-                aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <div v-if="hiddenAndFull" class="event-fact">
+            <span class="fact-icon fact-icon--coral"
+                aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
                   <path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z" />
                   <path d="M15 6v12" stroke-dasharray="2 2" />
-                </svg></span><span><strong>Full</strong><small>waitlist open</small></span></div>
+                </svg></span>
+            <span>
+              <strong>Full</strong>
+              <small>waitlist open</small></span></div>
             <!-- spots left out of the total in one fact, e.g. "24/30 spots left" -->
-            <div v-else-if="event.spotsLeft != null" class="event-fact"><span class="fact-icon fact-icon--coral"
-                aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <div v-else-if="event.spotsLeft != null" class="event-fact">
+            <span class="fact-icon fact-icon--coral"
+                aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
                   <path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z" />
                   <path d="M15 6v12" stroke-dasharray="2 2" />
-                </svg></span><span><strong>
-                  <BumpValue :value="event.spotsLeft" /><template v-if="hasCapacity">/{{ event.capacity }}</template>
-                </strong><small>spots
+                </svg></span>
+            <span>
+              <strong>
+                  <BumpValue :value="event.spotsLeft" />
+                <template v-if="hasCapacity">/{{ event.capacity }}</template>
+                </strong>
+              <small>spots
                   left</small></span></div>
-            <div v-else-if="hasCapacity" class="event-fact"><span class="fact-icon" aria-hidden="true"><svg
+            <div v-else-if="hasCapacity" class="event-fact">
+            <span class="fact-icon" aria-hidden="true">
+              <svg
                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
                   <circle cx="12" cy="8" r="3" />
                   <path d="M5 20v-2a7 7 0 0 1 14 0v2" />
-                </svg></span><span><strong>{{ event.capacity }}</strong><small>spots in total</small></span></div>
+                </svg></span>
+            <span>
+              <strong>{{ event.capacity }}</strong>
+              <small>spots in total</small></span></div>
             <div v-else-if="event.capacity == null && !event.hideCapacity" class="event-fact">
-              <span><strong>Unlimited</strong><small>spots</small></span>
+              <span>
+              <strong>Unlimited</strong>
+              <small>spots</small></span>
             </div>
           </div>
         </div>
@@ -88,10 +135,13 @@ const descriptionToShow = computed(() => {
         <slot name="hosts"></slot>
       </header>
 
-      <!-- The details card, and anything the page puts below it (the floor plan), flow as one column -->
+      <slot name="after-header"></slot>
+
+      <!-- the details card, and anything the page puts below it (the floor plan), flow as one column -->
       <div class="event-rest">
+        <Teleport :to="detailsTarget || 'body'" :disabled="!detailsTarget">
         <div class="event-body">
-          <!-- The description comes first, as plain text above where it is -->
+          <!-- the description comes first, as plain text above where it is -->
           <div v-if="event.description" class="event-description">
             <p :id="descriptionId" class="keep-line-breaks mb-1">{{ descriptionToShow }}</p>
             <button v-if="isLong" type="button" class="btn btn-link btn-sm p-0" :aria-expanded="showFullDescription"
@@ -102,24 +152,28 @@ const descriptionToShow = computed(() => {
           <slot v-if="event.isOnline" name="online-venue">
             <div class="event-venue">
               <span class="venue-label">Where</span>
-              <p class="venue-name"><span aria-hidden="true">⌖</span> Online</p>
+              <p class="venue-name">
+                <span aria-hidden="true">⌖</span> Online</p>
               <p class="venue-address">The link is shared with confirmed attendees</p>
             </div>
           </slot>
           <div v-else class="event-venue">
             <span class="venue-label">Where</span>
             <template v-if="hiddenFromPublic">
-              <p class="venue-name"><span aria-hidden="true">⌖</span> {{ hiddenFromPublic.venue.name }}</p>
+              <p class="venue-name">
+                <span aria-hidden="true">⌖</span> {{ hiddenFromPublic.venue.name }}</p>
               <p class="venue-address">{{ formatAddress(hiddenFromPublic.venue.address) }}</p>
               <p class="venue-hidden-note">Hidden from participants until {{ hiddenFromPublic.when }}. They see only
                 when it will be revealed.</p>
             </template>
             <template v-else-if="event.venuePending || !event.venue">
-              <p class="venue-name"><span aria-hidden="true">⌖</span> {{ venuePendingText(event) }}</p>
+              <p class="venue-name">
+                <span aria-hidden="true">⌖</span> {{ venuePendingText(event) }}</p>
               <p class="venue-address">{{ event.venueRevealAt ? 'The name and address appear here then.' : 'The organiser will add it here.' }}</p>
             </template>
             <template v-else>
-              <p class="venue-name"><span aria-hidden="true">⌖</span> {{ event.venue.name }}</p>
+              <p class="venue-name">
+                <span aria-hidden="true">⌖</span> {{ event.venue.name }}</p>
               <p class="venue-address">{{ formatAddress(event.venue.address) }}</p>
             </template>
           </div>
@@ -146,6 +200,7 @@ const descriptionToShow = computed(() => {
 
           <slot></slot>
         </div>
+        </Teleport>
         <slot name="below"></slot>
       </div>
     </div>
@@ -193,7 +248,8 @@ const descriptionToShow = computed(() => {
   padding-inline: 1rem;
 }
 
-/* lines up with the text inside the Where box */
+/* lines up with the text inside the where box */
+
 .event-tags .badge {
   text-transform: capitalize;
 }
@@ -383,7 +439,6 @@ const descriptionToShow = computed(() => {
     opacity: .65;
     transform: scale(1.025);
   }
-
   to {
     opacity: 1;
     transform: scale(1);
@@ -397,6 +452,7 @@ const descriptionToShow = computed(() => {
 }
 
 /* phones: details first, then the square cover at a size that doesn't take over the screen */
+
 @media (max-width: 575.98px) {
   .event-cover {
     width: min(100%, 320px);

@@ -1,4 +1,6 @@
-const { isDeepStrictEqual } = require('node:util');
+const {
+  isDeepStrictEqual
+} = require('node:util');
 
 function checkTrue(value, message = 'Expected a truthy value') {
   if (!value) throw new Error(message);
@@ -40,5 +42,10 @@ async function checkRejects(run, expectedMessage) {
   }
   throw new Error('Expected a rejection, but the operation succeeded');
 }
-
-module.exports = { checkTrue, checkEqual, checkDeepEqual, checkThrows, checkRejects };
+module.exports = {
+  checkTrue,
+  checkEqual,
+  checkDeepEqual,
+  checkThrows,
+  checkRejects
+};

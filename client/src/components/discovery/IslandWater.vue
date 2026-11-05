@@ -1,18 +1,58 @@
 <script setup>
-// Small authored patches of open water, never an animated filter on the terrain.
-// Each local wave travels only a few artwork pixels within its water patch.
-const patches = [
-  { x: 70, y: 585, sx: 1.1, sy: .6 },
-  { x: 95, y: 640, sx: 1.2, sy: .65 },
-  { x: 75, y: 117, sx: .7, sy: .5 },
-  { x: 790, y: 650, sx: 1.4, sy: .36 },
-  { x: 910, y: 635, sx: .8, sy: .4 },
-  { x: 1110, y: 660, sx: .8, sy: .7 },
-  { x: 1010, y: 745, sx: .9, sy: .7 },
-  { x: 1000, y: 800, sx: 1.4, sy: .7 },
-  { x: 910, y: 850, sx: 1.1, sy: .6 },
-  { x: 505, y: 872, sx: 1.3, sy: .35 },
-]
+// small authored patches of open water, never an animated filter on the terrain.
+// each local wave travels only a few artwork pixels within its water patch.
+
+const patches = [{
+  x: 70,
+  y: 585,
+  sx: 1.1,
+  sy: .6
+}, {
+  x: 95,
+  y: 640,
+  sx: 1.2,
+  sy: .65
+}, {
+  x: 75,
+  y: 117,
+  sx: .7,
+  sy: .5
+}, {
+  x: 790,
+  y: 650,
+  sx: 1.4,
+  sy: .36
+}, {
+  x: 910,
+  y: 635,
+  sx: .8,
+  sy: .4
+}, {
+  x: 1110,
+  y: 660,
+  sx: .8,
+  sy: .7
+}, {
+  x: 1010,
+  y: 745,
+  sx: .9,
+  sy: .7
+}, {
+  x: 1000,
+  y: 800,
+  sx: 1.4,
+  sy: .7
+}, {
+  x: 910,
+  y: 850,
+  sx: 1.1,
+  sy: .6
+}, {
+  x: 505,
+  y: 872,
+  sx: 1.3,
+  sy: .35
+}];
 </script>
 
 <template>
@@ -36,26 +76,58 @@ const patches = [
 
 <style scoped>
 .water-current {
-  opacity: .45; animation: water-drift 5s ease-in-out infinite;
+  opacity: .45;
+  animation: water-drift 5s ease-in-out infinite;
   animation-play-state: var(--island-play-state, running);
 }
+
 .water-glint {
-  opacity: .4; animation: water-sparkle 3.6s ease-in-out infinite;
+  opacity: .4;
+  animation: water-sparkle 3.6s ease-in-out infinite;
   animation-play-state: var(--island-play-state, running);
 }
+
 .shore-wash {
-  stroke: #e3ffff; stroke-width: 1.8; stroke-dasharray: 15 12 5 15;
-  opacity: .5; animation: shoreline-flow 7s linear infinite;
+  stroke: #e3ffff;
+  stroke-width: 1.8;
+  stroke-dasharray: 15 12 5 15;
+  opacity: .5;
+  animation: shoreline-flow 7s linear infinite;
   animation-play-state: var(--island-play-state, running);
 }
+
 @keyframes water-drift {
-  0% { transform: translate(-9px, -2px); opacity: .12; }
-  45% { opacity: .62; }
-  100% { transform: translate(10px, 3px); opacity: .12; }
+  0% {
+    transform: translate(-9px, -2px);
+    opacity: .12;
+  }
+  45% {
+    opacity: .62;
+  }
+  100% {
+    transform: translate(10px, 3px);
+    opacity: .12;
+  }
 }
-@keyframes water-sparkle { 0%,100% { opacity: .15; } 50% { opacity: .7; } }
-@keyframes shoreline-flow { to { stroke-dashoffset: -94; } }
+
+@keyframes water-sparkle {
+  0%,100% {
+    opacity: .15;
+  }
+  50% {
+    opacity: .7;
+  }
+}
+
+@keyframes shoreline-flow {
+  to {
+    stroke-dashoffset: -94;
+  }
+}
+
 @media(prefers-reduced-motion:reduce) {
-  .water-current,.water-glint,.shore-wash { animation: none; }
+  .water-current,.water-glint,.shore-wash {
+    animation: none;
+  }
 }
 </style>

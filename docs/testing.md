@@ -6,6 +6,24 @@ the list in demo mode. Run the spec against a fresh demo server, as described be
 pane doesn't fire focus events, and the suggestion data loads on focus, so scripted checks there must
 dispatch `focus` on `#event-search` themselves.
 
+## Account-wide update notifications (5 November)
+
+```sh
+node --test client/src/utils/__tests__/userNotifications.test.js
+VITE_USE_MOCK=true pnpm --dir client exec playwright test e2e/user-notifications.spec.js
+```
+
+Use an owned demo server; if 5173 is occupied, use the temporary-config approach below.
+The notification specs mutate only their isolated browser's demo storage, with `[TEST]`
+announcement content. Unit checks cover baseline/deduplication, reload history, independent
+sources/accounts, event/group decisions, offers, check-in and hidden-venue privacy. Browser
+checks cover top-right responsive placement in both themes, dino assets, close/ten-second
+expiry, background registration changes and new/edited announcements. The 5 November run
+used port 5199 and `/tmp/wad2-notification-playwright.config.mjs`; the two cases passed in
+separate targeted runs. Group decisions were also checked with a scratch demo browser script.
+No hosted data is changed. Live registration Realtime, private-group RLS and team invitations
+still need a human-signed-in live check. Polling snapshots do not prove durable offline delivery.
+
 5 November saved-events checkpoint: `client/src/utils/__tests__/savedEvents.test.js` (badge, action
 and ordering rules) passes with `NODE_ENV=test node --test` from `client/`, and
 `client/e2e/saved-events.spec.js` covers the Saved chip (live Discover with an in-browser Supabase
