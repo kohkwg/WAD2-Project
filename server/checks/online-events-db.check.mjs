@@ -162,6 +162,10 @@ await test('hidden capacity: Discover shows only whether it is full, except to t
 await test('online events cannot have Go together groups', async () => {
   await asUser(AMY);
   await rejects('select public.create_group($1,$2,$3,$4,$5)', [linked, '', 4, 'open', 'public'], /in-person events/);
+  // Starting a group needs an RSVP first (20261105050527); Amy RSVPs to the physical event
+  await admin();
+  await query("insert into public.registrations(event_id, user_id, status) values ($1, $2, 'confirmed')", [physical, AMY]);
+  await asUser(AMY);
   expect((await query('select public.create_group($1,$2,$3,$4,$5) as id', [physical, '', 4, 'open', 'public']))[0].id, 'physical events still can');
 });
 

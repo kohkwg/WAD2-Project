@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../../components/ui/BackLink.vue'
 import '../../assets/design-baseline.css'
 // Feature 3: participant's ticket. Shows their personal QR for staff to scan.
 // Mostly BOILERPLATE (loading + layout). The one interesting bit is the small
@@ -86,7 +87,8 @@ onUnmounted(() => {
 
 <template>
   <div class="container py-4 ticket-page text-center">
-    <RouterLink :to="back" class="small d-block text-start mb-3">&larr; Back</RouterLink>
+    <RouterLink to="/my-rsvps" class="small d-block text-start mb-3">&larr; Plans</RouterLink>
+    <BackLink :to="back" class="small d-block text-start mb-3">&larr; Back</BackLink>
 
     <div v-if="loading" class="py-5">
       <div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>

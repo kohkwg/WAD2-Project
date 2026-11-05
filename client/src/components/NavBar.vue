@@ -20,7 +20,9 @@ const ICONS = {
   // A door with an arrow leaving it, inside a circle
   signOut:
     'M12 1.5a10.5 10.5 0 1 1 0 21 10.5 10.5 0 0 1 0-21ZM13.9 9.7V7.5H8.7v9h5.2v-2.2M11.5 12h6M15.6 10l2 2-2 2',
-  discover: 'M3 11.5 12 4l9 7.5M5.5 10v10h13V10M10 20v-5h4v5',
+  home: 'M3 11.5 12 4l9 7.5M5.5 10v10h13V10M10 20v-5h4v5',
+  // A compass: a circle with a needle
+  discover: 'M12 2.5a9.5 9.5 0 1 1 0 19 9.5 9.5 0 0 1 0-19ZM15.8 8.2l-1.9 5.7-5.7 1.9 1.9-5.7z',
   community:
     'M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM22 20v-2a4 4 0 0 0-3-3.9M15.5 3.7a3.5 3.5 0 0 1 0 6.6',
   profile:
@@ -222,6 +224,13 @@ function resetDemo() {
       </RouterLink>
 
       <ul class="sidebar-links">
+        <li>
+          <RouterLink class="side-link" data-label="Home" active-class="" exact-active-class="active" to="/">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.home" /></svg>
+            <span class="side-label">Home</span>
+          </RouterLink>
+        </li>
+
         <li>
           <RouterLink
             class="side-link"
@@ -430,6 +439,11 @@ function resetDemo() {
   <!-- Phones: the four main destinations at thumb reach; the menu button keeps everything else.
        A separate landmark, so "Main navigation" still holds one link per destination -->
   <nav v-if="showBottomTabs" class="bottom-tabs" aria-label="Quick links">
+    <RouterLink class="bottom-tab" active-class="" exact-active-class="active" to="/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.home" /></svg>
+      Home
+    </RouterLink>
+
     <RouterLink
       class="bottom-tab"
       :class="{ active: isOnDiscover }"
@@ -822,6 +836,13 @@ function resetDemo() {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  transform: scale(1.3);
+}
+
+/* A dino shows whole, not cropped to the circle and its background */
+.nav-avatar:has(.nav-avatar-dino) {
+  overflow: visible;
+  background: none;
 }
 
 .nav-avatar {

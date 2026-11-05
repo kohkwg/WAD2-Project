@@ -87,6 +87,28 @@ test('an online event is created without venues, with its link and hidden capaci
   assert.equal(payload.venue, null)
   assert.equal(payload.backupVenue, null)
   assert.deepEqual(payload.onlineLink, { url: 'https://zoom.us/j/1', revealAt: '2026-12-01T09:45:00.000Z' })
+  assert.equal('venueRevealAt' in payload, false)
+})
+
+test('a physical event can be created with its venue to be announced, or hidden until a time', async () => {
+  const payloads = []
+  const client = { rpc: async (_name, args) => { payloads.push(args.p_event); return { data: 'event-x', error: null } } }
+  const base = {
+    requestId: 'd3edb13b-9022-4c2d-95fb-34774f34339e', title: 'Secret supper', description: '',
+    startTime: '2026-12-01T10:00:00.000Z', endTime: '2026-12-01T12:00:00.000Z', capacity: 20, requiresApproval: false,
+    tags: ['food'], questions: [],
+  }
+  // No venue: no rain plan either, even if the form still had one switched on
+  await createEventWith(client, { ...base, venue: null, isOutdoor: true, backupVenue: { name: 'Hall', address: '2', postal: '', lat: 1, lng: 103 }, venueRevealAt: '2026-11-30T10:00:00.000Z' })
+  assert.equal(payloads[0].venue, null)
+  assert.equal(payloads[0].isOutdoor, false)
+  assert.equal(payloads[0].backupVenue, null)
+  assert.equal('venueRevealAt' in payloads[0], false) // nothing to hide, so the key isn't sent
+  // Chosen and hidden: the venue goes to the RPC, which keeps it out of the public venues table
+  const venue = { name: 'Rooftop', address: '1 Road', postal: '', lat: 1.3, lng: 103.8 }
+  await createEventWith(client, { ...base, venue, isOutdoor: false, backupVenue: null, venueRevealAt: '2026-11-30T10:00:00.000Z' })
+  assert.deepEqual(payloads[1].venue, { ...venue, postal: null })
+  assert.equal(payloads[1].venueRevealAt, '2026-11-30T10:00:00.000Z')
 })
 
 test('live event creation requires a UUID request ID before calling Supabase', async () => {

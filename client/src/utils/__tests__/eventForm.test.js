@@ -1,6 +1,7 @@
 import test from 'node:test'
 import { expect } from './expect.js'
 import { blankEventForm, errorsForStep } from '../eventForm.js'
+import { venueRevealToSave } from '../venueReveal.js'
 
 // Create Event form: what each input accepts, and the message the organiser sees when it doesn't.
 // Local-time dates (like the form's datetime-local values) keep these independent of time zone.
@@ -60,9 +61,27 @@ test('an older event with no capacity limit can keep it when edited', () => {
   expect(errorsForStep({ ...valid(), capacity: '' }, 1, { now, editing: true, originalCapacity: '' })).toEqual([])
 })
 
-test('a venue must be picked from the address search', () => {
-  expect(errorsForStep({ ...valid(), venue: null }, 2)).toContain('Choose the venue from the address search.')
+test('the venue is optional: it can be announced later, with no rain plan or reveal time yet', () => {
+  expect(errorsForStep({ ...valid(), venue: null }, 2)).toEqual([])
   expect(errorsForStep({ ...valid(), venue: smu }, 2)).toEqual([])
+  // Settings left from a cleared venue are ignored (and not saved), not shown as errors
+  expect(errorsForStep({ ...valid(), venue: null, isOutdoor: true, venueRevealAt: '2026-11-10T20:00' }, 2)).toEqual([])
+  const saved = venueRevealToSave({ ...valid(), venue: null, venueRevealAt: '2026-11-09T19:00' }, now.getTime())
+  expect(saved).toBe(null)
+})
+
+test('a hidden venue is revealed no later than the start', () => {
+  expect(errorsForStep({ ...valid(), venue: smu, venueRevealAt: '2026-11-09T19:00' }, 2)).toEqual([])
+  expect(errorsForStep({ ...valid(), venue: smu, venueRevealAt: '2026-11-10T19:00' }, 2)).toEqual([])
+  expect(errorsForStep({ ...valid(), venue: smu, venueRevealAt: '2026-11-10T19:30' }, 2)).toContain('The venue has to be revealed before the event starts.')
+  expect(errorsForStep({ ...valid(), venue: smu, venueRevealAt: 'not a date' }, 2)).toContain('Choose when the venue is revealed.')
+})
+
+test('only a reveal time still to come keeps the venue hidden', () => {
+  const form = { ...valid(), venue: smu, venueRevealAt: '2026-11-09T19:00' }
+  expect(venueRevealToSave(form, now.getTime())).toBe(new Date('2026-11-09T19:00').toISOString())
+  expect(venueRevealToSave(form, new Date(2026, 10, 9, 19, 1).getTime())).toBe(null) // passed: shown now
+  expect(venueRevealToSave({ ...form, isOnline: true }, now.getTime())).toBe(null)
 })
 
 test('outdoor events need a rain backup venue', () => {

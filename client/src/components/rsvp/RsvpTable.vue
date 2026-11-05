@@ -1,4 +1,5 @@
 <script setup>
+import { answerText } from '../../utils/questionTypes.js'
 import GroupChip from './GroupChip.vue'
 import { ref, nextTick } from 'vue'
 import { formatShortDateTime } from '../../utils/helpers.js'
@@ -49,9 +50,7 @@ function toggleAll(on) {
 }
 
 function formatAnswer(question, answer) {
-  if (answer === undefined || answer === '') return '—'
-  if (question.type === 'yesno') return answer === 'yes' ? 'Yes' : 'No'
-  return answer
+  return answerText(question, answer)
 }
 </script>
 

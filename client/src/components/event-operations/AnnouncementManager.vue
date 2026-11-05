@@ -1,7 +1,10 @@
 <script setup>
-import { nextTick, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import ConfirmationDialog from './ConfirmationDialog.vue'
-defineProps({ posts: { type: Array, required: true }, pending: Boolean, actionError: String })
+const props = defineProps({ posts: { type: Array, required: true }, pending: Boolean, actionError: String })
+// Same order as the public feed: latest posted or edited first
+const activityAt = (post) => Date.parse(post.updatedAt || post.createdAt)
+const orderedPosts = computed(() => [...props.posts].sort((a, b) => activityAt(b) - activityAt(a)))
 const emit = defineEmits(['create', 'update', 'delete', 'cancel-action'])
 const body = ref('')
 const bodyInput = ref(null)
@@ -33,7 +36,7 @@ function date(value) { return new Date(value).toLocaleString('en-SG', { timeZone
     <div class="tool-heading"><div><h2 id="announcements-heading" tabindex="-1">Announcements</h2><p class="tool-description">Keep participants up to date. Published updates appear on the public event page.</p></div><button id="announcements-write" class="btn btn-outline-primary" type="button" :disabled="pending" @click="focusEditor">{{ editingId ? 'Continue editing' : 'Write announcement' }}</button></div>
 
     <p v-if="!posts.length" class="text-secondary">No announcements yet.</p>
-    <article v-for="post in posts" :key="post.id" class="announcement-entry border-bottom py-3">
+    <article v-for="post in orderedPosts" :key="post.id" class="announcement-entry border-bottom py-3">
       <p class="post-body">{{ post.body }}</p>
       <p class="small text-secondary"><time :datetime="post.createdAt">{{ date(post.createdAt) }}</time><span v-if="post.updatedAt"> · Edited {{ date(post.updatedAt) }}</span></p>
       <div v-if="post.kind === 'manual'" class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-primary" :disabled="pending" :aria-label="'Edit announcement: ' + post.body" @click="edit(post)">Edit</button><button type="button" class="btn btn-sm btn-outline-danger" :disabled="pending" :aria-label="'Delete announcement: ' + post.body" @click="deleting = post">Delete</button></div>

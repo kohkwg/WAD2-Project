@@ -3,6 +3,7 @@
 // `before` and `after` are both in the Create Event form shape (see CreateEventView.vue).
 
 import { formatEventTime } from './helpers.js'
+import { isStillHidden } from './venueReveal.js'
 
 const sameText = (a, b) => (a || '').trim() === (b || '').trim()
 const sameTime = (a, b) => new Date(a).getTime() === new Date(b).getTime()
@@ -12,9 +13,14 @@ const capacityText = (capacity) => (capacity === '' || capacity == null ? 'no li
 const tagList = (tags) => [...(tags || [])].sort().join(', ') || 'none'
 const sameRevealTime = (a, b) => (a || '') === (b || '') || (Boolean(a) && Boolean(b) && sameTime(a, b))
 const formatRevealTime = (value) => new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+// A chosen venue kept hidden until a time still to come; its name must not reach the public feed
+const hiddenVenue = (form, now) => !form.isOnline && Boolean(form.venue) && isStillHidden(form.venueRevealAt, now)
+// How the place reads in public: hidden, to be announced, or the venue's name
+const placeText = (form, now) => (hiddenVenue(form, now) ? `the venue will be revealed on ${formatRevealTime(form.venueRevealAt)}`
+  : form.venue ? form.venue.name : 'venue to be announced')
 
 // Returns [{ field, text }] in the order attendees care about most (time and place first)
-export function describeEventChanges(before, after) {
+export function describeEventChanges(before, after, { now = Date.now() } = {}) {
   const changes = []
   const add = (field, text) => changes.push({ field, text })
 
@@ -24,7 +30,8 @@ export function describeEventChanges(before, after) {
   // Announcements are public, so they never include the online link itself, and they leave
   // out capacity numbers once the organiser hides them.
   if (Boolean(before.isOnline) !== Boolean(after.isOnline)) {
-    add('venue', after.isOnline ? 'Now an online event' : `Now in person at ${venueName(after.venue)}`)
+    add('venue', after.isOnline ? 'Now an online event'
+      : after.venue && !hiddenVenue(after, now) ? `Now in person at ${venueName(after.venue)}` : `Now in person; ${placeText(after, now)}`)
   } else if (after.isOnline) {
     const link = (form) => [(form.onlineLink?.url || '').trim(), (form.onlineLink?.url || '').trim() ? form.onlineLink.revealAt || '' : '']
     const [beforeUrl, beforeReveal] = link(before)
@@ -34,6 +41,18 @@ export function describeEventChanges(before, after) {
         ? `Online link updated: confirmed attendees can open it from ${formatRevealTime(afterReveal)}`
         : 'Online link removed for now')
     }
+  } else if (hiddenVenue(after, now)) {
+    // Never names a hidden venue: only that it changed or when it appears
+    const beforeReveal = hiddenVenue(before, now) ? before.venueRevealAt : ''
+    if (venueKey(before.venue) !== venueKey(after.venue) || !sameRevealTime(beforeReveal, after.venueRevealAt)) {
+      add('venue', `${placeText(after, now)[0].toUpperCase()}${placeText(after, now).slice(1)}`)
+    }
+  } else if (hiddenVenue(before, now) && after.venue) {
+    add('venue', `Venue revealed: ${venueName(after.venue)}`)
+  } else if (!before.venue || !after.venue || hiddenVenue(before, now)) {
+    if (venueKey(before.venue) !== venueKey(after.venue) || hiddenVenue(before, now)) {
+      add('venue', after.venue ? `Venue announced: ${venueName(after.venue)}` : 'Venue to be announced')
+    }
   } else if (venueKey(before.venue) !== venueKey(after.venue)) {
     const samePlace = before.venue?.name === after.venue?.name && (before.venue?.address || '') === (after.venue?.address || '')
     add('venue', samePlace
@@ -42,9 +61,9 @@ export function describeEventChanges(before, after) {
   }
   if (!after.isOnline && (Boolean(before.isOutdoor) !== Boolean(after.isOutdoor)
     || (after.isOutdoor && venueKey(before.backupVenue) !== venueKey(after.backupVenue)))) {
-    add('backup', after.isOutdoor
-      ? `Outdoor event; if it rains it moves to ${venueName(after.backupVenue)}`
-      : 'No longer an outdoor event (no rain backup venue)')
+    add('backup', !after.isOutdoor ? 'No longer an outdoor event (no rain backup venue)'
+      : hiddenVenue(after, now) ? 'Outdoor event; the rain plan is shared when the venue is revealed'
+        : `Outdoor event; if it rains it moves to ${venueName(after.backupVenue)}`)
   }
   if (!sameText(before.title, after.title)) add('title', `New name: “${after.title.trim()}”`)
   if (String(before.capacity ?? '') !== String(after.capacity ?? '')) {

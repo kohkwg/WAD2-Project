@@ -923,3 +923,32 @@ Specs that switch theme with the expanded sidebar's drop-down start with
 testing what they were written for. A new spec that needs the drop-down at 992px or wider should
 do the same. On 5 November, every failure in those specs also failed on an untouched copy of
 HEAD served the same way (see status).
+
+## Live announcement feed (5 November)
+
+```sh
+cd client && NODE_ENV=test node --test src/utils/__tests__/announcementUpdates.test.js
+```
+
+Covers the Realtime insert/edit filter for one event, deletions only for posts on screen,
+catch-up on connect, poll, focus and online, waiting while the tab is hidden, the demo
+storage event, and clean-up. `feature4.test.js` imports `api.js`, so it needs the same
+temporary loader as `supabaseApi.test.js` (18/18 on 5 November).
+
+## Venue to be announced and hidden venues (5 November)
+
+```sh
+node server/checks/hidden-venues-db.check.mjs <tmp>/node_modules/@electric-sql/pglite/dist/index.js
+cd client && NODE_ENV=test node --test src/utils/__tests__/venueReveal.test.js src/utils/__tests__/eventForm.test.js src/utils/__tests__/onlineEvents.test.js
+node --test client/tests/organiser-events.test.mjs
+```
+
+The database check runs every migration in in-memory PGlite (the `cron.schedule` stub records the
+job) and covers: older events unchanged; publishing with no venue; no rain plan without a venue; a
+hidden venue kept out of `venues`; only organisers reading it; the public reveal time; reveal
+before the start; a passed time showing the venue now; the guards on `venue_reveal_at`; another
+user's writes; hiding and un-hiding; Go together waiting; and the release. `online-events-db`,
+`groups-db` and `community-public-db` should still pass. `supabaseApi.test.js` (the payload cases)
+needs the temporary loader described above. Browser behaviour (the timed reveal, organiser and
+participant views, announcement wording) was checked with a throwaway demo-mode script, not a
+committed spec.

@@ -30,6 +30,8 @@ test('live update adapter can reschedule a draft while protecting started publis
     .replace("import * as hangouts from './supabaseHangoutsApi.js'", 'const hangouts = {}')
     .replace("import { supabase } from './supabase.js'", 'const supabase = {}')
     .replace("import { api as recommendationApi } from '../lib/api.js'", 'const recommendationApi = {}')
+    // Pure helper modules load from their real files (a data: URL can't resolve relative imports)
+    .replace(/from '\.\/(onlineEvents|venueReveal)\.js'/g, (_, name) => `from '${new URL(`../src/utils/${name}.js`, import.meta.url).href}'`)
   const { updateEventWith } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'))
   const updates = []
   const client = { from() { return { update(value) { updates.push(value); return { eq: () => ({ select: async () => ({ data: [{ id: 'draft' }] }) }) } } } } }

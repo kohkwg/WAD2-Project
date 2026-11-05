@@ -1,4 +1,5 @@
 <script setup>
+import BackLink from '../components/ui/BackLink.vue'
 import '../assets/design-baseline.css'
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -366,7 +367,7 @@ async function demoExpireOffers() {
 
 <template>
 <div class="design-baseline">
-  <div v-if="!embedded" class="d-flex justify-content-between flex-wrap gap-2"><RouterLink :to="back" class="rsvp-back">&larr; Back</RouterLink><div class="d-flex flex-wrap gap-2"><RouterLink v-if="isMyEvent && new Date(event.startTime) > new Date()" class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage?tab=edit`">Edit event</RouterLink><RouterLink class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage`">Event tools</RouterLink></div></div>
+  <div v-if="!embedded" class="d-flex justify-content-between flex-wrap gap-2"><BackLink :to="back" class="rsvp-back">&larr; Back</BackLink><div class="d-flex flex-wrap gap-2"><RouterLink v-if="isMyEvent && new Date(event.startTime) > new Date()" class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage?tab=edit`">Edit event</RouterLink><RouterLink class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage`">Event tools</RouterLink></div></div>
 
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status">
@@ -386,8 +387,9 @@ async function demoExpireOffers() {
 
     <section class="guest-summary mb-4" aria-label="RSVP status summary">
       <div class="capacity-overview">
-        <div class="capacity-title"><div><h2>Spots</h2><p>{{ spotsTaken }} of {{ event.capacity }} taken or offered</p></div><strong><CountUp :value="capacityParts.availableCount" /><span> left</span></strong></div>
-        <div class="capacity-track" role="img" :aria-label="`Capacity: ${event.confirmedCount} confirmed, ${event.offeredCount} ${event.offeredCount === 1 ? 'offer' : 'offers'} out, ${capacityParts.availableCount} available of ${event.capacity}`">
+        <div v-if="event.capacity == null" class="capacity-title"><div><h2>Spots</h2><p>No limit, so everyone who RSVPs gets a place.</p></div><strong><CountUp :value="spotsTaken" /><span> taken</span></strong></div>
+        <div v-else class="capacity-title"><div><h2>Spots</h2><p>{{ spotsTaken }} of {{ event.capacity }} taken or offered</p></div><strong><CountUp :value="capacityParts.availableCount" /><span> left</span></strong></div>
+        <div v-if="event.capacity != null" class="capacity-track" role="img" :aria-label="`Capacity: ${event.confirmedCount} confirmed, ${event.offeredCount} ${event.offeredCount === 1 ? 'offer' : 'offers'} out, ${capacityParts.availableCount} available of ${event.capacity}`">
           <span class="capacity-segment capacity-segment--confirmed" :style="{ transform: `scaleX(${capacityParts.confirmed / 100})` }"></span>
           <span class="capacity-segment capacity-segment--offered" :style="{ transform: `scaleX(${(capacityParts.confirmed + capacityParts.offered) / 100})` }"></span>
           <span class="capacity-segment capacity-segment--available" :style="{ transform: `scaleX(${(capacityParts.confirmed + capacityParts.offered + capacityParts.available) / 100})` }"></span>
@@ -395,7 +397,7 @@ async function demoExpireOffers() {
         <ul class="capacity-legend" aria-label="Capacity breakdown">
           <li><i class="legend-dot legend-dot--confirmed" aria-hidden="true"></i><span>Confirmed</span><strong>{{ event.confirmedCount }}</strong></li>
           <li><i class="legend-dot legend-dot--offered" aria-hidden="true"></i><span>Offers out</span><strong>{{ event.offeredCount }}</strong></li>
-          <li><i class="legend-dot legend-dot--available" aria-hidden="true"></i><span>Available</span><strong>{{ capacityParts.availableCount }}</strong></li>
+          <li v-if="event.capacity != null"><i class="legend-dot legend-dot--available" aria-hidden="true"></i><span>Available</span><strong>{{ capacityParts.availableCount }}</strong></li>
         </ul>
       </div>
     </section>

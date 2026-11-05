@@ -1,10 +1,12 @@
 <script setup>
+import BackLink from '../components/ui/BackLink.vue'
 import '../assets/design-baseline.css'
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useBackLink } from '../composables/useBackLink.js'
 import * as api from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
+import { hasPlace, venuePendingText } from '../utils/venueReveal.js'
 import EventToolNavigation from '../components/event-operations/EventToolNavigation.vue'
 import TaskBoard from '../components/event-operations/TaskBoard.vue'
 import AnnouncementManager from '../components/event-operations/AnnouncementManager.vue'
@@ -93,7 +95,7 @@ async function load() {
   finally { if (ticket === epoch) loading.value = false }
 }
 watch(() => route.params.id, load, { immediate: true })
-watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => { if (tab === 'weather' && eventId && canManage.value) refreshWeather() })
+watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => { if (tab === 'weather' && eventId && canManage.value && hasPlace(workspace.value.event)) refreshWeather() })
 onBeforeUnmount(() => { epoch++; weatherRequest++ })
 
 async function refreshEditedEvent() {
@@ -188,7 +190,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 
 <template>
 <div class="design-baseline">
-  <RouterLink :to="back" class="workspace-back">← Back</RouterLink>
+  <BackLink :to="back" class="workspace-back">← Back</BackLink>
   <p v-if="loading" class="my-5 text-center" role="status">Loading event workspace…</p>
   <div v-dismissible v-else-if="loadError" class="alert alert-danger mt-3" role="alert">{{ loadError }} <button type="button" class="btn btn-sm btn-outline-danger" @click="load">Retry event</button></div>
   <div v-dismissible v-else-if="workspace && !canManage" class="alert alert-danger mt-3" role="alert">Only this event’s organisers can use these tools.</div>
@@ -197,11 +199,11 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
       <div class="workspace-title-row"><div class="workspace-title-copy"><p class="workspace-eyebrow">Organiser workspace</p><h1>{{ workspace.event.title }}</h1></div><span class="workspace-mode">{{ api.USING_SUPABASE ? 'Live workspace' : 'Demo workspace' }}</span></div>
       <div class="workspace-overview">
         <div class="overview-item"><span class="overview-label">Event time</span><strong>{{ formatEventTime(workspace.event) }}</strong></div>
-        <div class="overview-item"><span class="overview-label">Active venue</span><strong>{{ workspace.event.venue?.name || 'Venue not set' }}</strong><span v-if="workspace.event.usingBackup" class="workspace-mode workspace-mode--success">Backup active</span></div>
-        <details class="workspace-address"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
+        <div class="overview-item"><span class="overview-label">Active venue</span><strong>{{ workspace.event.hiddenVenue?.venue?.name || workspace.event.venue?.name || 'Venue not set' }}</strong><span v-if="workspace.event.venueRevealAt" class="workspace-mode">{{ venuePendingText(workspace.event).replace('Venue revealed', 'Hidden until revealed') }}</span><span v-if="workspace.event.usingBackup" class="workspace-mode workspace-mode--success">Backup active</span></div>
+        <div class="overview-item"><span class="overview-label">Venue address</span><strong>{{ workspace.event.hiddenVenue?.venue?.address || workspace.event.venue?.address || (workspace.event.isOnline ? 'Online event' : 'Address not set') }}</strong></div>
       </div>
       <div class="workspace-link-groups">
-        <div class="workspace-primary-links"><RouterLink class="btn event-cta" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink><span class="workspace-publish"><span v-if="publishState === 'draft'" class="workspace-mode">Unpublished</span><span v-else-if="publishState !== 'published'" class="workspace-mode">{{ publishState[0].toUpperCase() + publishState.slice(1) }}</span><button v-if="canTogglePublish" type="button" class="btn" :class="publishState === 'published' ? 'btn-outline-secondary' : 'btn-primary'" :disabled="publishing" @click="togglePublish">{{ publishing ? 'Saving…' : publishState === 'published' ? 'Unpublish' : 'Publish' }}</button></span><span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>
+        <div class="workspace-primary-links"><RouterLink class="btn event-cta" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink><span class="workspace-publish"><span v-if="publishState === 'draft'" class="workspace-mode">Unpublished</span><span v-else-if="publishState !== 'published'" class="workspace-mode">{{ publishState[0].toUpperCase() + publishState.slice(1) }}</span><button v-if="canTogglePublish" type="button" class="btn" :class="publishState === 'published' ? 'btn-outline-secondary workspace-unpublish' : 'btn-primary'" :disabled="publishing" @click="togglePublish">{{ publishing ? 'Saving…' : publishState === 'published' ? 'Unpublish' : 'Publish' }}</button></span><span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>
         <p v-dismissible v-if="publishError" class="text-danger mb-0" role="alert">{{ publishError }}</p>
       </div>
     </header>
@@ -227,6 +229,8 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 
 <style scoped>
 .workspace-publish { order: 2; display: inline-flex; align-items: center; gap: .6rem; margin-left: auto; }
+/* Unpublish sits on the coloured header, so give it a solid face and full-strength text */
+.workspace-publish .btn.workspace-unpublish { --bs-btn-bg: var(--bookedz-surface); --bs-btn-color: var(--bookedz-ink); --bs-btn-border-color: var(--bookedz-ink); --bs-btn-hover-bg: var(--bookedz-hover); --bs-btn-hover-color: var(--bookedz-ink); --bs-btn-hover-border-color: var(--bookedz-ink); --bs-btn-active-bg: var(--bookedz-hover); --bs-btn-active-color: var(--bookedz-ink); --bs-btn-active-border-color: var(--bookedz-ink); --bs-btn-disabled-bg: var(--bookedz-surface); --bs-btn-disabled-color: var(--bookedz-muted); --bs-btn-disabled-border-color: var(--bookedz-control-border); border-width: 2px; font-weight: 700; }
 .workspace-back { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .5rem; color: var(--bookedz-muted); font-weight: 600; text-decoration: none; }
 .workspace-header { padding: clamp(1.15rem, 3vw, 2rem); margin-bottom: 1.25rem; border: 1px solid var(--bookedz-border); border-radius: 1.25rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
 .workspace-title-row { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .7rem 1rem; }
@@ -235,14 +239,13 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 .workspace-header h1 { margin: 0; color: var(--bookedz-ink); font-size: clamp(1.55rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: -.04em; overflow-wrap: anywhere; }
 .workspace-mode { display: inline-flex; align-items: center; min-height: 30px; padding: .25rem .65rem; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-glass-solid); color: var(--bookedz-muted); font-size: .75rem; font-weight: 650; white-space: nowrap; }
 .workspace-mode--success { border-color: var(--bookedz-success); color: var(--bookedz-success); }
-.workspace-overview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: .75rem; margin-top: 1.25rem; }
+/* Event time, active venue and venue address share the row equally (stacked on small screens) */
+.workspace-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-top: 1.25rem; }
 .overview-item { display: grid; align-content: start; gap: .25rem; min-width: 0; padding: .8rem .9rem; border-radius: .85rem; background: var(--bookedz-glass-solid); }
 .overview-label { color: var(--bookedz-muted); font-size: .74rem; font-weight: 650; }
 .overview-item strong { color: var(--bookedz-ink); font-size: .9rem; overflow-wrap: anywhere; }
-.workspace-address { align-self: stretch; display: flex; align-items: center; min-width: 8rem; padding: .65rem .8rem; border: 1px solid var(--bookedz-border); border-radius: .85rem; color: var(--bookedz-muted); }
-.workspace-address[open] { display: block; }
-.workspace-address summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--bookedz-primary-dark); font-size: .85rem; font-weight: 600; }
-.workspace-address p { margin: .25rem 0; color: var(--bookedz-muted); font-size: .85rem; overflow-wrap: anywhere; }
+/* Keep the overview and buttons above the header's decorative star so it never sits behind text */
+.workspace-overview, .workspace-link-groups { position: relative; z-index: 1; }
 .workspace-link-groups { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.25rem; padding-top: 1rem; margin-top: 1rem; border-top: 1px solid var(--bookedz-border); }
 .workspace-primary-links, .workspace-quick-links { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; }
 .workspace-primary-links { flex: 1 1 100%; }
@@ -259,7 +262,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 :deep(.tool-heading .btn) { min-height: 44px; }
 :deep(.workspace-panel) { padding: clamp(1rem, 2vw, 1.35rem); border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
 :deep(.section-heading) { color: var(--bookedz-ink); font-weight: 700; }
-@media (max-width: 767.98px) { .workspace-overview { grid-template-columns: 1fr 1fr; } .workspace-address { grid-column: 1 / -1; } .workspace-quick-links { width: 100%; } }
-@media (max-width: 575.98px) { .workspace-overview { grid-template-columns: 1fr; } .workspace-address { grid-column: auto; } .workspace-link-groups { align-items: stretch; } .workspace-primary-links { align-items: stretch; } .workspace-primary-links .btn { width: 100%; } }
+@media (max-width: 767.98px) { .workspace-overview { grid-template-columns: 1fr; } .workspace-quick-links { width: 100%; } }
+@media (max-width: 575.98px) { .workspace-link-groups { align-items: stretch; } .workspace-primary-links { align-items: stretch; } .workspace-primary-links .btn { width: 100%; } }
 
 </style>

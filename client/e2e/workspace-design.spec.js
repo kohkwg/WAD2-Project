@@ -24,7 +24,10 @@ test('public layout prioritises event facts and Plans stays responsive', async (
     }
     const title = await details.getByRole('heading', { level: 1 }).boundingBox()
     const picture = await details.locator('.event-cover').boundingBox()
-    expect(title.y).toBeLessThan(picture.y)
+    // The square cover sits beside the title on wider screens and below the details on phones
+    if (width >= 576) expect(picture.x).toBeGreaterThanOrEqual(title.x + title.width)
+    else expect(title.y).toBeLessThan(picture.y)
+    expect(Math.abs(picture.width - picture.height)).toBeLessThan(2)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: testInfo.outputPath(`public-event-${width}.png`) })
     await page.goto('/my-rsvps')

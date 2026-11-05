@@ -1,4 +1,6 @@
 <script setup>
+import { blankAnswer, answerIsEmpty } from '../utils/questionTypes.js'
+import BackLink from '../components/ui/BackLink.vue'
 import '../assets/design-baseline.css'
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick, defineAsyncComponent } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
@@ -8,6 +10,7 @@ import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnouncementFeed from '../components/event-operations/AnnouncementFeed.vue'
 import ClashWarning from '../components/rsvp/ClashWarning.vue'
 import VenueMap from '../components/VenueMap.vue'
+import ShowHideButton from '../components/ui/ShowHideButton.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import EventGroups from '../components/community/EventGroups.vue'
 import OnlineEventLink from '../components/rsvp/OnlineEventLink.vue'
@@ -15,6 +18,7 @@ import { isGroup } from '../utils/groups.js'
 import { isEventFull } from '../utils/onlineEvents.js'
 import {
   getEvent,
+  releaseDueEventVenues,
   getUser,
   getMyRsvps,
   createRsvp,
@@ -48,10 +52,12 @@ const errorMessage = ref('')
 const result = ref(null) // the RSVP we get back after submitting
 const signedIn = ref(false)
 const validationSummary = ref(null)
+const mapOpen = ref(false) // the venue map starts hidden to reduce clutter
 
 let loadRequest = 0
 watch(eventId, async (id) => {
   const ticket = ++loadRequest
+  mapOpen.value = false
   loading.value = true
   event.value = null
   result.value = null
@@ -68,7 +74,7 @@ watch(eventId, async (id) => {
     // Go together groups have their own page
     if (isGroup(loadedEvent)) { router.replace(`/groups/${loadedEvent.id}`); return }
     event.value = loadedEvent
-    for (const question of loadedEvent.questions) answers.value[question.id] = ''
+    for (const question of loadedEvent.questions) answers.value[question.id] = blankAnswer(question.type)
     const sessionUser = await getCurrentUser()
     if (ticket !== loadRequest) return
     signedIn.value = Boolean(sessionUser)
@@ -87,12 +93,29 @@ watch(eventId, async (id) => {
 }, { immediate: true })
 onBeforeUnmount(() => { loadRequest++ })
 
+// A hidden venue appears at its reveal time without a reload: release it (the database job runs
+// only once a minute), then read the event again. Only for reveals within the next day.
+let revealTimer
+watch(() => [event.value?.id, event.value?.venuePending, event.value?.venueRevealAt], ([id, pending, revealAt]) => {
+  clearTimeout(revealTimer)
+  const wait = Date.parse(revealAt) - Date.now()
+  if (!id || !pending || !(wait < 864e5)) return
+  revealTimer = setTimeout(async () => {
+    try {
+      await releaseDueEventVenues()
+      const latest = await getEvent(id)
+      if (id === eventId.value) applyPublicEvent(latest)
+    } catch { /* the page keeps showing the reveal time; a reload or the next visit shows the venue */ }
+  }, Math.max(wait, 0) + 1500)
+})
+onBeforeUnmount(() => clearTimeout(revealTimer))
+
 // Public-feed refresh updates shared event details without resetting RSVP drafts.
 function applyPublicEvent(latest) {
   if (latest.id !== eventId.value || event.value?.id !== latest.id) return
   event.value = latest
   for (const question of latest.questions) {
-    if (!(question.id in answers.value)) answers.value[question.id] = ''
+    if (!(question.id in answers.value)) answers.value[question.id] = blankAnswer(question.type)
   }
 }
 
@@ -115,7 +138,7 @@ const formErrors = computed(() => {
   if (name.value.trim() === '') errors.push('Please enter your name.')
   if (!email.value.includes('@')) errors.push('Please enter a valid email.')
   for (const question of event.value.questions) {
-    if (question.required && String(answers.value[question.id]).trim() === '') {
+    if (question.required && answerIsEmpty(answers.value[question.id])) {
       errors.push('Please answer: ' + question.text)
     }
   }
@@ -218,7 +241,7 @@ async function submitRsvp() {
   </div>
   <div v-else ref="pageMotion" class="public-event-page">
   <div class="rsvp-intro">
-    <RouterLink :to="back" class="rsvp-back">&larr; Back</RouterLink>
+    <BackLink :to="back" class="rsvp-back">&larr; Back</BackLink>
     <!-- Tablets only: the RSVP panel sits below the details; phones get the pinned bar instead -->
     <a v-if="!loading && event && !event.isOnTeam" href="#rsvp" class="rsvp-jump d-none d-md-inline-flex d-lg-none" @click.prevent="jumpToRsvp">
       {{ jumpLabel }}<span aria-hidden="true">&nbsp;↓</span>
@@ -234,16 +257,22 @@ async function submitRsvp() {
     <!-- Public context and updates come first in both DOM and mobile reading order. -->
     <div class="col-lg-8 order-1 event-public-details">
       <EventSummary v-if="event" :event="event" heading-tag="h1">
-        <VenueMap v-if="!event.isOnline && event.venue?.lat" :lat="event.venue.lat" :lng="event.venue.lng" class="my-3" />
-        <OnlineEventLink v-if="event.isOnline" :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />
+        <!-- Online events: one card in the "Where" spot, green with the link once this viewer can open it -->
+        <template #online-venue>
+          <OnlineEventLink :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />
+        </template>
+        <!-- Folded away by default to keep the page short; the map only loads once opened -->
+        <div v-if="!event.isOnline && event.venue?.lat" class="event-map-toggle my-3">
+          <ShowHideButton v-model="mapOpen" controls="event-map" label="map" />
+          <div id="event-map">
+            <VenueMap v-if="mapOpen" :lat="event.venue.lat" :lng="event.venue.lng" class="mt-3" />
+          </div>
+        </div>
         <!-- Places and spots left are already in the facts above; the waitlist size is the extra detail -->
         <p v-if="isFull" class="waitlist-note">
           Full · {{ event.waitlistCount }} on the waitlist
         </p>
       </EventSummary>
-      <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
-      <!-- Go together groups meet at the venue, so online events have none -->
-      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline" :event-id="eventId" />
       <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
       <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>
@@ -342,22 +371,51 @@ async function submitRsvp() {
                 <div v-if="triedSubmit && question.required && !String(answers[question.id] || '').trim()" :id="question.id + '-error'" class="invalid-feedback d-block">Please answer: {{ question.text }}</div>
               </fieldset>
             </template>
+            <template v-else-if="question.type === 'choice' || question.type === 'multichoice'">
+              <fieldset class="border-0 p-0 m-0">
+                <legend class="form-label fs-6 mb-2">
+                  {{ question.text }}
+                  <span v-if="question.required" class="required-mark">(required)</span>
+                  <span v-if="question.type === 'multichoice'" class="text-secondary small"> Pick any that apply.</span>
+                </legend>
+                <div class="choice-group">
+                  <div v-for="(option, optionIndex) in question.options" :key="option" class="form-check choice-option">
+                    <input v-if="question.type === 'choice'" class="form-check-input" type="radio" :name="question.id" :id="`${question.id}-${optionIndex}`" :value="option" v-model="answers[question.id]" :aria-invalid="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? 'true' : undefined" />
+                    <input v-else class="form-check-input" type="checkbox" :name="question.id" :id="`${question.id}-${optionIndex}`" :value="option" v-model="answers[question.id]" :aria-invalid="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? 'true' : undefined" />
+                    <label class="form-check-label" :for="`${question.id}-${optionIndex}`">{{ option }}</label>
+                  </div>
+                </div>
+                <div v-if="triedSubmit && question.required && answerIsEmpty(answers[question.id])" :id="question.id + '-error'" class="invalid-feedback d-block">Please answer: {{ question.text }}</div>
+              </fieldset>
+            </template>
             <template v-else>
               <label class="form-label" :for="question.id">
                 {{ question.text }}
                 <span v-if="question.required" class="required-mark">(required)</span>
               </label>
 
-              <input
-                v-if="question.type === 'text'"
+              <textarea
+                v-if="question.type === 'longtext'"
                 :id="question.id"
                 class="form-control"
+                rows="4"
                 v-model="answers[question.id]"
                 :required="question.required"
-                :aria-invalid="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? 'true' : undefined"
-                :aria-describedby="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? question.id + '-error' : undefined"
+                :aria-invalid="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? 'true' : undefined"
+                :aria-describedby="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? question.id + '-error' : undefined"
+              ></textarea>
+              <input
+                v-else
+                :id="question.id"
+                class="form-control"
+                :type="question.type === 'number' ? 'number' : 'text'"
+                :inputmode="question.type === 'number' ? 'decimal' : undefined"
+                v-model="answers[question.id]"
+                :required="question.required"
+                :aria-invalid="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? 'true' : undefined"
+                :aria-describedby="triedSubmit && question.required && answerIsEmpty(answers[question.id]) ? question.id + '-error' : undefined"
               />
-              <div v-if="triedSubmit && question.required && !String(answers[question.id] || '').trim()" :id="question.id + '-error'" class="invalid-feedback d-block">Please answer: {{ question.text }}</div>
+              <div v-if="triedSubmit && question.required && answerIsEmpty(answers[question.id])" :id="question.id + '-error'" class="invalid-feedback d-block">Please answer: {{ question.text }}</div>
             </template>
           </div>
         </template>
@@ -379,6 +437,9 @@ async function submitRsvp() {
         </button>
       </form>
       </template>
+      <!-- Go together groups sit beside the details, then the updates. Groups meet at the venue: none for online events, or while the venue is hidden -->
+      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline && !event.venueRevealAt" :event-id="eventId" />
+      <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
     </div>
   </div>
   </div>
@@ -387,7 +448,7 @@ async function submitRsvp() {
 <style scoped>
 .form-spark svg { width: 28px; height: 28px; }
 .rsvp-action-panel { scroll-margin-top: 110px; }
-@media(min-width:992px) { .rsvp-action-panel :deep(.col-md-6) { width: 100%; }.rsvp-action-panel .event-cta { width: 100%; }.rsvp-action-panel .d-flex { flex-wrap: wrap; }.rsvp-action-panel { position: sticky; top: 110px; } }
+@media(min-width:992px) { .rsvp-action-panel :deep(.col-md-6) { width: 100%; }.rsvp-action-panel .event-cta { width: 100%; }.rsvp-action-panel .d-flex { flex-wrap: wrap; }.rsvp-action-panel { align-self: start; } }
 .rsvp-intro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: .8rem; }
 .rsvp-jump { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border: 1px solid var(--bookedz-control-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-surface); font-weight: 650; text-decoration: none; transition: background-color var(--bookedz-motion-fast) ease; }
 .rsvp-sticky { position: fixed; z-index: 1010; left: 0; right: 0; bottom: var(--bottom-nav-h, 0px); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px max(10px, env(safe-area-inset-bottom)); border-top: 1px solid var(--bookedz-border); background: color-mix(in srgb, var(--bookedz-surface) 96%, transparent); box-shadow: 0 -6px 18px rgba(0,0,0,.08); }

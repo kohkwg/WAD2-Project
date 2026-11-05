@@ -9,6 +9,7 @@ import { canEditFloorPlan, getFloorPlans, saveFloorPlan, getPlanMembers, getHelp
 import { USING_SUPABASE, getEvent } from '@/utils/api'
 import { clampPosition, backgroundUrl, fitRotated, clampOpacity, clampRotation, clampScale, validateFloorImage, findFreeSpot, personFootprint } from '@/utils/floorPlanModel'
 import ProgrammeFlow from '@/components/floor-plan/ProgrammeFlow.vue'
+import BackLink from '@/components/ui/BackLink.vue'
 
 const props = defineProps({
     // Viewer mode for the public event page: never editable, hidden when no plan exists
@@ -733,8 +734,8 @@ function addPerson() {
         <p v-dismissible v-if="!USING_SUPABASE" class="alert alert-info">Floor plans and programme editing require a configured live
             Supabase connection.</p>
         <template v-if="!readOnly && USING_SUPABASE">
-            <RouterLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event
-            </RouterLink>
+            <BackLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Back
+            </BackLink>
             <div class="floor-page-heading d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
                 <div>
                     <span class="ticket-kicker">Event workspace</span>
@@ -1099,7 +1100,7 @@ function addPerson() {
     </div>
     <div v-if="USING_SUPABASE && !loading && !loadError" :class="readOnly ? '' : 'container pb-4 floor-editor'">
         <ProgrammeFlow class="floor-aux-panel" :key="eventId" :event-id="eventId" :can-edit="canEdit" :plan-id="planId"
-            :zones="dirty ? [] : floorObjects" />
+            :zones="dirty ? [] : floorObjects" :collapsible="readOnly" />
     </div>
 </template>
 

@@ -1097,8 +1097,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .discover-page {
-  padding: 26px 24px 40px;
-  max-width: 1600px;
+  padding: 26px var(--page-gutter) 40px;
+  max-width: none;
   margin: 0 auto;
   color: var(--bookedz-ink);
 }
@@ -1485,7 +1485,7 @@ onBeforeUnmount(() => {
 /* Phones and tablets */
 @media (max-width: 991px) {
   .discover-page {
-    padding: 18px 12px 32px;
+    padding: 18px var(--page-gutter) 32px;
   }
 
   .discovery-toolbar {

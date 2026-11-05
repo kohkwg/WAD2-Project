@@ -12,6 +12,7 @@ import SkeletonList from '../components/ui/SkeletonList.vue'
 import BumpValue from '../components/ui/BumpValue.vue'
 import { toast } from '../composables/useToast'
 import { countdownLabel, isOfficialEvent } from '../utils/groups.js'
+import { isVenueHiddenForGroups } from '../utils/venueReveal.js'
 import { formatEventTime } from '../utils/helpers.js'
 
 // Community is Go together: people start a group for an event ("who wants to come?"),
@@ -72,6 +73,8 @@ async function load() {
     loading.value = false
   }
 }
+// Groups meet at the venue: not for online events, or while the venue is still hidden
+const groupableEvents = computed(() => events.value.filter((e) => !e.isOnline && !isVenueHiddenForGroups(e)))
 
 let refreshTimer
 // Friend requests arrive in real time in live mode; the panel refreshes when this ticks
@@ -316,7 +319,7 @@ function showEventGroups(eventId) {
     </aside>
     </div>
 
-    <StartGroupDialog v-if="composerFor !== null" :events="events" :event-id="composerFor" @close="closeComposer" @created="onCreated" />
+    <StartGroupDialog v-if="composerFor !== null" :events="groupableEvents" :event-id="composerFor" @close="closeComposer" @created="onCreated" />
   </div>
 </template>
 
@@ -325,11 +328,10 @@ function showEventGroups(eventId) {
 .community-shell { display: grid; gap: 24px; align-items: start; }
 .community-column, .community-main { min-width: 0; }
 .community-aside { min-width: 0; scroll-margin-top: 16px; }
-/* Wide screens: Friends is a full-height sidebar beside everything, from the top of the page */
+/* Wide screens: Friends is a sidebar beside everything, from the top of the page, as tall as its content needs */
 @media (min-width: 1100px) {
   .community-shell { grid-template-columns: minmax(0, 1fr) 340px; }
   .community-aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px)); overflow-y: auto; overscroll-behavior: contain; border-radius: 24px; }
-  .community-aside > :deep(*) { min-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px)); }
 }
 .community-eyebrow { margin: 0 0 6px; color: var(--bookedz-muted); font-weight: 600; }
 .community-hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }

@@ -13,6 +13,12 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 }
 
 /* Hero */
+/* Create / edit event: the step tracker sits inside the banner, on the banner's own colours */
+.design-baseline.design-baseline .create-heading > * { position: relative; z-index: 1; }
+.design-baseline.design-baseline .create-heading .creation-steps { margin: 1.1rem 0 0 !important; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.design-baseline.design-baseline .create-heading .step-item.is-current { background: color-mix(in srgb, var(--bookedz-surface) 75%, transparent); }
+.design-baseline.design-baseline .create-heading .progress-track { background: color-mix(in srgb, var(--bookedz-surface) 70%, transparent); }
+.design-baseline.design-baseline .create-heading .step-number { background: var(--bookedz-surface); }
 .design-baseline.design-baseline :is(.create-heading, .workspace-header, .rsvp-heading, .organiser-heading) {
   position: relative; margin: .5rem 0 1.75rem; padding: clamp(1.4rem, 4vw, 2.4rem); overflow: hidden;
   border: 2px solid var(--bookedz-ink); border-left-width: 2px; border-radius: var(--db-r);
@@ -130,7 +136,7 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 @media (max-width: 767.98px) { .account-page.account-page .account-heading { box-shadow: 4px 4px 0 var(--bookedz-ink); } }
 @media (prefers-reduced-motion: reduce) { .account-page.account-page .btn:not(:disabled):hover { transform: none; } }
 
-/* ---- Organise (OrganiserEventsView + OrganiserEventCard) ---------------------------
+/* ---- My events (OrganiserEventsView + OrganiserEventCard) ---------------------------
    CSS only, scoped to .organiser-events-page, so the view and card component stay untouched. */
 .organiser-events-page.organiser-events-page { position: relative; isolation: isolate; --db-r: 24px; max-width: none; }
 .organiser-events-page.organiser-events-page .organiser-heading {
@@ -149,6 +155,17 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
   background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 :root[data-theme="dark"] .organiser-events-page.organiser-events-page .organiser-heading { border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill); }
+/* Compact Organise header: title and Create on one line beside search and tabs, smaller title,
+   less padding and no big background star (it sat behind the tabs) */
+.organiser-events-page.organiser-events-page .organiser-heading { padding: .85rem 1.25rem; gap: .75rem 1.5rem; margin-bottom: 1.1rem; box-shadow: 4px 4px 0 var(--bookedz-ink); }
+:root[data-theme="dark"] .organiser-events-page.organiser-events-page .organiser-heading { box-shadow: 4px 4px 0 var(--bookedz-fill); }
+.organiser-events-page.organiser-events-page .organiser-heading::after { display: none; }
+.organiser-events-page.organiser-events-page .organiser-heading h1 { margin: 0; font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.1; }
+.organiser-events-page.organiser-events-page .organiser-heading .smart-head-top { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+.organiser-events-page.organiser-events-page .organiser-heading .smart-head-title { display: flex; align-items: center; gap: .5rem; }
+.organiser-events-page.organiser-events-page .organiser-heading .events-controls { margin-bottom: 0; flex: 1 1 22rem; justify-content: flex-end; gap: .5rem; }
+.organiser-events-page.organiser-events-page .organiser-heading .event-search { flex: 1 1 14rem; max-width: 26rem; }
+.organiser-events-page.organiser-events-page .organiser-heading .pending-summary { flex: 1 1 100%; margin-bottom: 0; }
 
 /* Search, filter pills, sort */
 .organiser-events-page.organiser-events-page .event-search input,
@@ -266,10 +283,16 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 .group-page.group-page .group-event::before { content: ''; position: absolute; top: -.7rem; left: 50%; width: 5rem; height: 1.3rem; translate: -50% 0; rotate: -3deg; background: color-mix(in srgb, var(--bookedz-pink) 55%, transparent); border-radius: 3px; pointer-events: none; }
 .group-page.group-page .group-note { font-weight: 600; }
 
-/* ---- Plans (MyRsvpsView and its cards) ------------------------------------------------------ */
+/* ---- My RSVPs (MyRsvpsView and its cards) ------------------------------------------------------ */
 .my-rsvps-page.my-rsvps-page { position: relative; isolation: isolate; --db-r: 24px; }
+/* The star sits behind the banner like Community's, clear of the button */
+.my-rsvps-page.my-rsvps-page .rsvps-heading::after {
+  content: '★'; position: absolute; right: 14%; top: 50%; translate: 0 -50%; rotate: 12deg;
+  font-size: clamp(4rem, 11vw, 7rem); line-height: 1; color: var(--bookedz-fill); opacity: .3; pointer-events: none;
+}
+@media (max-width: 767.98px) { .my-rsvps-page.my-rsvps-page .rsvps-heading::after { right: 1rem; top: 1.6rem; translate: 0; font-size: 4rem; } }
 .my-rsvps-page.my-rsvps-page .header-star { color: var(--bookedz-fill); opacity: .45; font-size: clamp(3.5rem, 10vw, 6rem); }
-/* Tabs become pills, like Organise */
+:root[data-theme="dark"] /* Tabs become pills, like My events */
 .my-rsvps-page.my-rsvps-page .rsvp-tabs { gap: 8px; padding: 4px 4px 8px; border-bottom: 0; }
 .my-rsvps-page.my-rsvps-page .rsvp-tabs button { min-height: 44px; padding: 8px 16px; border: 2px solid var(--bookedz-control-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-weight: 700; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp), background-color var(--bookedz-motion-fast) var(--bookedz-ease); }
 .my-rsvps-page.my-rsvps-page .rsvp-tabs button::after { display: none; }
@@ -400,8 +423,12 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 .discover-page.discover-page :is(.event-pagination, .event-more) .btn { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-action); box-shadow: 4px 4px 0 var(--bookedz-ink); }
 .discover-page.discover-page :is(.event-pagination, .event-more) .btn:disabled { opacity: .6; }
 :root[data-theme="dark"] .discover-page.discover-page :is(.event-pagination, .event-more) .btn { border-color: var(--bookedz-fill); box-shadow: 4px 4px 0 color-mix(in srgb, var(--bookedz-fill) 60%, transparent); }
-/* A hovered or focused ticket row stays above its neighbours' shadows. */
+/* Keep the bookmark tooltip above the next ticket row (the row shadow/transform makes each row its own layer). */
+.discover-page.discover-page .discovery-event-row { position: relative; }
 .discover-page.discover-page .discovery-event-row:is(:hover, :focus-within) { z-index: 6; }
+/* The tooltip anchors to the row's nearest positioned ancestor; make that the bookmark itself so it sits beside the button. */
+.discover-page.discover-page .row-actions .event-bookmark { position: relative; }
+.discover-page.discover-page .row-actions .bookmark-tooltip { top: auto; bottom: calc(100% + 6px); z-index: 7; }
 
 /* Edit event inside Manage event: same plain heading as the Tasks, Budget and other tabs (no festival hero card). */
 .design-baseline.design-baseline.is-embedded .create-heading {
@@ -422,6 +449,77 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 
 /* Scrolling a picked event into view clears the sticky top bar */
 .discovery-event-row { scroll-margin: 96px 16px; }
+
+/* ---- Event page (RsvpView, EventSummary) ---------------------------------------------------
+   Title block as the ticket banner, details and the RSVP panel as ticket cards. CSS only,
+   scoped to .public-event-page. */
+.public-event-page.public-event-page .participant-rsvp .event-summary { overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.public-event-page.public-event-page .participant-rsvp .event-summary > .card-body { padding: 0; }
+.public-event-page.public-event-page .event-hero {
+  position: relative; overflow: hidden; padding: clamp(1.4rem, 4vw, 2.4rem);
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r);
+  background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 70%);
+  box-shadow: 6px 6px 0 var(--bookedz-ink);
+}
+.public-event-page.public-event-page .event-hero::after {
+  content: '★'; position: absolute; right: clamp(1rem, 6vw, 4rem); top: 50%; translate: 0 -50%; rotate: 12deg;
+  font-size: clamp(4rem, 11vw, 7rem); line-height: 1; color: var(--bookedz-fill); opacity: .3; pointer-events: none;
+}
+.public-event-page.public-event-page .event-hero > * { position: relative; z-index: 1; }
+.public-event-page.public-event-page .event-eyebrow { display: block; margin: 0 0 6px; color: var(--bookedz-ink); font-weight: 600; text-transform: capitalize; }
+.public-event-page.public-event-page .event-hero .event-title {
+  margin: 0 0 .6rem; font-size: clamp(2.1rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -.03em; overflow-wrap: anywhere;
+  background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.public-event-page.public-event-page .event-hero .event-time { margin: 0; color: var(--bookedz-ink); font-weight: 500; }
+.public-event-page.public-event-page .event-hero .detail-icon { background: var(--bookedz-surface); }
+.public-event-page.public-event-page .event-body,
+.public-event-page.public-event-page .rsvp-action-panel .card,
+.public-event-page.public-event-page .event-public-details .card:not(.event-summary) {
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal);
+}
+.public-event-page.public-event-page .event-body { margin-top: 22px; padding: clamp(1.1rem, 3vw, 1.7rem); background: var(--bookedz-surface); }
+.public-event-page.public-event-page .rsvp-state--success { border-color: var(--bookedz-ink) !important; box-shadow: 6px 6px 0 var(--bookedz-mango); }
+.public-event-page.public-event-page .event-venue { border: 2px dashed var(--bookedz-control-border); }
+.public-event-page.public-event-page .event-fact { border: 2px solid var(--bookedz-control-border); }
+.public-event-page.public-event-page .event-cover { border: 2px solid var(--bookedz-ink); border-radius: 18px; }
+.public-event-page.public-event-page .state-mark { border: 2px solid var(--bookedz-ink); }
+.public-event-page.public-event-page .rsvp-jump { border-width: 2px; font-weight: 700; }
+:root[data-theme="dark"] .public-event-page.public-event-page .event-hero { border-color: var(--bookedz-fill); box-shadow: 6px 6px 0 var(--bookedz-fill); }
+:root[data-theme="dark"] .public-event-page.public-event-page :is(.event-body, .rsvp-action-panel .card, .event-public-details .card:not(.event-summary), .event-cover, .state-mark) { border-color: var(--bookedz-border); }
+:root[data-theme="dark"] .public-event-page.public-event-page :is(.event-body, .rsvp-action-panel .card, .event-public-details .card:not(.event-summary)) { box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+:root[data-theme="dark"] .public-event-page.public-event-page .rsvp-state--success { border-color: var(--bookedz-border) !important; box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-mango) 60%, transparent); }
+/* RSVP state cards: the tick sits beside the heading, so the card is about as tall as the banner */
+.public-event-page.public-event-page .rsvp-action-panel .rsvp-state { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 14px; padding-top: 1.4rem !important; }
+.public-event-page.public-event-page .rsvp-action-panel .rsvp-state > * { grid-column: 1 / -1; }
+.public-event-page.public-event-page .rsvp-action-panel .rsvp-state > .state-mark { grid-column: 1; margin: 0; }
+.public-event-page.public-event-page .rsvp-action-panel .rsvp-state > :is(h2, h3) { grid-column: 2; margin: 0; }
+.public-event-page.public-event-page .rsvp-action-panel .rsvp-state > :is(p, a, div):not(.state-mark) { margin-top: 1rem; margin-bottom: 0; }
+.public-event-page.public-event-page .rsvp-action-panel .rsvp-state > :is(p, a, div) + :is(p, a, div) { margin-top: .75rem; }
+/* Wide screens: one grid, so the banner lines up with the RSVP card and the details card with the
+   announcements. Below 992px the columns stack as before (the jump link and pinned bar need real boxes). */
+@media (min-width: 992px) {
+  .public-event-page.public-event-page .participant-rsvp { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); grid-auto-flow: row dense; gap: 22px 28px; margin-left: 0; margin-right: 0; }
+  .public-event-page.public-event-page .participant-rsvp > :is(.event-public-details, .rsvp-action-panel),
+  .public-event-page.public-event-page .participant-rsvp .event-summary,
+  .public-event-page.public-event-page .participant-rsvp .event-summary > .card-body { display: contents; }
+  .public-event-page.public-event-page .participant-rsvp .event-hero { grid-column: 1; grid-row: 1; }
+  .public-event-page.public-event-page .participant-rsvp .event-body { grid-column: 1; grid-row: 2 / span 2; margin-top: 0; }
+  .public-event-page.public-event-page .participant-rsvp .event-public-details > :not(.event-summary) { grid-column: 1; }
+  .public-event-page.public-event-page .participant-rsvp .rsvp-action-panel > * { grid-column: 2; margin-top: 0 !important; min-width: 0; }
+  .public-event-page.public-event-page .participant-rsvp .rsvp-action-panel > :first-child { grid-row: 1; }
+  /* The long form runs alongside the banner and the details; short state cards match the banner's height */
+  .public-event-page.public-event-page .participant-rsvp .rsvp-action-panel > .rsvp-form { grid-row: 1 / span 2; }
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-form) .event-hero { align-self: start; }
+  /* With the long form showing, the right column is one plain stack, so Go together and the
+     announcements follow the form directly instead of waiting for the details card's rows */
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-form) > .rsvp-action-panel { display: flex; flex-direction: column; gap: 22px; grid-column: 2; grid-row: 1 / span 3; align-self: start; min-width: 0; width: 100%; max-width: none; padding: 0; margin: 0; }
+  .public-event-page.public-event-page .participant-rsvp:has(.rsvp-action-panel > .rsvp-form) .rsvp-action-panel > * { grid-column: auto; grid-row: auto; }
+}
+@media (max-width: 767.98px) {
+  .public-event-page.public-event-page .event-hero { box-shadow: 4px 4px 0 var(--bookedz-ink); }
+  .public-event-page.public-event-page .event-hero::after { right: 1rem; top: 1.6rem; translate: 0; font-size: 4rem; }
+}
 
 /* ---- Smart headers (Organise, Plans, Go together) ---------------------------------------------
    One slim ticket header per page: a small star sticker, the title and the main button on one row,

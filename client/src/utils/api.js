@@ -14,7 +14,8 @@ import * as supabaseApi from './supabaseApi.js'
 import * as supabaseFeature4Api from './supabaseFeature4Api.js'
 import * as supabaseGroupsApi from './supabaseGroupsApi.js'
 import * as supabaseFeature4Weather from './supabaseFeature4Weather.js'
-import { isSupabaseConfigured } from './supabase.js'
+import { isSupabaseConfigured, supabase } from './supabase.js'
+import { watchAnnouncements } from './announcementUpdates.js'
 
 // VITE_USE_MOCK=true in client/.env forces the mock even when the keys are there (handy for demos)
 export const USING_SUPABASE = isSupabaseConfigured && import.meta.env?.VITE_USE_MOCK !== 'true'
@@ -52,6 +53,11 @@ export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
 // Online events: { hasLink, revealAt, url } (url only for the organiser, or confirmed attendees
 // once revealAt has passed); null for physical events. The link is saved with createEvent/updateEvent.
 export const getEventOnlineAccess = (eventId) => backend.getEventOnlineAccess(eventId)
+// Physical events may have no venue yet (venuePending, shown as "Venue to be announced"), or keep
+// a chosen venue hidden until venueRevealAt; the event's organisers get it as hiddenVenue. Saved
+// with createEvent/updateEvent (form.venueRevealAt). The event page calls this at the reveal time
+// so the venue appears without waiting for the once-a-minute job. Returns how many were released.
+export const releaseDueEventVenues = () => backend.releaseDueEventVenues()
 
 // ---------- Go together groups (Community) ----------
 // Live mode uses migrations 20261104142732 and 20261104142907 (see docs/decisions.md); a database
@@ -124,6 +130,14 @@ export const updateTask = (eventId, id, input) => operationsBackend.updateTask(e
 export const deleteTask = (eventId, id) => operationsBackend.deleteTask(eventId, id)
 export const saveTaskBoard = (eventId, columns) => operationsBackend.saveTaskBoard(eventId, columns)
 export const getAnnouncements = (eventId) => operationsBackend.getAnnouncements(eventId)
+// Calls onChange whenever the event's public announcements may have changed (a new, edited or
+// deleted post), so every viewer's feed can re-read them. Returns "stop watching".
+// Live: Realtime signal + slow poll. Demo: changes saved from another tab.
+export const watchEventAnnouncements = (eventId, onChange, hasPost) => watchAnnouncements({
+  eventId, onChange, hasPost,
+  client: USING_SUPABASE ? supabase : null,
+  storageKey: USING_SUPABASE ? null : mockApi.STORAGE_KEY,
+})
 export const createAnnouncement = (eventId, body, requestId) => operationsBackend.createAnnouncement(eventId, body, requestId)
 export const updateAnnouncement = (eventId, id, body) => operationsBackend.updateAnnouncement(eventId, id, body)
 export const deleteAnnouncement = (eventId, id) => operationsBackend.deleteAnnouncement(eventId, id)
