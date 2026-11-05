@@ -7,6 +7,7 @@ import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnouncementFeed from '../components/event-operations/AnnouncementFeed.vue'
 import ClashWarning from '../components/rsvp/ClashWarning.vue'
 import VenueMap from '../components/VenueMap.vue'
+import ShowHideButton from '../components/ui/ShowHideButton.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import EventGroups from '../components/community/EventGroups.vue'
 import OnlineEventLink from '../components/rsvp/OnlineEventLink.vue'
@@ -47,10 +48,12 @@ const errorMessage = ref('')
 const result = ref(null) // the RSVP we get back after submitting
 const signedIn = ref(false)
 const validationSummary = ref(null)
+const mapOpen = ref(false) // the venue map starts hidden to reduce clutter
 
 let loadRequest = 0
 watch(eventId, async (id) => {
   const ticket = ++loadRequest
+  mapOpen.value = false
   loading.value = true
   event.value = null
   result.value = null
@@ -254,7 +257,13 @@ async function submitRsvp() {
         <template #online-venue>
           <OnlineEventLink :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />
         </template>
-        <VenueMap v-if="!event.isOnline && event.venue?.lat" :lat="event.venue.lat" :lng="event.venue.lng" class="my-3" />
+        <!-- Folded away by default to keep the page short; the map only loads once opened -->
+        <div v-if="!event.isOnline && event.venue?.lat" class="event-map-toggle my-3">
+          <ShowHideButton v-model="mapOpen" controls="event-map" label="map" />
+          <div id="event-map">
+            <VenueMap v-if="mapOpen" :lat="event.venue.lat" :lng="event.venue.lng" class="mt-3" />
+          </div>
+        </div>
         <!-- Places and spots left are already in the facts above; the waitlist size is the extra detail -->
         <p v-if="isFull" class="waitlist-note">
           Full · {{ event.waitlistCount }} on the waitlist

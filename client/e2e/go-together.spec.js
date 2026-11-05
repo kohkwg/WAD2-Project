@@ -67,6 +67,9 @@ test('only people going can start a group; start a friends-only one and open it 
   // Not RSVPd to Pottery Basics: no Start a group on its page
   await page.goto('/events/e5/rsvp')
   const box = page.getByRole('region', { name: 'Go together' })
+  // The group list starts hidden on the event page
+  await box.getByRole('button', { name: /^Show groups/ }).click()
+  await expect(box.getByRole('button', { name: /^Hide groups/ })).toHaveAttribute('aria-expanded', 'true')
   await expect(box).toContainText('Joining a group RSVPs you to the event too')
   await expect(box.getByRole('link', { name: 'Start a group' })).toHaveCount(0)
   // The dropdown only lists events Alex has RSVPd to

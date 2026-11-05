@@ -1,8 +1,13 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { getProgramme, saveProgrammeItem, deleteProgrammeItem } from '@/utils/floorPlan'
 import { programmePayload, singaporeInput } from '@/utils/floorPlanModel'
-const props = defineProps({ eventId: { type: String, required: true }, canEdit: Boolean, planId: { type: String, default: null }, zones: { type: Array, default: () => [] } })
+import ShowHideButton from '@/components/ui/ShowHideButton.vue'
+// collapsible: the public event page folds the list away behind a Show/Hide button (editors always see it)
+const props = defineProps({ eventId: { type: String, required: true }, canEdit: Boolean, planId: { type: String, default: null }, zones: { type: Array, default: () => [] }, collapsible: Boolean })
+const open = ref(false)
+const bodyId = useId()
+const showBody = computed(() => !props.collapsible || open.value)
 const emit = defineEmits(['loaded'])
 const items = ref([]), error = ref(''), loading = ref(false), busy = ref(false), editing = ref(false), pendingDelete = ref(null)
 const empty = () => ({ id: null, title: '', description: '', starts_at: '', ends_at: '', location_label: '', zone_key: '' })
@@ -46,13 +51,15 @@ const time = (value) => new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', 
 </script>
 <template>
 <section class="my-4 programme-flow" aria-label="Programme flow">
-  <div class="programme-heading">
+  <div class="programme-heading" :class="{ 'is-folded': !showBody }">
     <div>
       <span class="programme-kicker">Run of show</span>
       <h2 class="h5 mb-0">Programme</h2>
     </div>
     <button v-if="canEdit" class="btn btn-sm btn-outline-primary" @click="edit(null)" :disabled="busy">Add programme item</button>
+    <ShowHideButton v-else-if="collapsible" v-model="open" :controls="bodyId" label="programme" :count="loading ? null : items.length" />
   </div>
+  <div :id="bodyId" v-show="showBody">
   <p v-if="loading" role="status">Loading programme…</p>
   <div v-dismissible v-if="error" class="alert alert-danger" role="alert">{{ error }} <button v-if="!editing && !pendingDelete" class="btn btn-sm btn-outline-danger" @click="load">Retry programme</button></div>
   <form v-if="editing && canEdit" class="programme-form border rounded p-3 mb-3" @submit.prevent="save">
@@ -80,6 +87,7 @@ const time = (value) => new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', 
       </div>
     </li>
   </ol>
+  </div>
 </section>
 </template>
 <style scoped>.programme-copy { min-width: 0; overflow-wrap: anywhere; }</style>
@@ -87,6 +95,7 @@ const time = (value) => new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', 
 <style scoped>
 .programme-flow{padding:1.1rem 1.25rem;border:1px solid var(--bookedz-border,#e9ded3);border-radius:18px;background:var(--bookedz-surface,#ffffff);box-shadow:var(--bookedz-card-shadow,none)}
 .programme-heading{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
+.programme-heading.is-folded{margin-bottom:0}
 .programme-kicker{display:block;color:var(--bookedz-muted,#636975);font-size:.72rem;font-weight:750;}
 .programme-flow h2,.programme-flow h3{font-family:var(--bookedz-heading,'Bricolage Grotesque',sans-serif);letter-spacing:-.02em}
 .programme-form{background:var(--bookedz-cream,#fff8f1)}

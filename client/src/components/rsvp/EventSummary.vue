@@ -23,6 +23,7 @@ const descriptionId = useId()
 watch(() => props.event?.id, () => { showFullDescription.value = false })
 const SHORT_LENGTH = 160
 // Participants of a hidden-capacity event get no numbers (capacity null), only whether it's full
+const hasCapacity = computed(() => props.event?.capacity != null && props.event?.capacity !== '')
 const hiddenAndFull = computed(() => Boolean(props.event?.hideCapacity) && props.event?.capacity == null && props.event?.spotsLeft === 0)
 
 // A venue hidden from participants, as its organisers see it: on the event page (hiddenVenue)
@@ -45,6 +46,9 @@ const descriptionToShow = computed(() => {
 <template>
   <article class="card event-summary">
     <div class="card-body">
+      <!-- Key details on the left, the square cover beside them (stacked below on phones) -->
+      <div class="event-top">
+      <div class="event-top-details">
       <div class="event-heading">
         <component :is="headingTag" class="event-title">{{ event.title || 'Untitled event' }}</component>
       </div>
@@ -84,16 +88,19 @@ const descriptionToShow = computed(() => {
 
       <div class="event-facts" aria-label="Event details">
         <!-- A hidden capacity reaches participants without numbers: only "Full" when it is -->
-        <div v-if="event.capacity != null && event.capacity !== ''" class="event-fact"><span class="fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg></span><span><strong>{{ event.capacity }}</strong><small>spots in total</small></span></div>
         <div v-if="hiddenAndFull" class="event-fact"><span class="fact-icon fact-icon--coral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z"/><path d="M15 6v12" stroke-dasharray="2 2"/></svg></span><span><strong>Full</strong><small>waitlist open</small></span></div>
-        <div v-else-if="event.spotsLeft != null" class="event-fact"><span class="fact-icon fact-icon--coral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z"/><path d="M15 6v12" stroke-dasharray="2 2"/></svg></span><span><strong><BumpValue :value="event.spotsLeft" /></strong><small>spots left</small></span></div>
+        <!-- Spots left out of the total in one fact, e.g. "24/30 spots left" -->
+        <div v-else-if="event.spotsLeft != null" class="event-fact"><span class="fact-icon fact-icon--coral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z"/><path d="M15 6v12" stroke-dasharray="2 2"/></svg></span><span><strong><BumpValue :value="event.spotsLeft" /><template v-if="hasCapacity">/{{ event.capacity }}</template></strong><small>spots left</small></span></div>
+        <div v-else-if="hasCapacity" class="event-fact"><span class="fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg></span><span><strong>{{ event.capacity }}</strong><small>spots in total</small></span></div>
+      </div>
       </div>
 
-    <div class="event-cover">
-      <img v-if="coverSource && failedCover !== coverSource" :src="coverSource" @error="failedCover = coverSource" :alt="`Cover for ${event.title}`" width="1200" height="600" />
-      <EventArtwork v-else :category="event.category || event.tags?.[0] || ''" />
-      <span v-if="event.category || event.tags?.[0]" class="cover-category">{{ event.category || event.tags?.[0] }}</span>
-    </div>
+      <div class="event-cover">
+        <img v-if="coverSource && failedCover !== coverSource" :src="coverSource" @error="failedCover = coverSource" :alt="`Cover for ${event.title}`" width="600" height="600" />
+        <EventArtwork v-else :category="event.category || event.tags?.[0] || ''" />
+        <span v-if="event.category || event.tags?.[0]" class="cover-category">{{ event.category || event.tags?.[0] }}</span>
+      </div>
+      </div>
       <div v-if="otherTags.length" class="mb-2 event-tags">
         <span v-for="tag in otherTags" :key="tag" class="badge text-bg-light border me-1">
           {{ tag }}
@@ -122,12 +129,15 @@ const descriptionToShow = computed(() => {
 
 <style scoped>
 .event-summary { overflow: hidden; border: 1px solid var(--bookedz-border); border-radius: var(--bookedz-radius-card, 24px); background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
-.event-cover { position: relative; display: block; width: 100%; height: clamp(160px, 24vw, 260px); margin: 1.1rem 0; border-radius: 16px; overflow: hidden; background: var(--bookedz-mint); }
+.event-top { display: grid; grid-template-columns: minmax(0, 1fr) clamp(150px, 24vw, 240px); align-items: start; gap: 1.25rem; margin-bottom: .9rem; }
+.event-top-details { min-width: 0; }
+.event-top-details > :last-child { margin-bottom: 0; }
+.event-cover { position: relative; display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 16px; overflow: hidden; background: var(--bookedz-mint); }
 .event-cover img { display: block; width: 100%; height: 100%; object-fit: cover; animation: image-settle 650ms ease both; }
 .event-cover > :deep(.event-artwork) { position: absolute; inset: 0; }
 .event-tags .badge { text-transform: capitalize; }
 .cover-category { text-transform: capitalize; }
-.cover-category { position: absolute; left: 1rem; bottom: 1rem; max-width: calc(100% - 2rem); padding: .35rem .75rem; border: 1px solid var(--bookedz-glass-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-glass); font-size: .8rem; font-weight: 700; }
+.cover-category { position: absolute; left: .7rem; bottom: .7rem; max-width: calc(100% - 1.4rem); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: .35rem .75rem; border: 1px solid var(--bookedz-glass-border); border-radius: 999px; color: var(--bookedz-ink); background: var(--bookedz-glass); font-size: .8rem; font-weight: 700; }
 .event-summary .card-body { padding: clamp(1.15rem, 3vw, 1.7rem); }
 .event-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: .8rem; }
 .event-title { margin: 0 0 .6rem; min-width: 0; color: var(--bookedz-ink); font: 600 clamp(1.65rem, 3vw, 2.25rem)/1.04 var(--bookedz-heading); letter-spacing: -.04em; }
@@ -153,4 +163,6 @@ const descriptionToShow = computed(() => {
 :deep(.badge) { border-radius: 999px; padding: .45rem .7rem; font-weight: 600; }
 @keyframes image-settle { from { opacity: .65; transform: scale(1.025); } to { opacity: 1; transform: scale(1); } }
 @media(prefers-reduced-motion:reduce) { .event-cover img { animation: none; } }
+/* Phones: details first, then the square cover at a size that doesn't take over the screen */
+@media (max-width: 575.98px) { .event-top { grid-template-columns: 1fr; gap: 1rem; } .event-cover { width: min(100%, 320px); } }
 </style>

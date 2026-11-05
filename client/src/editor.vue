@@ -1099,7 +1099,7 @@ function addPerson() {
     </div>
     <div v-if="USING_SUPABASE && !loading && !loadError" :class="readOnly ? '' : 'container pb-4 floor-editor'">
         <ProgrammeFlow class="floor-aux-panel" :key="eventId" :event-id="eventId" :can-edit="canEdit" :plan-id="planId"
-            :zones="dirty ? [] : floorObjects" />
+            :zones="dirty ? [] : floorObjects" :collapsible="readOnly" />
     </div>
 </template>
 
