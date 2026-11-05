@@ -63,11 +63,11 @@ Also on 5 November 2026: only people going to an event can start a group for it,
 RSVPs you to the event, Community has a "Your events" strip and group carousels, and event teams
 moved out of Community. Changed `CommunityView.vue`, `EventGroupsCard.vue`, `StartGroupDialog.vue`,
 `EventGroups.vue`, `GroupCard.vue`, `GroupView.vue`, `mockApi.js` and the unapplied migration
-`20261105120000_go_together_friends_invites.sql`.
+`20261105050527_go_together_friends_invites.sql`.
 
 On 5 November 2026, Go together gained friends-only groups, friend invites, join messages, host
 settings and deleting, and a new layout (groups under their event, a "Your groups" strip, a sticky
-bar on the group page). We wrote migration `20261105120000_go_together_friends_invites.sql`,
+bar on the group page). We wrote migration `20261105050527_go_together_friends_invites.sql`,
 `components/community/EventGroupsCard.vue`, and changed `StartGroupDialog.vue`, `GroupCard.vue`,
 `CommunityView.vue`, `GroupView.vue`, `FriendsPanel.vue`, `profileFriends.js` (demo friends),
 `groups.js`, `mockApi.js`, `mockData.js` (seed version 6), `supabaseGroupsApi.js` and `api.js`, with
