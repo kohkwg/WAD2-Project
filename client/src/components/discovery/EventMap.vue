@@ -34,7 +34,7 @@ const areaEvents = computed(() => (searchArea.value ? points.value.filter(p => i
 const selected = computed(() => props.events.find(e => e.id === selectedId.value))
 const selectionAnnouncement = computed(() => selected.value ? `Selected event: ${selected.value.title}. Event preview is available beside the map.` : selection.value.length ? `${selection.value.length} events selected. Choose an event from the preview.` : '')
 
-function dateLabel(event) { return new Date(event.start_time).toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' }) }
+function dateLabel(event) { return new Date(event.start_time).toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) }
 function timeLabel(event) { return new Date(event.start_time).toLocaleTimeString('en-SG', { hour: 'numeric', minute: '2-digit' }) }
 function categoryLabel(event) { return (categoryStyle(event).category || 'Event').replace(/[_-]/g, ' ') }
 

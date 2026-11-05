@@ -14,12 +14,12 @@ export const CLOSED_STATUSES = ['rejected', 'cancelled', 'declined', 'expired']
 
 // ---------- Dates and times ----------
 
-// "Sat, 18 Oct, 7:00 pm – 10:00 pm"
+// "Sat, 18 Oct 2026, 7:00 pm – 10:00 pm"
 export function formatEventTime(event) {
   if (!event.startTime || !event.endTime) return 'Date and time not set'
   const start = new Date(event.startTime)
   const end = new Date(event.endTime)
-  const dayFormat = { weekday: 'short', day: 'numeric', month: 'short' }
+  const dayFormat = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }
   const timeFormat = { hour: 'numeric', minute: '2-digit' }
   const day = start.toLocaleDateString('en-SG', dayFormat)
   const from = start.toLocaleTimeString('en-SG', timeFormat)
@@ -31,10 +31,10 @@ export function formatEventTime(event) {
   return `${day}, ${from} – ${to}`
 }
 
-// "14 Oct, 1:05 am" — used for "when did they RSVP"
+// "14 Oct 2026, 1:05 am" — used for "when did they RSVP"
 export function formatShortDateTime(isoString) {
   const d = new Date(isoString)
-  const day = d.toLocaleDateString('en-SG', { day: 'numeric', month: 'short' })
+  const day = d.toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })
   const time = d.toLocaleTimeString('en-SG', { hour: 'numeric', minute: '2-digit' })
   return `${day}, ${time}`
 }
