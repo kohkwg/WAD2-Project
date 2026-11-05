@@ -24,11 +24,11 @@ const loading = ref(true)
 const errorMessage = ref('')
 const statusMessage = ref('')
 const busyId = ref(null) // which RSVP is being saved
-const confirmCancelId = ref(null) // which RSVP is showing "Are you sure?"
+const confirmCancelId = ref(null) // which RSVP is showing "are you sure?"
 const TAB_IDS = ['upcoming', 'saved', 'past', 'cancelled']
 const route = useRoute()
 const router = useRouter()
-// ?tab=saved (e.g. from the "View saved" toast on Discover) opens that tab; the URL follows tab changes
+// ?tab=saved (e.g. from the "view saved" toast on discover) opens that tab; the URL follows tab changes
 const tabFromQuery = () => (TAB_IDS.includes(route.query.tab) ? route.query.tab : 'upcoming')
 const activeTab = ref(tabFromQuery())
 watch(() => route.query.tab, () => { activeTab.value = tabFromQuery() })
@@ -41,7 +41,7 @@ const savedError = ref('')
 const savedReady = ref(false)
 const groups = computed(() => groupRsvps(rsvps.value, now.value))
 const sortedSaved = computed(() => sortSavedEvents(savedEvents.value, now.value))
-// Your own RSVP per event, so a saved card says "You're going" instead of offering RSVP again
+// your own RSVP per event, so a saved card says "you're going" instead of offering RSVP again
 const rsvpStatusByEvent = computed(() => new Map(rsvps.value.map(row => [row.eventId || row.event?.id, row.status])))
 const tabs = computed(() => [
   { id: 'upcoming', label: 'Upcoming', count: groups.value.upcoming.length },
@@ -52,7 +52,7 @@ const tabs = computed(() => [
 const statusAlert = ref(null)
 const errorAlert = ref(null)
 
-// The button that was pressed disappears (confirm step, cancelled card, answered offer),
+// the button that was pressed disappears (confirm step, cancelled card, answered offer),
 // so keyboard focus moves to whatever replaced it instead of falling back to the page.
 async function focusMessage(target) {
   await nextTick()
@@ -180,7 +180,7 @@ onMounted(async () => {
     now.value = Date.now()
     refreshRsvps()
   }, 30000)
-  // While a waitlist offer is open, the countdown moves every second.
+  // while a waitlist offer is open, the countdown moves every second.
   clock = setInterval(() => { if (offers.value.length) now.value = Date.now() }, 1000)
   window.addEventListener('focus', onFocus)
 })
@@ -262,7 +262,7 @@ async function cancel(rsvpId) {
 
 <template>
   <div class="container my-rsvps-page">
-    <!-- One slim header: star, title and refresh, then the section tabs -->
+    <!-- one slim header: star, title and refresh, then the section tabs -->
     <header class="rsvps-heading smart-head">
       <div class="smart-head-top">
         <div class="smart-head-title"><span class="header-star smart-head-star" aria-hidden="true">★</span><h1 class="page-title">My RSVPs</h1></div>
@@ -276,7 +276,7 @@ async function cancel(rsvpId) {
     <template v-else>
       <div v-dismissible v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success mt-3" role="status" aria-live="polite">{{ statusMessage }}</div>
       <div v-dismissible v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger mt-3" role="alert">{{ errorMessage }}</div>
-      <!-- Waitlist offers expire, so they come before everything else. -->
+      <!-- waitlist offers expire, so they come before everything else. -->
       <div v-if="offers.length" class="offers-first stagger-in">
         <OfferBanner v-for="rsvp in offers" :key="rsvp.id" :rsvp="rsvp" :now="now" :busy="busyId !== null" @confirm="confirmOffer" @decline="declineOffer" />
       </div>
@@ -297,7 +297,7 @@ async function cancel(rsvpId) {
   </div>
 </template>
 <style scoped>
-.my-rsvps-page{max-width:1060px;margin:0 auto;padding:12px 0 48px;color:var(--bookedz-ink)}.rsvps-heading{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;padding:22px 28px;border-radius:22px;background:var(--bookedz-peach);border:1px solid var(--bookedz-border)}.rsvps-heading h1{ margin:10px 0; }.rsvps-heading p{margin:8px 0 0;color:var(--bookedz-muted);font-size:var(--text-body)}.header-star{font-size:3.5rem;line-height:1;color:var(--bookedz-primary);transform:rotate(15deg)}.offers-first{margin-top:20px}.rsvps-eyebrow{margin:0 0 6px;font-weight:600}.rsvps-lede{max-width:46ch}.rsvps-heading-actions .btn{min-height:44px;white-space:nowrap}.rsvps-toolbar p{font-size:var(--text-small);color:var(--bookedz-muted);margin:0}.rsvps-toolbar button{ min-height:44px; }.rsvp-tabs{display:flex;gap:8px;border-bottom:1px solid var(--bookedz-border);overflow-x:auto}.rsvp-tabs button{position:relative;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--bookedz-muted);padding:14px 12px;font-size:var(--text-button);white-space:nowrap;min-height:48px;transition:color var(--bookedz-motion-fast) var(--bookedz-ease)}.rsvp-tabs button::after{content:'';position:absolute;left:10px;right:10px;bottom:-3px;height:3px;border-radius:3px;background:var(--bookedz-primary-dark);transform:scaleX(0);transition:transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp)}.rsvp-tabs button[aria-selected=true]{color:var(--bookedz-primary-dark);font-weight:650}.rsvp-tabs button[aria-selected=true]::after{transform:scaleX(1)}.rsvp-tabs span{font-size:var(--text-caption);padding:3px 6px;border-radius:7px;background:var(--bookedz-hover);margin-left:4px}.rsvp-panel{padding-top:24px}.saved-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.section-title{ margin:0 0 18px; }.rsvp-panel .next-event{margin-top:0}.alert{overflow-wrap:anywhere}.alert button{min-height:44px;margin-left:8px}:deep(:focus-visible){outline:3px solid var(--bookedz-primary-dark);outline-offset:3px}
+.my-rsvps-page{max-width:1060px;margin:0 auto;padding:12px 0 48px;color:var(--bookedz-ink)}.rsvps-heading{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;padding:22px 28px;border-radius:22px;background:var(--bookedz-peach);border:1px solid var(--bookedz-border)}.rsvps-heading h1{ margin:10px 0; }.header-star{font-size:3.5rem;line-height:1;color:var(--bookedz-primary);transform:rotate(15deg)}.offers-first{margin-top:20px}.rsvps-toolbar button{ min-height:44px; }.rsvp-tabs{display:flex;gap:8px;border-bottom:1px solid var(--bookedz-border);overflow-x:auto}.rsvp-tabs button{position:relative;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--bookedz-muted);padding:14px 12px;font-size:var(--text-button);white-space:nowrap;min-height:48px;transition:color var(--bookedz-motion-fast) var(--bookedz-ease)}.rsvp-tabs button::after{content:'';position:absolute;left:10px;right:10px;bottom:-3px;height:3px;border-radius:3px;background:var(--bookedz-primary-dark);transform:scaleX(0);transition:transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp)}.rsvp-tabs button[aria-selected=true]{color:var(--bookedz-primary-dark);font-weight:650}.rsvp-tabs button[aria-selected=true]::after{transform:scaleX(1)}.rsvp-tabs span{font-size:var(--text-caption);padding:3px 6px;border-radius:7px;background:var(--bookedz-hover);margin-left:4px}.rsvp-panel{padding-top:24px}.saved-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.section-title{ margin:0 0 18px; }.rsvp-panel .next-event{margin-top:0}.alert{overflow-wrap:anywhere}.alert button{min-height:44px;margin-left:8px}:deep(:focus-visible){outline:3px solid var(--bookedz-primary-dark);outline-offset:3px}
 @media(max-width:767px){.saved-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:575px){.rsvps-heading{padding:24px 20px;flex-wrap:wrap}.header-star{font-size:3rem}.saved-grid{grid-template-columns:1fr}.rsvp-tabs{gap:0}.rsvp-tabs button{padding:13px 8px;font-size:.8rem}.rsvp-tabs span{margin-left:2px}.my-rsvps-page{padding-top:0}}
 </style>
