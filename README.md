@@ -14,6 +14,7 @@ the day from one workspace.
 | --- | --- |
 | Git repository | <https://github.com/kohkwg/WAD2-Project> (public), branch `main` |
 | First page when running | <http://127.0.0.1:5173/> |
+| Hosted vercel link | placeholder |
 | Tests | [How to test](#how-to-test) |
 | Use of AI | [AI use](#ai-use) |
 
