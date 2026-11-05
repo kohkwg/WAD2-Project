@@ -16,7 +16,7 @@ const currentStyle = () => document.documentElement.dataset.theme === 'dark' ? '
 export function addOneMapTiles(map) {
   let style = currentStyle()
   // OneMap only has tiles around Singapore, so skip requests well outside it.
-  const layer = L.tileLayer(tileUrl(style), { minZoom: 10, maxZoom: 19, detectRetina: true, bounds: SINGAPORE_MAX_BOUNDS, attribution: ONEMAP_ATTRIBUTION }).addTo(map)
+  const layer = L.tileLayer(tileUrl(style), { minZoom: 9, maxZoom: 19, detectRetina: true, bounds: SINGAPORE_MAX_BOUNDS, attribution: ONEMAP_ATTRIBUTION }).addTo(map)
   const observer = new MutationObserver(() => {
     const next = currentStyle()
     if (next !== style) { style = next; layer.setUrl(tileUrl(style)) }

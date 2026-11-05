@@ -20,9 +20,9 @@ function updateDate(field, value) {
 
 const props = defineProps({
   modelValue: { type: Object, required: true }, search: { type: String, default: '' },
-  total: { type: Number, default: null }, loading: Boolean, error: { type: String, default: '' }, showActive: Boolean,
+  sort: { type: String, default: 'soonest' }, total: { type: Number, default: null }, loading: Boolean, error: { type: String, default: '' }, showActive: Boolean,
 })
-const emit = defineEmits(['update:modelValue', 'update:search', 'show', 'retry', 'pick-dates'])
+const emit = defineEmits(['update:modelValue', 'update:search', 'update:sort', 'show', 'retry', 'pick-dates'])
 const root = ref(null)
 const searchInput = ref(null)
 const toggle = ref(null)
@@ -76,7 +76,7 @@ const activeChips = computed(() => groups.value.flatMap(group => {
     : group.options
   return options.filter(option => isSelected(group.key, option.value)).map(option => ({ ...option, group: group.key }))
 }))
-function clearAll() { flushSearch(); emit('update:modelValue', normalizeDiscoveryFilters()) }
+function clearAll() { flushSearch(); emit('update:modelValue', normalizeDiscoveryFilters()); emit('update:sort', 'soonest') }
 async function removeChip(chip) { choose(chip.group, chip.value); await nextTick(); searchInput.value?.focus({ preventScroll: true }) }
 async function clearSearch() { search.value = ''; flushSearch(); await nextTick(); searchInput.value?.focus() }
 function close(restoreFocus = false) { expanded.value = false; if (restoreFocus) nextTick(() => toggle.value?.focus()) }
@@ -149,6 +149,14 @@ onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('point
     End date must be on or after the start date.
   </p>
 </div>
+</fieldset>
+
+<fieldset class="filter-section">
+  <legend>Sort by</legend>
+  <div class="date-segments">
+    <button type="button" :aria-pressed="sort !== 'popular'" @click="emit('update:sort', 'soonest')">Soonest first</button>
+    <button type="button" :aria-pressed="sort === 'popular'" @click="emit('update:sort', 'popular')">Most popular</button>
+  </div>
 </fieldset>
 
 <fieldset class="filter-section">
