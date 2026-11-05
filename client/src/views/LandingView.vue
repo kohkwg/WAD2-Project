@@ -39,37 +39,9 @@ onMounted(() => {
   loadAccount()
   stopListening = onAuthChange(() => loadAccount())
 })
-onBeforeUnmount(() => stopListening())
+onBeforeUnmount(() => { active = false; accountRequest++; stopListening() })
 
-const name = computed(() => profile.value?.name || session.value?.email?.split('@')[0] || 'there')
-const firstName = computed(() => name.value.split(/\s+/)[0])
-import { useMyDino } from '@/lib/myDino'
-const { mySrc: myDinoSrc } = useMyDino()
-const initials = computed(() => name.value.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase())
-const now = Date.now()
-const upcoming = computed(() => rsvps.value.filter((r) => ['confirmed', 'pending', 'waitlisted', 'offered'].includes(r.status) && new Date(r.event?.endTime || r.event?.startTime) > now))
-const going = computed(() => upcoming.value.filter((r) => r.status === 'confirmed'))
-const offers = computed(() => upcoming.value.filter((r) => r.status === 'offered'))
-const nextPlan = computed(() => going.value[0] || null)
-const greeting = computed(() => {
-  const hour = new Date().getHours()
-  return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-})
-
-async function logOut() {
-  signingOut.value = true
-  try {
-    await signOut()
-    session.value = null
-    profile.value = null
-    toast('Signed out')
-  } catch (error) {
-    toast(error.message || 'Sign out failed. Please try again.', { tone: 'error' })
-  } finally {
-    signingOut.value = false
-  }
-}
-// Coming straight from the sign-in form earns a little celebration on the account summary
+// Coming straight from the sign-in form earns a little celebration on the dashboard avatar
 const justJoined = ref(false)
 function signedIn() {
   justJoined.value = true
@@ -87,105 +59,21 @@ function signedIn() {
 
     <LandingWelcome v-else-if="!session" @signed-in="signedIn" />
 
-    <section v-else class="account" aria-labelledby="account-title">
-      <header class="account-head">
-        <span class="account-avatar-wrap" :class="{ celebrate: justJoined }" aria-hidden="true">
-          <span class="account-avatar"><img v-if="myDinoSrc" class="dino-face" :src="myDinoSrc" alt="">{{ myDinoSrc ? '' : initials }}</span>
-          <span v-if="justJoined" class="account-burst"><span v-for="n in 8" :key="n" :style="{ '--burst-angle': `${n * 45}deg` }">✦</span></span>
-        </span>
-        <div class="min-w-0">
-          <p class="account-greeting">{{ greeting }},</p>
-          <h1 id="account-title" class="page-title m-0">{{ firstName }}</h1>
-          <p class="account-email text-meta">{{ session.email }}</p>
-        </div>
-      </header>
-
-      <p v-if="!USING_SUPABASE" class="account-demo">
-        <strong>Demo mode.</strong> You’re signed in as the sample account {{ name }}. Everything is stored in this browser only;
-        use <em>Reset demo data</em> in the top bar to start over.
-      </p>
-      <p v-dismissible v-if="loadError" class="alert alert-warning">Some of your details couldn’t load: {{ loadError }}</p>
-
-      <dl class="account-stats stagger-in">
-        <div><dt>Going</dt><dd><CountUp :value="going.length" /></dd></div>
-        <div><dt>All upcoming RSVPs</dt><dd><CountUp :value="upcoming.length" /></dd></div>
-        <div><dt>Saved for later</dt><dd><CountUp :value="savedCount" /></dd></div>
-      </dl>
-
-      <RouterLink v-if="offers.length" to="/my-rsvps" class="account-offer attention-once">
-        <strong>A spot opened up for {{ offers[0].event.title }}.</strong>
-        <span>Confirm it in My RSVPs before it goes to the next person.</span>
-      </RouterLink>
-
-      <div class="account-grid">
-        <section class="account-card" aria-labelledby="next-plan-title">
-          <h2 id="next-plan-title" class="section-title">Your next plan</h2>
-          <template v-if="nextPlan">
-            <p class="account-next-title">{{ nextPlan.event.title }}</p>
-            <p class="text-meta m-0">{{ formatEventTime(nextPlan.event) }}</p>
-            <p class="text-meta">{{ nextPlan.event.venue?.name || 'Venue to be announced' }}</p>
-            <RouterLink :to="`/events/${nextPlan.event.id}/rsvp`" class="btn btn-outline-secondary btn-sm">View event</RouterLink>
-          </template>
-          <template v-else>
-            <p class="text-meta">Nothing confirmed yet. Find something to do this week.</p>
-            <RouterLink to="/discover" class="btn btn-primary btn-sm">Explore events</RouterLink>
-          </template>
-        </section>
-
-        <section class="account-card" aria-labelledby="interests-title">
-          <h2 id="interests-title" class="section-title">Your interests</h2>
-          <div v-if="profile?.interests?.length" class="account-interests">
-            <span v-for="interest in profile.interests" :key="interest" class="account-interest cat-tint" :class="`cat-${interest}`">{{ interest.charAt(0).toUpperCase() + interest.slice(1) }}</span>
-          </div>
-          <p v-else class="text-meta">No interests picked yet.</p>
-          <RouterLink v-if="USING_SUPABASE" to="/profile" class="btn btn-outline-secondary btn-sm">Edit profile</RouterLink>
-          <p v-else class="text-caption text-secondary m-0">Profile editing is available in the live app.</p>
-        </section>
-      </div>
-
-      <nav class="account-links" aria-label="Go to">
-        <RouterLink to="/discover" class="btn btn-primary">Discover events</RouterLink>
-        <RouterLink to="/my-rsvps" class="btn btn-outline-secondary">My RSVPs</RouterLink>
-        <RouterLink to="/community" class="btn btn-outline-secondary">Community</RouterLink>
-        <button v-if="USING_SUPABASE" type="button" class="btn btn-outline-secondary" :disabled="signingOut" @click="logOut">{{ signingOut ? 'Signing out…' : 'Sign out' }}</button>
-      </nav>
-    </section>
+    <AccountDashboard
+      v-else
+      :session="session"
+      :profile="profile"
+      :rsvps="rsvps"
+      :saved="saved"
+      :load-error="loadError"
+      :just-joined="justJoined"
+      @refresh="loadAccount"
+    />
   </div>
 </template>
 
 <style scoped>
 .landing-page { min-height: calc(100svh - 150px); padding: 28px 24px 40px; }
 .landing-checking { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 40vh; color: var(--bookedz-muted); }
-.account { max-width: 880px; margin: 0 auto; display: grid; gap: 18px; }
-.account-head { display: flex; align-items: center; gap: 16px; }
-.dino-face { width: 100%; height: 100%; object-fit: contain; }
-.account-avatar { overflow: hidden; display: grid; place-items: center; flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--bookedz-orange-soft); color: var(--bookedz-primary-dark); font: 700 1.4rem var(--bookedz-heading); animation: pop-once var(--bookedz-motion-slip) var(--bookedz-ease-stamp); }
-.min-w-0 { min-width: 0; }
-.account-greeting { margin: 0; color: var(--bookedz-muted); }
-.account-email { margin: 2px 0 0; color: var(--bookedz-muted); overflow-wrap: anywhere; }
-.account-demo { margin: 0; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--bookedz-yellow) 60%, var(--bookedz-border)); border-radius: 14px; background: color-mix(in srgb, var(--bookedz-yellow) 18%, var(--bookedz-surface)); font-size: .95rem; }
-.account-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; }
-.account-stats > div { display: grid; gap: 4px; padding: 14px 18px; border: 1px solid var(--bookedz-border); border-radius: 18px; background: var(--bookedz-surface); }
-.account-stats dt { order: 2; color: var(--bookedz-muted); font-size: var(--text-small); font-weight: 500; }
-.account-stats dd { order: 1; margin: 0; font: 600 1.6rem var(--bookedz-heading); }
-.account-offer { display: grid; gap: 2px; padding: 14px 16px; border-radius: 16px; background: color-mix(in srgb, var(--bookedz-yellow) 30%, var(--bookedz-surface)); color: var(--bookedz-ink); text-decoration: none; }
-.account-offer:hover { color: var(--bookedz-ink); }
-.account-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.account-card { display: grid; align-content: start; gap: 8px; padding: 18px; border: 1px solid var(--bookedz-border); border-radius: 20px; background: var(--bookedz-surface); box-shadow: var(--bookedz-card-shadow); }
-.account-card .section-title { margin: 0 0 4px; }
-.account-card .btn { justify-self: start; min-height: 40px; }
-.account-next-title { margin: 0; font-weight: 700; font-size: 1.1rem; overflow-wrap: anywhere; }
-.account-interests { display: flex; flex-wrap: wrap; gap: 6px; }
-.account-interest { padding: 4px 12px; border-radius: 99px; font-size: .88rem; font-weight: 600; }
-.account-links { display: flex; flex-wrap: wrap; gap: 8px; }
-.account-links .btn { min-height: 44px; }
-@media (max-width: 767px) { .landing-page { padding: 18px 12px 32px; } .account-grid { grid-template-columns: 1fr; } .account-stats { gap: 8px; } .account-stats > div { padding: 12px; } }
-.account-avatar-wrap { position: relative; flex: none; display: grid; place-items: center; }
-.celebrate .account-avatar { animation: avatar-hop 900ms var(--bookedz-ease-stamp) both; }
-.account-burst { position: absolute; inset: 50% auto auto 50%; pointer-events: none; }
-.account-burst span { position: absolute; left: -.5em; top: -.5em; width: 1em; text-align: center; color: var(--bookedz-primary); font-size: .95rem; opacity: 0; animation: avatar-burst 900ms var(--bookedz-ease) 180ms both; }
-.account-burst span:nth-child(even) { color: var(--bookedz-yellow); font-size: .75rem; }
-@keyframes avatar-hop { 0% { transform: translateY(24px) scale(.4); } 45% { transform: translateY(-14px) scale(1.12); } 70% { transform: translateY(0) scale(.95); } 100% { transform: none; } }
-@keyframes avatar-burst { 0% { opacity: 1; transform: rotate(var(--burst-angle)) translateY(-18px) scale(.4); } 100% { opacity: 0; transform: rotate(var(--burst-angle)) translateY(-56px) scale(1); } }
-@media (prefers-reduced-motion: reduce) { .account-avatar, .celebrate .account-avatar { animation: none; } .account-burst { display: none; } }
+@media (max-width: 767px) { .landing-page { padding: 18px 12px 32px; } }
 </style>

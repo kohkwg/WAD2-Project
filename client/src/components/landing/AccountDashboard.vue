@@ -21,6 +21,7 @@ const props = defineProps({
   rsvps: { type: Array, default: () => [] },
   saved: { type: Array, default: () => [] },
   loadError: { type: String, default: '' },
+  justJoined: Boolean,
 })
 const emit = defineEmits(['refresh'])
 
@@ -145,7 +146,10 @@ const groupTitle = (g) => g.event?.title || 'Group'
 <template>
   <section class="dash" aria-labelledby="dash-title">
     <header class="dash-hero">
-      <span class="dash-avatar" aria-hidden="true"><img v-if="myDinoSrc" class="dino-face" :src="myDinoSrc" alt="">{{ myDinoSrc ? '' : initials }}</span>
+      <span class="dash-avatar-wrap" :class="{ celebrate: justJoined }" aria-hidden="true">
+        <span class="dash-avatar"><img v-if="myDinoSrc" class="dino-face" :src="myDinoSrc" alt="">{{ myDinoSrc ? '' : initials }}</span>
+        <span v-if="justJoined" class="dash-burst"><span v-for="n in 8" :key="n" :style="{ '--burst-angle': `${n * 45}deg` }">✦</span></span>
+      </span>
       <div class="dash-hero-copy">
         <p class="dash-greeting">{{ greeting }},</p>
         <h1 id="dash-title" class="page-title m-0">{{ firstName }}</h1>
@@ -278,6 +282,13 @@ const groupTitle = (g) => g.event?.title || 'Group'
 .dino-face { width: 100%; height: 100%; object-fit: contain; }
 /* A dino shows whole, not cropped to the circle */
 .dash-avatar:has(.dino-face) { overflow: visible; border-color: transparent; background: none; }
+.dash-avatar-wrap { position: relative; flex: none; display: grid; place-items: center; }
+.celebrate .dash-avatar { animation: avatar-hop 900ms var(--bookedz-ease-stamp) both; }
+.dash-burst { position: absolute; inset: 50% auto auto 50%; pointer-events: none; }
+.dash-burst span { position: absolute; left: -.5em; top: -.5em; width: 1em; text-align: center; color: var(--bookedz-primary); font-size: .95rem; opacity: 0; animation: avatar-burst 900ms var(--bookedz-ease) 180ms both; }
+.dash-burst span:nth-child(even) { color: var(--bookedz-yellow); font-size: .75rem; }
+@keyframes avatar-hop { 0% { transform: translateY(24px) scale(.4); } 45% { transform: translateY(-14px) scale(1.12); } 70% { transform: translateY(0) scale(.95); } 100% { transform: none; } }
+@keyframes avatar-burst { 0% { opacity: 1; transform: rotate(var(--burst-angle)) translateY(-18px) scale(.4); } 100% { opacity: 0; transform: rotate(var(--burst-angle)) translateY(-56px) scale(1); } }
 .dash-greeting { margin: 0; color: var(--bookedz-ink); font-weight: 500; }
 .dash-hero h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -.03em; overflow-wrap: anywhere; background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .dash-demo { margin: 0; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--bookedz-yellow) 60%, var(--bookedz-border)); border-radius: 14px; background: color-mix(in srgb, var(--bookedz-yellow) 18%, var(--bookedz-surface)); font-size: .95rem; }
@@ -348,7 +359,8 @@ const groupTitle = (g) => g.event?.title || 'Group'
 }
 @media (max-width: 575px) { .dash-slide { grid-template-columns:1fr; gap:14px; } .dash-next-art { max-width:160px; } .dash-next-art :deep(svg) { height:130px; } }
 @media (prefers-reduced-motion: reduce) {
-  .dash-avatar { animation: none; }
+  .dash-avatar, .celebrate .dash-avatar { animation: none; }
+  .dash-burst { display: none; }
   .dash .btn:not(:disabled):hover, .dash-attention-item:hover { transform: none; }
   .dash-carousel { scroll-behavior: auto; }
 }
