@@ -84,12 +84,12 @@ onMounted(async () => {
   // ?start=<event id> opens Start a group with that event chosen (linked from event pages)
   if (signedIn.value && typeof route.query.start === 'string') openComposer(route.query.start)
   else if (signedIn.value && route.query.compose === '1') openComposer()
-  // Keep the database load low: refresh only while the tab is visible, at most once a minute,
-  // and when you come back to the tab (not more than every 30 seconds)
-  refreshTimer = setInterval(() => { if (!document.hidden) load() }, 60000)
+  // Keep the database load low: refresh only while the tab is visible, every 2 minutes,
+  // and when you come back to the tab (not more than once a minute)
+  refreshTimer = setInterval(() => { if (!document.hidden) load() }, 120000)
   window.addEventListener('focus', refreshOnFocus)
 })
-function refreshOnFocus() { if (Date.now() - lastLoad > 30000) load() }
+function refreshOnFocus() { if (Date.now() - lastLoad > 60000) load() }
 onBeforeUnmount(() => { clearInterval(refreshTimer); window.removeEventListener('focus', refreshOnFocus); stopSocial() })
 
 async function openComposer(eventId = '') {

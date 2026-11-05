@@ -21,7 +21,7 @@ function fixture(session = { user: { id: 'test2' } }) {
   }
   const stop = watchSocialUpdates(client, () => updates++, () => enabled, {
     window: win, document: doc,
-    setInterval(callback, delay) { assert.equal(delay, 60_000); intervalCallback = callback; return 1 },
+    setInterval(callback, delay) { assert.equal(delay, 120_000); intervalCallback = callback; return 1 },
     clearInterval() { intervalCallback = null },
     setTimeout(callback) { const id = nextTimer++; timers.set(id, callback); return id },
     clearTimeout(id) { timers.delete(id) },

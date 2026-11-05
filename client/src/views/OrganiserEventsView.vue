@@ -72,10 +72,13 @@ onMounted(() => {
   mounted = true
   if (justCreatedId.value) { activeTab.value = savedAsDraft.value ? 'drafts' : 'upcoming'; search.value = ''; pendingOnly.value = false }
   loadEvents()
-  timer = setInterval(loadEvents, 30000)
-  window.addEventListener('focus', loadEvents)
+  // Every 2 minutes while the tab is visible, and on coming back to it (at most once a minute)
+  timer = setInterval(() => { if (!document.hidden) loadEvents() }, 120000)
+  window.addEventListener('focus', refreshOnFocus)
 })
-onUnmounted(() => { mounted = false; requestId++; clearInterval(timer); window.removeEventListener('focus', loadEvents) })
+let lastFocusLoad = Date.now()
+function refreshOnFocus() { if (Date.now() - lastFocusLoad > 60000) { lastFocusLoad = Date.now(); loadEvents() } }
+onUnmounted(() => { mounted = false; requestId++; clearInterval(timer); window.removeEventListener('focus', refreshOnFocus) })
 function selectTab(id) {
   activeTab.value = id
   pendingOnly.value = false

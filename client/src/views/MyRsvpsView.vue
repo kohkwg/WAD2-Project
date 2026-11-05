@@ -164,7 +164,11 @@ async function refreshRsvps() {
   }
 }
 
+let lastFocusLoad = Date.now()
 function onFocus() {
+  // Coming back to the tab refreshes at most once a minute
+  if (Date.now() - lastFocusLoad < 60000) return
+  lastFocusLoad = Date.now()
   refreshRsvps()
 }
 
@@ -176,9 +180,11 @@ onMounted(async () => {
     if (!mounted) return
     loading.value = false
   }
+  // `now` keeps countdowns moving every 30 s; RSVPs reload every 2 minutes while the tab is visible
+  let ticks = 0
   timer = setInterval(() => {
     now.value = Date.now()
-    refreshRsvps()
+    if (++ticks % 4 === 0 && !document.hidden) refreshRsvps()
   }, 30000)
   // while a waitlist offer is open, the countdown moves every second.
   clock = setInterval(() => { if (offers.value.length) now.value = Date.now() }, 1000)

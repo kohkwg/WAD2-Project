@@ -19,7 +19,7 @@ async function load() {
 }
 // Keep up with others' messages while the page is open
 let timer
-onMounted(() => { load(); timer = setInterval(() => { if (!document.hidden) load() }, 30000) })
+onMounted(() => { load(); timer = setInterval(() => { if (!document.hidden) load() }, 60000) })
 onBeforeUnmount(() => clearInterval(timer))
 
 async function post() {

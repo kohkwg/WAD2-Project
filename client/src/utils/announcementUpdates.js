@@ -15,7 +15,7 @@ export function watchAnnouncements({
   hasPost = () => false, // is this announcement id currently shown?
   client = null, // the shared browser Supabase client, live mode only
   storageKey = null, // the demo data's localStorage key, demo mode only
-  intervalMs = 20_000,
+  intervalMs = 120_000, // a backup for a dropped live connection; live updates arrive straight away
   window: win = globalThis.window,
   document: doc = globalThis.document,
   setInterval: repeat = globalThis.setInterval,

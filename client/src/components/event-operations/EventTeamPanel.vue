@@ -31,7 +31,7 @@ async function load(silent = false) {
   finally { if (active && ticket === request && current === context) loading.value = false }
 }
 function wake() { if (canRefresh()) load(true) }
-onMounted(() => { load(); timer = setInterval(wake, 15_000); window.addEventListener('focus', wake); document.addEventListener('visibilitychange', wake) })
+onMounted(() => { load(); timer = setInterval(wake, 60_000); window.addEventListener('focus', wake); document.addEventListener('visibilitychange', wake) })
 onBeforeUnmount(() => { active = false; context++; request++; searchRequest++; clearInterval(timer); window.removeEventListener('focus', wake); document.removeEventListener('visibilitychange', wake) })
 async function search() {
   const term = query.value.trim().replace(/^@/, '').toLowerCase()

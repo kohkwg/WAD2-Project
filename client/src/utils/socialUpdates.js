@@ -48,7 +48,7 @@ export function watchSocialUpdates(client, onChange, isActive, {
   }).catch(() => {})
   // Also works before the optional Realtime signal migration is installed. Once a minute keeps
   // database load low; focus and coming back online still refresh straight away.
-  const interval = repeat(() => { if (userId) notify() }, 60_000)
+  const interval = repeat(() => { if (userId) notify() }, 120_000)
   const wake = () => { if (userId) notify() }
   win?.addEventListener('focus', wake)
   win?.addEventListener('online', wake)

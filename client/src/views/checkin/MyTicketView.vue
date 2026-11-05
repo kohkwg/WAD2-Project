@@ -68,8 +68,8 @@ onMounted(async () => {
 
     await subscribe(reg.id)
     await loadCheckIn(reg.id)
-    // fallback if realtime is slow to start or drops: re-check every 5 s until checked in
-    poll = setInterval(() => (checkIn.value ? clearInterval(poll) : loadCheckIn(reg.id)), 5_000)
+    // fallback if realtime is slow to start or drops: re-check every 15 s (visible tab) until checked in
+    poll = setInterval(() => (checkIn.value ? clearInterval(poll) : document.hidden ? null : loadCheckIn(reg.id)), 15_000)
   } catch (e) {
     error.value = e.message ?? 'Could not load your ticket.'
   } finally {
