@@ -41,7 +41,9 @@ const FILTERS = [
 const invites = ref([])
 const notices = ref([])
 const inviteBusy = ref('')
+let lastLoad = 0 // when the page last fetched, for the focus refresh
 async function load() {
+  lastLoad = Date.now()
   error.value = ''
   try {
     signedIn.value = Boolean(await getCurrentUser())
@@ -79,10 +81,13 @@ onMounted(async () => {
   // ?start=<event id> opens Start a group with that event chosen (linked from event pages)
   if (signedIn.value && typeof route.query.start === 'string') openComposer(route.query.start)
   else if (signedIn.value && route.query.compose === '1') openComposer()
-  refreshTimer = setInterval(load, 30000)
-  window.addEventListener('focus', load)
+  // Keep the database load low: refresh only while the tab is visible, at most once a minute,
+  // and when you come back to the tab (not more than every 30 seconds)
+  refreshTimer = setInterval(() => { if (!document.hidden) load() }, 60000)
+  window.addEventListener('focus', refreshOnFocus)
 })
-onBeforeUnmount(() => { clearInterval(refreshTimer); window.removeEventListener('focus', load); stopSocial() })
+function refreshOnFocus() { if (Date.now() - lastLoad > 30000) load() }
+onBeforeUnmount(() => { clearInterval(refreshTimer); window.removeEventListener('focus', refreshOnFocus); stopSocial() })
 
 async function openComposer(eventId = '') {
   const destination = router.resolve({ path: '/community', query: { ...route.query, ...(eventId ? { start: eventId } : { compose: '1' }) } }).fullPath
