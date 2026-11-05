@@ -626,8 +626,13 @@ h3, .event-title {
 /* slim footer: one line at every width (the second tagline is dropped on phones, where it would wrap) */
 
 .app-footer {
+  --footer-h: 2.625rem;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: var(--footer-h);
   border-top: 1px solid var(--bookedz-border);
-  padding: .75rem 0;
+  padding: 0;
   color: var(--bookedz-muted);
   background: var(--bookedz-glass-solid);
   font-size: .75rem;
@@ -635,6 +640,7 @@ h3, .event-title {
 }
 
 .app-footer .container {
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

@@ -61,7 +61,7 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 
 .design-baseline.design-baseline :is(.create-heading, .workspace-header, .rsvp-heading, .organiser-heading) {
   position: relative;
-  margin: .5rem 0 1.75rem;
+  margin: 0 0 1.75rem;
   padding: clamp(1.4rem, 4vw, 2.4rem);
   overflow: hidden;
   border: 2px solid var(--bookedz-ink);
@@ -282,7 +282,7 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 .account-page.account-page .account-heading {
   position: relative;
   max-width: none;
-  margin: .5rem 0 1.75rem;
+  margin: 0 0 1.75rem;
   padding: clamp(1.4rem, 4vw, 2.4rem);
   overflow: hidden;
   border: 2px solid var(--bookedz-ink);
