@@ -88,6 +88,7 @@ export const TAG_OPTIONS = [
   'outdoors',
   'gaming',
   'wellness',
+  'others', // for events that fit none of the above; always last, never suggested
 ]
 
 // Words that hint at each tag. A word in the title/description that STARTS WITH one of
@@ -103,6 +104,7 @@ const TAG_KEYWORDS = {
   outdoors: ['outdoor', 'hike', 'hiking', 'park', 'trail', 'beach', 'cycling', 'nature'],
   gaming: ['game', 'gaming', 'esport'],
   wellness: ['wellness', 'yoga', 'meditat', 'mindful', 'pilates', 'mental'],
+  others: [],
 }
 
 export function suggestTags(text) {

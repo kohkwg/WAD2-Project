@@ -38,7 +38,8 @@ async function load() {
   try {
     const [groupList, eventList] = await Promise.all([getGroups(), getEvents()])
     groups.value = groupList
-    events.value = eventList.filter((e) => isOfficialEvent(e) && e.status === 'published' && new Date(e.startTime) > new Date())
+    // Groups meet at the event's venue, so online events can't have one
+    events.value = eventList.filter((e) => isOfficialEvent(e) && !e.isOnline && e.status === 'published' && new Date(e.startTime) > new Date())
   } catch (e) {
     error.value = e.message
   } finally {

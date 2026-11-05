@@ -1187,3 +1187,40 @@ not persist. These are dated observations, not permanent database invariants.
   4 of 7 `event-filters.test.mjs` cases.
 - Not done: full suites, a production build, live or real-device checks, and committed specs
   for the new menu and navigation (scratch scripts only).
+
+### 5 November — online events, hidden capacity and the Others tag
+
+- **Create Event:** Basics has an "Others" tag and a "Show the capacity to participants"
+  switch (on by default). Venue asks Physical or Online; Online replaces the venue search
+  with an optional meeting link (https only) and a "Show the link from" time, suggested as
+  15 minutes before the start and moved with the start time. Review and the live preview
+  show both. Manage event → Edit event uses the same wizard, so the link can be added or
+  changed there; the Weather tab says online events have no forecast to check.
+- **Event page:** online events show "Where: Online" and an Online event panel: the organiser
+  always sees the link; confirmed attendees see "Join online" once the time has passed (the
+  panel asks again at that time); others see when it appears. No map, directions or Go
+  together for online events. Hidden capacity shows only "Full · waitlist open" to
+  participants; "Join waitlist" no longer appears when spots are unknown.
+- **Data:** `utils/onlineEvents.js` holds the shared rules. The demo stores `isOnline` and
+  `hideCapacity` on every event (older demo data upgraded on load) and keeps links in
+  `onlineLinks`, apart from events. Live: migration `20261105120000_online_events_hidden_capacity`
+  adds the `others` interest, `events.is_online`/`hide_capacity` (existing rows false), no-venue
+  and official-only checks, the organiser-only `event_online_links` table, the
+  `event_online_access` function, the extended `create_event_with_details`, `create_group`
+  refusing online events, and `events_with_counts` with the two columns and masked numbers.
+- **Applied to Bookerz** with the user's explicit approval: `migration list` and a dry run first,
+  then `db push`, which also applied Vivienne's pending `20261105100000_budget_item_purchased_at`
+  (the user chose to push both). Hosted history now matches local. A read-only check with the
+  publishable key: 33 public events, all physical with capacity shown; the view has the new
+  columns; `others` exists; the link table is closed to the public; the access function
+  returns null for a physical event.
+- **Checks:** `online-events-db.check.mjs` 8/8 (in-memory PGlite, every migration);
+  `groups-db` 8/8, `hangouts-db` 7/7 and `event-team-db` 7/7 still pass. `recommendation-db`
+  has 1 failure ("91-day-old saved…"), identical with the new migration removed.
+  `onlineEvents.test.js` 8/8 and `eventForm.test.js` 14/14; Discover node tests 23/23 after
+  updating the expected "Spots left" filter; `supabaseApi.test.js` 8/8 using the temporary
+  loader in testing.md. A scratch Playwright run in demo mode (port 5191) passed 29 checks:
+  create → publish → stored shape, organiser and participant link states, hidden numbers,
+  Discover, edit reload, no console errors. 375, 575 and 768px showed no overflow and one `main`.
+- Not done: a signed-in live `[TEST]` run (needs a human sign-in), full suites, a
+  production build, dark-theme and real-device checks, committed browser specs.

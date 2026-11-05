@@ -266,6 +266,7 @@ h3, .event-title { font-family: var(--bookedz-heading); font-size: var(--text-ca
 .cat-outdoors { --cat-hue: #65a30d; }
 .cat-gaming { --cat-hue: #6366f1; }
 .cat-wellness { --cat-hue: #06b6d4; }
+.cat-others { --cat-hue: #64748b; }
 .cat-tint { background: color-mix(in srgb, var(--cat-hue, var(--bookedz-muted)) 20%, var(--bookedz-surface)); color: var(--bookedz-ink); }
 [data-theme='dark'] .cat-tint { background: color-mix(in srgb, var(--cat-hue, var(--bookedz-muted)) 30%, var(--bookedz-surface)); }
 

@@ -847,3 +847,28 @@ Events deletion now opens
 the card's ⋯ menu, then the pop-up. The phone tab bar is a separate "Quick links" landmark, so
 scope link lookups to "Main navigation" at phone widths. The new menu, tab bar and rail were
 demo server on 5187 with a temporary config. See status for the already-failing cases.
+
+## Online events, hidden capacity and Others (5 November)
+
+```sh
+cd client && NODE_ENV=test node --test src/utils/__tests__/onlineEvents.test.js src/utils/__tests__/eventForm.test.js
+cd client && node --test tests/discover-events.test.mjs tests/discover-browse.test.mjs tests/discovery-state.test.mjs tests/event-count.test.mjs
+```
+
+`onlineEvents.test.js` covers the Others tag, demo defaults, https-only links, reveal times,
+who can open the link, hidden-capacity masking and announcements that never include the link
+or hidden numbers. The Discover tests now expect the "Spots left" filter
+`spots_left.gt.0,spots_left.is.null` (unknown spots count as available).
+
+Database check (isolated PGlite, no credentials or hosted access; loads every migration and
+inserts an older event just before the new one to check existing rows):
+
+```sh
+mkdir -p /tmp/wad2-pglite && cd /tmp/wad2-pglite && npm init -y && npm install --ignore-scripts @electric-sql/pglite@0.5.12
+node server/checks/online-events-db.check.mjs /tmp/wad2-pglite/node_modules/@electric-sql/pglite/dist/index.js
+```
+
+`src/utils/__tests__/supabaseApi.test.js` (including the new online creation case) can't run
+under plain Node, at HEAD as well: `lib/api.js` uses an extensionless import and reads
+`import.meta.env` directly. On 5 November it was run with a temporary loader that added `.js`
+and stubbed `lib/api.js` (not committed).

@@ -638,3 +638,28 @@ OneMap routing.
   readable button, 44px targets and a compact drop-down on wide screens.
 - **Unit tests** use Node's runner with a small `expect` helper; no Vitest dependency.
 
+
+## 5 November 2026 — online events, hidden capacity and the Others tag
+
+Requested by the user (Create Event is Gregory's Feature 2; the Weather tab is Denzel's
+Feature 4; the database is Timothy's area). The user answered these choices:
+
+- **Others tag:** a new interest slug `others` ("Others"), last in the tag list and never
+  suggested from the title. It is also in `INTEREST_OPTIONS`, so profiles and filters match
+  the interests table; Discover's curated category chips are unchanged.
+- **Hide capacity (default: shown):** participants then see only whether the event is full
+  ("Full · waitlist open"), never the total or spots left. The organiser and their event team
+  keep the numbers. This is a display choice: the raw capacity column is still readable
+  through the events table, but every page, the Discover view and the recommendation feed
+  hide it. Change announcements leave out the numbers once capacity is hidden.
+- **Online or physical (Venue step):** online events have no venue, rain plan, weather check
+  or Go together groups (groups meet at the venue). The database enforces no venue rows.
+- **Online link:** optional at creation and editable later in Manage event → Edit event
+  (the user confirmed no separate panel is needed). It has a "show from" date and time,
+  suggested as 15 minutes before the start and before the event's end. Only the organiser
+  and **confirmed attendees once that time has passed** can open it; everyone else is told
+  when it appears. The link lives in its own table (`event_online_links`), never in the
+  public event row, and public announcements never include it.
+- **Consistent data (user's instruction):** every existing event becomes physical with
+  capacity shown; demo data is upgraded to the same shape, and the demo keeps links apart
+  from events, as the database does.

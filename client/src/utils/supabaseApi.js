@@ -16,6 +16,7 @@
 import { supabase } from './supabase.js'
 import { api as recommendationApi } from '../lib/api.js'
 import * as hangouts from './supabaseHangoutsApi.js'
+import { onlineVenue, hideCapacityNumbers } from './onlineEvents.js'
 
 // Network trouble gets a plain message, so people know the action did not go through.
 export function friendlyMessage(error) {
@@ -202,10 +203,13 @@ function toEvent(row, counts, myId) {
     // Present once migration 20261103120000_hangouts is applied; older rows are Official
     kind: row.kind || 'official',
     joinMode: row.join_mode || null,
+    // Present once migration 20261105120000 is applied; older rows are physical with capacity shown
+    isOnline: Boolean(row.is_online),
+    hideCapacity: Boolean(row.hide_capacity),
     // The database stores indoor/outdoor on the venue, not the event
     isOutdoor: row.venue ? !row.venue.is_indoor : false,
-    // If the venue was deleted, show a placeholder instead of breaking every page
-    venue: toVenue(row.using_backup ? row.backup_venue : row.venue) || { name: 'Venue to be confirmed', address: '' },
+    // Online events have no venue row. If a venue was deleted, show a placeholder instead of breaking every page
+    venue: row.is_online ? onlineVenue() : toVenue(row.using_backup ? row.backup_venue : row.venue) || { name: 'Venue to be confirmed', address: '' },
     backupVenue: toVenue(row.backup_venue),
     usingBackup: row.using_backup,
     questions: [...row.event_questions]
@@ -223,19 +227,17 @@ function toEvent(row, counts, myId) {
 
 // Participants can't read other people's RSVPs (RLS), so they can't count them.
 // event_availability is a SQL function that returns just the numbers, for many events at once.
-async function toEventsWithCounts(rows) {
+// Hidden capacity: only the organiser gets the numbers here (getEvent also keeps them for the team).
+async function toEventsWithCounts(rows, { keepTeamNumbers = false } = {}) {
   if (rows.length === 0) return []
   const myId = (await getCurrentUser())?.id
   const counts = check(
     await supabase.rpc('event_availability', { p_event_ids: rows.map((row) => row.id) }),
   )
-  return rows.map((row) =>
-    toEvent(
-      row,
-      counts.find((c) => c.event_id === row.id),
-      myId,
-    ),
-  )
+  return rows.map((row) => {
+    const event = toEvent(row, counts.find((c) => c.event_id === row.id), myId)
+    return event.isMine || keepTeamNumbers ? event : hideCapacityNumbers(event)
+  })
 }
 
 // answers from the database: [{ question_id, answer }] → the pages use { questionId: answer }
@@ -271,11 +273,20 @@ export async function getEvents() {
 export async function getEvent(eventId) {
   const row = check(await supabase.from('events').select(EVENT_COLUMNS).eq('id', eventId).maybeSingle())
   if (!row) throw new Error('Event not found')
-  const [event] = await toEventsWithCounts([row])
+  const [counted] = await toEventsWithCounts([row], { keepTeamNumbers: true })
   const user = await getCurrentUser()
-  event.isOnTeam = user ? Boolean(check(await supabase.rpc('is_event_staff', { p_event_id: eventId }))) : false
+  counted.isOnTeam = user ? Boolean(check(await supabase.rpc('is_event_staff', { p_event_id: eventId }))) : false
+  const event = counted.isMine || counted.isOnTeam ? counted : hideCapacityNumbers(counted)
   if (event.kind === 'hangout') event.hangout = await hangouts.hangoutDetails(eventId, event.isMine)
   return event
+}
+
+// The online link is in its own table that only the organiser can read; everyone else asks
+// event_online_access, which hands the link to confirmed attendees once its time has come.
+export async function getEventOnlineAccess(eventId) {
+  const access = check(await supabase.rpc('event_online_access', { p_event_id: eventId }))
+  if (!access) return null
+  return { hasLink: Boolean(access.hasLink), revealAt: access.revealAt || null, url: access.url || null }
 }
 
 // Several events at once (the official events Go together groups are for); missing or
@@ -331,16 +342,21 @@ export async function createEventWith(client, eventData) {
     lat: venue.lat,
     lng: venue.lng,
   })
+  const isOnline = Boolean(eventData.isOnline)
   const payload = {
     title: eventData.title,
     description: eventData.description,
     startTime: eventData.startTime,
     endTime: eventData.endTime,
     capacity: eventData.capacity,
+    hideCapacity: Boolean(eventData.hideCapacity),
     requiresApproval: eventData.requiresApproval,
-    isOutdoor: eventData.isOutdoor,
-    venue: venuePayload(eventData.venue),
-    backupVenue: venuePayload(eventData.backupVenue),
+    isOnline,
+    // Online events have no venue or rain plan; the RPC refuses one that does
+    isOutdoor: isOnline ? false : eventData.isOutdoor,
+    venue: isOnline ? null : venuePayload(eventData.venue),
+    backupVenue: isOnline ? null : venuePayload(eventData.backupVenue),
+    onlineLink: isOnline && eventData.onlineLink ? { url: eventData.onlineLink.url, revealAt: eventData.onlineLink.revealAt } : null,
     tags: eventData.tags,
     questions: eventData.questions.map(({ text, type, required }) => ({ text, type, required })),
   }
@@ -409,6 +425,18 @@ async function insertVenueWith(client, venue, isIndoor) {
     is_indoor: isIndoor,
   }).select('id').single())
   return row.id
+}
+
+// Only the organiser can write event_online_links (RLS). Saving the same link again is harmless.
+async function saveOnlineLinkWith(client, eventId, link) {
+  if (!link) {
+    check(await client.from('event_online_links').delete().eq('event_id', eventId))
+    return
+  }
+  check(await client.from('event_online_links').upsert(
+    { event_id: eventId, url: link.url, reveal_at: link.revealAt },
+    { onConflict: 'event_id' },
+  ))
 }
 
 async function saveEventTagsWith(client, eventId, before, after) {
@@ -484,21 +512,32 @@ export async function updateEventWith(client, { current, myId, rsvpCount }, chan
     capacity: changes.capacity,
     requires_approval: changes.requiresApproval,
     cover_image_url: changes.coverImageUrl || null,
+    hide_capacity: Boolean(changes.hideCapacity),
+    is_online: Boolean(changes.isOnline),
   }
-  // isOutdoor is stored on the venue row, so changing it also needs a new venue row
-  const outdoorChanged = Boolean(current.isOutdoor) !== Boolean(changes.isOutdoor)
-  const mainChanged = !sameVenue(current.venue, changes.venue) || outdoorChanged
-  const backupChanged = changes.isOutdoor ? !sameVenue(current.backupVenue, changes.backupVenue) : Boolean(current.backupVenue)
-  if (current.usingBackup && (mainChanged || backupChanged)) {
-    throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.')
+  if (changes.isOnline) {
+    // Online events keep no venue rows (events_online_has_no_venue); the old rows stay for history
+    if (current.usingBackup) throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.')
+    update.venue_id = null
+    update.backup_venue_id = null
+  } else {
+    // isOutdoor is stored on the venue row, so changing it also needs a new venue row
+    const outdoorChanged = Boolean(current.isOutdoor) !== Boolean(changes.isOutdoor)
+    const mainChanged = current.isOnline || !sameVenue(current.venue, changes.venue) || outdoorChanged
+    const backupChanged = changes.isOutdoor ? !sameVenue(current.backupVenue, changes.backupVenue) : Boolean(current.backupVenue)
+    if (current.usingBackup && (mainChanged || backupChanged)) {
+      throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.')
+    }
+    if (mainChanged) update.venue_id = await insertVenueWith(client, changes.venue, !changes.isOutdoor)
+    if (backupChanged) update.backup_venue_id = changes.isOutdoor ? await insertVenueWith(client, changes.backupVenue, true) : null
   }
-  if (mainChanged) update.venue_id = await insertVenueWith(client, changes.venue, !changes.isOutdoor)
-  if (backupChanged) update.backup_venue_id = changes.isOutdoor ? await insertVenueWith(client, changes.backupVenue, true) : null
 
+  // Becoming physical removes the saved link in the database (events_after_online_change)
   const rows = check(await client.from('events').update(update).eq('id', eventId).select('id'))
   if (!rows?.length) throw new Error('You can only edit events you organise.')
 
   try {
+    if (changes.isOnline) await saveOnlineLinkWith(client, eventId, changes.onlineLink)
     await saveEventTagsWith(client, eventId, current.tags || [], changes.tags)
     await saveEventQuestionsWith(client, eventId, current.questions || [], changes.questions)
   } catch (error) {

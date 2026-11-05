@@ -9,7 +9,9 @@ import ClashWarning from '../components/rsvp/ClashWarning.vue'
 import VenueMap from '../components/VenueMap.vue'
 import RsvpStatusBadge from '../components/RsvpStatusBadge.vue'
 import EventGroups from '../components/community/EventGroups.vue'
+import OnlineEventLink from '../components/rsvp/OnlineEventLink.vue'
 import { isGroup } from '../utils/groups.js'
+import { isEventFull } from '../utils/onlineEvents.js'
 import {
   getEvent,
   getUser,
@@ -119,7 +121,9 @@ const formErrors = computed(() => {
 })
 
 // The button names the action the press will take, matching the Discover list.
-const submitLabel = computed(() => event.value.requiresApproval ? 'Request a spot' : event.value.spotsLeft <= 0 ? 'Join waitlist' : 'RSVP')
+// Unknown spots (no limit, or a capacity the organiser hides) are not full
+const isFull = computed(() => isEventFull(event.value))
+const submitLabel = computed(() => event.value.requiresApproval ? 'Request a spot' : isFull.value ? 'Join waitlist' : 'RSVP')
 
 // Tell them what will happen BEFORE they press the button
 const whatHappensNext = computed(() => {
@@ -128,8 +132,11 @@ const whatHappensNext = computed(() => {
   if (event.value.spotsLeft > 0) {
     return `${event.value.spotsLeft} spot${event.value.spotsLeft === 1 ? '' : 's'} left, so you will be confirmed straight away.`
   }
+  if (!isFull.value) return 'Spots are still open, so you will be confirmed straight away.'
   return 'This event is full, so you will join the waitlist. If a spot opens up, you get 24 hours to take it.'
 })
+// The online link panel asks again when the viewer's RSVP changes
+const rsvpKey = computed(() => (result.value || existingRsvp.value)?.status || '')
 
 // Phones show the public details first, so a shortcut near the top jumps down to the RSVP panel
 const jumpLabel = computed(() => {
@@ -225,14 +232,16 @@ async function submitRsvp() {
     <!-- Public context and updates come first in both DOM and mobile reading order. -->
     <div class="col-lg-8 order-1 event-public-details">
       <EventSummary v-if="event" :event="event" heading-tag="h1">
-        <VenueMap v-if="event.venue?.lat" :lat="event.venue.lat" :lng="event.venue.lng" class="my-3" />
+        <VenueMap v-if="!event.isOnline && event.venue?.lat" :lat="event.venue.lat" :lng="event.venue.lng" class="my-3" />
+        <OnlineEventLink v-if="event.isOnline" :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />
         <!-- Places and spots left are already in the facts above; the waitlist size is the extra detail -->
-        <p v-if="event.spotsLeft <= 0" class="waitlist-note">
+        <p v-if="isFull" class="waitlist-note">
           Full · {{ event.waitlistCount }} on the waitlist
         </p>
       </EventSummary>
       <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
-      <EventGroups v-if="event && !event.isOnTeam" :event-id="eventId" />
+      <!-- Go together groups meet at the venue, so online events have none -->
+      <EventGroups v-if="event && !event.isOnTeam && !event.isOnline" :event-id="eventId" />
       <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
       <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
     </div>

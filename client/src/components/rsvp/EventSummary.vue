@@ -21,6 +21,8 @@ const showFullDescription = ref(false)
 const descriptionId = useId()
 watch(() => props.event?.id, () => { showFullDescription.value = false })
 const SHORT_LENGTH = 160
+// Participants of a hidden-capacity event get no numbers (capacity null), only whether it's full
+const hiddenAndFull = computed(() => Boolean(props.event?.hideCapacity) && props.event?.capacity == null && props.event?.spotsLeft === 0)
 
 const isLong = computed(() => (props.event.description || '').length > SHORT_LENGTH)
 const descriptionToShow = computed(() => {
@@ -40,8 +42,14 @@ const descriptionToShow = computed(() => {
 
       <div class="event-venue">
         <span class="venue-label">Where</span>
-        <p class="venue-name"><span aria-hidden="true">⌖</span> {{ event.venue ? event.venue.name : 'not set yet' }}</p>
-        <p v-if="event.venue" class="venue-address">{{ formatAddress(event.venue.address) }}</p>
+        <template v-if="event.isOnline">
+          <p class="venue-name"><span aria-hidden="true">⌖</span> Online</p>
+          <p class="venue-address">The link is shared with confirmed attendees</p>
+        </template>
+        <template v-else>
+          <p class="venue-name"><span aria-hidden="true">⌖</span> {{ event.venue ? event.venue.name : 'not set yet' }}</p>
+          <p v-if="event.venue" class="venue-address">{{ formatAddress(event.venue.address) }}</p>
+        </template>
       </div>
 
       <p v-if="event.usingBackup" class="small mb-2 text-success">Backup venue is active.</p>
@@ -52,8 +60,10 @@ const descriptionToShow = computed(() => {
       </p>
 
       <div class="event-facts" aria-label="Event details">
-        <div class="event-fact"><span class="fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg></span><span><strong>{{ event.capacity }}</strong><small>spots in total</small></span></div>
-        <div v-if="event.spotsLeft != null" class="event-fact"><span class="fact-icon fact-icon--coral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z"/><path d="M15 6v12" stroke-dasharray="2 2"/></svg></span><span><strong><BumpValue :value="event.spotsLeft" /></strong><small>spots left</small></span></div>
+        <!-- A hidden capacity reaches participants without numbers: only "Full" when it is -->
+        <div v-if="event.capacity != null && event.capacity !== ''" class="event-fact"><span class="fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/></svg></span><span><strong>{{ event.capacity }}</strong><small>spots in total</small></span></div>
+        <div v-if="hiddenAndFull" class="event-fact"><span class="fact-icon fact-icon--coral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z"/><path d="M15 6v12" stroke-dasharray="2 2"/></svg></span><span><strong>Full</strong><small>waitlist open</small></span></div>
+        <div v-else-if="event.spotsLeft != null" class="event-fact"><span class="fact-icon fact-icon--coral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4Z"/><path d="M15 6v12" stroke-dasharray="2 2"/></svg></span><span><strong><BumpValue :value="event.spotsLeft" /></strong><small>spots left</small></span></div>
       </div>
 
     <div class="event-cover">

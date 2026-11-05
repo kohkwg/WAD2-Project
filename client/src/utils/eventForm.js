@@ -1,6 +1,8 @@
 // Create Event form (Feature 2): the blank form and each step's checks, shared by the wizard
 // (CreateEventView) and its unit tests. Pure functions, no Vue.
 
+import { onlineLinkErrors } from './onlineEvents.js'
+
 // Everything the organiser fills in, across all steps
 export function blankEventForm() {
   return {
@@ -11,6 +13,9 @@ export function blankEventForm() {
     startTime: '', // from <input type="datetime-local">, e.g. "2026-10-20T19:00"
     endTime: '',
     capacity: 30,
+    hideCapacity: false, // true = participants see only whether it's full
+    isOnline: false, // online events have no venue; the link is kept privately
+    onlineLink: { url: '', revealAt: '' }, // revealAt is a datetime-local value; '' url = no link yet
     venue: null, // { name, address, postal, lat, lng } from OneMap
     isOutdoor: false,
     backupVenue: null, // used by Denzel's rain check
@@ -19,7 +24,7 @@ export function blankEventForm() {
   }
 }
 
-// The error messages for one step (1 basics, 2 venue, 3 RSVP questions); [] means it's valid.
+// The error messages for one step (1 basics, 2 venue or online link, 3 RSVP questions); [] means it's valid.
 // Edit mode can't go below the people already confirmed or offered a place (minCapacity), and an
 // older event may keep "no limit" ('' capacity). Live events need venues with map coordinates.
 export function errorsForStep(f, stepNumber, { now = new Date(), editing = false, originalCapacity, minCapacity = 1, live = false } = {}) {
@@ -46,7 +51,9 @@ export function errorsForStep(f, stepNumber, { now = new Date(), editing = false
     }
   }
 
-  if (stepNumber === 2) {
+  if (stepNumber === 2 && f.isOnline) errors.push(...onlineLinkErrors(f.onlineLink, f.endTime))
+
+  if (stepNumber === 2 && !f.isOnline) {
     if (!f.venue) errors.push('Choose the venue from the address search.')
     if (live && f.venue && !hasCoordinates(f.venue)) {
       errors.push('Choose a venue result with map coordinates for live events.')

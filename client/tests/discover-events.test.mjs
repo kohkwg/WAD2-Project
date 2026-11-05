@@ -52,7 +52,7 @@ test('searches title, description and resolved venue IDs; retains all filters an
   assert.ok(calls.some(c => c[0] === 'contains' && c[1] === 'tags' && c[2][0] === 'sports'))
   assert.ok(calls.some(c => c[0] === 'gte' && c[1] === 'start_time'))
   assert.ok(calls.some(c => c[0] === 'lte' && c[1] === 'start_time'))
-  assert.ok(calls.some(c => c[0] === 'or' && c[1] === 'spots_left.gt.0,capacity.is.null'))
+  assert.ok(calls.some(c => c[0] === 'or' && c[1] === 'spots_left.gt.0,spots_left.is.null'))
   assert.deepEqual(calls.filter(c => c[0] === 'order').map(c => c[1]), ['confirmed_count', 'start_time', 'id'])
   assert.deepEqual(calls.find(c => c[0] === 'range'), ['range', 12, 23])
 })
@@ -158,7 +158,7 @@ test('multiple category badges query any selected category alongside existing fi
   assert.deepEqual(calls.find(c => c[0] === 'overlaps' && c[1] === 'tags'), ['overlaps', 'tags', ['sports', 'hackathon']])
   assert.ok(!calls.some(c => c[0] === 'contains' && c[1] === 'tags'))
   assert.ok(calls.some(c => c[0] === 'or' && c[1].includes('title.ilike.%Meetup%')))
-  assert.ok(calls.some(c => c[0] === 'or' && c[1] === 'spots_left.gt.0,capacity.is.null'))
+  assert.ok(calls.some(c => c[0] === 'or' && c[1] === 'spots_left.gt.0,spots_left.is.null'))
   assert.ok(calls.some(c => c[0] === 'order' && c[1] === 'confirmed_count'))
 })
 

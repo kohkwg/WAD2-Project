@@ -42,7 +42,8 @@ export function matchesDiscoveryFilters(event, filters = {}) {
     && (!filters.tag || tags.includes(filters.tag))
     && (!filters.dateFrom || new Date(event.start_time) >= new Date(`${filters.dateFrom}T00:00:00+08:00`))
     && (!filters.dateTo || new Date(event.start_time) <= new Date(`${filters.dateTo}T23:59:59.999+08:00`))
-    && (!filters.availableOnly || event.capacity == null || event.spots_left > 0)
+    // Unknown spots (no limit, or a hidden capacity that isn't full) count as available
+    && (!filters.availableOnly || event.spots_left == null || event.spots_left > 0)
     && (!filters.savedOnly || event.saved === true)
 }
 
@@ -52,6 +53,8 @@ export function demoDiscoveryEvents(events, filters = {}, now = new Date()) {
     category: event.tags?.[0], confirmed_count: event.confirmedCount,
     spots_left: event.spotsLeft, venue_name: event.venue?.name,
     venue_address: event.venue?.address, attendees: [],
+    // The same columns as events_with_counts
+    is_online: Boolean(event.isOnline), hide_capacity: Boolean(event.hideCapacity),
   })).filter(event => new Date(event.start_time) > now)
     // Discover lists official events only; Go together groups live in Community
     .filter(isOfficialEvent)

@@ -49,6 +49,9 @@ export const createEvent = (eventData) => backend.createEvent(eventData)
 export const updateEvent = (eventId, changes) => backend.updateEvent(eventId, changes) // organiser edits a published event
 export const setEventPublished = (eventId, published) => backend.setEventPublished(eventId, published) // organiser: hide (draft) or show (published)
 export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
+// Online events: { hasLink, revealAt, url } (url only for the organiser, or confirmed attendees
+// once revealAt has passed); null for physical events. The link is saved with createEvent/updateEvent.
+export const getEventOnlineAccess = (eventId) => backend.getEventOnlineAccess(eventId)
 
 // ---------- Go together groups (Community) ----------
 // Live mode uses migrations 20261104142732 and 20261104142907 (see decisions.md); a database

@@ -90,7 +90,7 @@ async function load() {
   finally { if (ticket === epoch) loading.value = false }
 }
 watch(() => route.params.id, load, { immediate: true })
-watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => { if (tab === 'weather' && eventId && isOwner.value) refreshWeather() })
+watch(() => [activeTab.value, workspace.value?.event.id], ([tab, eventId]) => { if (tab === 'weather' && eventId && isOwner.value && !workspace.value.event.isOnline) refreshWeather() })
 onBeforeUnmount(() => { epoch++; weatherRequest++ })
 
 async function refreshEditedEvent() {
@@ -195,7 +195,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
       <div class="workspace-overview">
         <div class="overview-item"><span class="overview-label">Event time</span><strong>{{ formatEventTime(workspace.event) }}</strong></div>
         <div class="overview-item"><span class="overview-label">Active venue</span><strong>{{ workspace.event.venue?.name || 'Venue not set' }}</strong><span v-if="workspace.event.usingBackup" class="workspace-mode workspace-mode--success">Backup active</span></div>
-        <details class="workspace-address"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
+        <details v-if="!workspace.event.isOnline" class="workspace-address"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
       </div>
       <div class="workspace-link-groups">
         <div class="workspace-primary-links"><RouterLink class="btn event-cta" :to="'/organiser/events/' + workspace.event.id + '/rsvps'">Manage RSVPs</RouterLink><RouterLink class="btn btn-primary" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink><span class="workspace-publish"><span v-if="publishState === 'draft'" class="workspace-mode">Unpublished</span><span v-else-if="publishState !== 'published'" class="workspace-mode">{{ publishState[0].toUpperCase() + publishState.slice(1) }}</span><button v-if="canTogglePublish" type="button" class="btn" :class="publishState === 'published' ? 'btn-outline-secondary' : 'btn-primary'" :disabled="publishing" @click="togglePublish">{{ publishing ? 'Saving…' : publishState === 'published' ? 'Unpublish' : 'Publish' }}</button></span><span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>

@@ -8,7 +8,8 @@ import VenueMap from '../components/VenueMap.vue'
 import EventSummary from '../components/rsvp/EventSummary.vue'
 import AnnounceChangesDialog from '../components/rsvp/AnnounceChangesDialog.vue'
 import { uploadCover } from '../lib/uploadCover.js'
-import { createEvent, getEvent, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
+import { createEvent, getEvent, getEventOnlineAccess, getRsvpsForEvent, updateEvent, createAnnouncement, USING_SUPABASE } from '../utils/api.js'
+import { defaultRevealTime } from '../utils/onlineEvents.js'
 import { TAG_OPTIONS, suggestTags, toDateTimeInputValue } from '../utils/helpers.js'
 import { PLANNER_AVAILABLE, searchEventTitles, fetchPlanSuggestion, addPlanToEvent } from '../utils/planSuggestions.js'
 import { normalizeTitle } from '../utils/planSuggestModel.js'
@@ -88,6 +89,18 @@ watch(() => [form.value, form.value.startTime], ([currentForm, start], [previous
   if (!Number.isFinite(s)) return
   const length = Number.isFinite(p) && Number.isFinite(e) && e > p ? e - p : 2 * 60 * 60000
   if (!Number.isFinite(e) || e <= s || Number.isFinite(p)) form.value.endTime = toDateTimeInputValue(new Date(s + length))
+  // The online link keeps appearing the same time before the start
+  const reveal = Date.parse(form.value.onlineLink.revealAt)
+  if (Number.isFinite(p) && Number.isFinite(reveal)) form.value.onlineLink.revealAt = toDateTimeInputValue(new Date(reveal + s - p))
+})
+// Choosing Online suggests a time for the link to appear (15 minutes before the start)
+watch(() => form.value.isOnline, (isOnline) => {
+  if (isOnline && !form.value.onlineLink.revealAt) form.value.onlineLink.revealAt = defaultRevealTime(form.value.startTime)
+})
+// The Capacity switch reads "show", while the form stores whether it's hidden
+const showCapacity = computed({
+  get: () => !form.value.hideCapacity,
+  set: (value) => { form.value.hideCapacity = !value },
 })
 const endBeforeStart = computed(() => {
   const s = Date.parse(form.value.startTime), e = Date.parse(form.value.endTime)
@@ -106,7 +119,9 @@ const hasRsvps = ref(false) // once anyone has RSVP'd, existing questions can't 
 const venueLocked = ref(false) // the rain switch already moved the event to its backup venue
 
 const venueCopy = (venue) => (venue ? { name: venue.name, address: venue.address || '', postal: venue.postal || '', lat: venue.lat ?? null, lng: venue.lng ?? null } : null)
-function formFromEvent(event) {
+// access = getEventOnlineAccess(id) for an online event (the organiser always gets the link)
+function formFromEvent(event, access = null) {
+  const reveal = Date.parse(access?.revealAt)
   return {
     title: event.title || '',
     coverImageUrl: event.coverImageUrl || '',
@@ -115,7 +130,11 @@ function formFromEvent(event) {
     startTime: Number.isFinite(Date.parse(event.startTime)) ? toDateTimeInputValue(new Date(event.startTime)) : '',
     endTime: Number.isFinite(Date.parse(event.endTime)) ? toDateTimeInputValue(new Date(event.endTime)) : '',
     capacity: event.capacity ?? '', // '' = no capacity limit (older events only)
-    venue: venueCopy(event.venue),
+    hideCapacity: Boolean(event.hideCapacity),
+    isOnline: Boolean(event.isOnline),
+    onlineLink: { url: access?.url || '', revealAt: Number.isFinite(reveal) ? toDateTimeInputValue(new Date(reveal)) : '' },
+    // An online event's "Online" label isn't a venue to edit
+    venue: event.isOnline ? null : venueCopy(event.venue),
     isOutdoor: Boolean(event.isOutdoor),
     backupVenue: venueCopy(event.backupVenue),
     requiresApproval: Boolean(event.requiresApproval),
@@ -144,10 +163,10 @@ watch(editId, async (id) => {
     else if (event.status !== 'draft' && new Date(event.startTime).getTime() <= Date.now()) editBlocked.value = 'This event has already started, so it can no longer be edited.'
     else if (!isOfficialEvent(event)) editBlocked.value = 'Groups are managed from their page in Community.'
     else {
-      const rsvps = await getRsvpsForEvent(id)
+      const [rsvps, access] = await Promise.all([getRsvpsForEvent(id), event.isOnline ? getEventOnlineAccess(id) : null])
       if (request !== editRequest) return
-      form.value = formFromEvent(event)
-      original.value = formFromEvent(event)
+      form.value = formFromEvent(event, access)
+      original.value = formFromEvent(event, access)
       minCapacity.value = Math.max(1, (event.confirmedCount || 0) + (event.offeredCount || 0))
       hasRsvps.value = rsvps.length > 0
       venueLocked.value = Boolean(event.usingBackup)
@@ -375,6 +394,10 @@ async function focusStep() {
     else if (new Date(f.startTime) < new Date()) targetId = 'start'
     else if (!Number.isInteger(f.capacity) || f.capacity < 1) targetId = 'capacity'
     else if (f.tags.length === 0) targetId = 'tag-music'
+  } else if (step.value === 2 && form.value.isOnline) {
+    const link = form.value.onlineLink
+    if (link.url.trim() && stepErrors.value.some((error) => error.includes('https://'))) targetId = 'online-link'
+    else if (link.url.trim() && stepErrors.value.length) targetId = 'online-reveal'
   } else if (step.value === 2) {
     targetId = form.value.venue ? 'step-content-heading' : 'venue-search'
     if (form.value.isOutdoor && !form.value.backupVenue) targetId = 'backup-search'
@@ -481,10 +504,23 @@ function eventDataFromForm() {
     startTime: new Date(f.startTime).toISOString(), // store one standard date format
     endTime: new Date(f.endTime).toISOString(),
     capacity: f.capacity === '' ? null : f.capacity,
-    backupVenue: f.isOutdoor ? f.backupVenue : null,
+    hideCapacity: Boolean(f.hideCapacity),
+    isOnline: Boolean(f.isOnline),
+    // Online events keep no venue or rain plan; a typed venue stays in the form in case they switch back
+    isOutdoor: f.isOnline ? false : f.isOutdoor,
+    venue: f.isOnline ? null : f.venue,
+    backupVenue: !f.isOnline && f.isOutdoor ? f.backupVenue : null,
+    onlineLink: f.isOnline && f.onlineLink.url.trim()
+      ? { url: f.onlineLink.url.trim(), revealAt: new Date(f.onlineLink.revealAt).toISOString() }
+      : null,
     questions: f.questions.map((question) => ({ ...question, text: question.text.trim() })),
   }
 }
+
+const revealLabel = computed(() => {
+  const reveal = new Date(form.value.onlineLink.revealAt)
+  return Number.isNaN(reveal.getTime()) ? '' : new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'short' }).format(reveal)
+})
 
 const pendingChanges = ref([]) // what changed, shown in the pop-up and used for the announcement
 const showAnnounceDialog = ref(false)
@@ -739,6 +775,14 @@ async function publish() {
             </div>
           </div>
 
+          <div class="form-check form-switch mb-3">
+            <input id="show-capacity" v-model="showCapacity" class="form-check-input" type="checkbox" role="switch" aria-describedby="show-capacity-help" />
+            <label class="form-check-label" for="show-capacity">Show the capacity to participants</label>
+            <div id="show-capacity-help" class="form-text">
+              Off: participants still see when the event is full, but not how many spots there are or how many are left. You always see the numbers.
+            </div>
+          </div>
+
           <div class="mb-2">
             <label class="form-label d-block">Tags</label>
             <!-- Bootstrap "btn-check": a checkbox that looks like a toggle button -->
@@ -776,6 +820,60 @@ async function publish() {
           <p v-dismissible v-if="venueLocked" class="alert alert-info small">
             This event has already switched to its rain backup venue, so its venues can't be changed here.
           </p>
+          <fieldset class="event-mode mb-4" :disabled="venueLocked">
+            <legend class="h5 step-subheading">Where does it happen?</legend>
+            <div class="event-mode-options">
+              <input id="mode-physical" v-model="form.isOnline" class="btn-check" type="radio" name="event-mode" :value="false" />
+              <label class="event-mode-option" for="mode-physical">
+                <span class="event-mode-title">Physical</span>
+                <span class="event-mode-hint">At a venue, with a map</span>
+              </label>
+              <input id="mode-online" v-model="form.isOnline" class="btn-check" type="radio" name="event-mode" :value="true" />
+              <label class="event-mode-option" for="mode-online">
+                <span class="event-mode-title">Online</span>
+                <span class="event-mode-hint">A video call or stream link</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <template v-if="form.isOnline">
+            <h3 class="h5 step-subheading">Online link</h3>
+            <div class="mb-3">
+              <label for="online-link" class="form-label">Meeting or stream link (optional for now)</label>
+              <input
+                id="online-link"
+                v-model="form.onlineLink.url"
+                type="url"
+                inputmode="url"
+                class="form-control"
+                placeholder="https://zoom.us/j/123456"
+                autocomplete="off"
+                :maxlength="2048"
+                aria-describedby="online-link-help"
+                :aria-invalid="showErrors && stepErrors.some((error) => error.includes('https://')) || undefined"
+              />
+              <div id="online-link-help" class="form-text">
+                Only you and confirmed attendees can open it. You can add or change it later in Manage event → Edit event.
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="online-reveal" class="form-label">Show the link from</label>
+              <input
+                id="online-reveal"
+                v-model="form.onlineLink.revealAt"
+                type="datetime-local"
+                class="form-control online-reveal"
+                :max="form.endTime || undefined"
+                aria-describedby="online-reveal-help"
+                :aria-invalid="showErrors && stepErrors.some((error) => error.includes('appear')) || undefined"
+              />
+              <div id="online-reveal-help" class="form-text">
+                Confirmed attendees see the link on the event page from this date and time. Before then they see when it will appear.
+              </div>
+            </div>
+          </template>
+
+          <template v-else>
           <h3 class="h5 step-subheading">Main venue</h3>
           <!-- Theme-aware chosen-venue card; it receives focus after a search result is picked -->
           <div v-if="form.venue" class="venue-choice">
@@ -834,6 +932,7 @@ async function publish() {
               input-id="backup-search"
               @select="setBackupVenue"
             />
+          </template>
           </template>
         </div>
 
@@ -946,6 +1045,13 @@ async function publish() {
           <p v-dismissible v-if="questionNotice" class="question-notice" role="status">{{ questionNotice }}</p>
           <EventSummary :event="form">
             <hr />
+            <p v-if="form.isOnline" class="mb-1">
+              <strong>Online link:</strong>
+              {{ form.onlineLink.url.trim() ? `confirmed attendees can open it from ${revealLabel}` : 'not added yet. Add it later in Manage event → Edit event.' }}
+            </p>
+            <p v-if="form.hideCapacity" class="mb-1">
+              <strong>Capacity:</strong> hidden from participants (they only see when it's full)
+            </p>
             <p class="mb-1">
               <strong>RSVPs:</strong>
               {{
@@ -1084,8 +1190,8 @@ async function publish() {
           <p class="preview-date">{{ previewDate }}</p>
           <h2>{{ form.title.trim() || 'Your event title' }}</h2>
           <p class="preview-description">{{ form.description.trim() || 'Your description will appear here as you write it.' }}</p>
-          <div class="preview-meta"><span aria-hidden="true">⌖</span><span>{{ form.venue?.name || 'Venue to be chosen' }}</span></div>
-          <div class="preview-meta"><span aria-hidden="true">◎</span><span>{{ Number.isInteger(form.capacity) && form.capacity > 0 ? `${form.capacity} spots` : 'Capacity to be set' }}</span></div>
+          <div class="preview-meta"><span aria-hidden="true">⌖</span><span>{{ form.isOnline ? 'Online' : form.venue?.name || 'Venue to be chosen' }}</span></div>
+          <div class="preview-meta"><span aria-hidden="true">◎</span><span>{{ form.hideCapacity ? 'Capacity hidden from participants' : Number.isInteger(form.capacity) && form.capacity > 0 ? `${form.capacity} spots` : 'Capacity to be set' }}</span></div>
         </div>
       </article>
       <p class="preview-note">This is a guide to how your event details come together.</p>
@@ -1191,4 +1297,18 @@ async function publish() {
 .tag-chip:hover { border-color: var(--bookedz-control-border); }
 .btn-check:checked + .tag-chip { background: var(--bookedz-ink); color: var(--bookedz-surface); }
 .btn-check:focus-visible + .tag-chip { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
+/* Physical / Online: two large radio cards that reflow to one column on narrow phones */
+.event-mode { min-width: 0; margin: 0; padding: 0; border: 0; }
+.event-mode legend { float: none; width: auto; padding: 0; }
+.event-mode-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.event-mode-option { display: grid; gap: .15rem; min-height: 44px; padding: .8rem 1rem; border: 1px solid var(--bookedz-border); border-radius: 14px; background: var(--bookedz-surface); color: var(--bookedz-ink); cursor: pointer; transition: border-color var(--bookedz-motion-fast) var(--bookedz-ease), background-color var(--bookedz-motion-fast) var(--bookedz-ease); }
+.event-mode-option:hover { border-color: var(--bookedz-control-border); }
+.event-mode-title { font-weight: 700; }
+.event-mode-hint { color: var(--bookedz-muted); font-size: .82rem; }
+.btn-check:checked + .event-mode-option { border-color: var(--bookedz-primary-dark); background: color-mix(in srgb, var(--bookedz-mint) 22%, var(--bookedz-surface)); box-shadow: inset 0 0 0 1px var(--bookedz-primary-dark); }
+.btn-check:focus-visible + .event-mode-option { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
+.btn-check:disabled + .event-mode-option { cursor: not-allowed; opacity: .7; }
+.online-reveal { max-width: 20rem; }
+@media (max-width: 399.98px) { .event-mode-options { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .event-mode-option { transition: none; } }
 </style>

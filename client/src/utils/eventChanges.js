@@ -10,6 +10,8 @@ const venueKey = (venue) => (venue ? [venue.name, venue.address || '', venue.lat
 const venueName = (venue) => venue?.name || 'no venue'
 const capacityText = (capacity) => (capacity === '' || capacity == null ? 'no limit' : `${capacity} spots`)
 const tagList = (tags) => [...(tags || [])].sort().join(', ') || 'none'
+const sameRevealTime = (a, b) => (a || '') === (b || '') || (Boolean(a) && Boolean(b) && sameTime(a, b))
+const formatRevealTime = (value) => new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 
 // Returns [{ field, text }] in the order attendees care about most (time and place first)
 export function describeEventChanges(before, after) {
@@ -19,21 +21,40 @@ export function describeEventChanges(before, after) {
   if (!sameTime(before.startTime, after.startTime) || !sameTime(before.endTime, after.endTime)) {
     add('time', `Time: ${formatEventTime(before)} → ${formatEventTime(after)}`)
   }
-  if (venueKey(before.venue) !== venueKey(after.venue)) {
+  // Announcements are public, so they never include the online link itself, and they leave
+  // out capacity numbers once the organiser hides them.
+  if (Boolean(before.isOnline) !== Boolean(after.isOnline)) {
+    add('venue', after.isOnline ? 'Now an online event' : `Now in person at ${venueName(after.venue)}`)
+  } else if (after.isOnline) {
+    const link = (form) => [(form.onlineLink?.url || '').trim(), (form.onlineLink?.url || '').trim() ? form.onlineLink.revealAt || '' : '']
+    const [beforeUrl, beforeReveal] = link(before)
+    const [afterUrl, afterReveal] = link(after)
+    if (beforeUrl !== afterUrl || !sameRevealTime(beforeReveal, afterReveal)) {
+      add('link', afterUrl
+        ? `Online link updated: confirmed attendees can open it from ${formatRevealTime(afterReveal)}`
+        : 'Online link removed for now')
+    }
+  } else if (venueKey(before.venue) !== venueKey(after.venue)) {
     const samePlace = before.venue?.name === after.venue?.name && (before.venue?.address || '') === (after.venue?.address || '')
     add('venue', samePlace
       ? `Venue location adjusted on the map (${venueName(after.venue)})`
       : `Venue: ${venueName(before.venue)} → ${venueName(after.venue)}`)
   }
-  if (Boolean(before.isOutdoor) !== Boolean(after.isOutdoor)
-    || (after.isOutdoor && venueKey(before.backupVenue) !== venueKey(after.backupVenue))) {
+  if (!after.isOnline && (Boolean(before.isOutdoor) !== Boolean(after.isOutdoor)
+    || (after.isOutdoor && venueKey(before.backupVenue) !== venueKey(after.backupVenue)))) {
     add('backup', after.isOutdoor
       ? `Outdoor event; if it rains it moves to ${venueName(after.backupVenue)}`
       : 'No longer an outdoor event (no rain backup venue)')
   }
   if (!sameText(before.title, after.title)) add('title', `New name: “${after.title.trim()}”`)
   if (String(before.capacity ?? '') !== String(after.capacity ?? '')) {
-    add('capacity', `Capacity: ${capacityText(before.capacity)} → ${capacityText(after.capacity)}`)
+    const raised = before.capacity !== '' && (after.capacity === '' || Number(after.capacity) > Number(before.capacity))
+    add('capacity', after.hideCapacity
+      ? (raised ? 'More spots are now available' : 'Fewer spots are now available')
+      : `Capacity: ${capacityText(before.capacity)} → ${capacityText(after.capacity)}`)
+  }
+  if (Boolean(before.hideCapacity) !== Boolean(after.hideCapacity)) {
+    add('capacity', after.hideCapacity ? 'The number of spots is no longer shown' : `Capacity is now shown: ${capacityText(after.capacity)}`)
   }
   if (Boolean(before.requiresApproval) !== Boolean(after.requiresApproval)) {
     add('approval', after.requiresApproval
@@ -62,7 +83,7 @@ export function describeEventChanges(before, after) {
 }
 
 const FIELD_WORDS = {
-  time: 'time', venue: 'venue', backup: 'rain plan', title: 'name', capacity: 'capacity',
+  time: 'time', venue: 'venue', link: 'online link', backup: 'rain plan', title: 'name', capacity: 'capacity',
   approval: 'RSVP rules', questions: 'RSVP questions', description: 'details', tags: 'tags', cover: 'cover image',
 }
 

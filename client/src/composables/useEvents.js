@@ -4,6 +4,9 @@ import { api } from '@/lib/api'
 import { USING_SUPABASE, getEvents } from '@/utils/api'
 import { demoDiscoveryEvents } from '@/lib/discoveryState'
 
+// Same label as ONLINE_VENUE_NAME in utils/onlineEvents.js (kept inline: tests load this file's source)
+const ONLINE_VENUE_NAME = 'Online'
+
 const PAGE_SIZE = 12
 
 async function confirmedAttendees(eventIds) {
@@ -56,7 +59,7 @@ async function withEventDetails(rows, includeAttendees = true) {
   const venueDetails = new Map((venues.data || []).map(v => [v.id, v]))
   const statuses = new Map((registrations.data || []).map(r => [r.event_id, r.status]))
   return rows.map(e => ({
-    ...e, saved: savedIds.has(e.id), venue_name: venueDetails.get(activeVenueId(e))?.name || e.venue_name || '',
+    ...e, saved: savedIds.has(e.id), venue_name: venueDetails.get(activeVenueId(e))?.name || e.venue_name || (e.is_online ? ONLINE_VENUE_NAME : ''),
     venue_address: venueDetails.get(activeVenueId(e))?.address || e.venue_address || '',
     lat: venueDetails.get(activeVenueId(e))?.latitude ?? (e.using_backup ? null : e.lat),
     lng: venueDetails.get(activeVenueId(e))?.longitude ?? (e.using_backup ? null : e.lng),
@@ -139,7 +142,8 @@ export function useEvents() {
         const end = new Date(`${filters.dateTo}T23:59:59.999+08:00`)
         q = q.lte('start_time', end.toISOString())
       }
-      if (filters.availableOnly) q = q.or('spots_left.gt.0,capacity.is.null')
+      // spots_left is null when there is no limit, or when a hidden capacity isn't full yet
+      if (filters.availableOnly) q = q.or('spots_left.gt.0,spots_left.is.null')
       if (savedIds) q = q.in('id', savedIds)
       // Count official events only, so "Show N more" matches the rows the list can actually show
       q = q.or('kind.is.null,kind.eq.official')

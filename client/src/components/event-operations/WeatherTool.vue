@@ -35,7 +35,14 @@ function cancelSwitch() { confirming.value = false; emit('cancel-action') }
 </script>
 
 <template>
-  <section aria-labelledby="weather-heading">
+  <!-- Online events have no venue, so there is no forecast or rain plan to check -->
+  <section v-if="event.isOnline" aria-labelledby="weather-heading">
+    <div class="tool-heading">
+      <div><h2 id="weather-heading" tabindex="-1">Weather</h2><p class="tool-description">Weather checks are for events at a venue.</p></div>
+    </div>
+    <p class="workspace-panel text-secondary mb-0">This is an online event, so there is no forecast or backup venue to check. If it moves to a venue, choose Physical in Edit event.</p>
+  </section>
+  <section v-else aria-labelledby="weather-heading">
     <div class="tool-heading">
       <div><h2 id="weather-heading" tabindex="-1">Weather</h2><p class="tool-description">Check conditions and the backup plan before moving your event.</p></div>
       <button type="button" class="btn btn-outline-primary" :disabled="loading || pending" @click="emit('refresh')">{{ loading ? 'Refreshing weather…' : 'Refresh weather' }}</button>

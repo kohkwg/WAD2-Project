@@ -11,6 +11,7 @@ import { OFFER_HOURS, ACTIVE_STATUSES } from './helpers.js'
 import { isGroup, isOfficialEvent, joinOutcome, groupErrors, groupEventData, emptyPlan, fitSlots, mealLabel, SLOTS, suggestionFrom, suggestionErrors, availabilityError } from './groups.js'
 import { TASK_STATUSES, FALLBACK_BUDGET_CATEGORY, budgetCategoryOptions, validateCategoryName, validateCents, validateExpenseAmounts, summariseBudget } from './feature4.js'
 import { fetchForecastData, forecastAreas, eventForecast } from './feature4Weather.js'
+import { applyEventDefaults, onlineVenue, onlineAccess, onlineLinkErrors, hideCapacityNumbers, ONLINE_GROUP_ERROR } from './onlineEvents.js'
 
 // Who is "logged in" for the demo. In Supabase mode this comes from the login session instead.
 // Alex (u1) is the participant and the Demo Club (org1) is the organiser, so one person can
@@ -38,13 +39,32 @@ function loadDb() {
     }
     // Demo data saved before Go together groups existed is brought up to date once
     if (db.groupSeedVersion !== GROUP_SEED_VERSION) { addSampleGroups(db); saveDb(db) }
+    if (withEventOptions(db)) saveDb(db)
     return db
   }
 
   const fresh = createSeedData()
   fresh.feature4 = emptyOperations()
+  withEventOptions(fresh)
   saveDb(fresh)
   return fresh
+}
+
+// Every event records whether it is online and whether its capacity is hidden, like the
+// database columns; older demo data is physical with capacity shown. Online links are kept
+// apart from the events (like public.event_online_links), so reading an event never shows one.
+// Returns true when anything had to be added.
+function withEventOptions(db) {
+  let changed = !Array.isArray(db.onlineLinks)
+  if (changed) db.onlineLinks = []
+  for (const event of db.events) {
+    if (typeof event.isOnline !== 'boolean' || typeof event.hideCapacity !== 'boolean' || 'onlineLink' in event) {
+      delete event.onlineLink
+      applyEventDefaults(event)
+      changed = true
+    }
+  }
+  return changed
 }
 
 function saveDb(db) {
@@ -96,11 +116,13 @@ function spotsTaken(db, eventId) {
 }
 
 // Adds live numbers to an event: how many confirmed, waiting, spots left, etc.
+// Online events show "Online" as their venue; hidden capacity stays visible to the event's team only.
 function withCounts(db, event) {
   const rsvps = db.rsvps.filter((r) => r.eventId === event.id)
   const count = (status) => rsvps.filter((r) => r.status === status).length
-  return {
+  const result = {
     ...event,
+    venue: event.isOnline ? onlineVenue() : event.venue,
     isOnTeam: event.organiserId === CURRENT_USER_ID || (db.eventMembers || []).some(member => member.eventId === event.id && member.userId === CURRENT_USER_ID),
     isMine: event.organiserId === CURRENT_ORGANISER_ID, // can the logged-in person manage it?
     confirmedCount: count('confirmed'),
@@ -109,6 +131,51 @@ function withCounts(db, event) {
     waitlistCount: count('waitlisted'),
     spotsLeft: Math.max(0, event.capacity - spotsTaken(db, event.id)),
   }
+  return result.isMine || result.isOnTeam ? result : hideCapacityNumbers(result)
+}
+
+// Saves (or clears) an online event's link, kept apart from the event like the live table
+function saveOnlineLink(db, eventId, link) {
+  db.onlineLinks = db.onlineLinks.filter((saved) => saved.eventId !== eventId)
+  if (link) db.onlineLinks.push({ eventId, url: link.url, revealAt: link.revealAt, updatedAt: new Date().toISOString() })
+}
+
+// Event fields both create and update accept; online events never keep a venue or rain plan
+function eventFields(eventData) {
+  const isOnline = Boolean(eventData.isOnline)
+  return {
+    isOnline,
+    hideCapacity: Boolean(eventData.hideCapacity),
+    isOutdoor: isOnline ? false : Boolean(eventData.isOutdoor),
+    venue: isOnline ? null : eventData.venue,
+    backupVenue: !isOnline && eventData.isOutdoor ? eventData.backupVenue : null,
+  }
+}
+
+function checkedOnlineLink(eventData) {
+  const link = eventData.onlineLink || null
+  if (!eventData.isOnline) {
+    if (link) throw new Error('Only online events can have an online link.')
+    return null
+  }
+  if (!link) return null
+  const errors = onlineLinkErrors(link, eventData.endTime)
+  if (errors.length) throw new Error(errors[0])
+  return { url: link.url.trim(), revealAt: new Date(link.revealAt).toISOString() }
+}
+
+// Same rule as public.event_online_access: the organiser always sees the link; confirmed
+// attendees see it once its time has come; everyone else only learns when it appears.
+export async function getEventOnlineAccess(eventId) {
+  await fakeDelay()
+  const db = loadFreshDb()
+  const event = findEvent(db, eventId)
+  const isOrganiser = event.organiserId === CURRENT_ORGANISER_ID
+  const visible = isOrganiser || !event.status || event.status === 'published'
+  if (!visible) throw new Error('Event not found')
+  const rsvp = db.rsvps.find((r) => r.eventId === eventId && r.userId === CURRENT_USER_ID && ACTIVE_STATUSES.includes(r.status))
+  const link = db.onlineLinks.find((saved) => saved.eventId === eventId) || null
+  return onlineAccess({ event, link, isOrganiser, rsvpStatus: rsvp?.status || null })
 }
 
 function isMember(db, organiserId, userId) {
@@ -253,6 +320,7 @@ export async function deleteEvent(eventId) {
   if (event.organiserId !== CURRENT_ORGANISER_ID) throw new Error('You can only delete events you organise.')
   db.events = db.events.filter((e) => e.id !== eventId)
   db.rsvps = db.rsvps.filter((r) => r.eventId !== eventId) // its RSVPs go too
+  db.onlineLinks = db.onlineLinks.filter((link) => link.eventId !== eventId)
   db.feature4.tasks = db.feature4.tasks.filter((task) => task.eventId !== eventId)
   db.feature4.announcements = db.feature4.announcements.filter((post) => post.eventId !== eventId)
   delete db.feature4.budgets[eventId]
@@ -381,6 +449,7 @@ export async function createGroup({ eventId, note = '', capacity = 4, joinMode =
   const errors = groupErrors({ eventId, note, capacity, visibility }, official)
   if (errors.length) throw new Error(errors[0].message)
   const target = official.find((e) => e.id === eventId)
+  if (target.isOnline) throw new Error(ONLINE_GROUP_ERROR)
   const group = { ...groupEventData(target, { note, capacity, joinMode, visibility }), id: newId('g'), organiserId: CURRENT_ORGANISER_ID, status: 'published', createdAt: new Date().toISOString() }
   db.events.push(group)
   saveDb(db)
@@ -509,16 +578,23 @@ export async function getOrganiserEvents() {
 export async function createEvent(eventData) {
   await fakeDelay()
   const db = loadFreshDb()
+  const link = checkedOnlineLink(eventData)
+  // The link is stored apart from the event, and the live retry id isn't stored at all
+  const details = { ...eventData }
+  delete details.onlineLink
+  delete details.requestId
   const event = {
-    ...eventData,
+    ...details,
+    ...eventFields(eventData),
     id: newId('e'),
     organiserId: CURRENT_ORGANISER_ID,
     status: 'published',
     createdAt: new Date().toISOString(),
   }
   db.events.push(event)
+  saveOnlineLink(db, event.id, link)
   saveDb(db)
-  return event
+  return { ...event }
 }
 
 // The organiser edits a published event (Create Event in edit mode).
@@ -538,10 +614,13 @@ export async function updateEvent(eventId, changes) {
   if (changes.capacity != null && changes.capacity < taken) {
     throw new Error(`Capacity can't be lower than ${taken}: that many people are already confirmed or offered a place.`)
   }
+  const fields = eventFields(changes)
+  const link = checkedOnlineLink(changes)
   const venueKey = (venue) => JSON.stringify(venue ? [venue.name, venue.address || '', venue.lat ?? null, venue.lng ?? null] : null)
-  const venuesChanged = venueKey(event.venue) !== venueKey(changes.venue)
-    || Boolean(event.isOutdoor) !== Boolean(changes.isOutdoor)
-    || venueKey(event.backupVenue) !== venueKey(changes.backupVenue)
+  const venuesChanged = venueKey(event.venue) !== venueKey(fields.venue)
+    || event.isOnline !== fields.isOnline
+    || Boolean(event.isOutdoor) !== fields.isOutdoor
+    || venueKey(event.backupVenue) !== venueKey(fields.backupVenue)
   if (event.usingBackup && venuesChanged) {
     throw new Error('This event has switched to its backup venue, so its venues can no longer be changed.')
   }
@@ -564,12 +643,11 @@ export async function updateEvent(eventId, changes) {
     endTime: changes.endTime,
     capacity: changes.capacity,
     requiresApproval: changes.requiresApproval,
-    isOutdoor: changes.isOutdoor,
-    venue: changes.venue,
-    backupVenue: changes.isOutdoor ? changes.backupVenue : null,
+    ...fields,
     questions: changes.questions.map(({ id, text, type, required }) => ({ id, text, type, required })),
     updatedAt: new Date().toISOString(),
   })
+  saveOnlineLink(db, eventId, link) // a physical event (or a cleared link) keeps no link
   if (raisedCapacity) fillFreeSpots(db, eventId) // new places go to the waitlist first, like the database trigger
   saveDb(db)
   return withCounts(db, event)

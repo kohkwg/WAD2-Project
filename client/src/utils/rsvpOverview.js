@@ -59,7 +59,7 @@ export function sortSavedEvents(events, now = Date.now()) {
 
 export function directionsUrl(event) {
   const venue = event.venue
-  if (!venue) return ''
+  if (!venue || event.isOnline) return '' // online events have no place to go to
   const query = Number.isFinite(venue.lat) && Number.isFinite(venue.lng)
     ? `${venue.lat},${venue.lng}` : venue.address
   return query ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}` : ''

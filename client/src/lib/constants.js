@@ -4,7 +4,7 @@
 // Lowercase because the recommendation engine matches on exact strings.
 export const INTEREST_OPTIONS = [
   'tech', 'music', 'sports', 'arts', 'food',
-  'volunteering', 'career', 'outdoors', 'gaming', 'wellness',
+  'volunteering', 'career', 'outdoors', 'gaming', 'wellness', 'others',
 ]
 
 export const CATEGORIES = INTEREST_OPTIONS

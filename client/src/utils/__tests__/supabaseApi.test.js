@@ -59,14 +59,34 @@ test('live event creation sends the full normalized event to one idempotent RPC'
       p_event: {
         title: 'Acoustic Night', description: 'Live music',
         startTime: '2026-12-01T10:00:00.000Z', endTime: '2026-12-01T12:00:00.000Z',
-        capacity: 30, requiresApproval: true, isOutdoor: true,
+        capacity: 30, hideCapacity: false, requiresApproval: true, isOnline: false, isOutdoor: true,
         venue: { name: 'Campus Green', address: '1 College Road', postal: '123456', lat: 1.3, lng: 103.8 },
         backupVenue: { name: 'Hall', address: '2 College Road', postal: '123457', lat: 1.31, lng: 103.81 },
+        onlineLink: null,
         tags: ['music', 'arts'],
         questions: [{ text: 'Dietary needs?', type: 'text', required: true }],
       },
     },
   }])
+})
+
+test('an online event is created without venues, with its link and hidden capacity in the same RPC', async () => {
+  let payload
+  const client = { rpc: async (_name, args) => { payload = args.p_event; return { data: 'event-online', error: null } } }
+  await createEventWith(client, {
+    requestId: 'd3edb13b-9022-4c2d-95fb-34774f34339e',
+    title: 'Online talk', description: '', startTime: '2026-12-01T10:00:00.000Z', endTime: '2026-12-01T12:00:00.000Z',
+    capacity: 50, hideCapacity: true, requiresApproval: false, isOnline: true, isOutdoor: true,
+    venue: { name: 'Left over from a draft', address: 'x', postal: '', lat: 1, lng: 103 }, backupVenue: null,
+    onlineLink: { url: 'https://zoom.us/j/1', revealAt: '2026-12-01T09:45:00.000Z' },
+    tags: ['others'], questions: [],
+  })
+  assert.equal(payload.isOnline, true)
+  assert.equal(payload.hideCapacity, true)
+  assert.equal(payload.isOutdoor, false)
+  assert.equal(payload.venue, null)
+  assert.equal(payload.backupVenue, null)
+  assert.deepEqual(payload.onlineLink, { url: 'https://zoom.us/j/1', revealAt: '2026-12-01T09:45:00.000Z' })
 })
 
 test('live event creation requires a UUID request ID before calling Supabase', async () => {
