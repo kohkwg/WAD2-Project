@@ -621,7 +621,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     class="profile-page"
-    :class="{ 'container py-4 py-md-5': !embedded, 'profile-page--embedded': embedded }"
+    :class="{ 'container': !embedded, 'profile-page--embedded': embedded }"
   >
     <header v-if="!embedded" class="profile-heading">
       <p class="profile-kicker">Your Dino account</p>

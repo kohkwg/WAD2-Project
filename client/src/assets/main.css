@@ -274,7 +274,7 @@ h3, .event-title {
 
 .app-main {
   padding-top: 2.5rem;
-  padding-bottom: 4rem;
+  padding-bottom: 2.5rem;
   min-height: calc(100vh - 230px);
 }
 
@@ -680,10 +680,10 @@ h3, .event-title {
 
 @media(max-width:575.98px) {
   .app-main {
-    padding-top: 1.5rem;
+    padding-block: 1.5rem;
   }
   .app-main--discover {
-    padding-top: 0;
+    padding-block: 0;
   }
   .card-body,.workspace-panel {
     padding: 1.1rem;

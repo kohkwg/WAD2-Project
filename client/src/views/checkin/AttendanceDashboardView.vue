@@ -159,7 +159,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel));
 </script>
 
 <template>
-  <div class="container py-4 attendance-page">
+  <div class="container attendance-page">
     <BackLink
     v-if="!embedded"
     :to="`/organiser/events/${eventId}/manage`"

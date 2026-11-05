@@ -38,7 +38,7 @@ async function leave() {
 </script>
 
 <template>
-  <div class="account-page py-4 py-md-5">
+  <div class="account-page">
     <header class="account-heading">
       <p class="text-body-secondary mb-2">Your Dino account</p>
       <h1>Your profile</h1>

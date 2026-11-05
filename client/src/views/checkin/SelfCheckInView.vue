@@ -113,7 +113,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container py-4 self-checkin-page">
+  <div class="container self-checkin-page">
     <BackLink :to="back" class="small d-block mb-3">&larr; Back</BackLink>
     <header class="checkin-heading">
     <span class="ticket-kicker">At the venue</span>

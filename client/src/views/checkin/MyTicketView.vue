@@ -92,7 +92,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="container py-4 ticket-page text-center">
+  <div class="container ticket-page text-center">
     <BackLink to="/my-rsvps" class="small d-block text-start mb-3">&larr; Back</BackLink>
 
     <div v-if="loading" class="py-5">

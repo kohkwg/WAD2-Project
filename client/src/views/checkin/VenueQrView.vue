@@ -111,7 +111,7 @@ onUnmounted(() => clearInterval(timer));
 </script>
 
 <template>
-  <div class="container py-4 venue-qr-page text-center">
+  <div class="container venue-qr-page text-center">
     <BackLink
     v-if="!embedded"
     :to="`/organiser/events/${eventId}/manage`"

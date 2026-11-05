@@ -106,7 +106,7 @@ onMounted(() => getEvent(eventId).then(e => event.value = e).catch(() => {}));
 </script>
 
 <template>
-  <div class="container py-4 staff-page">
+  <div class="container staff-page">
     <BackLink
     v-if="!embedded"
     :to="`/organiser/events/${eventId}/manage`"
