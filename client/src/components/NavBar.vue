@@ -115,10 +115,9 @@ function resetDemo() {
           <button type="button" class="side-link sidebar-theme-cycle" :data-label="`Theme: ${THEME_CYCLE[themePreference].label}`" :aria-label="themeCycleLabel" @click="cycleTheme">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="THEME_ICONS[themePreference]" /></svg>
           </button>
-          <!-- Expanded: the icon and "Theme" cycle Auto → Light → Dark; the dropdown still picks one directly -->
+          <!-- Expanded: the icon and "Theme" cycle Auto → Light → Dark -->
           <div class="theme-control sidebar-theme">
-            <button type="button" class="sidebar-theme-toggle" :aria-label="themeCycleLabel" @click="cycleTheme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="THEME_ICONS[themePreference]"/></svg><span>Theme</span></button>
-            <label class="sidebar-theme-select"><span class="visually-hidden">Color theme</span><select :value="themePreference" name="color-theme" @change="setTheme($event.target.value)"><option value="system">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+            <button type="button" class="sidebar-theme-toggle" :aria-label="themeCycleLabel" @click="cycleTheme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="THEME_ICONS[themePreference]"/></svg><span>Theme</span><span class="sidebar-theme-state">{{ THEME_CYCLE[themePreference].label }}</span></button>
           </div>
         </li>
       </ul>
@@ -189,8 +188,8 @@ function resetDemo() {
 .sidebar-theme-toggle { display: flex; flex: 1; align-items: center; gap: 12px; min-width: 0; min-height: 48px; padding: 0 8px 0 16px; border: 0; border-radius: 14px; background: transparent; color: inherit; font: inherit; text-align: left; transition: background-color .15s ease, color .15s ease; }
 .sidebar-theme-toggle:hover { background: var(--bookedz-glass-hover); color: var(--bookedz-ink); }
 .sidebar-theme svg { flex: 0 0 22px; width: 22px; height: 22px; }
-.sidebar-theme-select { display: flex; align-items: center; margin: 0; }
-.sidebar-account :focus-visible, .sidebar-theme select:focus-visible, .sidebar-theme-toggle:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
+.sidebar-theme-state { margin-left: auto; color: var(--bookedz-muted); font-size: .8125rem; }
+.sidebar-account :focus-visible, .sidebar-theme-toggle:focus-visible { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 2px; }
 @media(min-width:992px) { .app-topbar--minimal { display: none; } }
 .nav-sign-in, .nav-quiet, .nav-profile { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 9px 15px; border: 0; border-radius: 14px; text-decoration: none; font-size: .875rem; font-weight: 600; white-space: nowrap; }
 .nav-sign-in { background: var(--bookedz-primary); color: var(--bookedz-on-action); }

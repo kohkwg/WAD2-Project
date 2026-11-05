@@ -86,25 +86,31 @@ const pub = await create([official.id, '[TEST] Public meetup', 4, 'open', 'publi
 const priv = await create([official.id, '[TEST] Private meetup', 4, 'approval', 'private']);
 await asUser(null,'anon');
 await test('anonymous visitors browse public previews without private data', async () => {
-  const rows=(await query('select public.public_group_list() as data'))[0].data;
+  const rows=(await query('select public.group_list() as data'))[0].data;
   expect(rows.length===1 && rows[0].id===pub,'Public list wrong');
   expect(!('inviteToken' in rows[0]) && rows[0].myStatus===null,'Private fields exposed');
   expect(rows[0].host.name==='Hana','Public host missing');
   expect(!(JSON.stringify(rows).includes(HOST)),'Account ID exposed');
-  expect((await query('select public.public_group_view($1) as data',[pub]))[0].data.id===pub,'Public detail unavailable');
-  await rejects('select public.public_group_view($1)',[priv],/unavailable/);
+  expect((await query('select public.group_view($1) as data',[pub]))[0].data.id===pub,'Public detail unavailable');
+  await rejects('select public.group_view($1)',[priv],/unavailable/);
 });
-await test('anonymous visitors cannot join, create, read private chats or use the original group view', async () => {
+await test('anonymous visitors cannot join, create, read private chats', async () => {
   await rejects('select public.join_group($1)',[pub],/permission denied/);
   await rejects("select public.create_group($1::uuid,''::text,4,'open'::text,'public'::text,'{}'::uuid[])",[official.id],/permission denied/);
   await rejects('select public.group_messages_list($1)',[pub],/permission denied/);
-  await rejects('select public.group_view($1)',[pub],/permission denied/);
+});
+await test('signed-in host keeps private groups, member identity and invite access',async()=>{
+  await asUser(HOST);
+  const rows=(await query('select public.group_list() as data'))[0].data;
+  expect(rows.some(row=>row.id===priv),'Private host group missing');
+  const group=(await query('select public.group_view($1) as data',[priv]))[0].data;
+  expect(group.myStatus==='host' && group.host.id===HOST && group.inviteToken,'Signed-in details changed');
 });
 await test('hidden official events do not leak through public groups',async()=>{
   await admin();await query("update public.events set status='draft' where id=$1",[official.id]);
   await asUser(null,'anon');
-  expect((await query('select public.public_group_list() as data'))[0].data.length===0,'Hidden event leaked');
-  await rejects('select public.public_group_view($1)',[pub],/unavailable/);
+  expect((await query('select public.group_list() as data'))[0].data.length===0,'Hidden event leaked');
+  await rejects('select public.group_view($1)',[pub],/unavailable/);
 });
 } finally {
  console.log(`${passed} passed, ${failed} failed`);

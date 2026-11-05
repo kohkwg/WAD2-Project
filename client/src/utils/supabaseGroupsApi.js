@@ -11,7 +11,7 @@ const NOT_READY = 'Go together isn’t set up in the live app yet. Try it in dem
 async function rpc(name, params) {
   const { data, error } = await supabase.rpc(name, params)
   if (error) {
-    if (['PGRST202', '42883', '42P01'].includes(error.code)) throw new Error(name.startsWith('public_group_') ? 'Public Community browsing is not set up yet. Please try again later.' : NOT_READY)
+    if (['PGRST202', '42883', '42P01'].includes(error.code)) throw new Error(NOT_READY)
     throw new Error(error.message || 'Something went wrong. Please try again.')
   }
   return data
@@ -36,21 +36,13 @@ async function getPlan(groupId) {
 }
 
 // Public upcoming groups, plus private groups you host or belong to; soonest first.
-// Public browsing uses a separate minimal RPC; private groups and member identities stay protected.
+// The existing group RPCs return public previews for guests and personalised results after sign-in.
 export async function getGroups() {
-  const signedIn = Boolean(await getCurrentUser())
-  return withEvents(await rpc(signedIn ? 'group_list' : 'public_group_list'))
+  return withEvents(await rpc('group_list'))
 }
 
 // One group with its plan. A private group needs its invite token unless you're already in it.
 export async function getGroup({ id, token } = {}) {
-  const signedIn = Boolean(await getCurrentUser())
-  if (!signedIn) {
-    if (token) throw new Error('Sign in to open this invitation.')
-    const view = await rpc('public_group_view', { p_group_id: id })
-    const [withEvent] = await withEvents([view])
-    return { ...withEvent, plan: null }
-  }
   const view = await rpc('group_view', { p_group_id: token ? null : id, p_token: token || null })
   const [withEvent] = await withEvents([view])
   const member = view.myStatus === 'host' || view.myStatus === 'confirmed'

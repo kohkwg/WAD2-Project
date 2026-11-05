@@ -420,3 +420,6 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 /* My events and My RSVPs use the whole content width, like Profile and Community */
 .organiser-events-page.organiser-events-page.organiser-events-page,
 .my-rsvps-page.my-rsvps-page.my-rsvps-page { max-width: none; width: 100%; margin-inline: 0; }
+
+/* Scrolling a picked event into view clears the sticky top bar */
+.discovery-event-row { scroll-margin: 96px 16px; }
