@@ -101,7 +101,6 @@ const descriptionToShow = computed(() => {
         <EventArtwork v-else :category="event.category || event.tags?.[0] || ''" />
         <span v-if="event.category || event.tags?.[0]" class="cover-category">{{ event.category || event.tags?.[0] }}</span>
       </div>
-      </div>
       <div v-if="otherTags.length" class="mb-2 event-tags">
         <span v-for="tag in otherTags" :key="tag" class="badge text-bg-light border me-1">
           {{ tag }}
@@ -124,7 +123,6 @@ const descriptionToShow = computed(() => {
       </template>
 
       <slot></slot>
-      </div>
     </div>
   </article>
 </template>
