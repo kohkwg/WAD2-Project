@@ -1,118 +1,123 @@
 <script setup>
-import BackLink from '../../components/ui/BackLink.vue'
-// Feature 3: participant self check-in by scanning the venue QR.
-// Two ways in:
-//   1. In-app: open this page, the camera scans the venue QR.
-//   2. Phone camera: the venue QR is a URL to this page with ?s=<secret>, so it
+import BackLink from '../../components/ui/BackLink.vue';
+// feature 3: participant self check-in by scanning the venue qr.
+// two ways in:
+//   1. in-app: open this page, the camera scans the venue qr.
+//   2. phone camera: the venue qr is a url to this page with ?s=<secret>, so it
 //      opens here and checks in straight away.
-import { onMounted, ref } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { useBackLink } from '../../composables/useBackLink.js'
-import QrScanner from '@/components/checkin/QrScanner.vue'
-import {
-  formatTime,
-  getDeviceId,
-  getEvent,
-  getLocation,
-  selfCheckIn,
-  wasAlreadyCheckedIn,
-} from '@/utils/checkin'
+import { onMounted, ref } from 'vue';
+import { RouterLink, useRoute, useRouter } from 'vue-router';
+import { useBackLink } from '../../composables/useBackLink.js';
+import QrScanner from '@/components/checkin/QrScanner.vue';
+import { formatTime, getDeviceId, getEvent, getLocation, selfCheckIn, wasAlreadyCheckedIn } from '@/utils/checkin';
 
-const back = useBackLink('/my-rsvps')
-const route = useRoute()
-const router = useRouter()
-const eventId = route.params.eventId
+const back = useBackLink('/my-rsvps');
 
-const event = ref(null)
-const step = ref('scan') // 'scan' | 'working' | 'done' | 'error'
-const message = ref('')
-const result = ref(null) // { row, already }
+const route = useRoute();
 
-// ===== HUXLEY: core logic ===================================================
-// secretFromScan(text)
-// The venue QR holds a URL like https://<site>/events/<eventId>/check-in?s=<secret>.
-// Pull out the secret, and reject it if it's for a DIFFERENT event than the page
-// we're on (e.g. someone scanned the QR for the hall next door).
-// Returns the secret string, or throws an Error with a friendly message.
+const router = useRouter();
+
+const eventId = route.params.eventId;
+
+const event = ref(null);
+
+const step = ref('scan'); // 'scan' | 'working' | 'done' | 'error'
+
+const message = ref('');
+
+const result = ref(null); // { row, already }
+
+// ===== huxley: core logic ===================================================
+// secretfromscan(text)
+// the venue qr holds a url like https://<site>/events/<eventid>/check-in?s=<secret>.
+// pull out the secret, and reject it if it's for a different event than the page
+// we're on (e.g. someone scanned the qr for the hall next door).
+// returns the secret string, or throws an error with a friendly message.
 // ============================================================================
+
 function secretFromScan(text) {
-  let url
+  let url;
   try {
-    url = new URL(text)
+    url = new URL(text);
   } catch {
-    throw new Error("That isn't a Dino venue QR code.")
+    throw new Error("That isn't a Dino venue QR code.");
   }
-  const match = url.pathname.match(/^\/events\/([^/]+)\/check-in$/)
-  const secret = url.searchParams.get('s')
-  if (!match || !secret) throw new Error("That isn't a Dino venue QR code.")
-  if (match[1] !== eventId) throw new Error('That QR code is for a different event.')
-  return secret
+  const match = url.pathname.match(/^\/events\/([^/]+)\/check-in$/);
+  const secret = url.searchParams.get('s');
+  if (!match || !secret) throw new Error("That isn't a Dino venue QR code.");
+  if (match[1] !== eventId) throw new Error('That QR code is for a different event.');
+  return secret;
 }
 
-// ===== HUXLEY: core logic ===================================================
-// checkIn(secret)
-// The whole self check-in flow, in order:
+// ===== huxley: core logic ===================================================
+// checkin(secret)
+// the whole self check-in flow, in order:
 //   1. device id: same random id every time on this phone (fraud: shared phone)
 //   2. location: ask the browser; null if refused (fraud: far from venue)
-//   3. call self_check_in. The DATABASE does the real checks: is the secret the
-//      current one, does this user have a CONFIRMED registration. It also stops
+//   3. call self_check_in. the database does the real checks: is the secret the
+//      current one, does this user have a confirmed registration. it also stops
 //      duplicates (one row per registration).
 //   4. show the result: "checked in", "already checked in at …", or the error.
-// Note `sentAt` is taken BEFORE the request so wasAlreadyCheckedIn can compare.
-// Common errors from the DB, shown as-is:
-//   "Invalid or expired check-in code"  -> the screen rotated; scan again
-//   "You do not have a confirmed registration for this event"
+// note `sentAt` is taken before the request so wasalreadycheckedin can compare.
+// common errors from the db, shown as-is:
+//   "invalid or expired check-in code"  -> the screen rotated; scan again
+//   "you do not have a confirmed registration for this event"
 // ============================================================================
+
 async function checkIn(secret) {
-  step.value = 'working'
-  message.value = 'Getting your location…'
+  step.value = 'working';
+  message.value = 'Getting your location…';
   try {
-    const deviceId = getDeviceId()
-    const loc = await getLocation()
-
-    message.value = 'Checking you in…'
-    const sentAt = Date.now()
-    const row = await selfCheckIn(eventId, secret, deviceId, loc?.lat ?? null, loc?.lng ?? null)
-
-    result.value = { row, already: wasAlreadyCheckedIn(row, sentAt), noLocation: !loc }
-    step.value = 'done'
+    const deviceId = getDeviceId();
+    const loc = await getLocation();
+    message.value = 'Checking you in…';
+    const sentAt = Date.now();
+    const row = await selfCheckIn(eventId, secret, deviceId, loc?.lat ?? null, loc?.lng ?? null);
+    result.value = {
+      row,
+      already: wasAlreadyCheckedIn(row, sentAt),
+      noLocation: !loc
+    };
+    step.value = 'done';
   } catch (e) {
-    message.value = e.message
-    step.value = 'error'
+    message.value = e.message;
+    step.value = 'error';
   } finally {
     // drop ?s= from the address bar so a refresh or shared link doesn't reuse it
-    if (route.query.s) router.replace({ query: {} })
+    if (route.query.s) router.replace({
+      query: {}
+    });
   }
 }
 
 function onDecoded(text) {
   try {
-    checkIn(secretFromScan(text))
+    checkIn(secretFromScan(text));
   } catch (e) {
-    message.value = e.message
-    step.value = 'error'
+    message.value = e.message;
+    step.value = 'error';
   }
 }
 
 function scanAgain() {
-  message.value = ''
-  result.value = null
-  step.value = 'scan'
+  message.value = '';
+  result.value = null;
+  step.value = 'scan';
 }
 
 onMounted(async () => {
-  getEvent(eventId)
-    .then((e) => (event.value = e))
-    .catch(() => {})
-  // opened from the phone camera: the secret is already in the URL
-  if (route.query.s) checkIn(String(route.query.s))
-})
+  getEvent(eventId).then(e => event.value = e).catch(() => {});
+  // opened from the phone camera: the secret is already in the url
+  if (route.query.s) checkIn(String(route.query.s));
+});
 </script>
 
 <template>
   <div class="container py-4 self-checkin-page">
     <BackLink :to="back" class="small d-block mb-3">&larr; Back</BackLink>
-    <header class="checkin-heading"><span class="ticket-kicker">At the venue</span><h1 class="h3 mb-1">Check in</h1>
+    <header class="checkin-heading">
+    <span class="ticket-kicker">At the venue</span>
+    <h1 class="h3 mb-1">Check in</h1>
     <p class="text-body-secondary small mb-4">{{ event?.title ?? '' }}</p></header>
 
     <section v-if="step === 'scan'" class="checkin-card">
@@ -147,5 +152,52 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.self-checkin-page{max-width:600px}.checkin-heading{display:block;padding:1.15rem 1.25rem;margin-bottom:1rem;border-radius:22px;background:var(--bookedz-cream,#fff8f1)}.checkin-card{padding:1.25rem;border:1px solid var(--bookedz-border,#e9ded3);border-radius:22px;background:#ffffff}.self-checkin-page :deep(.qr-scanner){border:5px solid #1f2937;border-radius:16px!important}.self-checkin-page .alert{border-radius:14px}.self-checkin-page .btn{min-height:46px;border-radius:12px}.self-checkin-page .btn-primary{--bs-btn-bg:var(--bookedz-coral-dark,#9a3412);--bs-btn-border-color:var(--bookedz-coral-dark,#9a3412);--bs-btn-color:#fff;--bs-btn-hover-bg:#9a3412;--bs-btn-hover-border-color:#9a3412;--bs-btn-hover-color:#fff}.self-checkin-page .btn-outline-primary{--bs-btn-color:var(--bookedz-coral-dark,#9a3412);--bs-btn-border-color:var(--bookedz-coral-dark,#9a3412);--bs-btn-hover-bg:var(--bookedz-coral-dark,#9a3412);--bs-btn-hover-border-color:var(--bookedz-coral-dark,#9a3412)}
+.self-checkin-page {
+  max-width: 600px;
+}
+
+.checkin-heading {
+  display: block;
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1rem;
+  border-radius: 22px;
+  background: var(--bookedz-cream,#fff8f1);
+}
+
+.checkin-card {
+  padding: 1.25rem;
+  border: 1px solid var(--bookedz-border,#e9ded3);
+  border-radius: 22px;
+  background: #ffffff;
+}
+
+.self-checkin-page :deep(.qr-scanner) {
+  border: 5px solid #1f2937;
+  border-radius: 16px!important;
+}
+
+.self-checkin-page .alert {
+  border-radius: 14px;
+}
+
+.self-checkin-page .btn {
+  min-height: 46px;
+  border-radius: 12px;
+}
+
+.self-checkin-page .btn-primary {
+  --bs-btn-bg: var(--bookedz-coral-dark,#9a3412);
+  --bs-btn-border-color: var(--bookedz-coral-dark,#9a3412);
+  --bs-btn-color: #fff;
+  --bs-btn-hover-bg: #9a3412;
+  --bs-btn-hover-border-color: #9a3412;
+  --bs-btn-hover-color: #fff;
+}
+
+.self-checkin-page .btn-outline-primary {
+  --bs-btn-color: var(--bookedz-coral-dark,#9a3412);
+  --bs-btn-border-color: var(--bookedz-coral-dark,#9a3412);
+  --bs-btn-hover-bg: var(--bookedz-coral-dark,#9a3412);
+  --bs-btn-hover-border-color: var(--bookedz-coral-dark,#9a3412);
+}
 </style>

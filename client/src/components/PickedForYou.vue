@@ -1,74 +1,92 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { useRouter, RouterLink } from 'vue-router'
-import RecommendationCard from './RecommendationCard.vue'
+import { computed, ref } from 'vue';
+import { useRouter, RouterLink } from 'vue-router';
+import RecommendationCard from './RecommendationCard.vue';
 
 const props = defineProps({
-  events: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: false },
-  error: { type: String, default: '' },
-  personalized: { type: Boolean, default: false },
-  fallback: { type: Boolean, default: false },
-  collapsedCount: { type: Number, default: 3 },
-  preferencePending: { type: Boolean, default: false },
-  actionError: { type: String, default: '' },
-  undoEvent: { type: Object, default: null },
-  compact: { type: Boolean, default: false },
-  strip: { type: Boolean, default: false },
-  filtered: { type: Boolean, default: false },
-  otherPicks: { type: Boolean, default: false },
-})
+  events: {
+    type: Array,
+    default: () => []
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  error: {
+    type: String,
+    default: ''
+  },
+  personalized: {
+    type: Boolean,
+    default: false
+  },
+  fallback: {
+    type: Boolean,
+    default: false
+  },
+  collapsedCount: {
+    type: Number,
+    default: 3
+  },
+  preferencePending: {
+    type: Boolean,
+    default: false
+  },
+  actionError: {
+    type: String,
+    default: ''
+  },
+  undoEvent: {
+    type: Object,
+    default: null
+  },
+  compact: {
+    type: Boolean,
+    default: false
+  },
+  strip: {
+    type: Boolean,
+    default: false
+  },
+  filtered: {
+    type: Boolean,
+    default: false
+  },
+  otherPicks: {
+    type: Boolean,
+    default: false
+  }
+});
 
-const emit = defineEmits([
-  'retry', 'rsvp', 'waitlist', 'preference', 'other-picks',
-])
+const emit = defineEmits(['retry', 'rsvp', 'waitlist', 'preference', 'other-picks']);
 
-const router = useRouter()
-const showAll = ref(false)
+const router = useRouter();
 
-const collapsedLimit = computed(() =>
-  Math.max(1, Math.floor(props.collapsedCount) || 3)
-)
+const showAll = ref(false);
 
-// Preserve the existing featured-event selection and backend ranking.
+const collapsedLimit = computed(() => Math.max(1, Math.floor(props.collapsedCount) || 3));
+
+// preserve the existing featured-event selection and backend ranking.
+
 const featured = computed(() => {
   if (props.events.some(event => event.source)) {
-    return props.events[0] || null
+    return props.events[0] || null;
   }
-
-  const available = props.events.filter(event =>
-    !event.is_full &&
-    (event.spots_left == null || Number(event.spots_left) > 0)
-  )
-
-  return available.find(event =>
-    event.reason_type === 'interest' ||
-    (!event.reason_type &&
-      /^Matches your interests/i.test(event.reason || ''))
-  ) || available[0] || props.events[0] || null
-})
+  const available = props.events.filter(event => !event.is_full && (event.spots_left == null || Number(event.spots_left) > 0));
+  return available.find(event => event.reason_type === 'interest' || !event.reason_type && /^Matches your interests/i.test(event.reason || '')) || available[0] || props.events[0] || null;
+});
 
 const orderedEvents = computed(() => {
-  if (!featured.value) return []
+  if (!featured.value) return [];
+  return [featured.value, ...props.events.filter(event => event.id !== featured.value.id)];
+});
 
-  return [
-    featured.value,
-    ...props.events.filter(event => event.id !== featured.value.id),
-  ]
-})
+const visibleEvents = computed(() => showAll.value ? orderedEvents.value : orderedEvents.value.slice(0, collapsedLimit.value));
 
-const visibleEvents = computed(() =>
-  showAll.value
-    ? orderedEvents.value
-    : orderedEvents.value.slice(0, collapsedLimit.value)
-)
-
-const canToggle = computed(() =>
-  props.events.length > collapsedLimit.value
-)
+const canToggle = computed(() => props.events.length > collapsedLimit.value);
 
 function view(event) {
-  router.push(`/events/${event.id}/rsvp`)
+  router.push(`/events/${event.id}/rsvp`);
 }
 </script>
 
@@ -215,7 +233,10 @@ function view(event) {
   margin-bottom: 18px;
 }
 
-.picks-header h2 { margin: 0; color: var(--bookedz-ink); }
+.picks-header h2 {
+  margin: 0;
+  color: var(--bookedz-ink);
+}
 
 .see-all {
   min-height: 40px;
@@ -226,7 +247,7 @@ function view(event) {
   color: var(--bookedz-ink);
   font-family: var(--bookedz-body);
   font-weight: 600;
-  font-size:var(--text-button);
+  font-size: var(--text-button);
   cursor: pointer;
 }
 
@@ -313,7 +334,7 @@ function view(event) {
 
 .picks-grid :deep(.pick-reason) {
   margin: 0 0 8px;
-  font-size:var(--text-small);
+  font-size: var(--text-small);
 }
 
 .picks-grid :deep(.pick-explanation) {
@@ -372,22 +393,147 @@ function view(event) {
   outline: 2px solid var(--bookedz-primary-dark);
   outline-offset: 3px;
 }
-/* Compact ranked strip: display only; featured selection and server order above
-   are unchanged. Preference actions and explanations remain available. */
-.picked-for-you--strip { display: grid; grid-template-columns: 156px minmax(0,1fr); gap: 0 14px; align-items: start; padding: 14px; margin: 0; border: 1px solid var(--bookedz-primary); border-radius: 15px; background: var(--bookedz-glass-active); }
-.picked-for-you--strip .picks-header { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin: 4px 0 0; }
-.picked-for-you--strip .picks-header h2 { font-size: 20px; line-height: 1.15; }
-.picks-eyebrow { margin: 0; color: var(--bookedz-primary-dark); font-size: 11px; font-weight: 700; }
-.picked-for-you--strip .see-all { min-height: 36px; padding: 4px 0; border: 0; background: transparent; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
-.picked-for-you--strip .picks-note { grid-column: 1; grid-row: 2; margin: 8px 0 0; font-size: 12px; line-height: 1.5; }
-.picked-for-you--strip .picks-grid { grid-column: 2; grid-row: 1 / span 4; grid-template-columns: repeat(var(--columns), minmax(0,1fr)); gap: 10px; align-self: stretch; }
-.picked-for-you--strip .picks-context { grid-column: 1; grid-row: 3; margin: 8px 0 0; gap: 2px; }
-.picked-for-you--strip .picks-context p { min-width: 0; font-size: 12px; }
-.picked-for-you--strip .picks-loading { grid-column: 2; grid-row: 1 / span 4; grid-template-columns: repeat(3,minmax(0,1fr)); }
-.picked-for-you--strip .pick-skeleton { height: 145px; }
-.picked-for-you--strip .picks-message,.picked-for-you--strip > .alert { grid-column: 2; padding: 10px; margin: 0 0 8px; font-size: 12px; }
-.picked-for-you--strip .picks-grid :deep(.recommendation-card) { border: 0; border-radius: 11px; overflow: visible; }
-.picked-for-you--strip .picks-grid :deep(.pick-details) { padding: 12px; }
-@media(max-width:1199px) { .picked-for-you--strip { grid-template-columns: 128px minmax(0,1fr); gap: 0 10px; }.picked-for-you--strip .picks-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@media(max-width:767px) { .picked-for-you--strip { display: block; padding: 12px; }.picked-for-you--strip .picks-header { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0; }.picked-for-you--strip .picks-eyebrow { width: 100%; }.picked-for-you--strip .picks-note { margin: 6px 0 12px; }.picked-for-you--strip .picks-grid { grid-template-columns: minmax(0,1fr); gap: 8px; }.picked-for-you--strip .picks-loading { grid-template-columns: minmax(0,1fr); }.picked-for-you--strip .picks-context { margin-bottom: 10px; } }
+
+/* compact ranked strip: display only; featured selection and server order above
+   are unchanged. preference actions and explanations remain available. */
+
+.picked-for-you--strip {
+  display: grid;
+  grid-template-columns: 156px minmax(0,1fr);
+  gap: 0 14px;
+  align-items: start;
+  padding: 14px;
+  margin: 0;
+  border: 1px solid var(--bookedz-primary);
+  border-radius: 15px;
+  background: var(--bookedz-glass-active);
+}
+
+.picked-for-you--strip .picks-header {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 4px 0 0;
+}
+
+.picked-for-you--strip .picks-header h2 {
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.picks-eyebrow {
+  margin: 0;
+  color: var(--bookedz-primary-dark);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.picked-for-you--strip .see-all {
+  min-height: 36px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.picked-for-you--strip .picks-note {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.picked-for-you--strip .picks-grid {
+  grid-column: 2;
+  grid-row: 1 / span 4;
+  grid-template-columns: repeat(var(--columns), minmax(0,1fr));
+  gap: 10px;
+  align-self: stretch;
+}
+
+.picked-for-you--strip .picks-context {
+  grid-column: 1;
+  grid-row: 3;
+  margin: 8px 0 0;
+  gap: 2px;
+}
+
+.picked-for-you--strip .picks-context p {
+  min-width: 0;
+  font-size: 12px;
+}
+
+.picked-for-you--strip .picks-loading {
+  grid-column: 2;
+  grid-row: 1 / span 4;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+}
+
+.picked-for-you--strip .pick-skeleton {
+  height: 145px;
+}
+
+.picked-for-you--strip .picks-message,.picked-for-you--strip > .alert {
+  grid-column: 2;
+  padding: 10px;
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+
+.picked-for-you--strip .picks-grid :deep(.recommendation-card) {
+  border: 0;
+  border-radius: 11px;
+  overflow: visible;
+}
+
+.picked-for-you--strip .picks-grid :deep(.pick-details) {
+  padding: 12px;
+}
+
+@media(max-width:1199px) {
+  .picked-for-you--strip {
+    grid-template-columns: 128px minmax(0,1fr);
+    gap: 0 10px;
+  }
+  .picked-for-you--strip .picks-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:767px) {
+  .picked-for-you--strip {
+    display: block;
+    padding: 12px;
+  }
+  .picked-for-you--strip .picks-header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: 0;
+  }
+  .picked-for-you--strip .picks-eyebrow {
+    width: 100%;
+  }
+  .picked-for-you--strip .picks-note {
+    margin: 6px 0 12px;
+  }
+  .picked-for-you--strip .picks-grid {
+    grid-template-columns: minmax(0,1fr);
+    gap: 8px;
+  }
+  .picked-for-you--strip .picks-loading {
+    grid-template-columns: minmax(0,1fr);
+  }
+  .picked-for-you--strip .picks-context {
+    margin-bottom: 10px;
+  }
+}
 </style>

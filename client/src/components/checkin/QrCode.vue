@@ -1,25 +1,39 @@
 <script setup>
-// BOILERPLATE: draws `value` as a QR code on a <canvas> using the qrcode library.
-// Re-draws whenever `value` changes (e.g. the venue secret rotates).
-import { onMounted, ref, watch } from 'vue'
-import QRCode from 'qrcode'
+// boilerplate: draws `value` as a qr code on a <canvas> using the qrcode library.
+// re-draws whenever `value` changes (e.g. the venue secret rotates).
+import { onMounted, ref, watch } from 'vue';
+import QRCode from 'qrcode';
 
 const props = defineProps({
-  value: { type: String, required: true },
-  size: { type: Number, default: 260 },
-  label: { type: String, default: 'QR code' },
-})
+  value: {
+    type: String,
+    required: true
+  },
+  size: {
+    type: Number,
+    default: 260
+  },
+  label: {
+    type: String,
+    default: 'QR code'
+  }
+});
 
-const canvas = ref(null)
+const canvas = ref(null);
 
 async function draw() {
-  if (!canvas.value || !props.value) return
-  // errorCorrectionLevel 'M' still scans if the screen is a bit scratched or glary
-  await QRCode.toCanvas(canvas.value, props.value, { width: props.size, margin: 2, errorCorrectionLevel: 'M' })
+  if (!canvas.value || !props.value) return;
+  // errorcorrectionlevel 'm' still scans if the screen is a bit scratched or glary
+  await QRCode.toCanvas(canvas.value, props.value, {
+    width: props.size,
+    margin: 2,
+    errorCorrectionLevel: 'M'
+  });
 }
 
-onMounted(draw)
-watch(() => [props.value, props.size], draw)
+onMounted(draw);
+
+watch(() => [props.value, props.size], draw);
 </script>
 
 <template>

@@ -3,4 +3,6 @@ function check(name, actual, expected) {
   console.log(ok ? 'PASS' : 'FAIL', '-', name, '| got', Number(actual).toFixed(2), '| expected', expected);
   if (!ok) process.exitCode = 1;
 }
-module.exports = { check };
+module.exports = {
+  check
+};

@@ -31,6 +31,25 @@ orange on hover; a dashboard card's buttons sit at its bottom. On Discover, clic
 again closes it, as do a click outside the cards and map and Escape inside it (focus returns to
 the thumbnail);
 
+5 November 2026 — the user expands the readability cleanup from three-file batches to
+all remaining first-party code and asks for the files to review afterwards. Preserve
+appearance and behaviour, use readable spacing and simple lowercase comment prose, retain
+tool directives/attribution/code references, and keep all pre-existing work. This covers
+local source formatting, not dependency updates, SQL changes, Git publishing or deployment.
+
+5 November 2026 — the user pauses the code review and requests account-wide in-app
+notifications for relevant event/group updates, especially announcements and accepted or
+rejected requests. Reuse the existing toast presentation at the top right, add existing
+dino artwork with an emotion matching the update, a close button and roughly ten seconds
+before automatic dismissal. Existing explicit undo durations remain tied to their undo
+windows. This authorises the shared notification UI change; it does not authorise hosted
+schema changes or turn the app into an email/browser-push service.
+
+5 November 2026 — the user, structure-only cleanup: use the supplied OneDrive exercise
+examples as a reference for readable Vue/JavaScript structure. Work one page at a time
+for user review. Preserve all current appearance and behaviour; comments must be simple
+and lowercase. Exercise instructions are reference material, not authority to change
+the app's stack or functionality.
 
 5 November 2026 — Denzel, Discover map shows location only: choosing an event (its card or its
 pin) no longer opens a pop-up card on the map. The map highlights the pin and zooms to the
