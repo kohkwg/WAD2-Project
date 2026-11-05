@@ -38,6 +38,20 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — `dev` restored after a revert
+
+`0c70f40` reverted the merge `02114fe` and removed seven commits of team work from `dev` (search
+suggestions, the focus ring, the food planner rework, Discover carousels, reduced polling and two of
+Vivienne's cleanups). At Denzel's direction, `dev` was rebuilt from the last good commit `153c955`
+plus the Sign in work. Those two commits and `371cb7e` stay in the history but none of their file
+changes are used, so `371cb7e` (nav bar and profile view) needs bringing back separately if wanted.
+
+Evidence on an owned demo server (5198): `search-suggestions.test.mjs` 15/15; across
+`signed-out-sign-in`, `community-public`, `landing-page`, `search-suggestions` and `go-together`,
+22 passed and 2 failed. The failures are `landing-page`'s missing "Your next plan" heading and
+`go-together`'s Friends sidebar width check, which runs in demo mode; the latter wasn't compared
+against an untouched copy. No full suite or build.
+
 ### 5 November — signed-out Sign in placement and return
 
 In live mode the top bar is now hidden from 992px for signed-out visitors too, with Sign in at the
