@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useBackLink } from '../composables/useBackLink.js'
 import { requireCommunityAccount } from '../utils/communityAccount.js'
 import EventArtwork from '../components/EventArtwork.vue'
 import BumpValue from '../components/ui/BumpValue.vue'
@@ -60,6 +61,7 @@ const invite = computed(() => group.value?.myInvite || null)
 const countdown = computed(() => (group.value ? countdownLabel(group.value.startTime) : ''))
 const people = computed(() => (group.value ? [{ ...group.value.host, host: true }, ...group.value.members] : []))
 import { useMyDino } from '@/lib/myDino'
+const back = useBackLink('/community')
 const { dinoFor } = useMyDino()
 const initials = (name) => name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()
 const inviteUrl = computed(() => (group.value?.inviteToken ? `${location.origin}${router.resolve(`/g/${group.value.inviteToken}`).href}` : ''))
@@ -203,7 +205,7 @@ async function removeGroup() {
 
 <template>
   <div class="container group-page">
-    <RouterLink to="/community" class="group-back">&larr; Go together</RouterLink>
+    <RouterLink :to="back" class="group-back">&larr; Back</RouterLink>
 
     <div v-if="loading" class="group-loading" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Loading the group…</div>
     <div v-dismissible v-else-if="error" class="group-empty" role="alert">

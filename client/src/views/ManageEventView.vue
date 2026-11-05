@@ -2,6 +2,7 @@
 import '../assets/design-baseline.css'
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useBackLink } from '../composables/useBackLink.js'
 import * as api from '../utils/api.js'
 import { formatEventTime } from '../utils/helpers.js'
 import EventToolNavigation from '../components/event-operations/EventToolNavigation.vue'
@@ -12,6 +13,7 @@ import WeatherTool from '../components/event-operations/WeatherTool.vue'
 import { TASK_STATUSES } from '../utils/feature4.js'
 import { defineAsyncComponent } from 'vue'
 // Tools from other features are loaded only when their tab opens (they subscribe/fetch on mount).
+const back = useBackLink('/organiser/events')
 const EventTeamPanel = defineAsyncComponent(() => import('../components/event-operations/EventTeamPanel.vue'))
 const EventEditor = defineAsyncComponent(() => import('./CreateEventView.vue'))
 const StaffStationView = defineAsyncComponent(() => import('./checkin/StaffStationView.vue'))
@@ -186,7 +188,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
 
 <template>
 <div class="design-baseline">
-  <RouterLink to="/organiser/events" class="workspace-back">← Organise</RouterLink>
+  <RouterLink :to="back" class="workspace-back">← Back</RouterLink>
   <p v-if="loading" class="my-5 text-center" role="status">Loading event workspace…</p>
   <div v-dismissible v-else-if="loadError" class="alert alert-danger mt-3" role="alert">{{ loadError }} <button type="button" class="btn btn-sm btn-outline-danger" @click="load">Retry event</button></div>
   <div v-dismissible v-else-if="workspace && !canManage" class="alert alert-danger mt-3" role="alert">Only this event’s organisers can use these tools.</div>

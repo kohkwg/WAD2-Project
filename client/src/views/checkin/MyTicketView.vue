@@ -5,11 +5,13 @@ import '../../assets/design-baseline.css'
 // live subscription so the page flips to "checked in" the moment staff scan it.
 import { onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { useBackLink } from '../../composables/useBackLink.js'
 import QrCode from '@/components/checkin/QrCode.vue'
 import Barcode from '@/components/checkin/Barcode.vue'
 import { supabase } from '@/utils/supabase'
 import { formatTime, getEvent } from '@/utils/checkin'
 
+const back = useBackLink('/my-rsvps')
 const route = useRoute()
 const eventId = route.params.eventId
 
@@ -84,7 +86,7 @@ onUnmounted(() => {
 
 <template>
   <div class="container py-4 ticket-page text-center">
-    <RouterLink to="/my-rsvps" class="small d-block text-start mb-3">&larr; Plans</RouterLink>
+    <RouterLink :to="back" class="small d-block text-start mb-3">&larr; Back</RouterLink>
 
     <div v-if="loading" class="py-5">
       <div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>
