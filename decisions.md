@@ -25,6 +25,21 @@ migration `20261105050527_go_together_friends_invites.sql` (tables `group_invite
 project on 5 November (recorded as 20261105050527, so the file carries that name; a rolled-back smoke
 test passed). It creates `profile_friendships` only if it is missing.
 
+5 November 2026 — Gregory, a softer dark mode, Discover spacing and "My Events": Discover keeps
+Vivienne's own ticket pass from dev; when dev was merged into `gregory`, Gregory's overlapping
+Discover rules were dropped, keeping only a little more space between rows and days. After
+Vivienne said the dark colours felt heavy (and a first pass that blended them into the dark
+surface looked dull), every ticket page's dark mode, including Discover and the event RSVP,
+sign-in and ticket pages, uses four shared tokens (`--db-dark-hero`, `--db-dark-edge`,
+`--db-dark-orange`, `--db-dark-teal`): big areas stay plain dark with a soft
+orange corner glow on the hero, edges are a clean orange, and hard shadows are 45–50% instead of
+solid orange and 60% teal. The My RSVPs waitlist offer banner and the My Events date strip no
+longer use the olive fill. Light mode is unchanged apart from the Discover spacing. "My events" is renamed **My Events** wherever it is shown,
+a deliberate exception to sentence case to match My RSVPs. The Sort by drop-downs on My Events
+and Discover open as a list attached to the button (chosen over a floating panel) where the
+browser supports customisable selects. Discover is Aishani's page, so she should review the
+change. No backend, data or routing changes.
+
 5 November 2026 — saved events are one journey, adopted after reviewing rendered previews. The
 words are **Save** / **Saved** everywhere: the bookmark reads "Save {event}" / "Remove {event} from
 saved" with the tooltips "Save event" / "Remove from saved". Saving on Discover shows "Saved to your

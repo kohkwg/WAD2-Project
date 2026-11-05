@@ -73,6 +73,12 @@ bar on the group page). We wrote migration `20261105050527_go_together_friends_i
 `groups.js`, `mockApi.js`, `mockData.js` (seed version 6), `supabaseGroupsApi.js` and `api.js`, with
 tests in `groups.test.js`, `e2e/go-together.spec.js` and `server/checks/groups-db.check.mjs`.
 
+On 5 November 2026, added more space between Discover's rows, toned down
+dark mode on every ticket page (Discover included) after Vivienne's feedback that the colours felt heavy,
+renamed "My events" to "My Events", and restyled the Sort by drop-downs. We changed `design-baseline.css`, `DiscoverView.vue`,
+`NavBar.vue`, the router title, `OrganiserEventsView.vue`, the back links in `CreateEventView.vue`,
+`ManageEventView.vue` and `ManageRsvpsView.vue`, and three e2e specs.
+
 On 4 November 2026, Friends moved from Profile into a side panel in Community, and the Profile
 Groups tab was removed (its hosted tables were left alone). Go together, the group page and My RSVPs
 were restyled with Vivienne's design baseline, and the broken Edit event links now open Manage

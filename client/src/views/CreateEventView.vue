@@ -623,7 +623,7 @@ async function publish() {
       <span class="visually-hidden">Loading the event…</span>
     </div>
     <div v-dismissible v-else-if="isEditing && editBlocked" class="alert alert-warning" role="alert">
-      {{ editBlocked }} <RouterLink to="/organiser/events">Back to My events</RouterLink>
+      {{ editBlocked }} <RouterLink to="/organiser/events">Back to My Events</RouterLink>
     </div>
 
     <template v-else>
