@@ -594,10 +594,18 @@ function showEventGroups(eventId) {
 </template>
 
 <style scoped>
+/* the same space above the page as plans and organise: 12px, none on phones */
+
 .community-page {
   width: 100%;
   max-width: none;
-  padding-block: 1.5rem 3rem;
+  padding-block: 12px 3rem;
+}
+
+@media (max-width: 575px) {
+  .community-page {
+    padding-top: 0;
+  }
 }
 
 .community-shell {

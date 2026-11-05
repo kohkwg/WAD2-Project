@@ -591,7 +591,10 @@ async function removeEvent(eventId) {
   }
 }
 
-@media(max-width:575px) {
+/* phones under 520px: one column with full-width tabs. from 520px the page matches 576px (two
+   cards across, tabs at their own width); narrower than that, two cards squeeze the buttons */
+
+@media(max-width:519.98px) {
   .organiser-heading {
     padding: 24px 20px;
   }
@@ -621,6 +624,11 @@ async function removeEvent(eventId) {
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
+/* like plans: no extra space above the header on phones */
+
+@media(max-width:575px) {
   .organiser-events-page {
     padding-top: 0;
   }

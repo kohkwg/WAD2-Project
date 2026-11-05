@@ -843,3 +843,8 @@ nearby places from Geoapify (open at the meal time, nearest first), OneMap searc
   the tallest card in the row left an empty gap beside a taller one.
 - **Tried and dropped the same day (not in the code):** Organise showing All first with "Show
   more" on phones and tablets, and smaller Discover cards on phones.
+- **Organise from 520px matches 576px** (later the same evening): tabs at their own width and
+  two event cards across. Below 520px it keeps the one-column phone layout, because two cards
+  there squeeze the action buttons to 35–49px wide.
+- **Top spacing follows Plans:** Community and Organise leave the same space above their first
+  content as Plans at every width.

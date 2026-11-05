@@ -38,6 +38,22 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — Organise from 520px matches 576px; Plans' top spacing (Gregory)
+
+`OrganiserEventsView.vue`'s phone rules now start below 520px instead of at 575px, so 520–575px
+get the 576px layout: tabs at their own width and two cards across. Checked on the owned demo
+server (5195) in dark mode with six events: 575px matches 576px (265px cards, 85px buttons), 520px
+has 237px cards and 72px buttons, and 519, 430 and 375px keep the one-column layout. No overflow,
+clipped text or page errors at any of them. At 375px the All tab already sat on its own row
+before this change.
+
+Community and Organise now leave the same space above their content as Plans: 12px of page
+padding (none at 575px and below) on top of the shell's. Community had 24px, and Organise's
+phone rule had moved to 519px with the change above. Measured from the top bar to the first
+content: 24px at 375 and 575px and 52px at 768, 991 and 1280px on all three pages (Community was
+48 and 64px, Organise 36px at 575px). Not done: e2e specs, light-mode screenshots, full suites, a
+build.
+
 ### 5 November — Community Filters panel, Groups | Friends switch and smaller cards (Gregory)
 
 - **Filters:** the view chips became one Filters panel beside the search bar. Choosing a
