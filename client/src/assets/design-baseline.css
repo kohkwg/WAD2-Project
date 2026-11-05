@@ -253,6 +253,9 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 .group-page.group-page .group-hero { flex-wrap: wrap; }
 .group-page.group-page .group-avatar { border: 2px solid var(--bookedz-ink); background: var(--bookedz-surface); }
 :root[data-theme="dark"] .group-page.group-page .group-avatar { border-color: var(--bookedz-fill); }
+/* A dino shows whole, not cropped to the circle */
+.group-page.group-page .group-avatar:has(.dino-face) { border-color: transparent; background: none; }
+:root[data-theme="dark"] .group-page.group-page .group-avatar:has(.dino-face) { border-color: transparent; }
 .group-page.group-page .group-card { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal); }
 :root[data-theme="dark"] .group-page.group-page .group-card { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
 .group-page.group-page .group-card .section-title { font-weight: 900; }

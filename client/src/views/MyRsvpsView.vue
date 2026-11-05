@@ -265,7 +265,7 @@ async function cancel(rsvpId) {
     <!-- One slim header: title and refresh, then the section tabs -->
     <header class="rsvps-heading smart-head">
       <div class="smart-head-top">
-        <div class="smart-head-title"><span class="header-star smart-head-star" aria-hidden="true">✳</span><h1 class="page-title">Plans</h1></div>
+        <div class="smart-head-title"><span class="header-star smart-head-star" aria-hidden="true">★</span><h1 class="page-title">Plans</h1></div>
         <div class="rsvps-toolbar"><p>Updates on its own every 30 seconds.</p><button type="button" class="btn btn-outline-secondary btn-sm" :disabled="loading || busyId !== null" @click="refreshRsvps">Refresh RSVPs</button></div>
       </div>
       <div class="rsvp-tabs" role="tablist" aria-label="Your events">

@@ -18,20 +18,21 @@ const StaffStationView = defineAsyncComponent(() => import('./checkin/StaffStati
 const VenueQrView = defineAsyncComponent(() => import('./checkin/VenueQrView.vue'))
 const AttendanceDashboardView = defineAsyncComponent(() => import('./checkin/AttendanceDashboardView.vue'))
 const FloorPlanEditor = defineAsyncComponent(() => import('../editor.vue'))
+const GuestList = defineAsyncComponent(() => import('./ManageRsvpsView.vue'))
 
 const route = useRoute()
 const router = useRouter()
 const coreTabs = ['tasks', 'announcements', 'budget', 'weather']
 // Check-in, venue QR, attendance and floor plan need the live database, so they only exist there.
-const tabs = api.USING_SUPABASE ? ['edit', 'team', ...coreTabs, 'check-in', 'venue-qr', 'attendance', 'floor-plan'] : ['edit', 'team', ...coreTabs]
-const TAB_LABELS = { team: 'Event team', edit: 'Edit event', tasks: 'Tasks', announcements: 'Announcements', budget: 'Budget', weather: 'Weather', 'check-in': 'Check-in station', 'venue-qr': 'Venue QR', attendance: 'Attendance', 'floor-plan': 'Floor plan' }
-const TAB_HINTS = { team: 'Helpers and co-organisers', edit: 'Event details', tasks: 'Plan the work', announcements: 'Tell attendees', budget: 'Track costs', weather: 'Venue plan', 'check-in': 'Scan arrivals', 'venue-qr': 'Entrance display', attendance: 'Live arrivals', 'floor-plan': 'Layout and programme' }
+const tabs = api.USING_SUPABASE ? ['rsvps', 'edit', 'team', ...coreTabs, 'check-in', 'venue-qr', 'attendance', 'floor-plan'] : ['rsvps', 'edit', 'team', ...coreTabs]
+const TAB_LABELS = { rsvps: 'Guest list', team: 'Event team', edit: 'Edit event', tasks: 'Tasks', announcements: 'Announcements', budget: 'Budget', weather: 'Weather', 'check-in': 'Check-in station', 'venue-qr': 'Venue QR', attendance: 'Attendance', 'floor-plan': 'Floor plan' }
+const TAB_HINTS = { rsvps: 'Approve and manage RSVPs', team: 'Helpers and co-organisers', edit: 'Event details', tasks: 'Plan the work', announcements: 'Tell attendees', budget: 'Track costs', weather: 'Venue plan', 'check-in': 'Scan arrivals', 'venue-qr': 'Entrance display', attendance: 'Live arrivals', 'floor-plan': 'Layout and programme' }
 const toolGroups = [
-  { id: 'general', label: 'General', hint: 'Details and updates', ids: ['edit', 'team', 'announcements'] },
+  { id: 'general', label: 'General', hint: 'Details and updates', ids: ['rsvps', 'edit', 'team', 'announcements'] },
   { id: 'planning', label: 'Planning', hint: 'Tasks, costs and layout', ids: ['tasks', 'budget', 'floor-plan'] },
   { id: 'on-the-day', label: 'On the day', hint: 'Venue and arrivals', ids: ['weather', 'check-in', 'venue-qr', 'attendance'] },
 ].map(group => ({ ...group, tabs: group.ids.filter(id => tabs.includes(id)).map(id => ({ id, label: TAB_LABELS[id], hint: TAB_HINTS[id] })) }))
-const activeTab = computed(() => tabs.includes(route.query.tab) ? route.query.tab : 'tasks')
+const activeTab = computed(() => tabs.includes(route.query.tab) ? route.query.tab : 'rsvps')
 const teamVisited = ref(false)
 watch(activeTab, tab => { if (tab === 'team') teamVisited.value = true }, { immediate: true })
 watch(() => route.params.id, () => { teamVisited.value = activeTab.value === 'team' })
@@ -79,7 +80,7 @@ function createRequestId(action) {
 }
 
 watch(() => route.query.tab, tab => {
-  if (!tabs.includes(tab)) router.replace({ path: route.path, query: { ...route.query, tab: 'tasks' }, hash: route.hash })
+  if (!tabs.includes(tab)) router.replace({ path: route.path, query: { ...route.query, tab: 'rsvps' }, hash: route.hash })
 }, { immediate: true })
 async function load() {
   const ticket = ++epoch
@@ -198,7 +199,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
         <details class="workspace-address"><summary>Venue address</summary><p>{{ workspace.event.venue?.address }}</p></details>
       </div>
       <div class="workspace-link-groups">
-        <div class="workspace-primary-links"><RouterLink class="btn event-cta" :to="'/organiser/events/' + workspace.event.id + '/rsvps'">Manage RSVPs</RouterLink><RouterLink class="btn btn-primary" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink><span class="workspace-publish"><span v-if="publishState === 'draft'" class="workspace-mode">Unpublished</span><span v-else-if="publishState !== 'published'" class="workspace-mode">{{ publishState[0].toUpperCase() + publishState.slice(1) }}</span><button v-if="canTogglePublish" type="button" class="btn" :class="publishState === 'published' ? 'btn-outline-secondary' : 'btn-primary'" :disabled="publishing" @click="togglePublish">{{ publishing ? 'Saving…' : publishState === 'published' ? 'Unpublish' : 'Publish' }}</button></span><span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>
+        <div class="workspace-primary-links"><RouterLink class="btn event-cta" :to="'/events/' + workspace.event.id + '/rsvp'">View public event</RouterLink><span class="workspace-publish"><span v-if="publishState === 'draft'" class="workspace-mode">Unpublished</span><span v-else-if="publishState !== 'published'" class="workspace-mode">{{ publishState[0].toUpperCase() + publishState.slice(1) }}</span><button v-if="canTogglePublish" type="button" class="btn" :class="publishState === 'published' ? 'btn-outline-secondary' : 'btn-primary'" :disabled="publishing" @click="togglePublish">{{ publishing ? 'Saving…' : publishState === 'published' ? 'Unpublish' : 'Publish' }}</button></span><span class="workspace-save-note">{{ api.USING_SUPABASE ? 'Saved to your organiser account' : 'Saved in this browser' }}</span></div>
         <p v-dismissible v-if="publishError" class="text-danger mb-0" role="alert">{{ publishError }}</p>
       </div>
     </header>
@@ -207,6 +208,7 @@ function switchVenue(action) { mutate('weather', action, id => api.confirmBackup
       <div v-dismissible v-if="errors[activeTab]" class="alert alert-danger" role="alert">{{ errors[activeTab] }} <button v-if="retries[activeTab]" type="button" class="btn btn-sm btn-outline-danger" :disabled="pending[activeTab]" @click="retries[activeTab]()">Retry save</button></div>
       <p v-if="pending[activeTab]" role="status" class="text-secondary">Saving…</p><p v-dismissible v-else-if="successes[activeTab]" role="status" class="text-success">{{ successes[activeTab] }}</p>
     </div>
+    <GuestList v-if="activeTab === 'rsvps'" :key="'rsvps-' + workspace.event.id" embedded />
     <EventEditor v-if="editVisited" v-show="activeTab === 'edit'" :key="'edit-' + workspace.event.id" embedded @saved="refreshEditedEvent" />
     <EventTeamPanel v-if="teamVisited" v-show="activeTab === 'team'" :visible="activeTab === 'team'" :key="'team-' + workspace.event.id" :event-id="String(workspace.event.id)" />
     <TaskBoard v-show="activeTab === 'tasks'" :key="'tasks-' + workspace.event.id" :tasks="workspace.tasks" :pending="pending.tasks" :action-error="errors.tasks" @create="saveTask($event, 'create')" @update="saveTask($event, 'update')" @delete="saveTask($event, 'delete')" @save-board="saveBoard" @cancel-action="cancelDestructiveAction('tasks')" />

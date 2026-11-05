@@ -22,6 +22,8 @@ import {
 } from '../utils/api.js'
 import { formatEventTime, formatShortDateTime } from '../utils/helpers.js'
 
+// Inside Manage event the page already shows the event's title and links, so only the guest list itself is drawn
+const props = defineProps({ embedded: { type: Boolean, default: false } })
 const route = useRoute()
 const eventId = computed(() => String(route.params.id || ''))
 
@@ -362,7 +364,7 @@ async function demoExpireOffers() {
 
 <template>
 <div class="design-baseline">
-  <div class="d-flex justify-content-between flex-wrap gap-2"><RouterLink to="/organiser/events" class="rsvp-back">&larr; Organise</RouterLink><div class="d-flex flex-wrap gap-2"><RouterLink v-if="isMyEvent && new Date(event.startTime) > new Date()" class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage?tab=edit`">Edit event</RouterLink><RouterLink class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage`">Event tools</RouterLink></div></div>
+  <div v-if="!embedded" class="d-flex justify-content-between flex-wrap gap-2"><RouterLink to="/organiser/events" class="rsvp-back">&larr; Organise</RouterLink><div class="d-flex flex-wrap gap-2"><RouterLink v-if="isMyEvent && new Date(event.startTime) > new Date()" class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage?tab=edit`">Edit event</RouterLink><RouterLink class="btn btn-outline-secondary" :to="`/organiser/events/${eventId}/manage`">Event tools</RouterLink></div></div>
 
   <div v-if="loading" class="text-center my-5">
     <div class="spinner-border text-primary" role="status">
@@ -377,7 +379,7 @@ async function demoExpireOffers() {
   </div>
 
   <template v-else>
-    <header class="rsvp-heading mt-2 mb-4"><div><p class="rsvp-kicker mb-1">Guest list</p><h1 class="mb-1">{{ event.title }}</h1>
+    <header v-if="!embedded" class="rsvp-heading mt-2 mb-4"><div><p class="rsvp-kicker mb-1">Guest list</p><h1 class="mb-1">{{ event.title }}</h1>
     <p class="rsvp-event-meta mb-0"><span>{{ formatEventTime(event) }}</span><span>{{ event.venue.name }}</span></p></div><span class="guestlist-stamp" aria-hidden="true">✳</span></header>
 
     <section class="guest-summary mb-4" aria-label="RSVP status summary">

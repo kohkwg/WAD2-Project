@@ -45,7 +45,9 @@ not persist. These are dated observations, not permanent database invariants.
   conflicted and were combined: `NavBar.vue` and `DiscoverView.vue` (dev's reformatted files with
   the new names), `DiscoveryEventRow.vue` and `DiscoveryDayRow.vue` (Aishani's cards),
   `CommunityView.vue` (dev's Friends sidebar layout with the slim header),
-  `saved-events.spec.js`, and this file (dev's version).
+  `saved-events.spec.js`, and this file (dev's version). A second merge then brought in `dev`
+  `92ebaf8`: Vivienne's `AccountDashboard.vue` and Manage event's embedded guest list, with the
+  new names, and her ★ in the Plans header.
 - **Names:** Plans and Organise in the sidebar and its tooltips, the phone tab bar, router titles,
   headings, back links (ticket, check-in, create, manage, RSVP list) and the sentences in
   `RsvpView`, `LandingView`, `DeleteAccount`, `EventTeamPanel`, `OfferBanner` and Discover's Saved
