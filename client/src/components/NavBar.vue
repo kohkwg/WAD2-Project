@@ -340,7 +340,7 @@ function resetDemo() {
       </ul>
 
       <div v-if="USING_SUPABASE && hasSession" class="sidebar-account">
-        <RouterLink to="/profile" class="nav-profile" aria-label="Your profile">
+        <RouterLink to="/profile" class="nav-profile" data-label="Profile" aria-label="Your profile">
           <span class="nav-avatar" aria-hidden="true">
             <img v-if="userDino" class="nav-avatar-dino" :src="userDino.src" alt="" />{{ accountInitial }}
           </span>
@@ -1034,6 +1034,7 @@ function resetDemo() {
      The empty alt text (/ "") keeps it out of accessible names, so a label is not read twice */
   .sidebar-collapse::after,
   .is-collapsed .side-link::after,
+  .is-collapsed .sidebar-account .nav-profile::after,
   .is-collapsed .sidebar-sign-out::after {
     content: attr(data-label);
     content: attr(data-label) / '';
@@ -1056,6 +1057,7 @@ function resetDemo() {
   }
 
   .is-collapsed .side-link::after,
+  .is-collapsed .sidebar-account .nav-profile::after,
   .is-collapsed .sidebar-sign-out::after {
     z-index: 5;
   }
@@ -1064,6 +1066,8 @@ function resetDemo() {
   .sidebar-collapse:focus-visible::after,
   .is-collapsed .side-link:hover::after,
   .is-collapsed .side-link:focus-visible::after,
+  .is-collapsed .sidebar-account .nav-profile:hover::after,
+  .is-collapsed .sidebar-account .nav-profile:focus-visible::after,
   .is-collapsed .sidebar-sign-out:hover::after,
   .is-collapsed .sidebar-sign-out:focus-visible::after {
     opacity: 1;
@@ -1138,6 +1142,7 @@ function resetDemo() {
   }
 
   .is-collapsed .sidebar-account .nav-profile {
+    position: relative;
     justify-content: center;
     padding: 6px 0;
   }

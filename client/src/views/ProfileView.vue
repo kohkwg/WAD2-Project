@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute, onBeforeRouteLeave } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { USING_SUPABASE, changePassword } from '@/utils/api'
@@ -117,6 +117,24 @@ watch(username, (handle) => {
 function onUsernameInput() {
   usernameError.value = ''
   success.value = ''
+}
+// The picture popup: the avatar opens it, picking a dino only highlights it, and Save keeps it.
+const pictureDialog = ref(null)
+const draftDino = ref('') // the dino highlighted in the popup; only saved when Save is pressed
+function openPicture() {
+  dinoError.value = ''
+  draftDino.value = dino.value
+  pictureDialog.value?.showModal()
+}
+function closePicture() {
+  if (dinoSaving.value) return // no closing mid-save
+  pictureDialog.value?.close()
+}
+async function savePicture() {
+  if (dinoSaving.value || !draftDino.value) return
+  if (draftDino.value === dino.value) { pictureDialog.value?.close(); return } // nothing changed
+  await chooseDino(draftDino.value)
+  if (!dinoError.value) pictureDialog.value?.close() // on failure it stays open with the message
 }
 // Save the chosen dino. If saving fails, go back to the old one.
 async function chooseDino(id) {
@@ -390,6 +408,11 @@ function resetPasswordForm() {
 function togglePassword() {
   passwordOpen.value = !passwordOpen.value
   resetPasswordForm()
+  // The button that was clicked disappears or reappears, so keep keyboard focus somewhere sensible
+  nextTick(() => {
+    const target = passwordOpen.value ? document.querySelector('#password-fields input') : document.getElementById('change-password-btn')
+    target?.focus()
+  })
 }
 
 // Saves the new password
@@ -552,7 +575,7 @@ onBeforeUnmount(() => {
 
       <div class="profile-summary" :class="{ 'is-viewing': !editing }">
         <div class="profile-top">
-          <span class="profile-avatar" :class="{ 'has-dino': chosenDino }" aria-hidden="true"><img v-if="chosenDino" class="profile-avatar-dino" :src="chosenDino.src" alt="">{{ chosenDino ? '' : initial }}</span>
+          <button type="button" class="profile-avatar profile-avatar-btn" :class="{ 'has-dino': chosenDino }" aria-haspopup="dialog" aria-label="Change profile picture" @click="openPicture"><img v-if="chosenDino" class="profile-avatar-dino" :src="chosenDino.src" alt=""><template v-else>{{ initial }}</template><span class="profile-avatar-edit" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg></span></button>
 
           <div class="profile-id">
             <h2 class="profile-name">{{ displayName || 'No name yet' }}</h2>
@@ -712,17 +735,30 @@ onBeforeUnmount(() => {
         </template>
       </div>
 
-      <div class="profile-block">
+      <div v-if="editing" class="profile-actions">
+        <button type="submit" class="btn btn-primary" :disabled="saving">
+          <span v-if="saving" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+          {{ saving ? 'Saving…' : 'Save' }}
+        </button>
+        <button type="button" class="btn btn-outline-secondary" :disabled="saving" @click="cancelEdit">
+          Cancel
+        </button>
+      </div>
+
+      <div class="profile-block profile-block--last">
         <div class="profile-password">
           <h3 class="profile-block-title">Password</h3>
+          <!-- Hidden while the form is open: its own Cancel button is beside "Save password" -->
           <button
+            v-if="!passwordOpen"
+            id="change-password-btn"
             type="button"
             class="btn btn-outline-secondary btn-sm"
-            :aria-expanded="passwordOpen"
+            aria-expanded="false"
             aria-controls="password-fields"
             @click="togglePassword"
           >
-            {{ passwordOpen ? 'Cancel' : 'Change password' }}
+            Change password
           </button>
         </div>
 
@@ -793,36 +829,37 @@ onBeforeUnmount(() => {
             {{ passwordBanner }}
           </div>
 
-          <button
-            type="button"
-            class="btn btn-primary mt-3"
-            :disabled="passwordBusy"
-            @click="savePassword"
-          >
-            <span v-if="passwordBusy" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-            Save password
-          </button>
+          <div class="password-actions">
+            <button
+              type="button"
+              class="btn btn-primary"
+              :disabled="passwordBusy"
+              @click="savePassword"
+            >
+              <span v-if="passwordBusy" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+              Save password
+            </button>
+            <button type="button" class="btn btn-outline-secondary" :disabled="passwordBusy" @click="togglePassword">
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
 
-      <section class="profile-section" aria-labelledby="dino-heading">
-        <h2 id="dino-heading" class="profile-section-title">Profile Picture</h2>
-        <p class="profile-help">Your mascot shows next to your name. Change it any time.</p>
-        <DinoPicker :model-value="dino" :disabled="dinoSaving" @update:model-value="chooseDino" />
-        <p v-if="dinoError" v-dismissible class="text-danger mt-2 mb-0" role="alert">
-          {{ dinoError }}
-        </p>
-      </section>
 
-      <div v-if="editing" class="profile-actions">
-        <button type="submit" class="btn btn-primary" :disabled="saving">
-          <span v-if="saving" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-          {{ saving ? 'Saving…' : 'Save' }}
-        </button>
-        <button type="button" class="btn btn-outline-secondary" :disabled="saving" @click="cancelEdit">
-          Cancel
-        </button>
-      </div>
+      <dialog ref="pictureDialog" class="picture-dialog" aria-labelledby="picture-dialog-title" @cancel="dinoSaving && $event.preventDefault()" @click.self="closePicture">
+        <h2 id="picture-dialog-title" class="picture-dialog-title">Profile Picture</h2>
+        <p class="profile-help">Pick a dino, then press Save. It shows next to your name, and you can change it any time.</p>
+        <DinoPicker :model-value="draftDino" :disabled="dinoSaving" @update:model-value="draftDino = $event" />
+        <p v-if="dinoError" v-dismissible class="text-danger mt-2 mb-0" role="alert">{{ dinoError }}</p>
+        <div class="picture-dialog-actions">
+          <button type="button" class="btn btn-primary" :disabled="dinoSaving || !draftDino" @click="savePicture">
+            <span v-if="dinoSaving" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            {{ dinoSaving ? 'Saving…' : 'Save' }}
+          </button>
+          <button type="button" class="btn btn-outline-secondary" :disabled="dinoSaving" @click="closePicture">Cancel</button>
+        </div>
+      </dialog>
     </form>
 
     <div
@@ -936,6 +973,37 @@ onBeforeUnmount(() => {
 /* The picked dino shows whole, with no circle or background behind it */
 .profile-avatar.has-dino { width: 72px; height: 72px; background: none; }
 .profile-avatar-dino { width: 100%; height: 100%; object-fit: contain; }
+/* The avatar is a button that opens the picture popup */
+.profile-avatar-btn { position: relative; padding: 0; border: 0; cursor: pointer; transition: transform var(--bookedz-motion-fast) var(--bookedz-ease); }
+.profile-avatar-btn:hover { transform: scale(1.05); }
+.profile-avatar-btn:focus-visible { outline: 3px solid var(--bookedz-focus); outline-offset: 3px; }
+.profile-avatar-edit { position: absolute; right: -4px; bottom: -4px; display: grid; place-items: center; width: 26px; height: 26px; border: 2px solid var(--bookedz-ink); border-radius: 50%; background: var(--bookedz-surface); color: var(--bookedz-ink); }
+.profile-avatar-edit svg { width: 14px; height: 14px; }
+/* Wide enough for six dinos a row, and never scrolls: icons shrink on narrow or short screens instead */
+.picture-dialog { width: min(94vw, 50rem); max-height: none; padding: clamp(1rem, 3dvh, 1.75rem); border: 1px solid var(--bookedz-border); border-radius: var(--bookedz-radius-card); background: var(--bookedz-surface); color: var(--bookedz-ink); box-shadow: var(--bookedz-shadow); overflow: visible; }
+.picture-dialog :deep(.dino-picker) { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+@media (max-width: 575.98px), (max-height: 760px) {
+  .picture-dialog :deep(.dino-picker) { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+  .picture-dialog :deep(.dino-option) { padding: 6px 4px 5px; border-radius: 14px; font-size: 11px; }
+  .picture-dialog :deep(.dino-option img) { width: 52px; height: 52px; }
+  .picture-dialog .profile-help { margin-bottom: .5rem; }
+  .picture-dialog-actions { margin-top: .9rem; }
+}
+@media (max-height: 640px) {
+  .picture-dialog { padding: .85rem; }
+  .picture-dialog :deep(.dino-picker) { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 6px; }
+  .picture-dialog :deep(.dino-option) { padding: 4px 2px 3px; font-size: 10px; }
+  .picture-dialog :deep(.dino-option img) { width: 40px; height: 40px; }
+  .picture-dialog-title { font-size: 1.15rem; margin-bottom: .25rem; }
+  .picture-dialog .profile-help { display: none; }
+  .picture-dialog-actions { margin-top: .65rem; }
+  .picture-dialog .btn { min-height: 40px; }
+}
+.picture-dialog::backdrop { background: rgb(31 41 55 / 45%); }
+.picture-dialog-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+.picture-dialog-title { margin: 0 0 .5rem; font-family: var(--bookedz-heading); font-size: 1.35rem; font-weight: 650; }
+.picture-dialog .btn { min-height: 44px; }
+@media (prefers-reduced-motion: reduce) { .profile-avatar-btn { transition: none; } .profile-avatar-btn:hover { transform: none; } }
 
 .profile-id {
   flex: 1;
@@ -965,6 +1033,10 @@ onBeforeUnmount(() => {
   padding: 1.1rem 0;
   border-top: 1px solid var(--bookedz-border);
 }
+/* The last block ends the card, so its padding would add to the card's own and make the bottom roomier than the top */
+.profile-block--last {
+  padding-bottom: 0;
+}
 .profile-block-title {
   margin: 0 0 0.5rem;
   font-family: var(--bookedz-heading);
@@ -977,12 +1049,65 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 1rem;
 }
+.password-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.password-actions .btn {
+  min-height: 44px;
+}
 .password-fields {
   max-width: 28rem;
   margin-top: 1rem;
 }
 .profile-password .profile-block-title {
   margin: 0;
+}
+/* The profile buttons (Edit profile, Save, Change/Save password) use green instead of the site's orange */
+.password-fields .btn-primary,
+.picture-dialog .btn-primary,
+.profile-password .btn,
+.profile-actions .btn-primary,
+.profile-edit {
+  --bs-btn-bg: var(--bookedz-teal-ink);
+  --bs-btn-border-color: var(--bookedz-teal-ink);
+  --bs-btn-color: #fff;
+  --bs-btn-hover-bg: color-mix(in srgb, var(--bookedz-teal-ink) 85%, #000);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--bookedz-teal-ink) 85%, #000);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-bg: color-mix(in srgb, var(--bookedz-teal-ink) 80%, #000);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--bookedz-teal-ink) 80%, #000);
+  --bs-btn-active-color: #fff;
+  --bs-btn-disabled-bg: var(--bookedz-teal-ink);
+  --bs-btn-disabled-border-color: var(--bookedz-teal-ink);
+  --bs-btn-disabled-color: #fff;
+  font-weight: 700;
+}
+/* Dark theme: a light mint with dark text instead */
+:global(:root[data-theme="dark"]) .password-fields .btn-primary,
+:global(:root[data-theme="dark"]) .picture-dialog .btn-primary,
+:global(:root[data-theme="dark"]) .profile-password .btn,
+:global(:root[data-theme="dark"]) .profile-actions .btn-primary,
+:global(:root[data-theme="dark"]) .profile-edit {
+  --bs-btn-bg: var(--bookedz-teal);
+  --bs-btn-border-color: var(--bookedz-teal);
+  --bs-btn-color: var(--bookedz-on-fill);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--bookedz-teal) 85%, #fff);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--bookedz-teal) 85%, #fff);
+  --bs-btn-hover-color: var(--bookedz-on-fill);
+  --bs-btn-active-bg: color-mix(in srgb, var(--bookedz-teal) 75%, #fff);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--bookedz-teal) 75%, #fff);
+  --bs-btn-active-color: var(--bookedz-on-fill);
+  --bs-btn-disabled-bg: var(--bookedz-teal);
+  --bs-btn-disabled-border-color: var(--bookedz-teal);
+  --bs-btn-disabled-color: var(--bookedz-on-fill);
+}
+/* The account pages give primary buttons an orange outline in dark mode; keep this one green */
+/* ...and keep their dark-mode outline green rather than the orange one the account pages add */
+:global(:root[data-theme="dark"]) .account-page.account-page :is(.password-fields, .profile-actions, .picture-dialog) .btn-primary {
+  border-color: var(--bookedz-teal);
 }
 
 /* Messages */
@@ -1113,6 +1238,7 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   gap: 0.75rem;
   padding-top: 1.5rem;
+  margin-bottom: 1.5rem;
   border-top: 1px solid var(--bookedz-border);
 }
 .profile-unavailable,
