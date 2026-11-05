@@ -69,7 +69,7 @@ watch(eventId, async (id) => {
   try {
     const loadedEvent = await getEvent(id)
     if (ticket !== loadRequest) return
-    // Go together groups have their own page
+    // go together groups have their own page
     if (isGroup(loadedEvent)) { router.replace(`/groups/${loadedEvent.id}`); return }
     event.value = loadedEvent
     for (const question of loadedEvent.questions) answers.value[question.id] = blankAnswer(question.type)
@@ -91,8 +91,8 @@ watch(eventId, async (id) => {
 }, { immediate: true })
 onBeforeUnmount(() => { loadRequest++ })
 
-// A hidden venue appears at its reveal time without a reload: release it (the database job runs
-// only once a minute), then read the event again. Only for reveals within the next day.
+// a hidden venue appears at its reveal time without a reload: release it (the database job runs
+// only once a minute), then read the event again. only for reveals within the next day.
 let revealTimer
 watch(() => [event.value?.id, event.value?.venuePending, event.value?.venueRevealAt], ([id, pending, revealAt]) => {
   clearTimeout(revealTimer)
@@ -108,7 +108,7 @@ watch(() => [event.value?.id, event.value?.venuePending, event.value?.venueRevea
 })
 onBeforeUnmount(() => clearTimeout(revealTimer))
 
-// Public-feed refresh updates shared event details without resetting RSVP drafts.
+// public-feed refresh updates shared event details without resetting RSVP drafts.
 function applyPublicEvent(latest) {
   if (latest.id !== eventId.value || event.value?.id !== latest.id) return
   event.value = latest
@@ -117,12 +117,12 @@ function applyPublicEvent(latest) {
   }
 }
 
-// If they already RSVP'd to this event, show that instead of the form
+// if they already RSVP'd to this event, show that instead of the form
 const existingRsvp = computed(() =>
   myRsvps.value.find((r) => r.eventId === eventId.value && ACTIVE_STATUSES.includes(r.status)),
 )
 
-// Events they've joined that overlap this one
+// events they've joined that overlap this one
 const clashes = computed(() => {
   if (!event.value) return []
   return myRsvps.value
@@ -143,12 +143,12 @@ const formErrors = computed(() => {
   return errors
 })
 
-// The button names the action the press will take, matching the Discover list.
-// Unknown spots (no limit, or a capacity the organiser hides) are not full
+// the button names the action the press will take, matching the discover list.
+// unknown spots (no limit, or a capacity the organiser hides) are not full
 const isFull = computed(() => isEventFull(event.value))
 const submitLabel = computed(() => event.value.requiresApproval ? 'Request a spot' : isFull.value ? 'Join waitlist' : 'RSVP')
 
-// Tell them what will happen BEFORE they press the button
+// tell them what will happen before they press the button
 const whatHappensNext = computed(() => {
   if (event.value.requiresApproval)
     return 'The organiser reviews each RSVP. You will see the result in Plans.'
@@ -158,18 +158,18 @@ const whatHappensNext = computed(() => {
   if (!isFull.value) return 'Spots are still open, so you will be confirmed straight away.'
   return 'This event is full, so you will join the waitlist. If a spot opens up, you get 24 hours to take it.'
 })
-// The online link panel asks again when the viewer's RSVP changes
+// the online link panel asks again when the viewer's RSVP changes
 const rsvpKey = computed(() => (result.value || existingRsvp.value)?.status || '')
 
-// Phones show the public details first, so a shortcut near the top jumps down to the RSVP panel
+// phones show the public details first, so a shortcut near the top jumps down to the RSVP panel
 const jumpLabel = computed(() => {
   if (!signedIn.value) return 'Sign in to RSVP'
   if (result.value || existingRsvp.value) return 'See your RSVP'
   return 'Go to RSVP'
 })
 
-// Phones: a bar pinned above the bottom tabs keeps the main action in reach while reading
-// the details. It hides once the RSVP panel itself is on screen.
+// phones: a bar pinned above the bottom tabs keeps the main action in reach while reading
+// the details. it hides once the RSVP panel itself is on screen.
 const panelVisible = ref(false)
 let panelObserver = null
 onMounted(() => {
@@ -217,7 +217,7 @@ async function submitRsvp() {
       result.value = savedRsvp
       toast(savedRsvp?.status === 'confirmed' ? "You're in!" : savedRsvp?.status === 'pending' ? 'Request sent to the organiser' : 'Added to the waitlist')
     }
-    // Refresh "spots left" / waitlist count; a failed refresh must not hide the saved RSVP
+    // refresh "spots left" / waitlist count; a failed refresh must not hide the saved RSVP
     try {
       const refreshed = await getEvent(eventId.value)
       if (ticket === loadRequest) event.value = refreshed
@@ -231,7 +231,7 @@ async function submitRsvp() {
 </script>
 
 <template>
-  <!-- Plans from the retired planner (live rows still stored as kind 'hangout'): point people to Community -->
+  <!-- plans from the retired planner (live rows still stored as kind 'hangout'): point people to community -->
   <div v-if="!loading && event?.kind === 'hangout'" class="container py-5 text-center">
     <h1 class="page-title">This plan has moved</h1>
     <p class="text-meta">Plans with friends now happen in Go together groups.</p>
@@ -240,7 +240,7 @@ async function submitRsvp() {
   <div v-else ref="pageMotion" class="public-event-page">
   <div class="rsvp-intro">
     <BackLink to="/events" class="rsvp-back">&larr; Back</BackLink>
-    <!-- Tablets only: the RSVP panel sits below the details; phones get the pinned bar instead -->
+    <!-- tablets only: the RSVP panel sits below the details; phones get the pinned bar instead -->
     <a v-if="!loading && event && !event.isOnTeam" href="#rsvp" class="rsvp-jump d-none d-md-inline-flex d-lg-none" @click.prevent="jumpToRsvp">
       {{ jumpLabel }}<span aria-hidden="true">&nbsp;↓</span>
     </a>
@@ -252,25 +252,25 @@ async function submitRsvp() {
   </div>
 
   <div class="row g-4 mt-1 participant-rsvp">
-    <!-- Public context and updates come first in both DOM and mobile reading order. -->
+    <!-- public context and updates come first in both DOM and mobile reading order. -->
     <div class="col-lg-8 order-1 event-public-details">
       <EventSummary v-if="event" :event="event" heading-tag="h1">
-        <!-- Online events: one card in the "Where" spot, green with the link once this viewer can open it -->
+        <!-- online events: one card in the "where" spot, green with the link once this viewer can open it -->
         <template #online-venue>
           <OnlineEventLink :event-id="eventId" :is-organiser="Boolean(event.isMine)" :refresh-key="rsvpKey" />
         </template>
-        <!-- Folded away by default to keep the page short; the map only loads once opened -->
+        <!-- folded away by default to keep the page short; the map only loads once opened -->
         <div v-if="!event.isOnline && event.venue?.lat" class="event-map-toggle my-3">
           <ShowHideButton v-model="mapOpen" controls="event-map" label="map" />
           <div id="event-map">
             <VenueMap v-if="mapOpen" :lat="event.venue.lat" :lng="event.venue.lng" class="mt-3" />
           </div>
         </div>
-        <!-- Places and spots left are already in the facts above; the waitlist size is the extra detail -->
+        <!-- places and spots left are already in the facts above; the waitlist size is the extra detail -->
         <p v-if="isFull" class="waitlist-note">
           Full · {{ event.waitlistCount }} on the waitlist
         </p>
-        <!-- Feature 6: read-only floor plan; renders nothing when the event has none -->
+        <!-- feature 6: read-only floor plan; renders nothing when the event has none -->
         <template #below>
           <FloorPlan v-if="USING_SUPABASE" :key="eventId" :event-id="eventId" read-only />
         </template>
@@ -291,7 +291,7 @@ async function submitRsvp() {
         <p>Sign in to RSVP. Event details and announcements are available beside this form.</p>
         <RouterLink :to="{ path: '/login', query: { redirect: route.fullPath } }" class="btn event-cta align-self-start">Sign in to RSVP</RouterLink>
       </div>
-      <!-- After submitting -->
+      <!-- after submitting -->
       <div v-else-if="result" class="card card-body shadow-sm rsvp-state rsvp-state--success" role="status" aria-live="polite">
         <span class="state-mark" aria-hidden="true">✓</span>
         <h2 class="h4">RSVP sent</h2>
@@ -308,7 +308,7 @@ async function submitRsvp() {
         </div>
       </div>
 
-      <!-- Already RSVP'd before -->
+      <!-- already RSVP'd before -->
       <div v-else-if="existingRsvp" class="card card-body shadow-sm rsvp-state">
         <span class="state-mark" aria-hidden="true">✓</span>
         <h2 class="h4">You already RSVP'd</h2>
@@ -318,8 +318,8 @@ async function submitRsvp() {
         >
       </div>
 
-      <!-- The RSVP form -->
-      <!-- Team members can't RSVP; the event's organiser gets the next useful step instead of a dead end -->
+      <!-- the RSVP form -->
+      <!-- team members can't RSVP; the event's organiser gets the next useful step instead of a dead end -->
       <div v-else-if="event.isOnTeam" class="card card-body shadow-sm rsvp-state rsvp-state--team" role="status">
         <span class="state-mark" aria-hidden="true">✳</span>
         <h2 class="h4">You're on this event's team</h2>
@@ -357,7 +357,7 @@ async function submitRsvp() {
                   {{ question.text }}
                   <span v-if="question.required" class="required-mark">(required)</span>
                 </legend>
-                <!-- Native radios inside 44px choice pills: the whole pill is an easy touch target -->
+                <!-- native radios inside 44px choice pills: the whole pill is an easy touch target -->
                 <div class="choice-group">
                   <div class="form-check choice-option">
                     <input class="form-check-input" type="radio" :name="question.id" :id="question.id + '-yes'" value="yes" v-model="answers[question.id]" :required="question.required" :aria-invalid="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? 'true' : undefined" :aria-describedby="triedSubmit && question.required && !String(answers[question.id] || '').trim() ? question.id + '-error' : undefined" />
@@ -437,7 +437,7 @@ async function submitRsvp() {
         </button>
       </form>
       </template>
-      <!-- Announcements sit right under the RSVP, then Go together groups. Groups meet at the venue: none for online events, or while the venue is hidden -->
+      <!-- announcements sit right under the RSVP, then go together groups. groups meet at the venue: none for online events, or while the venue is hidden -->
       <div class="rsvp-extras">
         <AnnouncementFeed :event-id="eventId" :load-event="getEvent" @refreshed="applyPublicEvent" />
         <EventGroups v-if="event && !event.isOnTeam && !event.isOnline && !event.venueRevealAt" :event-id="eventId" />
@@ -460,12 +460,12 @@ async function submitRsvp() {
 .rsvp-sticky-note { color: var(--bookedz-muted); font-size: var(--text-caption); }
 .rsvp-sticky .btn { min-height: 44px; }
 .rsvp-jump:hover { color: var(--bookedz-ink); background: var(--bookedz-glass-hover); }
-/* The panel is only focused as the shortcut's target; its own controls keep their focus rings */
+/* the panel is only focused as the shortcut's target; its own controls keep their focus rings */
 .participant-rsvp > .rsvp-action-panel:focus, .participant-rsvp > .rsvp-action-panel:focus-visible { outline: none; }
 .waitlist-note { margin: 1rem 0 0; padding-top: 1rem; border-top: 1px solid var(--bookedz-border); color: var(--bookedz-ink); font-weight: 650; }
 .rsvp-state--team { background: linear-gradient(145deg, var(--bookedz-surface), color-mix(in srgb, var(--bookedz-yellow) 30%, var(--bookedz-surface))); }
 .required-mark { color: var(--bookedz-danger); font-size: .85em; font-weight: 600; }
-/* Bootstrap's validation red is 4.46:1 on the light card; the theme's danger token passes in both themes */
+/* bootstrap's validation red is 4.46:1 on the light card; the theme's danger token passes in both themes */
 .rsvp-form .invalid-feedback { color: var(--bookedz-danger); }
 .choice-group { display: flex; flex-wrap: wrap; gap: .5rem; }
 .choice-option { position: relative; display: inline-flex; align-items: center; gap: .55rem; min-height: 44px; margin: 0; padding: 0 1.1rem 0 .9rem; border: 1px solid var(--bookedz-control-border); border-radius: 12px; background: var(--bookedz-surface); transition: border-color var(--bookedz-motion-fast) ease, background-color var(--bookedz-motion-fast) ease; }
@@ -477,15 +477,13 @@ async function submitRsvp() {
 .choice-option:has(.form-check-input[aria-invalid="true"]) { border-color: var(--bookedz-danger); }
 .rsvp-back { display: inline-flex; align-items: center; min-height: 44px; width: fit-content; color: var(--bookedz-ink); font-weight: 650; text-decoration-color: var(--bookedz-border); text-underline-offset: 4px; transition: transform var(--bookedz-motion-fast) ease; }
 .rsvp-back:hover { transform: translateX(-3px); }
-.rsvp-kicker { margin: .8rem 0 0; color: var(--bookedz-primary-dark); font-size: .82rem; font-weight: 700; }
-.rsvp-lede { margin: 0; font: 600 clamp(1.45rem, 2.5vw, 2rem)/1.15 var(--bookedz-heading); letter-spacing: -.035em; color: var(--bookedz-ink); }
 .participant-rsvp { --rsvp-panel: var(--bookedz-surface); align-items: start; }
 .participant-rsvp > [class*="col-"] { min-width: 0; }
 .participant-rsvp :deep(.card) { overflow: hidden; border: 1px solid var(--bookedz-border); border-radius: var(--bookedz-radius-card, 24px); background: var(--rsvp-panel); box-shadow: var(--bookedz-card-shadow); }
 .participant-rsvp :deep(.card-body) { padding: clamp(1.1rem, 3vw, 1.8rem); }
 .rsvp-form { position: relative; }
 .form-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-bottom: 1.15rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--bookedz-border); }
-/* Decorative only: a plain icon, not a filled tile that looks pressable */
+/* decorative only: a plain icon, not a filled tile that looks pressable */
 .form-spark { flex: 0 0 auto; color: var(--bookedz-primary-dark); }
 .rsvp-state { position: relative; padding-top: 2rem !important; }
 .rsvp-state--signin { background: linear-gradient(145deg, var(--bookedz-surface), var(--bookedz-mint)); }
@@ -501,6 +499,6 @@ async function submitRsvp() {
 .participant-rsvp :deep(:focus-visible) { outline: 3px solid var(--bookedz-primary-dark); outline-offset: 3px; }
 @keyframes confirmation-arrive { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (max-width: 991.98px) { .rsvp-intro { margin-bottom: .25rem; } }
-@media (max-width: 575px) { .participant-rsvp { --bs-gutter-x: 1rem; } .rsvp-lede { max-width: 18ch; } .rsvp-state .d-flex { flex-direction: column; align-items: stretch; } .rsvp-state .btn { width: 100%; } }
+@media (max-width: 575px) { .participant-rsvp { --bs-gutter-x: 1rem; } .rsvp-state .d-flex { flex-direction: column; align-items: stretch; } .rsvp-state .btn { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .rsvp-back, .rsvp-state--success, .rsvp-jump, .choice-option { animation: none; transition: none; } }
 </style>
