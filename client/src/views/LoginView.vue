@@ -228,7 +228,7 @@ async function submit() {
           <div v-if="mode === 'signin' && secondsLeft > 0" class="alert alert-danger" role="alert">Too many wrong attempts. Please wait {{ secondsLeft }} second{{ secondsLeft === 1 ? '' : 's' }} before trying again.</div>
           <div v-else-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
           <!-- Shown after sign-up: tells them to check their email for the confirmation link -->
-          <div v-if="infoMessage" class="alert alert-success">{{ infoMessage }}</div>
+          <div v-dismissible v-if="infoMessage" class="alert alert-success">{{ infoMessage }}</div>
 
           <!-- Disabled while loading; label changes with the mode -->
           <button type="submit" class="btn btn-primary w-100" :disabled="loading || (mode === 'signin' && secondsLeft > 0)">

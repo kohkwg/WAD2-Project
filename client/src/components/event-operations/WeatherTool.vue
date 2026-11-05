@@ -52,10 +52,10 @@ function cancelSwitch() { confirming.value = false; emit('cancel-action') }
           </div>
         </fieldset>
       </form>
-      <p v-if="areasError" class="text-danger mt-2 mb-0" role="alert">{{ areasError }} <button type="button" class="btn btn-sm btn-outline-danger" :disabled="loading" @click="emit('refresh')">Retry areas</button></p>
+      <p v-dismissible v-if="areasError" class="text-danger mt-2 mb-0" role="alert">{{ areasError }} <button type="button" class="btn btn-sm btn-outline-danger" :disabled="loading" @click="emit('refresh')">Retry areas</button></p>
     </div>
     <p v-if="loading" role="status">Loading the latest forecast…</p>
-    <div v-if="error" class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-sm btn-outline-danger" :disabled="loading" @click="emit('refresh')">Retry weather</button></div>
+    <div v-dismissible v-if="error" class="alert alert-danger" role="alert">{{ error }} <button type="button" class="btn btn-sm btn-outline-danger" :disabled="loading" @click="emit('refresh')">Retry weather</button></div>
     <div class="weather-grid">
       <div v-if="forecast" class="workspace-panel">
         <p class="text-secondary small mb-2">Two-hour forecast · data.gov.sg</p>
@@ -68,7 +68,7 @@ function cancelSwitch() { confirming.value = false; emit('cancel-action') }
       <div class="workspace-panel">
         <h3 class="section-heading">Active venue</h3>
         <p class="mb-1 fw-semibold">{{ event.venue?.name }}</p><p class="text-secondary venue-address">{{ event.venue?.address }}</p>
-        <p v-if="event.usingBackup" class="alert alert-success mb-0">The backup venue is active. Participants can see its address and the venue update.</p>
+        <p v-dismissible v-if="event.usingBackup" class="alert alert-success mb-0">The backup venue is active. Participants can see its address and the venue update.</p>
         <template v-else>
           <h3 class="section-heading mt-4">Backup venue</h3>
           <template v-if="event.backupVenue"><p class="mb-1 fw-semibold">{{ event.backupVenue.name }}</p><p class="text-secondary venue-address">{{ event.backupVenue.address }}</p></template>

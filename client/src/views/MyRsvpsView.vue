@@ -269,8 +269,8 @@ async function cancel(rsvpId) {
     </header>
     <SkeletonList v-if="loading" class="mt-4" :count="3" label="Loading your RSVPs…" />
     <template v-else>
-      <div v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success mt-3" role="status" aria-live="polite">{{ statusMessage }}</div>
-      <div v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger mt-3" role="alert">{{ errorMessage }}</div>
+      <div v-dismissible v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success mt-3" role="status" aria-live="polite">{{ statusMessage }}</div>
+      <div v-dismissible v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger mt-3" role="alert">{{ errorMessage }}</div>
       <!-- Waitlist offers expire, so they come before everything else. -->
       <div v-if="offers.length" class="offers-first stagger-in">
         <OfferBanner v-for="rsvp in offers" :key="rsvp.id" :rsvp="rsvp" :now="now" :busy="busyId !== null" @confirm="confirmOffer" @decline="declineOffer" />

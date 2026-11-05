@@ -84,10 +84,10 @@ async function onFileChosen(e) {
       </label>
     </div>
 
-    <div v-if="error" class="alert alert-danger mt-3 mb-0 small" role="alert">{{ error }}</div>
+    <div v-dismissible v-if="error" class="alert alert-danger mt-3 mb-0 small" role="alert">{{ error }}</div>
 
     <div v-if="importResult" class="mt-3">
-      <div class="alert alert-success py-2 small mb-2" role="status">
+      <div v-dismissible class="alert alert-success py-2 small mb-2" role="status">
         {{ importResult.matched }} checked in from the file.
         <template v-if="importResult.skipped">{{ importResult.skipped }} blank row(s) skipped.</template>
       </div>

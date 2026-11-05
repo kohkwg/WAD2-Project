@@ -65,7 +65,7 @@ async function submit() {
         <option v-for="event in events" :key="event.id" :value="event.id">{{ event.title }}</option>
       </select>
       <p v-if="chosen" class="group-chosen text-meta">{{ formatEventTime(chosen) }} · {{ chosen.venue?.name || 'Venue to be announced' }}</p>
-      <p v-if="errorFor('event')" id="group-event-error" class="group-error" role="alert">{{ errorFor('event') }}</p>
+      <p v-dismissible v-if="errorFor('event')" id="group-event-error" class="group-error" role="alert">{{ errorFor('event') }}</p>
 
       <label class="form-label mt-3" for="group-note">Note <span class="text-secondary fw-normal">(optional)</span></label>
       <textarea id="group-note" v-model="form.note" class="form-control" rows="3" :maxlength="NOTE_LIMIT" placeholder="First time going? Where to meet? Say hi." :aria-invalid="Boolean(errorFor('note')) || undefined"></textarea>
@@ -96,8 +96,8 @@ async function submit() {
           </label>
         </div>
       </fieldset>
-      <p v-if="errorFor('capacity')" class="group-error" role="alert">{{ errorFor('capacity') }}</p>
-      <p v-if="failure" class="group-error" role="alert">{{ failure }}</p>
+      <p v-dismissible v-if="errorFor('capacity')" class="group-error" role="alert">{{ errorFor('capacity') }}</p>
+      <p v-dismissible v-if="failure" class="group-error" role="alert">{{ failure }}</p>
 
       <footer class="group-form-foot">
         <button type="button" class="btn btn-outline-secondary" @click="emit('close')">Cancel</button>

@@ -97,11 +97,11 @@ function view(event) {
 
     <p v-if="strip && personalized" class="picks-note">Based on your interests and activity.</p>
 
-    <p v-if="actionError" class="alert alert-danger" role="alert">
+    <p v-dismissible v-if="actionError" class="alert alert-danger" role="alert">
       {{ actionError }}
     </p>
 
-    <div v-if="undoEvent" class="alert alert-info" role="status">
+    <div v-dismissible v-if="undoEvent" class="alert alert-info" role="status">
       Hidden {{ undoEvent.title }}.
       <button
         id="undo-recommendation-dismiss"
@@ -158,7 +158,7 @@ function view(event) {
       ></div>
     </div>
 
-    <div v-else-if="error" class="picks-message" role="status">
+    <div v-dismissible v-else-if="error" class="picks-message" role="status">
       <p>{{ error }}</p>
       <button type="button" class="see-all" @click="emit('retry')">
         Try again

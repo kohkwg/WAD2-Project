@@ -80,7 +80,7 @@ test('no feasible plan returns a diagnosis and explicit relaxations', () => {
   // 13:00–16:00 overlaps lunch by an hour, so one stop alone still needs the meal relaxed too.
   assert.equal(generatePlan([event('gig', '13:30', '15:00', ['music'])], input(['13:00', '16:00']), { minStops: 1 }).ok, false)
   assert.equal(generatePlan([event('gig', '13:30', '15:00', ['music'])], input(['13:00', '16:00']), { minStops: 1, mealWanted: false }).ok, true)
-  assert.match(generatePlan([], input(['13:00', '16:00'])).reason, /No Official Bookedz events/)
+  assert.match(generatePlan([], input(['13:00', '16:00'])).reason, /No Official Dino events/)
 })
 
 test('the pool widens to 12 km and excludes full events', () => {
