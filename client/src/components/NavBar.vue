@@ -64,7 +64,7 @@ const accountInitial = computed(() => {
 })
 // Highlight Discover when the user is on the Discover page.
 const isOnDiscover = computed(() => route.path === '/discover')
-// Highlight My events on organiser pages, except Create event.
+// Highlight Organise on organiser pages, except Create event.
 const isMyEvents = computed(() => {
   return route.path.startsWith('/organiser/events') && route.path !== '/organiser/events/new'
 })
@@ -252,25 +252,25 @@ function resetDemo() {
           <li>
             <RouterLink
               class="side-link"
-              data-label="My RSVPs"
+              data-label="Plans"
               active-class="active"
               to="/my-rsvps"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg>
-              <span class="side-label">My RSVPs</span>
+              <span class="side-label">Plans</span>
             </RouterLink>
           </li>
 
           <li>
             <RouterLink
               class="side-link"
-              data-label="My events"
+              data-label="Organise"
               active-class=""
               :class="{ active: isMyEvents }"
               to="/organiser/events"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>
-              <span class="side-label">My events</span>
+              <span class="side-label">Organise</span>
             </RouterLink>
           </li>
         </template>
@@ -448,7 +448,7 @@ function resetDemo() {
 
     <RouterLink class="bottom-tab" active-class="active" to="/my-rsvps">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.rsvps" /></svg>
-      My RSVPs
+      Plans
     </RouterLink>
 
     <RouterLink
@@ -458,7 +458,7 @@ function resetDemo() {
       to="/organiser/events"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="ICONS.events" /></svg>
-      My events
+      Organise
     </RouterLink>
 
     <RouterLink class="bottom-tab" active-class="active" to="/profile">

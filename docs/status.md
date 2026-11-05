@@ -38,6 +38,61 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 5 November — Discover map shows location only
+
+Choosing an event no longer opens a pop-up on the map. The pin is highlighted (orange halo,
+other pins at 55% opacity), the map centres on it at street level, and View event and RSVP (or
+the RSVP status) sit inside the chosen card, which grows to fit them; on phones the card also
+shows under the map. A cluster zooms in until its pins separate. Escape on the map clears the
+choice, and a polite live region announces the event shown.
+
+Evidence, headless Chromium on an owned demo server (5196): at 1280 and 1100px a clicked card
+shows View event and Join waitlist, the map has no pop-up or tooltip, the selected pin is
+centred (within 1px) with others dimmed, Escape clears it, and clicking a pin selects its card;
+at 375 and 768px the Map view shows the chosen card under the map with View event and RSVP, with
+no sideways scroll; no page errors. In the four specs whose map steps changed, the updated
+steps pass where they run (`discover-browse` pin-to-card case, `immersive-discovery`,
+`discovery-list-palette` up to its retired "All categories" heading); the other twelve failing
+cases stop earlier or later at retired features (desktop Map button, category directory,
+`.map-surface`, the theme drop-down), so the `redesign.spec.js` map step is not exercised. No
+full suite, build, commit or push.
+
+### 5 November — Plans and Organise, slim headers, Discover bookmark (`gregory`)
+
+- **Brought `dev` in without a commit:** 
+  fast-forwarded to `dev` `2460de7` and the uncommitted work was re-applied on top. Seven files
+  conflicted and were combined: `NavBar.vue` and `DiscoverView.vue` (dev's reformatted files with
+  the new names), `DiscoveryEventRow.vue` and `DiscoveryDayRow.vue` (Aishani's cards),
+  `CommunityView.vue` (dev's Friends sidebar layout with the slim header),
+  `saved-events.spec.js`, and this file (dev's version). A second merge then brought in `dev`
+  `92ebaf8`: Vivienne's `AccountDashboard.vue` and Manage event's embedded guest list, with the
+  new names, and her ★ in the Plans header. A third brought in Denzel's Discover map change
+  (`bfefd6e`); only the docs clashed, and both entries are kept.
+- **Names:** Plans and Organise in the sidebar and its tooltips, the phone tab bar, router titles,
+  headings, back links (ticket, check-in, create, manage, RSVP list) and the sentences in
+  `RsvpView`, `LandingView`, `DeleteAccount`, `EventTeamPanel`, `OfferBanner` and Discover's Saved
+  empty state. Ten e2e specs updated; loose "Plans" heading checks are now exact, because "All
+  upcoming plans" would also match.
+- **Slim headers** (`.smart-head` in `design-baseline.css`): Organise moves search, the tabs and
+  the pending-requests strip into the header and drops its count line; Plans moves the tabs and
+  Refresh into it; Go together folds its explainer into a remembered `<details>`
+  (`bookedz-go-together-intro`). At 1280px, content starts about 200px higher on Organise and
+  230px on Plans. Also removed a stray `:root[data-theme="dark"]` fragment that made Plans' tab
+  pills dark-mode only.
+- **Discover bookmark:** removed the "Save event" tooltip and its stylesheet rules, which had
+  pushed the button 12px down and left; on desktop cards it now sits centred on the right. Hover
+  or keyboard focus slides out a "Save" / "Saved" pill (no slide with reduced motion; no hover
+  state on touch). The Saved cards on Plans share it.
+- **Checks** on an owned demo server (5195; 5173 was in use): Discover, Plans, Organise, Go
+  together, the landing page and Manage RSVPs at 375 and 1280px in both themes loaded with one
+  `main`, no overflow and no console errors. After Denzel's change the bookmark still measures
+  centred on the 144px cards (50px above and below); in the chosen card (184px) it sits top-right
+  beside the title, above View event and RSVP. The pill stays inside the card in both themes.
+  `saved-events` passed 4/4 before the merge; the e2e run after the merge was stopped and is
+  unverified.
+- **Not done:** the soft dark-mode tokens are not restored; full suites, a production build, live
+  and real-device checks.
+
 ### 5 November — navbar cleanup merge repair
 
 Combined Aishani's formatted navbar and comments with dev's collapsed-by-default

@@ -262,9 +262,15 @@ async function cancel(rsvpId) {
 
 <template>
   <div class="my-rsvps-page">
-    <header class="rsvps-heading">
-      <div><h1 class="page-title">My RSVPs</h1><p>Your plans, saved favourites and good times to come.</p></div>
-      <span class="header-star" aria-hidden="true">★</span>
+    <!-- One slim header: title and refresh, then the section tabs -->
+    <header class="rsvps-heading smart-head">
+      <div class="smart-head-top">
+        <div class="smart-head-title"><span class="header-star smart-head-star" aria-hidden="true">★</span><h1 class="page-title">Plans</h1></div>
+        <div class="rsvps-toolbar"><p>Updates on its own every 30 seconds.</p><button type="button" class="btn btn-outline-secondary btn-sm" :disabled="loading || busyId !== null" @click="refreshRsvps">Refresh RSVPs</button></div>
+      </div>
+      <div class="rsvp-tabs" role="tablist" aria-label="Your events">
+        <button v-for="(tab, index) in tabs" :id="`tab-${tab.id}`" :key="tab.id" role="tab" type="button" :aria-selected="activeTab === tab.id" :aria-controls="`panel-${tab.id}`" :tabindex="activeTab === tab.id ? 0 : -1" @click="activeTab = tab.id" @keydown="moveTab($event, index)">{{ tab.label }} <span v-if="!loading">{{ tab.count }}</span></button>
+      </div>
     </header>
     <SkeletonList v-if="loading" class="mt-4" :count="3" label="Loading your RSVPs…" />
     <template v-else>
@@ -273,10 +279,6 @@ async function cancel(rsvpId) {
       <!-- Waitlist offers expire, so they come before everything else. -->
       <div v-if="offers.length" class="offers-first stagger-in">
         <OfferBanner v-for="rsvp in offers" :key="rsvp.id" :rsvp="rsvp" :now="now" :busy="busyId !== null" @confirm="confirmOffer" @decline="declineOffer" />
-      </div>
-      <div class="rsvps-toolbar"><p>Updates on its own every 30 seconds.</p><button type="button" class="btn btn-outline-secondary btn-sm" :disabled="busyId !== null" @click="refreshRsvps">Refresh RSVPs</button></div>
-      <div class="rsvp-tabs" role="tablist" aria-label="Your events">
-        <button v-for="(tab, index) in tabs" :id="`tab-${tab.id}`" :key="tab.id" role="tab" type="button" :aria-selected="activeTab === tab.id" :aria-controls="`panel-${tab.id}`" :tabindex="activeTab === tab.id ? 0 : -1" @click="activeTab = tab.id" @keydown="moveTab($event, index)">{{ tab.label }} <span>{{ tab.count }}</span></button>
       </div>
       <section v-for="tab in tabs" v-show="activeTab === tab.id" :id="`panel-${tab.id}`" :key="tab.id" role="tabpanel" :aria-labelledby="`tab-${tab.id}`" tabindex="0" class="rsvp-panel stagger-in">
         <template v-if="tab.id === 'saved'">

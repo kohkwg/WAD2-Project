@@ -114,15 +114,15 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 | Going to an event with others | **Go together** (the feature), **group**; **Start a group**, **Join group**, **Ask to join** (host approves), **Leave group**; who can see it: **Public** / **Friends only**; who can join: **Anyone can join** / **Host approves**; **Invite link**, **Accept invite**, **Delete group** | Jio, meetup, squad, hangout |
 | People you know | **Friends**; **Add friend**, **Friend requests**, **Find people** (by username) | Contacts, followers, friend groups |
 | A group's plan around the event | **before and after plan**; **when you're free** | hangout, itinerary |
+| The pages for your RSVPs and saves, and for events you host | **Plans** and **Organise** (one word each) | My RSVPs, My Events, Organize |
 
-- **Sentence case** for headings, labels, buttons and tags, except **My Events**, which is
-  capitalised to match My RSVPs. No all-caps eyebrows or labels.
+- **Sentence case** for headings, labels, buttons and tags. No all-caps eyebrows or labels.
 - **Dates and times** use the Singapore style everywhere: "Sat, 7 Nov, 10:00 am – 12:00 pm"
   (`formatEventTime`), "7 Nov" for timeline dates, "1 Nov, 1:39 pm" for timestamps.
   Day before month, 12-hour times with lower-case am/pm.
 - **Buttons name the result:** "Approve selected (3)", "Join waitlist", "Save changes".
   Toasts echo the action: "Saved", "Posted", "Spot confirmed". Saving an event says "Saved to your
-  list" with a **View saved** button to My RSVPs → Saved.
+  list" with a **View saved** button to Plans → Saved.
 - **Errors say what happened and what to do:** "The event has to end after it starts."
 - **Sample data stays out of real labels.** No "demo" or "test" in event titles shown to users.
 
@@ -133,9 +133,11 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 - **Chips** are pills, 44px tall, tinted by category, with a 2px edge; the selected chip turns
   orange with a small tilt and hard shadow, like the Go together filters. A scrolling chip row
   fades at whichever edge has more to show.
-- **Sort drop-downs** (My Events, Discover) open as a list attached to the button, the same
-  width and edge, with the chosen option in orange text and a tick. Browsers without
-  customisable selects show their native list.
+- **Page headers** (Organise, Plans, Go together) are one slim ticket card: a small star, the
+  title and the main button on one row, then the page's own controls in the same card.
+- **Bookmark:** an icon-only round button with no tooltip. Hover or keyboard focus slides out a
+  "Save" / "Saved" pill from behind the icon; touch screens skip it.
+- **Sort by** on Discover uses the browser's native list.
 - **Discover rows** are compact and equal height: thumbnail ("Show on map"), title,
   "time · spots · venue" on one line (cut off with "…", full text on hover and when
   selected). Clicking a row selects it; the RSVP button and extra details appear only on
@@ -161,7 +163,7 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
   bar on phones for signed-in and demo users. Personal links follow the session; Discover
   is public. The menu closes on route change or Escape. Below 992px the sidebar is a drawer
   opened from ☰ (phones also have the bottom tab bar). From 992px (Bootstrap lg, xl and xxl) it
-  **starts as a 76px icon rail** (Discover, Community, My RSVPs, My Events, Theme, account);
+  **starts as a 76px icon rail** (Discover, Community, Plans, Organise, Theme, account);
   each icon's name shows as a tooltip on hover or keyboard focus. The **Expand sidebar** button
   (a round chevron on the sidebar's right edge, on the divider line, labelled "Expand" /
   "Collapse" on hover or focus) opens the full 240px sidebar, which pushes the page over rather
@@ -182,7 +184,7 @@ form (with a "Browse events without signing in" link to Discover); `/login` link
 page and keep `?redirect=` so sign-in returns to where they were going. **Signed-in people**
 see an account summary: greeting and name, email, counts (going, all upcoming RSVPs, saved),
 a waitlist offer if one is open, their next confirmed plan, their interests, and links to
-Discover, My RSVPs and Community (plus Sign out in the live app). The demo account always
+Discover, Plans and Community (plus Sign out in the live app). The demo account always
 sees the summary, with a note that it is a sample account stored in this browser.
 
 **Signed-out motion (5 November):** `useLandingMotion.js` (GSAP, ScrollTrigger, SplitText,
@@ -210,8 +212,14 @@ open the map on phones and keep their filters.
 attribution. The map is framed like a card with its own + / − buttons. Single pins use
 their category colour; "Picked for you" events are orange stars; nearby events merge into a
 dark count bubble (with a small star if it contains a pick). Cluster labels name their
-events for screen readers and open a list. The "background couldn't load" warning only
-appears when no tiles loaded (OneMap has no tiles over the sea and Johor).
+events for screen readers; choosing a cluster zooms in until its pins separate (events at the
+very same venue choose the first). **The map only shows where an event is** (5 November):
+choosing a pin or a card highlights that pin (larger, with an orange halo, other pins dimmed),
+centres the map on it and zooms to street level (15, or closer if already zoomed in); there is
+no pop-up, and Escape clears the choice. The chosen card opens up in the list with its category,
+match and **View event** and **RSVP** (or your RSVP status) buttons; on phones that card also
+appears under the map in the Map view. The "background couldn't load" warning only appears when
+no tiles loaded (OneMap has no tiles over the sea and Johor).
 
 ### Event page (`/events/:id/rsvp`)
 Facts first (title, time, venue, spots), then the cover, description, map and
@@ -221,9 +229,10 @@ phones. On phones a bar pinned above the tab bar keeps the main action ("RSVP",
 screen. The panel explains what will happen before you press (confirmed now, waitlist
 with a 24-hour offer, or organiser approval). Addresses from OneMap are shown in normal case.
 
-### My RSVPs
-Waitlist offers come first, with a live countdown that shows seconds in the last hour.
-Then the totals, then tabs (Upcoming, Saved, Past, Cancelled); `?tab=saved` (and the other tab ids)
+### Plans (`/my-rsvps`)
+The slim header holds the title, Refresh and the tabs (Upcoming, Saved, Past, Cancelled).
+Waitlist offers come first under it, with a live countdown that shows seconds in the last hour.
+`?tab=saved` (and the other tab ids)
 opens a tab directly. Updates every 30 seconds and on focus; the Refresh button stays as a fallback.
 Saved cards carry one badge (your RSVP, then Full or 5 or fewer spots, then "Starts tomorrow" /
 "Starts in 3 days") and one main action (RSVP, Join waitlist, Review offer, View your RSVP); the
@@ -233,7 +242,8 @@ signed-in visitors with a save get a **Saved** chip (with a count) at the start 
 ### Community: Go together (`/community`)
 Community is where people find others to go to events with. **Official events live in
 Discover; groups live in Community**, and neither appears in the other's lists (Discover
-and My Events exclude groups).
+and Organise exclude groups). The slim header holds the title and **Start a group**; "How Go
+together works" is open on a first visit and stays folded once closed.
 
 - **A group** is tied to one official event: the host's note, the event card (title, time,
   venue, category tint), who is going (avatars), spots left (2 to 8 including the host) and
@@ -278,8 +288,9 @@ to `/community`). A four-step studio
 whole hour for two hours; moving the start keeps the length, and an end before the start is
 flagged beside the field. Back is hidden on the first step. Tags match the Discover chips.
 
-### My Events and Manage RSVPs (organiser)
-My Events: date-led cards, search, tabs and sort, skeleton loading, animated grid.
+### Organise and Manage RSVPs (organiser)
+Organise: a slim header with search, the section tabs (with counts) and, when there are any,
+pending requests; then date-led cards, skeleton loading and an animated grid.
 Manage RSVPs: the spots bar (confirmed, offers out, available) with "N left"; tabs carry
 the other counts (no duplicate tiles). With more than one pending RSVP, checkboxes and
 **Approve selected** handle them in bulk. Reject sits apart from Approve and has a
@@ -309,8 +320,8 @@ ease-out for most movement and a stamp ease only for one-off feedback.
 - **Toggles and tabs:** the List | Map pill slides between options; the My RSVPs tab
   underline grows under the chosen tab; Manage RSVPs tab panels ease in when switched.
 - **Selection:** the chosen category chip pops once; the selected map pin bounces once and
-  stays enlarged; pins grow slightly on hover; the selected Discover row's details and RSVP
-  button ease down into place (`.reveal-down`).
+  stays enlarged with a halo while other pins dim; pins grow slightly on hover; the selected
+  Discover card's View event and RSVP buttons ease down into place (`.reveal-down`).
 - **Saving:** the bookmark icon pops when an event is saved; likes pop for the post you
   just liked.
 - **Attention:** a new waitlist offer glows once (`.attention-once`), then settles.
@@ -320,7 +331,7 @@ ease-out for most movement and a stamp ease only for one-off feedback.
 - **GSAP** handles scoped entrances and section reveals (on the signed-out landing also
   SplitText for the headline and DrawSVG for its squiggle); **Lenis** smooth scrolling only for
   desktop wheel input outside forms, maps, editors and dialogs; **Motion for Vue** springs
-  map previews, the landing hero card's shuffle and the landing dino hop.
+  the landing hero card's shuffle and the landing dino hop.
 - **Placement vs motion:** where GSAP animates an element, its resting tilt or offset uses the
   CSS `rotate`/`translate` properties (GSAP folds them in), hover effects use `translate`,
   `rotate` and `scale` rather than `transform`, and anything else animating it sits on a
@@ -384,6 +395,13 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **5 Nov 2026:** Discover's map only shows where an event is: no pop-up, the chosen pin is
+  highlighted and the map zooms to its area; View event and RSVP moved into the chosen card (Denzel).
+- **5 Nov 2026:** "My RSVPs" is now **Plans** and "My Events" **Organise** (Gregory). Organise,
+  Plans and Go together have slim headers that hold their own controls. The Discover bookmark's
+  tooltip is replaced by a Save / Saved pill on hover or focus. The soft dark mode, Discover
+  spacing and attached Sort by in the entry further down were dropped by a later `dev` merge and
+  are not in the code.
 - **5 Nov 2026:** The sidebar starts as the icon rail at every laptop and desktop width and only
   expands when someone asks; the choice is remembered (Denzel).
 - **5 Nov 2026:** The signed-out landing page moves (Denzel): word-by-word headline with a drawn

@@ -146,7 +146,7 @@ const submitLabel = computed(() => event.value.requiresApproval ? 'Request a spo
 // Tell them what will happen BEFORE they press the button
 const whatHappensNext = computed(() => {
   if (event.value.requiresApproval)
-    return 'The organiser reviews each RSVP. You will see the result in My RSVPs.'
+    return 'The organiser reviews each RSVP. You will see the result in Plans.'
   if (event.value.spotsLeft > 0) {
     return `${event.value.spotsLeft} spot${event.value.spotsLeft === 1 ? '' : 's'} left, so you will be confirmed straight away.`
   }
@@ -289,11 +289,11 @@ async function submitRsvp() {
         <p v-if="result.status === 'confirmed'">See you there. We've saved your spot.</p>
         <p v-else-if="result.status === 'pending'">The organiser will review your RSVP soon.</p>
         <p v-else>
-          You're on the waitlist. If a spot opens up you'll see a banner on My RSVPs and have 24
+          You're on the waitlist. If a spot opens up you'll see a banner on Plans and have 24
           hours to confirm.
         </p>
         <div class="d-flex gap-2">
-          <RouterLink to="/my-rsvps" class="btn event-cta">Go to My RSVPs</RouterLink>
+          <RouterLink to="/my-rsvps" class="btn event-cta">Go to Plans</RouterLink>
           <RouterLink to="/events" class="btn event-cta event-cta--secondary">Back to events</RouterLink>
         </div>
       </div>
@@ -304,7 +304,7 @@ async function submitRsvp() {
         <h2 class="h4">You already RSVP'd</h2>
         <p>Status: <RsvpStatusBadge :status="existingRsvp.status" /></p>
         <RouterLink to="/my-rsvps" class="btn event-cta align-self-start"
-          >Manage in My RSVPs</RouterLink
+          >Manage in Plans</RouterLink
         >
       </div>
 

@@ -9,6 +9,30 @@ the [README](../README.md#credits-and-licences). Original supplied material stay
 
 ## Decision log, newest first
 
+5 November 2026 — Denzel, Discover map shows location only: choosing an event (its card or its
+pin) no longer opens a pop-up card on the map. The map highlights the pin and zooms to the
+event's general area (street level), and the event's **View event** and **RSVP** buttons move
+inside its card in the list. Phones, where the Map view hides the list, show the chosen card
+under the map. This replaces the map preview card (and its cluster list) on Discover.
+
+5 November 2026 — Gregory, Plans and Organise, slim page headers and the Discover bookmark:
+"My RSVPs" is renamed **Plans** and "My Events" **Organise** in the sidebar, phone tab bar, page
+titles, headings, back links and the sentences that name those pages; the URLs stay `/my-rsvps`
+and `/organiser/events`. Organise uses British spelling to match "organiser". This replaces the
+same-day "My Events" exception to sentence case. Organise, Plans and Go together use a slim
+header: a small star, the title and the main button on one row, with the page's own controls in
+the same card (Organise: search, the section tabs carrying the counts, and pending requests;
+Plans: the tabs and Refresh; Go together: a "How Go together works" explainer that is open on a
+first visit and stays folded once closed). Go together's filters stay beside the feed they
+filter. On Discover, Gregory withdrew his own expanding card (RSVP and Save) in favour of
+Aishani's day cards; Denzel's entry above then put View event and RSVP in the chosen card. The
+bookmark's "Save event" tooltip is
+gone; hovering or focusing the bookmark slides out a "Save" / "Saved" pill instead. The soft
+dark-mode tokens, Discover row spacing and attached Sort by drop-down in the earlier 5 November
+entry were dropped by the 13:33 merge of `vivi` into `dev` and are not in the code; restoring
+them is undecided. Denzel (Organise, Manage event), Huxley (check-in, shared UI), Aishani
+(Discover) and Vivienne (shared stylesheet) should look over the changes in their areas.
+
 5 November 2026 — the user, venue to be announced or revealed later: organisers no longer have to
 choose a venue to create a physical event. Left blank, the event shows "Venue to be announced" and
 the venue can be added later in Manage event → Edit event; the rain plan is set up once there is a

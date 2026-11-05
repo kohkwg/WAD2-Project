@@ -250,7 +250,7 @@ const groupTitle = (g) => g.event?.title || 'Group'
         </ul>
         <p v-else class="text-meta m-0">{{ hostedDrafts ? `${hostedDrafts} ${hostedDrafts === 1 ? 'draft' : 'drafts'} waiting to be published.` : 'Run something of your own and manage it from here.' }}</p>
         <div class="dash-actions">
-          <RouterLink to="/organiser/events" class="btn btn-outline-secondary btn-sm">My Events</RouterLink>
+          <RouterLink to="/organiser/events" class="btn btn-outline-secondary btn-sm">Organise</RouterLink>
           <RouterLink v-if="USING_SUPABASE && !hostedUpcoming.length" to="/organiser/events/new" class="btn btn-primary btn-sm">Create an event</RouterLink>
         </div>
       </section>
@@ -271,7 +271,7 @@ const groupTitle = (g) => g.event?.title || 'Group'
 </template>
 
 <style scoped>
-/* Same festival-ticket look as My RSVPs and Community: ink outline, hard shadow, pill buttons */
+/* Same festival-ticket look as Plans and Community: ink outline, hard shadow, pill buttons */
 .dash { width: 100%; max-width: none; margin: 0 auto; display: grid; gap: 22px; --db-r: 24px; }
 .dash-hero { position: relative; overflow: hidden; display: flex; align-items: center; flex-wrap: wrap; gap: 18px; padding: clamp(1.4rem, 4vw, 2.2rem); border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 70%); box-shadow: 6px 6px 0 var(--bookedz-ink); }
 .dash-hero::after { content: '★'; position: absolute; right: 38%; top: 50%; translate: 0 -50%; rotate: 12deg; font-size: clamp(4rem, 11vw, 7rem); line-height: 1; color: var(--bookedz-fill); opacity: .35; pointer-events: none; }
