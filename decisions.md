@@ -1,5 +1,20 @@
 # Decisions
 
+5 November 2026 — Gregory, festival-ticket look on Discover and a softer dark mode: Discover now
+uses Vivienne's ticket look (2px edges, hard shadows, pill controls, an orange stamped category
+chip) in both themes, as a page-scoped `.discover-page` section in `design-baseline.css`. It has
+no hero card so the map keeps its height, and its rows have a little more space between them. After
+Vivienne said the dark colours felt heavy (and a first pass that blended them into the dark
+surface looked dull), every ticket page's dark mode uses four shared tokens (`--db-dark-hero`,
+`--db-dark-edge`, `--db-dark-orange`, `--db-dark-teal`): big areas stay plain dark with a soft
+orange corner glow on the hero, edges are a clean orange, and hard shadows are 45–50% instead of
+solid orange and 60% teal. The My RSVPs waitlist offer banner and the My Events date strip no
+longer use the olive fill. Light mode is unchanged apart from the Discover spacing. "My events" is renamed **My Events** wherever it is shown,
+a deliberate exception to sentence case to match My RSVPs. The Sort by drop-downs on My Events
+and Discover open as a list attached to the button (chosen over a floating panel) where the
+browser supports customisable selects. Discover is Aishani's page, so she should review the
+change. No backend, data or routing changes.
+
 4 November 2026 — Huxley, Community gets Friends; Profile loses its tabs: at the team's request
 Vivienne's Profile **Groups** (friend circles) are removed from the app, because Go together groups
 already use the word and two kinds of group were confusing. Her **Friends** stay and move to a small

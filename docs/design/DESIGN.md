@@ -115,8 +115,8 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 | People you know | **Friends**; **Add friend**, **Friend requests**, **Find people** (by username) | Contacts, followers, friend groups |
 | A group's plan around the event | **before and after plan**; **when you're free** | hangout, itinerary |
 
-- **Sentence case** for headings, labels, buttons and tags. No all-caps eyebrows or
-  labels.
+- **Sentence case** for headings, labels, buttons and tags, except **My Events**, which is
+  capitalised to match My RSVPs. No all-caps eyebrows or labels.
 - **Dates and times** use the Singapore style everywhere: "Sat, 7 Nov, 10:00 am – 12:00 pm"
   (`formatEventTime`), "7 Nov" for timeline dates, "1 Nov, 1:39 pm" for timestamps.
   Day before month, 12-hour times with lower-case am/pm.
@@ -129,7 +129,11 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 
 - **Event actions** use a ticket-inspired shape with a perforated divider. Labels follow
   [section 3](#3-words). Status indicators are labelled, non-interactive badges with icons.
-- **Chips** are pills, 44px tall, tinted by category; the selected chip turns ink-filled.
+- **Chips** are pills, 44px tall, tinted by category, with a 2px edge; the selected chip turns
+  orange with a small tilt and hard shadow, like the Go together filters.
+- **Sort drop-downs** (My Events, Discover) open as a list attached to the button, the same
+  width and edge, with the chosen option in orange text and a tick. Browsers without
+  customisable selects show their native list.
   A scrolling chip row fades at whichever edge has more to show.
 - **Discover rows** are compact and equal height: thumbnail ("Show on map"), title,
   "time · spots · venue" on one line (cut off with "…", full text on hover and when
@@ -156,7 +160,7 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
   bar on phones for signed-in and demo users. Personal links follow the session; Discover
   is public. The menu closes on route change or Escape. From 992px a **Collapse sidebar**
   button at the bottom of the sidebar turns it into a 76px icon rail (Discover, Community, My
-  RSVPs, My events, Settings, Theme, account); each icon's name shows as a tooltip on hover or
+  RSVPs, My Events, Settings, Theme, account); each icon's name shows as a tooltip on hover or
   keyboard focus, and the page widens with it. The choice is saved as `bookedz-sidebar`; until
   someone chooses, it starts collapsed below 1200px and expanded above.
 - **Theme:** System / Light / Dark, defaulting to the OS and saved as `bookedz-color-theme`.
@@ -208,7 +212,7 @@ and on focus; the Refresh button stays as a fallback.
 ### Community: Go together (`/community`)
 Community is where people find others to go to events with. **Official events live in
 Discover; groups live in Community**, and neither appears in the other's lists (Discover
-and My events exclude groups).
+and My Events exclude groups).
 
 - **A group** is tied to one official event: the host's note, the event card (title, time,
   venue, category tint), who is going (avatars), spots left (2 to 8 including the host) and
@@ -253,8 +257,8 @@ to `/community`). A four-step studio
 whole hour for two hours; moving the start keeps the length, and an end before the start is
 flagged beside the field. Back is hidden on the first step. Tags match the Discover chips.
 
-### My events and Manage RSVPs (organiser)
-My events: date-led cards, search, tabs and sort, skeleton loading, animated grid.
+### My Events and Manage RSVPs (organiser)
+My Events: date-led cards, search, tabs and sort, skeleton loading, animated grid.
 Manage RSVPs: the spots bar (confirmed, offers out, available) with "N left"; tabs carry
 the other counts (no duplicate tiles). With more than one pending RSVP, checkboxes and
 **Approve selected** handle them in bulk. Reject sits apart from Approve and has a
@@ -347,6 +351,12 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
+- **5 Nov 2026:** Discover uses the festival-ticket look in both themes (ticket rows and map
+  frame, stamped category chip, pill controls, more space between rows; no hero). Dark mode on
+  every ticket page keeps big areas plain and accents clean: a dark hero with a soft orange
+  corner glow, a clean orange edge and hard shadows at 45–50%; the waitlist offer banner and
+  My Events date strip lose their olive fill. "My events" is now **My Events**. The Sort by
+  drop-downs open as an attached list.
 - **4 Nov 2026:** Collapsible sidebar (icon rail with tooltips, remembered). Go together
   pages got more motion and live updates: painted cells pop, the group heatmap and best
   outline ease, slot times and picks fade in, Keen counts and filter counts bump, members

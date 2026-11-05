@@ -14,6 +14,7 @@ import { toast } from '@/composables/useToast'
 import { useDiscoveryMotion } from '@/composables/useDiscoveryMotion'
 import { CATEGORIES } from '@/lib/constants'
 import { normalizeDiscoveryFilters, discoveryEventQuery, discoveryUrlQuery, discoveryFiltersFromQuery } from '@/lib/discoveryFilters'
+import '../assets/design-baseline.css'
 
 const defaults = () => normalizeDiscoveryFilters()
 const route = useRoute()
