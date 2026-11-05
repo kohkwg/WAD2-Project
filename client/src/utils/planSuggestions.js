@@ -3,6 +3,7 @@
 // Express plan-suggestion route. Live Supabase mode only.
 
 import { supabase } from './supabase'
+import { requestPlanSuggestion } from './planSuggestionRequest.js'
 import { USING_SUPABASE, getCurrentUser, createTask } from './api'
 import { saveProgrammeItem } from './floorPlan'
 import { applyPlan, likePattern, rankTitleSuggestions } from './planSuggestModel'
@@ -32,16 +33,7 @@ const apiBase = () => import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000'
 // input: { title, description, tags, capacity, startsAt, endsAt }
 export async function fetchPlanSuggestion(input, signal) {
   if (!PLANNER_AVAILABLE) throw new Error('Plan suggestions need a live connection.')
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) throw new Error('Sign in to generate a plan.')
-  const response = await fetch(`${apiBase()}/api/plan-suggestions`, {
-    method: 'POST',
-    signal,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-    body: JSON.stringify(input),
-  })
-  const body = await response.json().catch(() => null)
-  if (!response.ok) throw new Error(body?.error || 'Could not generate a plan. Please try again.')
+  const body = await requestPlanSuggestion({ client: supabase, baseUrl: apiBase(), input, signal })
   return {
     source: body?.source || 'none',
     basedOn: Array.isArray(body?.basedOn) ? body.basedOn : [],

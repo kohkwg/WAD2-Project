@@ -141,7 +141,7 @@ function withCounts(db, event) {
     offeredCount: count('offered'),
     pendingCount: count('pending'),
     waitlistCount: count('waitlisted'),
-    spotsLeft: Math.max(0, event.capacity - spotsTaken(db, event.id)),
+    spotsLeft: event.capacity == null ? null : Math.max(0, event.capacity - spotsTaken(db, event.id)), // null = no limit
   }
   return result.isMine || result.isOnTeam ? result : hideCapacityNumbers(result)
 }
@@ -235,7 +235,7 @@ function rankedWaitlist(db, eventId) {
 function fillFreeSpots(db, eventId) {
   const event = findEvent(db, eventId)
   if (new Date(event.startTime).getTime() <= Date.now()) return
-  let freeSpots = event.capacity - spotsTaken(db, eventId)
+  let freeSpots = event.capacity == null ? Infinity : event.capacity - spotsTaken(db, eventId)
   const queue = rankedWaitlist(db, eventId)
 
   while (freeSpots > 0 && queue.length > 0) {
@@ -895,7 +895,8 @@ export async function updateEvent(eventId, changes) {
     }
   }
 
-  const raisedCapacity = changes.capacity != null && changes.capacity > event.capacity
+  // Going from a limit to no limit also opens places for the waitlist
+  const raisedCapacity = event.capacity != null && (changes.capacity == null || changes.capacity > event.capacity)
   Object.assign(event, {
     title: changes.title,
     description: changes.description,
@@ -906,7 +907,7 @@ export async function updateEvent(eventId, changes) {
     capacity: changes.capacity,
     requiresApproval: changes.requiresApproval,
     ...fields,
-    questions: changes.questions.map(({ id, text, type, required }) => ({ id, text, type, required })),
+    questions: changes.questions.map(({ id, text, type, required, options }) => ({ id, text, type, required, ...(options?.length ? { options } : {}) })),
     updatedAt: new Date().toISOString(),
   })
   saveOnlineLink(db, eventId, link) // a physical event (or a cleared link) keeps no link
@@ -1062,7 +1063,7 @@ export async function approveRsvp(rsvpId) {
   if (rsvp.status !== 'pending') throw new Error('Only pending RSVPs can be approved.')
 
   const event = findEvent(db, rsvp.eventId)
-  rsvp.status = spotsTaken(db, event.id) < event.capacity ? 'confirmed' : 'waitlisted'
+  rsvp.status = event.capacity == null || spotsTaken(db, event.id) < event.capacity ? 'confirmed' : 'waitlisted'
   // Approved into a group: RSVP them to the event too
   if (isGroup(event) && rsvp.status === 'confirmed') ensureEventRsvp(db, event, rsvp.userId)
   saveDb(db)

@@ -177,13 +177,17 @@ function toVenue(row) {
   }
 }
 
-// Database question types → the two types our pages know
+// Database question types ↔ the types our pages know (see utils/questionTypes.js)
+const DB_TO_PAGE_TYPE = { short_text: 'text', long_text: 'longtext', yes_no: 'yesno', number: 'number', single_choice: 'choice', multi_choice: 'multichoice' }
+const PAGE_TO_DB_TYPE = Object.fromEntries(Object.entries(DB_TO_PAGE_TYPE).map(([db, page]) => [page, db]))
 function toQuestion(row) {
+  const options = Array.isArray(row.options) ? row.options : []
   return {
     id: row.id,
     text: row.prompt,
-    type: row.type === 'yes_no' ? 'yesno' : 'text',
+    type: DB_TO_PAGE_TYPE[row.type] || 'text',
     required: row.required,
+    ...(options.length ? { options } : {}),
   }
 }
 
@@ -390,7 +394,8 @@ export async function createEventWith(client, eventData) {
     backupVenue: isOnline || !eventData.venue || !eventData.isOutdoor ? null : venuePayload(eventData.backupVenue) || null,
     onlineLink: isOnline && eventData.onlineLink ? { url: eventData.onlineLink.url, revealAt: eventData.onlineLink.revealAt } : null,
     tags: eventData.tags,
-    questions: eventData.questions.map(({ text, type, required }) => ({ text, type, required })),
+    // `options` is only sent for the pick-one and pick-several types, so older questions keep the original payload shape
+    questions: eventData.questions.map(({ text, type, required, options }) => ({ text, type, required, ...(options?.length ? { options } : {}) })),
   }
   if (eventData.coverImageUrl) payload.coverImageUrl = eventData.coverImageUrl
   // Only sent when a chosen venue is hidden, so ordinary events also work with an RPC from before
@@ -451,7 +456,7 @@ const sameVenue = (a, b) => Boolean(a && b) && a.name === b.name && (a.address |
 const sameVenueOrNone = (a, b) => (!a && !b) || sameVenue(a, b)
 // The jsonb shape event_hidden_venues accepts (the create_event_with_details venue shape)
 const venueJson = (venue) => venue && ({ name: venue.name, address: venue.address || '', postal: venue.postal || null, lat: venue.lat ?? null, lng: venue.lng ?? null })
-const toQuestionType = (type) => (type === 'yesno' ? 'yes_no' : 'short_text')
+const toQuestionType = (type) => PAGE_TO_DB_TYPE[type] || 'short_text'
 
 async function insertVenueWith(client, venue, isIndoor) {
   const row = check(await client.from('venues').insert({
@@ -504,6 +509,7 @@ async function saveEventQuestionsWith(client, eventId, before, after) {
     if (old.text !== question.text) patch.prompt = question.text
     if (old.required !== question.required) patch.required = question.required
     if (old.type !== question.type) patch.type = toQuestionType(question.type)
+    if (JSON.stringify(old.options || []) !== JSON.stringify(question.options || [])) patch.options = question.options || []
     if (Object.keys(patch).length) check(await client.from('event_questions').update(patch).eq('event_id', eventId).eq('id', question.id))
   }
   const added = after.map((question, position) => ({ question, position })).filter(({ question }) => !beforeById.has(question.id))
@@ -511,7 +517,7 @@ async function saveEventQuestionsWith(client, eventId, before, after) {
     check(await client.from('event_questions').upsert(
       added.map(({ question, position }) => ({
         id: question.id, event_id: eventId, prompt: question.text,
-        type: toQuestionType(question.type), required: question.required, position,
+        type: toQuestionType(question.type), options: question.options || [], required: question.required, position,
       })),
       { onConflict: 'id', ignoreDuplicates: true },
     ))
