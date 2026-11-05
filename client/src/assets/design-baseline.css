@@ -402,3 +402,16 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 /* The tooltip anchors to the row's nearest positioned ancestor; make that the bookmark itself so it sits beside the button. */
 .discover-page.discover-page .row-actions .event-bookmark { position: relative; }
 .discover-page.discover-page .row-actions .bookmark-tooltip { top: auto; bottom: calc(100% + 6px); z-index: 7; }
+
+/* Edit event inside Manage event: same plain heading as the Tasks, Budget and other tabs (no festival hero card). */
+.design-baseline.design-baseline.is-embedded .create-heading {
+  margin: 0 0 1.25rem; padding: .2rem 0 1rem; overflow: visible; border: 0; border-bottom: 1px solid var(--bookedz-border);
+  border-radius: 0; background: none; box-shadow: none;
+}
+.design-baseline.design-baseline.is-embedded .create-heading::after { content: none; }
+.design-baseline.design-baseline.is-embedded .create-heading :is(h1, h2) {
+  margin: 0; background: none; color: var(--bookedz-ink); -webkit-text-fill-color: currentColor;
+  font-size: clamp(1.45rem, 2.5vw, 1.8rem); font-weight: 700; letter-spacing: -.035em;
+}
+.design-baseline.design-baseline.is-embedded .create-heading p { max-width: 44rem; margin: .35rem 0 0; color: var(--bookedz-muted); font-weight: 400; }
+:root[data-theme="dark"] .design-baseline.design-baseline.is-embedded .create-heading { border: 0; border-bottom: 1px solid var(--bookedz-border); background: none; box-shadow: none; }

@@ -31,7 +31,7 @@ function check({ data, error }) {
 export async function getCurrentUser() {
   const { data } = await supabase.auth.getSession()
   if (!data.session) return null
-  return { id: data.session.user.id, email: data.session.user.email }
+  return { id: data.session.user.id, email: data.session.user.email, user_metadata: { dino: data.session.user.user_metadata?.dino } }
 }
 
 async function requireUserId() {
@@ -141,7 +141,7 @@ export async function signOut() {
 // Runs callback(user or null) whenever someone signs in or out. Returns a function to stop.
 export function onAuthChange(callback) {
   const { data } = supabase.auth.onAuthStateChange((event, session) => {
-    callback(session ? { id: session.user.id, email: session.user.email } : null)
+    callback(session ? { id: session.user.id, email: session.user.email, user_metadata: { dino: session.user.user_metadata?.dino } } : null)
   })
   return () => data.subscription.unsubscribe()
 }

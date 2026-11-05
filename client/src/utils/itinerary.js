@@ -1,5 +1,5 @@
 // Hangout itinerary rules (adapted from the OpenJio specification §5). Pure functions.
-// Listings are real Official Bookedz events (fixed times) or host-entered OneMap places
+// Listings are real Official Dino events (fixed times) or host-entered OneMap places
 // (a duration and optional opening hours). Times are epoch ms; days use Singapore time.
 import { distanceKm, eventLatLng } from './discoveryMap.js'
 
@@ -186,7 +186,7 @@ export function generatePlan(listings, input, overrides = {}) {
     ok: false, radiusKm, candidates: pool.length, suggestions,
     reason: pool.length
       ? `${pool.length} Official ${pool.length === 1 ? 'event fits' : 'events fit'} this time within ${radiusKm} km, but no ${options.minStops}-stop plan works without long waits, overruns or a missing meal.`
-      : `No Official Bookedz events fit inside this time within ${radiusKm} km of the start area.`,
+      : `No Official Dino events fit inside this time within ${radiusKm} km of the start area.`,
   }
 }
 

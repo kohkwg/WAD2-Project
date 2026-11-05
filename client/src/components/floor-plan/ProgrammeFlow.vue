@@ -54,7 +54,7 @@ const time = (value) => new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', 
     <button v-if="canEdit" class="btn btn-sm btn-outline-primary" @click="edit(null)" :disabled="busy">Add programme item</button>
   </div>
   <p v-if="loading" role="status">Loading programme…</p>
-  <div v-if="error" class="alert alert-danger" role="alert">{{ error }} <button v-if="!editing && !pendingDelete" class="btn btn-sm btn-outline-danger" @click="load">Retry programme</button></div>
+  <div v-dismissible v-if="error" class="alert alert-danger" role="alert">{{ error }} <button v-if="!editing && !pendingDelete" class="btn btn-sm btn-outline-danger" @click="load">Retry programme</button></div>
   <form v-if="editing && canEdit" class="programme-form border rounded p-3 mb-3" @submit.prevent="save">
     <div class="row g-2">
       <label class="col-12">Title<input v-model="draft.title" required maxlength="180" class="form-control" /></label>

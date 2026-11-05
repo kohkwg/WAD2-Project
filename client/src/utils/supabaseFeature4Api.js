@@ -64,7 +64,7 @@ function announcementDto(row) {
 function budgetItemDto(row) {
   return {
     id: row.id, eventId: row.event_id, name: row.description, category: row.category, quantity: row.quantity ?? 1,
-    plannedCents: amountToCents(row.estimated_amount), actualCents: amountToCents(row.actual_amount),
+    plannedCents: amountToCents(row.estimated_amount), actualCents: amountToCents(row.actual_amount), purchasedAt: row.purchased_at ?? null,
   }
 }
 
@@ -92,12 +92,17 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
     return rows.map(announcementDto)
   }
 
+  // purchased_at arrives with migration 20261105100000; until it is deployed the sheet simply has no dates.
+  let purchasedAtColumn = true
+  const budgetColumns = () => 'id,event_id,description,category,quantity,estimated_amount,actual_amount' + (purchasedAtColumn ? ',purchased_at' : '')
+  const missingPurchasedAt = result => purchasedAtColumn && result.error?.code === '42703' && /purchased_at/.test(result.error.message || '')
   async function readBudget(eventId) {
-    const [setting, rows] = await Promise.all([
+    const readRows = () => client.from('budget_items').select(budgetColumns()).eq('event_id', eventId).eq('kind', 'expense').order('created_at')
+    let [setting, rows] = await Promise.all([
       client.from('event_operation_settings').select('budget_limit').eq('event_id', eventId).maybeSingle(),
-      client.from('budget_items').select('id,event_id,description,category,quantity,estimated_amount,actual_amount')
-        .eq('event_id', eventId).eq('kind', 'expense').order('created_at'),
+      readRows(),
     ])
+    if (missingPurchasedAt(rows)) { purchasedAtColumn = false; rows = await readRows() }
     const config = check(setting)
     const items = check(rows).map(budgetItemDto)
     const limitCents = config?.budget_limit == null ? null : amountToCents(config.budget_limit)
@@ -222,7 +227,8 @@ export function createSupabaseFeature4Api(client, fetchEvent = getEvent, fetchAr
     const planned = centsToAmount(input?.plannedCents)
     const actual = centsToAmount(input?.actualCents)
     const values = { event_id: eventId, kind: 'expense', category, description: nonBlank(input?.name, 'Item name'), quantity, estimated_amount: planned, actual_amount: actual }
-    const columns = 'id,event_id,kind,description,category,quantity,estimated_amount,actual_amount'
+    if (purchasedAtColumn) values.purchased_at = input?.purchasedAt ? new Date(input.purchasedAt).toISOString() : null
+    const columns = 'id,event_id,kind,' + budgetColumns().split(',').slice(2).join(',')
     let row
     if (input?.id) {
       row = check(await client.from('budget_items').update(values).eq('event_id', eventId).eq('id', input.id).select(columns).single())

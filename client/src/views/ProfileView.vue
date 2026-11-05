@@ -229,7 +229,7 @@ async function save() {
 <template>
   <div class="profile-page" :class="{ 'container py-4 py-md-5': !embedded, 'profile-page--embedded': embedded }">
     <header v-if="!embedded" class="profile-heading">
-      <p class="profile-kicker">Your Bookedz account</p>
+      <p class="profile-kicker">Your Dino account</p>
       <h1 class="profile-title page-title">Your profile</h1>
       <p class="profile-lede">Keep your details current and shape the events you discover.</p>
     </header>
@@ -239,8 +239,15 @@ async function save() {
     </div>
 
     <form v-else-if="userId" class="profile-form" :aria-busy="saving" @submit.prevent="save">
-      <div v-if="success" class="alert alert-success" role="status">{{ success }}</div>
-      <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
+      <div v-dismissible v-if="success" class="alert alert-success" role="status">{{ success }}</div>
+      <div v-dismissible v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
+
+      <section class="profile-section" aria-labelledby="dino-heading">
+        <h2 id="dino-heading" class="profile-section-title">Pick your dino</h2>
+        <p class="profile-help">Your mascot shows next to your name. Change it any time.</p>
+        <DinoPicker :model-value="dino" :disabled="dinoSaving" @update:model-value="chooseDino" />
+        <p v-dismissible v-if="dinoError" class="text-danger mt-2 mb-0" role="alert">{{ dinoError }}</p>
+      </section>
 
       <div class="profile-top">
         <span class="profile-avatar" aria-hidden="true">{{ initial() }}</span>
@@ -351,7 +358,7 @@ async function save() {
       </div>
     </form>
 
-    <div v-else class="profile-unavailable alert alert-warning" :role="USING_SUPABASE ? 'alert' : 'status'">
+    <div v-dismissible v-else class="profile-unavailable alert alert-warning" :role="USING_SUPABASE ? 'alert' : 'status'">
       <p>{{ error }}</p>
       <button v-if="USING_SUPABASE" type="button" class="btn btn-outline-secondary" @click="loadProfile">Retry profile</button>
       <RouterLink v-else to="/discover" class="btn btn-outline-secondary">Explore demo events</RouterLink>
@@ -386,7 +393,7 @@ async function save() {
 .profile-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
 .profile-chips li { padding: .3rem .85rem; border-radius: 99px; background: var(--bookedz-orange-soft, var(--bookedz-glass-active)); color: var(--bookedz-ink); font-size: .9rem; font-weight: 600; }
 .profile-section { min-width: 0; margin: 0 0 1.75rem; padding: 0 0 1.5rem; border: 0; border-bottom: 1px solid var(--bookedz-border); }
-.profile-section legend { float: none; width: auto; margin-bottom: .5rem; font-family: var(--bookedz-heading); font-size: 1.35rem; font-weight: 650; }
+.profile-section legend, .profile-section-title { float: none; width: auto; margin-bottom: .5rem; font-family: var(--bookedz-heading); font-size: 1.35rem; font-weight: 650; }
 .profile-section legend, .profile-section .form-label { color: var(--bookedz-ink, #1f2937); }
 .profile-help { max-width: 55ch; margin-bottom: 1.25rem; color: var(--bookedz-muted); }
 .profile-interests { padding-bottom: 0; border: 0; }
