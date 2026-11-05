@@ -155,3 +155,32 @@ test('invites, join messages, host settings and deleting a group', async ({ page
   await expect(page).toHaveURL(/\/community$/)
   await expect(page.locator('#group-grp6')).toHaveCount(0)
 })
+
+test('organisers see which RSVPs are coming with a group, as an indicator', async ({ page }) => {
+  // Intro to Vue (e2) approves RSVPs by hand; Ethan hosts a group for it and is waiting
+  await page.goto('/organiser/events/e2/rsvps?status=pending')
+  await expect(page.getByRole('status').filter({ hasText: /coming with 1 Go together group/ })).toContainText('waiting for your approval')
+  const ethan = page.locator('tr', { hasText: 'Ethan Ng' })
+  await expect(ethan).toContainText('Hosting a group of 1')
+  // Approving works as normal
+  await expect(ethan.getByRole('button', { name: /Approve/ })).toBeEnabled()
+  // Acoustic Night (e1): Bea hosts groups; Chen is on the waitlist and in Bea's group
+  await page.goto('/organiser/events/e1/rsvps?status=waitlist')
+  await expect(page.locator('tr, li', { hasText: 'Chen Wei' }).first()).toContainText('With Bea Lim’s group')
+})
+
+test('Friends is a full-height sidebar beside Community on wide screens', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/community')
+  await expect(page.getByRole('heading', { name: 'Friends', level: 2 })).toBeVisible()
+  const box = await page.evaluate(() => {
+    const hero = document.querySelector('.community-hero').getBoundingClientRect()
+    const aside = document.querySelector('#friends').getBoundingClientRect()
+    return { heroTop: hero.top, asideTop: aside.top, asideLeft: aside.left, heroRight: hero.right, asideHeight: aside.height, vh: innerHeight }
+  })
+  expect(Math.abs(box.asideTop - box.heroTop)).toBeLessThan(4) // starts level with the top of the page
+  expect(box.asideLeft).toBeGreaterThan(box.heroRight) // beside everything, not below
+  expect(box.asideHeight).toBeGreaterThan(box.vh - 60) // fills the screen's height
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})

@@ -1,5 +1,15 @@
 # Decisions
 
+5 November 2026 — Huxley, organisers see groups; Friends is a sidebar: on Manage RSVPs, people coming
+with a Go together group get a small chip ("With Bea Lim's group · 3", or "In a friends-only group"
+without the host's name) and a one-line summary says how many RSVPs came with groups and how many are
+waiting for approval. It is only an indicator: approving and removing work as before. Live mode uses
+`event_group_members()`, readable only by the event's team (migration
+`20261105150000_event_group_members.sql`, which also merges the two `create_group` definitions from
+`20261105050527` and `20261105120000` into one with every rule, restoring the online-events check on
+the hosted project). In Community, Friends is now a full-height sticky sidebar beside everything from
+1100px wide, and below the groups on smaller screens.
+
 5 November 2026 — Huxley, groups follow RSVPs: only people with an RSVP to an event (going,
 waitlisted, pending or offered) can start a group for it, so the Start a group list shows just your
 upcoming RSVP'd events. Anyone can still join a group; getting in (an open join, an accepted invite
