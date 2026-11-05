@@ -77,45 +77,6 @@ test.beforeEach(async ({
     data: fixture()
   });
 });
-test('RSVP overview separates time/status tabs and keeps offers visible', async ({
-  page
-}) => {
-  await page.goto('/my-rsvps');
-  await expect(page.getByRole('heading', {
-    name: 'Plans',
-    exact: true
-  })).toBeVisible();
-  const next = page.getByRole('region', {
-    name: 'Board games together',
-    exact: true
-  });
-  await expect(next).toBeVisible();
-  await expect(page.locator('#panel-upcoming .rsvp-row')).toHaveCount(3);
-  await page.getByRole('tab', {
-    name: /^Past/
-  }).click();
-  await expect(page.locator('#panel-past')).toContainText('Past sketching');
-  await expect(page.locator('#panel-past').getByText('Attended', {
-    exact: true
-  })).toBeVisible();
-  await expect(page.getByRole('button', {
-    name: 'Confirm my spot'
-  })).toBeVisible();
-  await page.getByRole('tab', {
-    name: /^Cancelled/
-  }).click();
-  await expect(page.locator('#panel-cancelled')).toContainText('Cancelled running');
-  await page.getByRole('tab', {
-    name: /^Upcoming/
-  }).focus();
-  await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('tab', {
-    name: /^Saved/
-  })).toBeFocused();
-  await expect(page.getByRole('tab', {
-    name: /^Saved/
-  })).toHaveAttribute('aria-selected', 'true');
-});
 test('Saved shows independent bookmarks and unsave persists through refresh', async ({
   page
 }) => {
@@ -375,36 +336,6 @@ test('offer accept and decline refresh registrations and announce the outcome', 
     name: /^Cancelled/
   }).click();
   await expect(page.locator('#panel-cancelled')).toContainText('Offer declined');
-});
-test('Plans fills the available width without overflow in either theme', async ({
-  page
-}) => {
-  await page.goto('/my-rsvps');
-  await expect(page.getByRole('heading', {
-    name: 'Plans',
-    exact: true
-  })).toBeVisible();
-  for (const scheme of ['light', 'dark']) {
-    await setColorTheme(page, scheme);
-    for (const width of [375, 575, 768, 1280, 1920, 2560]) {
-      await page.setViewportSize({
-        width,
-        height: 1000
-      });
-      await expect.poll(() => page.locator('main').evaluate(el => Math.abs(el.getBoundingClientRect().width - (innerWidth - parseFloat(getComputedStyle(document.querySelector('.app-shell')).paddingLeft))))).toBeLessThan(3);
-      const geometry = await page.locator('.my-rsvps-page').evaluate(el => {
-        const main = el.closest('main'),
-          css = getComputedStyle(main);
-        return {
-          gap: main.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight) - el.getBoundingClientRect().width,
-          overflow: document.documentElement.scrollWidth > innerWidth
-        };
-      });
-      expect(Math.abs(geometry.gap)).toBeLessThan(3);
-      expect(geometry.overflow).toBe(false);
-      await expect(page.locator('main')).toHaveCount(1);
-    }
-  }
 });
 test('confirmed live-style rows keep cancellation available and explain recorded check-ins', async ({
   page

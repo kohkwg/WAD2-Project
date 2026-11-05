@@ -14,6 +14,8 @@ async function liveDiscover(page) {
     body: `
     export const USING_SUPABASE = true;
     export const getEvents = async () => [];
+    export const getMyRsvps = async () => [];
+    export const JOINED_STATUSES = ['pending', 'confirmed', 'offered'];
     const day = 86400000, soon = Date.now() + 2 * day;
     const row = (id, title, offset, extra = {}) => ({ id, title, kind: 'official', status: 'published', tags: ['arts'], category: 'arts',
       start_time: new Date(soon + offset * day).toISOString(), end_time: new Date(soon + offset * day + 7200000).toISOString(),

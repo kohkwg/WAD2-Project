@@ -39,6 +39,39 @@ not persist. These are dated observations, not permanent database invariants.
 
 ## Timeline
 
+### 6 November — Failing e2e specs removed, current-app spec added (Huxley)
+
+The 6 November run on `dev` `5ce2127` had 77 failing demo browser tests, mostly specs written for
+screens that have since been redesigned. At Huxley's request (no time to rewrite them), the
+failing tests were removed instead of rewritten:
+
+- Three fixtures were fixed first, because a missing export stopped the app from starting:
+  `account-dashboard` (`respondToRequest`), `f1-profile-design` (`changePassword`) and
+  `saved-events` (`getMyRsvps`, `JOINED_STATUSES`). Both `saved-events` tests then passed and stay.
+- The 75 tests that still failed were removed with a JavaScript parser, so the rest of each file is
+  unchanged. Seven files had no passing tests left and were deleted: `account-dashboard`,
+  `discover-browse`, `discovery-list-palette`, `discovery-rsvp-regressions`, `redesign`,
+  `shared-ui` and `workspace-design`. In `feature4-ux` only the budget case was removed. All of them
+  can be restored from `5ce2127`.
+- New `client/e2e/current-app.spec.js` (11 tests) covers the current app: Discover day rows at 375
+  and 1280px, See more and Close, Show more adds a week, "Hosted by" on the event page, Community
+  groups, the group planner (free-time grid, place box, Lock it in), group chat, phone bottom tabs,
+  Plans and Organise, and the dark theme. Each checks page errors, one `main` and sideways scroll.
+
+The seven tests already switched off with `test.skip` on 4 November (they covered the old landing
+hero search and the removed "Picked for you" strip) were then removed too: one from
+`design-polish`, and all of `filter-panel` and `recommendation-mvp`, which were deleted.
+
+Result on a fresh demo server (port 5199, 4 workers): 99 passed, 0 failed, 0 skipped (1.3 min).
+
+Removed tests that may have been catching real problems, recorded so they are not lost:
+the Plans page heading is "My RSVPs" again, though the navigation and page title say Plans
+(`my-rsvps`, `legacy-review-fixes`, `event-team`); a participant's Plans row may not show
+"Confirmed" after approval (`organiser-events`); the sign-out icon colour does not change with the
+theme (`navbar-account`); dragging a task into an empty column and the rain switch's public post
+(`feature4`); the teal colour changed from `#14b8a6` to `#92cfad` (`discovery-list-palette`); and
+the announcements feed now follows the RSVP form on phones (`feature4-public-weather`).
+
 ### 6 November — Code cleanup by area and spec updates (Denzel)
 
 At Denzel's request, we cleaned up the code area by area. We removed unused imports, exports,

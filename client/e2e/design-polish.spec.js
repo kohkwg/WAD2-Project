@@ -1,47 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// the landing hero with search and the island map was removed (design.md, landing), so these
-// hero journeys are skipped; the same filters are covered on discover.
-test.skip('search stays with its hero and preserves pending text when views change', async ({
-  page
-}, testInfo) => {
-  await page.emulateMedia({
-    reducedMotion: 'reduce'
-  });
-  await page.goto('/');
-  await expect(page.locator('.hero-map')).toBeVisible();
-  for (const width of [375, 575, 768, 1280]) {
-    await page.setViewportSize({
-      width,
-      height: 800
-    });
-    await expect(page.locator('.hero-copy [role="search"]')).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await expect(page.locator('main')).toHaveCount(1);
-    if (width === 1280) {
-      const action = await page.getByRole('button', {
-        name: 'Explore events',
-        exact: true
-      }).boundingBox();
-      expect(action.y + action.height).toBeLessThanOrEqual(800);
-    }
-    await page.screenshot({
-      path: testInfo.outputPath(`discovery-${width}.png`)
-    });
-  }
-  // freeze the debounce timer so switching views exercises the pending draft.
-  await page.clock.install();
-  await page.getByLabel('Search by title, description or venue').fill('no-such-event-XYZ');
-  await page.getByRole('button', {
-    name: 'Explore the map'
-  }).click();
-  await page.clock.runFor(400);
-  await expect(page.getByLabel('Search by title, description or venue')).toHaveValue('no-such-event-XYZ');
-  await expect(page.getByRole('heading', {
-    name: 'No events found'
-  })).toBeVisible();
-  await expect(page.locator('.map-bottomline')).toContainText('0 events on the map');
-});
 test('live navigation hides personal links until a session arrives', async ({
   page
 }) => {

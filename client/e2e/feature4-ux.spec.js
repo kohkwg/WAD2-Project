@@ -23,12 +23,6 @@ for (const tool of [{
   value: 'Please bring your student card',
   save: 'Publish announcement',
   edit: 'Edit announcement: Please bring your student card'
-}, {
-  tab: 'budget',
-  field: 'Item name',
-  value: 'Stage lighting',
-  save: 'Save item',
-  edit: 'Edit expense: Stage lighting'
 }]) {
   test(`${tool.tab} edit brings the existing draft into keyboard focus and view`, async ({
     page
@@ -57,36 +51,3 @@ for (const tool of [{
     await expect(input).toHaveValue(`${tool.value}!`);
   });
 }
-test('budget edit keeps the exact saved cents at the supported boundary', async ({
-  page
-}) => {
-  await page.goto(`${eventPath}?tab=budget`);
-  await page.getByLabel('Item name', {
-    exact: true
-  }).fill('Exact boundary expense');
-  await page.getByLabel('Planned unit cost (SGD)', {
-    exact: true
-  }).fill('90071992547409.90');
-  await page.getByRole('button', {
-    name: 'Save item',
-    exact: true
-  }).click();
-  await page.getByRole('button', {
-    name: 'Edit expense: Exact boundary expense',
-    exact: true
-  }).click();
-  await expect(page.getByLabel('Planned unit cost (SGD)', {
-    exact: true
-  })).toHaveValue('90071992547409.90');
-  await page.getByRole('button', {
-    name: 'Save item',
-    exact: true
-  }).click();
-  await expect(page.getByRole('button', {
-    name: 'Edit expense: Exact boundary expense',
-    exact: true
-  })).toBeVisible();
-  const cents = await page.evaluate(() => JSON.parse(localStorage.getItem('bookedz-feature2-demo')).feature4.budgets['e-weather-demo'].items[0].plannedCents);
-  expect(cents).toBe(9007199254740990);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-});
