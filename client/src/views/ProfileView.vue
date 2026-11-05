@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, onBeforeRouteLeave } from 'vue-router'
 import { supabase } from '@/lib/supabase'
-import { USING_SUPABASE, changeEmail, changePassword } from '@/utils/api'
-import { emailError } from '@/lib/emailRules'
+import { USING_SUPABASE, changePassword } from '@/utils/api'
+import { cleanUsername, nameError, usernameError as usernameFormatError, postalCodeError } from '@/lib/fieldRules'
+import { profileLabel } from '@/lib/profileLabel'
 import { geocodePostalCode } from '@/lib/onemap'
 import { INTEREST_OPTIONS } from '@/lib/constants'
 import { passwordErrors } from '@/lib/passwordRules'
@@ -21,15 +22,17 @@ const usernameError = ref('')
 const usernameAvailable = ref(true)
 const postalCode = ref('')
 const email = ref('')
-const emailDraft = ref('')
-const emailErrorText = ref('')
+const touched = ref({ name: false, username: false, postal: false })
+const triedSave = ref(false)
 const editing = ref(false)
 // Password change opens inline, in the same grid as the other fields
 const passwordOpen = ref(false)
 const currentPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
-const passwordProblems = ref([])
+const passwordTried = ref(false)
+const passwordServerError = ref('')
+const passwordBanner = ref('') // failures that are not about one field (e.g. network)
 const usernameState = ref('idle') // 'idle' | 'checking' | 'available' | 'taken'
 let usernameTimer
 const passwordBusy = ref(false)
@@ -47,12 +50,12 @@ onBeforeUnmount(() => { active = false; clearTimeout(usernameTimer) })
 watch(username, handle => {
   clearTimeout(usernameTimer)
   usernameState.value = 'idle'
-  const clean = handle.trim().toLowerCase()
-  if (!editing.value || !usernameAvailable.value || clean === (snapshot?.username ?? '') || !/^[a-z0-9_]{3,20}$/.test(clean)) return
+  const clean = cleanUsername(handle)
+  if (!editing.value || !usernameAvailable.value || clean === (snapshot?.username ?? '') || usernameFormatError(clean)) return
   usernameState.value = 'checking'
   usernameTimer = setTimeout(async () => {
     const free = await checkUsernameFree(clean)
-    if (clean !== username.value.trim().toLowerCase()) return
+    if (clean !== cleanUsername(username.value)) return
     usernameState.value = free === true ? 'available' : free === false ? 'taken' : 'idle'
   }, 450)
 })
@@ -87,6 +90,7 @@ async function loadProfile() {
     email.value = auth.user.email || ''
     displayName.value = data.display_name || ''
     username.value = data.username || ''
+    profileLabel.value = { username: username.value, displayName: data.display_name || '' }
     // The username picked on Create account travels in the account's metadata. If it could not be
     // saved at that moment (email confirmation, or a slow first sign-in), claim it now.
     const chosen = String(auth.user.user_metadata?.username || '').trim().toLowerCase()
@@ -112,8 +116,8 @@ onMounted(loadProfile)
 
 function startEdit() {
   snapshot = { displayName: displayName.value, username: username.value, postalCode: postalCode.value, selected: [...selected.value] }
-  emailDraft.value = email.value
-  emailErrorText.value = ''
+  touched.value = { name: false, username: false, postal: false }
+  triedSave.value = false
   success.value = ''
   error.value = ''
   usernameError.value = ''
@@ -126,33 +130,73 @@ function cancelEdit() {
     postalCode.value = snapshot.postalCode
     selected.value = [...snapshot.selected]
   }
-  emailErrorText.value = ''
   usernameError.value = ''
   error.value = ''
   editing.value = false
 }
 const initial = () => (displayName.value || username.value || email.value || '?').trim().charAt(0).toUpperCase()
 
+// ---- Validation: shown once a field has been left or Save was pressed, and cleared as it is fixed
+const fieldErrors = computed(() => ({
+  name: nameError(displayName.value),
+  username: usernameAvailable.value
+    ? (usernameFormatError(username.value) || (usernameState.value === 'taken' ? 'This username is already taken.' : ''))
+    : '',
+  postal: postalCodeError(postalCode.value),
+}))
+const visible = field => triedSave.value || touched.value[field]
+const nameMessage = computed(() => (visible('name') ? fieldErrors.value.name : ''))
+const usernameMessage = computed(() => usernameError.value || (visible('username') ? fieldErrors.value.username : ''))
+const postalMessage = computed(() => (visible('postal') ? fieldErrors.value.postal : ''))
+
+// ---- Unsaved changes: nothing is sent if nothing changed, and leaving mid-edit asks first
+const hasChanges = computed(() => Boolean(snapshot) && (
+  displayName.value.trim() !== snapshot.displayName.trim()
+  || cleanUsername(username.value) !== cleanUsername(snapshot.username)
+  || postalCode.value.trim() !== snapshot.postalCode.trim()
+  || [...selected.value].sort().join() !== [...snapshot.selected].sort().join()
+))
+const isDirty = computed(() => editing.value && hasChanges.value)
+function warnBeforeUnload(event) { if (isDirty.value) { event.preventDefault(); event.returnValue = '' } }
+onMounted(() => window.addEventListener('beforeunload', warnBeforeUnload))
+onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnload))
+onBeforeRouteLeave(() => (isDirty.value ? window.confirm('You have unsaved changes. Leave without saving?') : true))
+
+// ---- Change password (inline, saved separately from the profile)
+const passwordErrorsNow = computed(() => ({
+  current: currentPassword.value ? '' : 'Current password is required.',
+  next: newPassword.value === '' ? 'New password is required.'
+    : passwordErrors(newPassword.value)[0]
+      || (newPassword.value === currentPassword.value ? 'Your new password must be different from the current one.' : ''),
+  confirm: confirmPassword.value === '' ? 'Please confirm your new password.'
+    : confirmPassword.value !== newPassword.value ? 'Passwords do not match.' : '',
+}))
+const currentPasswordMessage = computed(() => (passwordTried.value ? passwordErrorsNow.value.current : '') || passwordServerError.value)
+const newPasswordMessage = computed(() => (passwordTried.value ? passwordErrorsNow.value.next : ''))
+const confirmPasswordMessage = computed(() => (passwordTried.value ? passwordErrorsNow.value.confirm : ''))
+
 function togglePassword() {
   passwordOpen.value = !passwordOpen.value
   currentPassword.value = newPassword.value = confirmPassword.value = ''
-  passwordProblems.value = []
+  passwordTried.value = false
+  passwordServerError.value = ''
+  passwordBanner.value = ''
 }
 async function savePassword() {
-  const problems = []
-  if (!currentPassword.value) problems.push('Please enter your current password.')
-  problems.push(...passwordErrors(newPassword.value))
-  if (newPassword.value && newPassword.value === currentPassword.value) problems.push('Choose a new password that is different from your current one.')
-  if (newPassword.value !== confirmPassword.value) problems.push('The new passwords do not match.')
-  passwordProblems.value = problems
-  if (problems.length) return
+  if (passwordBusy.value) return
+  passwordTried.value = true
+  passwordServerError.value = ''
+  passwordBanner.value = ''
+  if (Object.values(passwordErrorsNow.value).some(Boolean)) return
   passwordBusy.value = true
   try {
     await changePassword(currentPassword.value, newPassword.value)
-    togglePassword()
-    success.value = 'Password updated.'
+    togglePassword() // clears the three boxes
+    success.value = 'Password updated successfully.'
   } catch (failure) {
-    passwordProblems.value = [failure.message]
+    // A wrong current password belongs under that field; anything else (e.g. network) is a banner.
+    if (/current password is incorrect/i.test(failure.message)) passwordServerError.value = failure.message
+    else passwordBanner.value = failure.message
   } finally {
     passwordBusy.value = false
   }
@@ -160,17 +204,14 @@ async function savePassword() {
 
 async function save() {
   if (saving.value || !userId.value) return
+  triedSave.value = true
   success.value = ''
   error.value = ''
   usernameError.value = ''
-  const handle = username.value.trim().toLowerCase()
-  const emailChanged = emailDraft.value.trim().toLowerCase() !== email.value.toLowerCase()
-  emailErrorText.value = emailChanged ? emailError(emailDraft.value, { requireCom: true }) : ''
-  if (emailErrorText.value) return
-  if (usernameAvailable.value && handle && !/^[a-z0-9_]{3,20}$/.test(handle)) {
-    usernameError.value = 'Use 3–20 letters, numbers or underscores.'
-    return
-  }
+  if (Object.values(fieldErrors.value).some(Boolean)) return
+  // Nothing changed: no request, just leave edit mode.
+  if (!hasChanges.value) { editing.value = false; return }
+  const handle = cleanUsername(username.value)
   saving.value = true
   try {
     let lat = null, lng = null
@@ -187,39 +228,26 @@ async function save() {
       p_lat: lat, p_lng: lng, p_interests: [...selected.value],
     }
     const { error: err } = usernameAvailable.value
-      ? await supabase.rpc('update_profile_with_username', { ...payload, p_username: handle || null })
+      ? await supabase.rpc('update_profile_with_username', { ...payload, p_username: handle })
       : await supabase.rpc('update_recommendation_profile', payload)
     if (!active) return
     if (err) throw err
     username.value = handle
+    displayName.value = displayName.value.trim()
+    profileLabel.value = { username: handle, displayName: displayName.value }
 
-    success.value = 'Profile saved.'
+    success.value = 'Profile updated successfully.'
     editing.value = false
-    // The profile is saved first; the email only changes once the emailed link is clicked.
-    if (emailChanged) {
-      try {
-        const sentTo = emailDraft.value.trim()
-        await changeEmail(sentTo)
-        // Whether a confirmation link is needed depends on the Supabase project's settings, so
-        // ask what actually happened instead of assuming.
-        const { data: fresh } = await supabase.auth.getUser()
-        if (fresh?.user?.email?.toLowerCase() === sentTo.toLowerCase()) {
-          email.value = fresh.user.email
-          success.value = `Profile saved. Your email is now ${fresh.user.email}.`
-        } else {
-          success.value = `Profile saved. We sent a confirmation link to ${sentTo}. Your email changes once you click it.`
-        }
-      } catch (failure) {
-        error.value = `Your profile was saved, but the email was not changed: ${failure.message}`
-      }
-    }
   } catch (e) {
     if (!active) return
-    if (e.code === '23505') usernameError.value = 'That username is already taken. Choose another.'
+    // Stay in edit mode with everything the person typed still in place.
+    if (e.code === '23505') usernameError.value = 'This username is already taken.'
     else if (['PGRST202', 'PGRST204', '42703', '42883'].includes(e.code)) error.value = usernameAvailable.value
       ? 'Username saving is not available yet. Your changes are kept; please try again after account updates are available.'
       : 'Profile saving is temporarily unavailable. Your changes are kept; please try again later.'
-    else error.value = e.message || 'Could not save your profile.'
+    else error.value = /failed to fetch|network/i.test(e.message || '')
+      ? 'Could not reach the server. Your changes are kept here; check your connection and try again.'
+      : e.message || 'Could not save your profile. Your changes are kept; please try again.'
   } finally {
     saving.value = false
   }
@@ -274,34 +302,34 @@ async function save() {
           <div class="row g-4 profile-details-grid">
             <div class="col-12 col-md-6 col-xl-4">
               <label for="name" class="form-label">Name</label>
-              <input id="name" v-model="displayName" class="form-control" autocomplete="name" />
+              <input id="name" v-model="displayName" class="form-control" :class="{ 'is-invalid': nameMessage }" autocomplete="name" :aria-invalid="Boolean(nameMessage)" aria-describedby="name-error" @blur="touched.name = true" />
+              <p v-if="nameMessage" id="name-error" class="field-error" role="alert">{{ nameMessage }}</p>
             </div>
             <div class="col-12 col-md-6 col-xl-4">
               <label for="username" class="form-label">Username</label>
-              <div class="input-group">
+              <div class="input-group" :class="{ 'has-validation': usernameMessage }">
                 <span class="input-group-text" aria-hidden="true">@</span>
-                <input id="username" v-model="username" class="form-control" autocomplete="username" :disabled="!usernameAvailable"
-                       autocapitalize="none" :spellcheck="false" maxlength="20"
-                       aria-describedby="username-help username-error" :aria-invalid="Boolean(usernameError)"
-                       @input="usernameError = ''; success = ''" />
+                <input id="username" v-model="username" class="form-control" :class="{ 'is-invalid': usernameMessage }" autocomplete="username" :disabled="!usernameAvailable"
+                       autocapitalize="none" :spellcheck="false" maxlength="21"
+                       aria-describedby="username-help username-error" :aria-invalid="Boolean(usernameMessage)"
+                       @blur="touched.username = true" @input="usernameError = ''; success = ''" />
               </div>
+              <p v-if="usernameMessage" id="username-error" class="field-error" role="alert">{{ usernameMessage }}</p>
+              <p v-else-if="usernameState === 'checking'" class="profile-note mb-0" role="status">Checking…</p>
+              <p v-else-if="usernameState === 'available'" class="profile-ok mb-0" role="status">✓ @{{ cleanUsername(username) }} is available</p>
               <div v-if="usernameAvailable" id="username-help" class="form-text">3–20 letters, numbers or underscores. People find you by it.</div>
               <div v-else id="username-help" class="form-text">Username setup is coming soon.</div>
-              <p v-if="usernameError" id="username-error" class="text-danger mb-0" role="alert">{{ usernameError }}</p>
-              <p v-else-if="usernameState === 'checking'" class="profile-note mb-0" role="status">Checking…</p>
-              <p v-else-if="usernameState === 'taken'" class="text-danger mb-0" role="status">That username is already taken.</p>
-              <p v-else-if="usernameState === 'available'" class="profile-ok mb-0" role="status">✓ @{{ username.trim().toLowerCase() }} is available</p>
             </div>
             <div class="col-12 col-md-6 col-xl-4">
               <label for="email" class="form-label">Email</label>
-              <input id="email" v-model="emailDraft" type="email" class="form-control" autocomplete="email" aria-describedby="email-help email-error" :aria-invalid="Boolean(emailErrorText)" @input="emailErrorText = ''" />
-              <div id="email-help" class="form-text">You may be asked to confirm the new address by email.</div>
-              <p v-if="emailErrorText" id="email-error" class="text-danger mb-0" role="alert">{{ emailErrorText }}</p>
+              <input id="email" :value="email" type="email" class="form-control" readonly aria-describedby="email-help" />
+              <div id="email-help" class="form-text">Your email is your sign-in and cannot be edited here.</div>
             </div>
             <div class="col-12 col-xl-4">
               <label for="postal" class="form-label">Postal code</label>
-              <input id="postal" v-model="postalCode" class="form-control" inputmode="numeric"
-                     maxlength="6" pattern="\d{6}" placeholder="e.g. 188065" autocomplete="postal-code" aria-describedby="postal-help" />
+              <input id="postal" v-model="postalCode" class="form-control" :class="{ 'is-invalid': postalMessage }" inputmode="numeric"
+                     maxlength="6" placeholder="e.g. 188065" autocomplete="postal-code" aria-describedby="postal-help postal-error" :aria-invalid="Boolean(postalMessage)" @blur="touched.postal = true" />
+              <p v-if="postalMessage" id="postal-error" class="field-error" role="alert">{{ postalMessage }}</p>
               <div id="postal-help" class="form-text">Optional. Used to find events near you.</div>
             </div>
           </div>
@@ -330,18 +358,21 @@ async function save() {
           <div class="row g-3">
             <div class="col-12">
               <label for="current-password" class="form-label">Current password</label>
-              <PasswordInput id="current-password" v-model="currentPassword" autocomplete="current-password" @keydown.enter.prevent="savePassword" />
+              <PasswordInput id="current-password" v-model="currentPassword" :class="{ 'is-invalid': currentPasswordMessage }" autocomplete="current-password" :aria-invalid="Boolean(currentPasswordMessage)" aria-describedby="current-password-msg" @keydown.enter.prevent="savePassword" @input="passwordServerError = ''" />
+              <p v-if="currentPasswordMessage" id="current-password-msg" class="field-error" role="alert">{{ currentPasswordMessage }}</p>
             </div>
             <div class="col-12">
               <label for="new-password-field" class="form-label">New password</label>
-              <PasswordInput id="new-password-field" v-model="newPassword" autocomplete="new-password" @keydown.enter.prevent="savePassword" />
+              <PasswordInput id="new-password-field" v-model="newPassword" :class="{ 'is-invalid': newPasswordMessage }" autocomplete="new-password" :aria-invalid="Boolean(newPasswordMessage)" aria-describedby="new-password-msg" @keydown.enter.prevent="savePassword" />
+              <p v-if="newPasswordMessage" id="new-password-msg" class="field-error" role="alert">{{ newPasswordMessage }}</p>
             </div>
             <div class="col-12">
               <label for="confirm-password" class="form-label">Confirm new password</label>
-              <PasswordInput id="confirm-password" v-model="confirmPassword" autocomplete="new-password" @keydown.enter.prevent="savePassword" />
+              <PasswordInput id="confirm-password" v-model="confirmPassword" :class="{ 'is-invalid': confirmPasswordMessage }" autocomplete="new-password" :aria-invalid="Boolean(confirmPasswordMessage)" aria-describedby="confirm-password-msg" @keydown.enter.prevent="savePassword" />
+              <p v-if="confirmPasswordMessage" id="confirm-password-msg" class="field-error" role="alert">{{ confirmPasswordMessage }}</p>
             </div>
           </div>
-          <div v-if="passwordProblems.length" class="alert alert-danger mt-3" role="alert"><ul class="mb-0"><li v-for="problem in passwordProblems" :key="problem">{{ problem }}</li></ul></div>
+          <div v-if="passwordBanner" class="alert alert-danger mt-3" role="alert">{{ passwordBanner }}</div>
           <button type="button" class="btn btn-primary mt-3" :disabled="passwordBusy" @click="savePassword">
             <span v-if="passwordBusy" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
             Save password
@@ -387,6 +418,8 @@ async function save() {
 .profile-password { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .password-fields { max-width: 28rem; margin-top: 1rem; }
 .profile-password .profile-block-title { margin: 0; }
+.field-error { margin: .35rem 0 0; color: var(--bookedz-danger); font-size: .875rem; overflow-wrap: anywhere; }
+:deep(.form-control.is-invalid) { background-image: none; }
 .profile-note { color: var(--bookedz-muted); font-size: .875rem; }
 .profile-ok { color: var(--bookedz-success); font-size: .875rem; }
 .profile-empty { margin: 0; color: var(--bookedz-muted); }
