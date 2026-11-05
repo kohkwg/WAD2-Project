@@ -2,6 +2,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { getOrganiserEvents, deleteEvent } from '../utils/api.js'
+import EventTeamPanel from '../components/event-operations/EventTeamPanel.vue'
 import OrganiserEventCard from '../components/organiser/OrganiserEventCard.vue'
 import SkeletonList from '../components/ui/SkeletonList.vue'
 import { organiserEventState, organiserEventCounts, filterOrganiserEvents } from '../utils/organiserEvents.js'
@@ -125,10 +126,11 @@ async function removeEvent(eventId) {
 <template>
   <div class="organiser-events-page">
     <header class="organiser-heading"><div><p class="organiser-kicker">Your hosting space</p><h1 class="page-title">My events</h1><p>{{ loading ? 'Your gatherings, all in one place.' : `${counts.all} events · ${counts.upcoming} upcoming · ${counts.drafts} drafts` }}</p></div><RouterLink to="/organiser/events/new" class="btn btn-primary">＋ Create event</RouterLink></header>
-    <div v-if="justCreatedId" class="alert alert-success" role="status">Event published. Participants can now find it and RSVP.</div>
-    <div v-if="justUpdatedId" class="alert alert-success" role="status">Changes saved. {{ route.query.announced ? 'An announcement about them is now on the event page.' : 'No announcement was posted.' }}</div>
-    <div v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success" role="status">{{ statusMessage }}</div>
-    <div v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }} <button type="button" class="btn btn-outline-secondary" :disabled="busyId !== null" @click="loadEvents">Retry loading events</button></div>
+    <div v-dismissible v-if="justCreatedId" class="alert alert-success" role="status">Event published. Participants can now find it and RSVP.</div>
+    <div v-dismissible v-if="justUpdatedId" class="alert alert-success" role="status">Changes saved. {{ route.query.announced ? 'An announcement about them is now on the event page.' : 'No announcement was posted.' }}</div>
+    <div v-dismissible v-if="statusMessage" ref="statusAlert" tabindex="-1" class="alert alert-success" role="status">{{ statusMessage }}</div>
+    <div v-dismissible v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }} <button type="button" class="btn btn-outline-secondary" :disabled="busyId !== null" @click="loadEvents">Retry loading events</button></div>
+    <EventTeamPanel class="mb-4" compact />
     <SkeletonList v-if="loading" variant="card" :count="3" label="Loading your events…" />
     <template v-else>
       <aside v-if="pendingCount > 0" class="pending-summary" aria-label="Pending RSVP requests"><p><span aria-hidden="true">!</span><strong>{{ pendingCount }}</strong> {{ pendingCount === 1 ? 'RSVP is' : 'RSVPs are' }} waiting for your approval across {{ pendingEvents.length }} {{ pendingEvents.length === 1 ? 'event' : 'events' }}.</p><button type="button" class="btn btn-primary" @click="reviewAll">Review all requests</button></aside>

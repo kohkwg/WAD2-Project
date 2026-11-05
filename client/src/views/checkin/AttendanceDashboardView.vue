@@ -157,7 +157,7 @@ onUnmounted(() => channel && supabase.removeChannel(channel))
       <div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>
     </div>
 
-    <div v-else-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
+    <div v-dismissible v-else-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
 
     <template v-else>
       <section class="attendance-stat mb-4">

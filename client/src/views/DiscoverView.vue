@@ -265,7 +265,7 @@ function showMore() { if (!loading.value) visibleCount.value += STEP }
           <h2 class="visually-hidden">What’s coming up</h2>
           <!-- First load shows placeholder rows; later filter changes keep the old results visible (dimmed) until the new ones arrive. -->
           <SkeletonList v-if="loading && !events.length" :count="5" label="Finding your next event…" />
-          <div v-else-if="error" class="empty-state" role="alert"><h2>We couldn’t load events</h2><p>{{ error }}</p><button type="button" class="btn btn-outline-danger" @click="refreshDiscovery">Try again</button></div>
+          <div v-dismissible v-else-if="error" class="empty-state" role="alert"><h2>We couldn’t load events</h2><p>{{ error }}</p><button type="button" class="btn btn-outline-danger" @click="refreshDiscovery">Try again</button></div>
           <div v-else-if="!events.length && !loading" class="empty-state" role="status">
             <template v-if="savedSelected">
               <h2>No saved events here</h2>

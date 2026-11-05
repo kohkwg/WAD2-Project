@@ -28,7 +28,7 @@ test('public layout prioritises event facts and My RSVPs stays responsive', asyn
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.screenshot({ path: testInfo.outputPath(`public-event-${width}.png`) })
     await page.goto('/my-rsvps')
-    await expect(page.locator('.plans-summary')).toBeVisible()
+    await expect(page.locator('.rsvp-tabs')).toBeVisible()
     await expect(page.locator('.rsvp-card').first()).toBeVisible()
     expect(await page.locator('.rsvp-status svg').count()).toBeGreaterThan(0)
     const offer = page.getByRole('button', { name: 'Confirm my spot', exact: true })

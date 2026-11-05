@@ -144,7 +144,7 @@ onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('point
       >
     </label>
   </div>
-  <p v-if="selected.dateFrom && selected.dateTo &&
+  <p v-dismissible v-if="selected.dateFrom && selected.dateTo &&
            selected.dateFrom > selected.dateTo" role="alert">
     End date must be on or after the start date.
   </p>
@@ -169,7 +169,7 @@ onBeforeUnmount(() => { clearTimeout(timer); document.removeEventListener('point
     :checked="isSelected('extras', 'spots_left')"
     @change="choose('extras', 'spots_left')">
 </label>
-        <p v-if="error" class="count-error" role="alert">Couldn’t load the event count. <button type="button" @click="emit('retry')">Try again</button></p>
+        <p v-dismissible v-if="error" class="count-error" role="alert">Couldn’t load the event count. <button type="button" @click="emit('retry')">Try again</button></p>
         <footer class="filter-footer">
           <button type="button" class="clear-all" @click="clearAll">Clear all</button>
           <button type="submit" class="show-events" :disabled="loading || Boolean(error) || total === null || invalidCustomRange">{{ loading ? 'Finding events…' : total === null ? 'Show events' : `Show ${total} events` }}</button>

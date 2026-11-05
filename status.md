@@ -1,5 +1,12 @@
 # Project status and timeline
 
+5 November, account/dev merge conflict repair — retained the navbar's saved
+profile-label lookup and incoming accessible theme label together. Login success
+messages retain `role="status"` alongside dev's dismissible-notice directive.
+NavBar, LoginView and the automatically merged ProfileView pass script, template
+and style compilation. No browser checks, full build/suite, hosted changes,
+commit or push performed in this repair.
+
 5 November, authentication-page navigation — hide the redundant top-right Sign in
 link on `/`, which already contains the sign-in/create-account form. Anonymous
 visitors can still use the navigation link from other pages. NavBar script and

@@ -222,7 +222,7 @@ onBeforeUnmount(() => {
         </div>
         <button v-if="movedSinceSearch && !loading && !error" type="button" class="btn btn-primary btn-sm map-search-area" @click="searchThisArea">Search this area</button>
         <div v-if="loading" class="map-message" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Finding events around Singapore…</div>
-        <div v-else-if="error" class="map-message" role="alert">The map couldn’t load events. <button class="btn btn-link btn-sm" @click="emit('retry')">Try again</button></div>
+        <div v-dismissible v-else-if="error" class="map-message" role="alert">The map couldn’t load events. <button class="btn btn-link btn-sm" @click="emit('retry')">Try again</button></div>
         <div v-else-if="!points.length" class="map-message" role="status">{{ events.length ? 'These events don’t have a map location yet. Explore them in the list.' : 'No events match your search. Try another category or date.' }}</div>
         <motion.div v-if="selection.length" :key="selectedId ?? selection.map(event => event.id).join(',')" class="map-preview" :initial="reduced ? false : { opacity: 0, y: 18, scale: .94 }" :animate="{ opacity: 1, y: 0, scale: 1 }" :transition="reduced ? { duration: 0 } : { type: 'spring', stiffness: 360, damping: 28 }" role="region" aria-label="Selected map events">
           <button class="preview-close" type="button" aria-label="Close event preview" @click="dismiss">×</button>
@@ -243,7 +243,7 @@ onBeforeUnmount(() => {
           <span class="rail-count">{{ areaEvents.length }} {{ areaEvents.length === 1 ? 'event' : 'events' }}</span>
         </div>
         <button v-if="searchArea" type="button" class="rail-clear" @click="showAll">Clear area <span aria-hidden="true">×</span></button>
-        <p v-if="locateMessage" class="rail-note" role="status">{{ locateMessage }}</p>
+        <p v-dismissible v-if="locateMessage" class="rail-note" role="status">{{ locateMessage }}</p>
         <ul v-if="areaEvents.length" class="rail-list">
           <li v-for="event in areaEvents" :key="event.id">
             <button type="button" class="rail-item" :aria-current="selectedId === event.id ? 'true' : undefined" @click="openEvent(event)">

@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getEvents, getGroups } from '../utils/api.js'
 import { subscribeSocialUpdates } from '../utils/profileSocial.js'
+import EventTeamPanel from '../components/event-operations/EventTeamPanel.vue'
 import FriendsPanel from '../components/community/FriendsPanel.vue'
 import '../assets/design-baseline.css'
 import GroupCard from '../components/community/GroupCard.vue'
@@ -112,6 +113,7 @@ const counts = computed(() => ({
 
     <div class="community-layout">
     <div class="community-main">
+      <EventTeamPanel class="mb-4" :updates="socialUpdates" />
       <div class="community-tools">
         <div class="community-filters" role="group" aria-label="Show groups">
           <button v-for="f in FILTERS" :key="f.key" type="button" class="community-filter" :aria-pressed="filter === f.key" @click="filter = f.key">
@@ -123,7 +125,7 @@ const counts = computed(() => ({
       </div>
 
       <SkeletonList v-if="loading" :count="3" label="Loading groups…" />
-      <div v-else-if="error" class="community-empty" role="alert">
+      <div v-dismissible v-else-if="error" class="community-empty" role="alert">
         <h2 class="section-title">Couldn’t load groups</h2>
         <p>{{ error }}</p>
         <button type="button" class="btn btn-outline-secondary" @click="load">Try again</button>
@@ -152,7 +154,7 @@ const counts = computed(() => ({
 </template>
 
 <style scoped>
-.community-page { max-width: 1180px; padding-block: 1.5rem 3rem; }
+.community-page { width: 100%; max-width: none; padding-block: 1.5rem 3rem; }
 .community-layout { display: grid; gap: 22px; align-items: start; }
 .community-main { min-width: 0; }
 .community-aside { min-width: 0; scroll-margin-top: 16px; }

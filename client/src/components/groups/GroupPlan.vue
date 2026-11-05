@@ -135,7 +135,7 @@ const validLabel = { valid: 'On at this time', unknown: 'Check times' }
         <div v-if="openSlot === slot" :id="`add-${slot}`" class="group-add-panel reveal-down">
           <template v-if="hasMap">
             <p v-if="food[slot]?.loading" class="text-meta text-secondary m-0" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Finding food near {{ venue.name }}…</p>
-            <p v-else-if="food[slot]?.error" class="group-add-note" role="status">{{ food[slot].error }}</p>
+            <p v-dismissible v-else-if="food[slot]?.error" class="group-add-note" role="status">{{ food[slot].error }}</p>
             <template v-else-if="food[slot]">
               <div class="group-tabs" role="tablist" aria-label="Nearby food">
                 <button type="button" role="tab" class="group-tab" :aria-selected="tab === 'deals'" @click="tab = 'deals'">Deals <span class="tnum">{{ food[slot].deals.length }}</span></button>
@@ -176,7 +176,7 @@ const validLabel = { valid: 'On at this time', unknown: 'Check times' }
       </article>
     </div>
 
-    <p v-if="error" class="group-plan-error" role="alert">{{ error }}</p>
+    <p v-dismissible v-if="error" class="group-plan-error" role="alert">{{ error }}</p>
     <GroupMap v-if="hasMap" :venue="venue" :spots="mapSpots" />
     <p class="text-caption text-secondary m-0">Deals come from public Telegram channels and deal sites and may change; check with the shop. Places from OpenStreetMap.</p>
   </section>

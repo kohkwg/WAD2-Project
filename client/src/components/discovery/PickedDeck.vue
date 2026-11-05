@@ -103,7 +103,7 @@ function key(event) {
     </div>
 
     <div v-if="loading" class="deck-message" role="status">Finding your picks…</div>
-    <div v-else-if="error" class="deck-message" role="status">{{ error }} <button type="button" class="deck-link" @click="emit('retry')">Try again</button></div>
+    <div v-dismissible v-else-if="error" class="deck-message" role="status">{{ error }} <button type="button" class="deck-link" @click="emit('retry')">Try again</button></div>
     <div v-else-if="!events.length" class="deck-message">
       No picks yet. <RouterLink v-if="personalized" to="/profile">Add your interests</RouterLink><template v-else>Check back for upcoming events</template>.
     </div>
@@ -145,7 +145,7 @@ function key(event) {
 .deck-stage:focus-visible { outline: 2px solid var(--bookedz-primary-dark); outline-offset: 6px; border-radius: 12px; }
 .deck-round { flex: none; width: 52px; height: 52px; border-radius: 50%; font-size: 22px; line-height: 1; cursor: pointer; }
 .deck-round--skip { border: 2px solid var(--bookedz-primary-dark); background: transparent; color: var(--bookedz-primary-dark); }
-.deck-round--yes { border: 0; background: var(--bookedz-success); color: #fff; box-shadow: 0 4px 10px #14b8a640; }
+.deck-round--yes { border: 0; background: var(--bookedz-success); color: #fff; box-shadow: 0 4px 10px #2f8a6340; }
 .deck-card { flex: none; width: 262px; overflow: hidden; border-radius: 14px; background: var(--bookedz-surface); box-shadow: 0 10px 28px #3c32231f; cursor: grab; touch-action: pan-y; user-select: none; transition: transform .22s ease; }
 .deck-card.is-dragging { cursor: grabbing; transition: none; }
 .deck-cover { position: relative; height: 72px; background: var(--bookedz-yellow); overflow: hidden; }

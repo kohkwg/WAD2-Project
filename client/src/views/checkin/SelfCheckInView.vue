@@ -37,11 +37,11 @@ function secretFromScan(text) {
   try {
     url = new URL(text)
   } catch {
-    throw new Error("That isn't a Bookedz venue QR code.")
+    throw new Error("That isn't a Dino venue QR code.")
   }
   const match = url.pathname.match(/^\/events\/([^/]+)\/check-in$/)
   const secret = url.searchParams.get('s')
-  if (!match || !secret) throw new Error("That isn't a Bookedz venue QR code.")
+  if (!match || !secret) throw new Error("That isn't a Dino venue QR code.")
   if (match[1] !== eventId) throw new Error('That QR code is for a different event.')
   return secret
 }
@@ -126,7 +126,7 @@ onMounted(async () => {
     </div>
 
     <template v-else-if="step === 'done'">
-      <div class="alert" :class="result.already ? 'alert-info' : 'alert-success'" role="status">
+      <div v-dismissible class="alert" :class="result.already ? 'alert-info' : 'alert-success'" role="status">
         <h2 class="h5 mb-1">{{ result.already ? "You're already checked in" : "You're checked in!" }}</h2>
         <p class="mb-0">at {{ formatTime(result.row.checked_in_at) }}</p>
       </div>
@@ -137,7 +137,7 @@ onMounted(async () => {
     </template>
 
     <template v-else>
-      <div class="alert alert-danger" role="alert">{{ message }}</div>
+      <div v-dismissible class="alert alert-danger" role="alert">{{ message }}</div>
       <button class="btn btn-primary w-100" @click="scanAgain">Scan again</button>
     </template>
   </div>

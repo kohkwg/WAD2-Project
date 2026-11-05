@@ -5,6 +5,27 @@ const props = defineProps({ groups: { type: Array, required: true }, activeTab: 
 const route = useRoute()
 const nav = ref(null)
 const openGroup = ref('')
+let hoverOpened = ''
+let closeTimer
+function hover(event, id) {
+  if (event.pointerType !== 'mouse' || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+  clearTimeout(closeTimer)
+  if (openGroup.value !== id) { openGroup.value = id; hoverOpened = id }
+}
+function exitHover(event, id) {
+  if (event.pointerType !== 'mouse') return
+  clearTimeout(closeTimer)
+  closeTimer = setTimeout(() => {
+    const links = nav.value?.querySelector(`#event-tools-${id}-links`)
+    if (openGroup.value === id && !links?.contains(document.activeElement)) close()
+  }, 180)
+}
+function activate(id, event) {
+  clearTimeout(closeTimer)
+  if (event.detail > 0 && hoverOpened === id && openGroup.value === id) { hoverOpened = ''; return }
+  hoverOpened = ''
+  toggle(id)
+}
 const current = group => group.tabs.find(tab => tab.id === props.activeTab)
 function trigger(id) { return nav.value?.querySelector(`#event-tools-${id}`) }
 async function toggle(id, focus = '') {
@@ -16,6 +37,8 @@ async function toggle(id, focus = '') {
   }
 }
 function close(restore = false) {
+  clearTimeout(closeTimer)
+  hoverOpened = ''
   const id = openGroup.value
   openGroup.value = ''
   if (restore) trigger(id)?.focus({ preventScroll: true })
@@ -32,14 +55,14 @@ function keydown(event, id) {
   links[next]?.focus()
 }
 onMounted(() => document.addEventListener('pointerdown', outside))
-onBeforeUnmount(() => document.removeEventListener('pointerdown', outside))
+onBeforeUnmount(() => { clearTimeout(closeTimer); document.removeEventListener('pointerdown', outside) })
 watch(() => route.fullPath, () => close(Boolean(nav.value?.contains(document.activeElement))))
 </script>
 
 <template>
   <nav ref="nav" class="event-tool-groups mb-4" aria-label="Event tools" @focusout="leave">
-    <div v-for="group in groups" :key="group.id" class="tool-group" @keydown="keydown($event, group.id)">
-      <button :id="`event-tools-${group.id}`" type="button" class="tool-group-trigger" :class="{ active: current(group) }" :aria-expanded="openGroup === group.id" :aria-controls="`event-tools-${group.id}-links`" @click="toggle(group.id)" @keydown.down.prevent="toggle(group.id, 'first')" @keydown.up.prevent="toggle(group.id, 'last')">
+    <div v-for="group in groups" :key="group.id" class="tool-group" @keydown="keydown($event, group.id)" @pointerenter="hover($event, group.id)" @pointerleave="exitHover($event, group.id)">
+      <button :id="`event-tools-${group.id}`" type="button" class="tool-group-trigger" :class="{ active: current(group) }" :aria-expanded="openGroup === group.id" :aria-controls="`event-tools-${group.id}-links`" @click="activate(group.id, $event)" @keydown.down.prevent="toggle(group.id, 'first')" @keydown.up.prevent="toggle(group.id, 'last')">
         <span><strong>{{ group.label }}</strong><span class="tool-group-caption">{{ current(group)?.label || group.hint }}</span></span>
         <span class="tool-chevron" aria-hidden="true">⌄</span>
       </button>
@@ -51,7 +74,7 @@ watch(() => route.fullPath, () => close(Boolean(nav.value?.contains(document.act
 </template>
 
 <style scoped>
-.event-tool-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; padding: .45rem; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-glass-solid); position: relative; z-index: 5; }
+.event-tool-groups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; padding: .45rem; border: 1px solid var(--bookedz-border); border-radius: 1rem; background: var(--bookedz-glass-solid); position: sticky; top: var(--topbar-h, 0px); z-index: 20; }
 .tool-group { position: relative; min-width: 0; }
 .tool-group-trigger { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; min-height: 62px; padding: .65rem .8rem; border: 1px solid transparent; border-radius: .75rem; background: transparent; color: var(--bookedz-muted); text-align: left; }
 .tool-group-trigger strong { display: block; font-size: .95rem; }
