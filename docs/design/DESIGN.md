@@ -121,7 +121,8 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
   (`formatEventTime`), "7 Nov" for timeline dates, "1 Nov, 1:39 pm" for timestamps.
   Day before month, 12-hour times with lower-case am/pm.
 - **Buttons name the result:** "Approve selected (3)", "Join waitlist", "Save changes".
-  Toasts echo the action: "Saved", "Posted", "Spot confirmed".
+  Toasts echo the action: "Saved", "Posted", "Spot confirmed". Saving an event says "Saved to your
+  list" with a **View saved** button to My RSVPs → Saved.
 - **Errors say what happened and what to do:** "The event has to end after it starts."
 - **Sample data stays out of real labels.** No "demo" or "test" in event titles shown to users.
 
@@ -130,11 +131,11 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 - **Event actions** use a ticket-inspired shape with a perforated divider. Labels follow
   [section 3](#3-words). Status indicators are labelled, non-interactive badges with icons.
 - **Chips** are pills, 44px tall, tinted by category, with a 2px edge; the selected chip turns
-  orange with a small tilt and hard shadow, like the Go together filters.
+  orange with a small tilt and hard shadow, like the Go together filters. A scrolling chip row
+  fades at whichever edge has more to show.
 - **Sort drop-downs** (My Events, Discover) open as a list attached to the button, the same
   width and edge, with the chosen option in orange text and a tick. Browsers without
   customisable selects show their native list.
-  A scrolling chip row fades at whichever edge has more to show.
 - **Discover rows** are compact and equal height: thumbnail ("Show on map"), title,
   "time · spots · venue" on one line (cut off with "…", full text on hover and when
   selected). Clicking a row selects it; the RSVP button and extra details appear only on
@@ -159,11 +160,12 @@ Interactive cards lift 2px on hover (`.lift-on-hover`). Spacing follows Bootstra
 - **Navigation:** sidebar on desktop, a floating frosted top bar where needed, a bottom tab
   bar on phones for signed-in and demo users. Personal links follow the session; Discover
   is public. The menu closes on route change or Escape. From 992px a **Collapse sidebar**
-  button at the bottom of the sidebar turns it into a 76px icon rail (Discover, Community, My
-  RSVPs, My Events, Settings, Theme, account); each icon's name shows as a tooltip on hover or
+  button (a round chevron on the sidebar's right edge, on the divider line, labelled "Collapse" /
+  "Expand" on hover or focus) turns it into a 76px icon rail (Discover, Community, My
+  RSVPs, My Events, Theme, account); each icon's name shows as a tooltip on hover or
   keyboard focus, and the page widens with it. The choice is saved as `bookedz-sidebar`; until
   someone chooses, it starts collapsed below 1200px and expanded above.
-- **Theme:** System / Light / Dark, defaulting to the OS and saved as `bookedz-color-theme`.
+- **Theme:** Auto (follows the OS) / Light / Dark, saved as `bookedz-color-theme`. The collapsed desktop rail shows one icon button that cycles Auto → Light → Dark.
   Bootstrap's `data-bs-theme`, native controls, map tiles and the browser colour follow it.
 - **Breakpoints:** phones below 768px (Bootstrap md), tablets 768 to 991px, desktop 992px
   and up. Check 375, 575, 768 and 1280px with no sideways scrolling.
@@ -206,8 +208,12 @@ with a 24-hour offer, or organiser approval). Addresses from OneMap are shown in
 
 ### My RSVPs
 Waitlist offers come first, with a live countdown that shows seconds in the last hour.
-Then the totals, then tabs (Upcoming, Saved, Past, Cancelled). Updates every 30 seconds
-and on focus; the Refresh button stays as a fallback.
+Then the totals, then tabs (Upcoming, Saved, Past, Cancelled); `?tab=saved` (and the other tab ids)
+opens a tab directly. Updates every 30 seconds and on focus; the Refresh button stays as a fallback.
+Saved cards carry one badge (your RSVP, then Full or 5 or fewer spots, then "Starts tomorrow" /
+"Starts in 3 days") and one main action (RSVP, Join waitlist, Review offer, View your RSVP); the
+filled bookmark removes the save. Ended or cancelled saves are greyed and listed last. On Discover,
+signed-in visitors with a save get a **Saved** chip (with a count) at the start of the category row.
 
 ### Community: Go together (`/community`)
 Community is where people find others to go to events with. **Official events live in
@@ -266,7 +272,11 @@ the other counts (no duplicate tiles). With more than one pending RSVP, checkbox
 
 ### Manage event, check-in, floor plans, profile
 Manage event leads with event, time and active venue, then RSVP and check-in links and the
-Tasks / Announcements / Budget / Weather panels. Budget figures stay exact SGD cents.
+grouped tool navigation: General (Edit event, Announcements), Planning (Tasks, Budget,
+Floor plan), and On the day (Weather, Check-in station, Venue QR, Attendance). Each
+section opens a dropdown and names its active tool; phones expand the choices inline.
+Live-only tools stay hidden in demo. Existing `?tab=` links are retained. Budget
+figures stay exact SGD cents.
 Floor plans and programmes use the shared fonts and theme panels. Profile uses labelled
 fieldsets, checkmarked interests and explicit saving and error states.
 
@@ -351,9 +361,9 @@ separately or not at all. About 18 browser and 4 unit tests failed on `dev` befo
 
 ## 11. Change log
 
-- **5 Nov 2026:** Discover uses the festival-ticket look in both themes (ticket rows and map
-  frame, stamped category chip, pill controls, more space between rows; no hero). Dark mode on
-  every ticket page keeps big areas plain and accents clean: a dark hero with a soft orange
+- **5 Nov 2026:** Discover keeps Vivienne's ticket pass, with more space between rows and days.
+  Dark mode on every ticket page, Discover and the event RSVP, sign-in and ticket pages
+  included, keeps big areas plain and accents clean: a dark hero with a soft orange
   corner glow, a clean orange edge and hard shadows at 45–50%; the waitlist offer banner and
   My Events date strip lose their olive fill. "My events" is now **My Events**. The Sort by
   drop-downs open as an attached list.

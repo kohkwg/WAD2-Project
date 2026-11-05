@@ -43,6 +43,7 @@ export function matchesDiscoveryFilters(event, filters = {}) {
     && (!filters.dateFrom || new Date(event.start_time) >= new Date(`${filters.dateFrom}T00:00:00+08:00`))
     && (!filters.dateTo || new Date(event.start_time) <= new Date(`${filters.dateTo}T23:59:59.999+08:00`))
     && (!filters.availableOnly || event.capacity == null || event.spots_left > 0)
+    && (!filters.savedOnly || event.saved === true)
 }
 
 export function demoDiscoveryEvents(events, filters = {}, now = new Date()) {

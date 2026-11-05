@@ -8,7 +8,7 @@ defineProps({
 </script>
 
 <template>
-  <div v-if="clashes.length > 0" class="alert alert-warning">
+  <div v-dismissible v-if="clashes.length > 0" class="alert alert-warning">
     <div class="fw-semibold mb-1">This overlaps with an event you've already joined:</div>
     <ul class="mb-1">
       <li v-for="event in clashes" :key="event.id">

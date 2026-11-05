@@ -20,7 +20,7 @@ async function serverCall(path, options = {}) {
   try {
     response = await fetch(`${apiBase()}/api/hangouts${path}`, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}`, ...options.headers } })
   } catch {
-    throw new Error('The Bookedz server couldn’t be reached for group times. Check it’s running and try again.')
+    throw new Error('The Dino server couldn’t be reached for group times. Check it’s running and try again.')
   }
   const body = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(body.message || 'Couldn’t load this hangout’s times.')

@@ -8,13 +8,13 @@ watch(() => props.saved, (now, before) => { if (now && !before) popKey.value++ }
 </script>
 <template>
   <button type="button" class="event-bookmark" :disabled="pending"
-    :aria-pressed="saved" :aria-label="(saved ? 'Unsave ' : 'Save ') + eventTitle"
+    :aria-pressed="saved" :aria-label="saved ? `Remove ${eventTitle} from saved` : `Save ${eventTitle}`"
     @click="emit('toggle')">
     <svg :key="popKey" :class="{ 'pop-once': popKey > 0 && saved }" viewBox="0 0 24 24" :fill="saved ? 'currentColor' : 'none'"
       stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">
       <path d="M6 3h12v18l-6-4-6 4V3Z" />
     </svg>
-    <span class="bookmark-tooltip">{{ saved ? 'Remove bookmark' : 'Bookmark event' }}</span>
+    <span class="bookmark-tooltip" aria-hidden="true">{{ saved ? 'Remove from saved' : 'Save event' }}</span>
   </button>
 </template>
 <style scoped>

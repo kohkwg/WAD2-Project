@@ -1,5 +1,31 @@
 # Project status and timeline
 
+5 November, account/dev merge conflict repair — retained the navbar's saved
+profile-label lookup and incoming accessible theme label together. Login success
+messages retain `role="status"` alongside dev's dismissible-notice directive.
+NavBar, LoginView and the automatically merged ProfileView pass script, template
+and style compilation. No browser checks, full build/suite, hosted changes,
+commit or push performed in this repair.
+
+5 November, authentication-page navigation — hide the redundant top-right Sign in
+link on `/`, which already contains the sign-in/create-account form. Anonymous
+visitors can still use the navigation link from other pages. NavBar script and
+template compilation passed; browser verification and full build/suite not run.
+
+5 November, saved events made findable — Save/Saved wording, a "View saved" toast action,
+`/my-rsvps?tab=saved`, a Saved chip on Discover (list, map and count via `savedOnly`) and saved cards
+with a badge, one main action and ended saves last (decisions.md, 5 November). Five new unit tests,
+the four `saved-events.spec.js` cases and all eight `my-rsvps.spec.js` cases pass on a demo-mode
+server; screenshots checked in both themes at 375 and 1280px. The live Saved chip query was exercised
+only through a mocked Supabase client, not against Bookerz. No commit, push or hosted changes.
+
+4 November, local stash conflict repair — combined the background page selectors
+and retained the added local styles in `design-baseline.css`; Community keeps dev's
+Groups/Friends imports rather than imports for removed Jio components. Both files
+are free of conflict markers. Community's script, template, scoped styles and local
+import paths, plus the shared baseline CSS, pass focused compilation checks.
+No browser journey, full build/suite, commit, push or hosted changes in this repair.
+
 3 November, local merge resolution — resolved the overlapping `aish-algorithm`
 and `origin/dev` files. Retained Aishani's recommendation, saved-event, My RSVPs,
 My events, palette, typography, illustrated landing and committed street-map
@@ -1162,13 +1188,18 @@ not persist. These are dated observations, not permanent database invariants.
 - Not done: full suites, a production build, live or real-device checks, and committed specs
   for the new menu and navigation (scratch scripts only).
 
-### 5 November — ticket look on Discover, softer dark mode, "My Events" (`gregory`)
+### 5 November — softer dark mode, Discover spacing, "My Events" (`gregory`)
 
-- **Discover:** `DiscoverView.vue` imports `design-baseline.css`; a new `.discover-page` section
-  gives event rows 2px edges and 4px hard shadows (orange when selected), the map a ticket frame
-  with a pink shadow, category chips a 2px edge with an orange stamped selection, and pill search,
-  sort, List | Map toggle and buttons; 14px between rows and 18px between days. No hero, so the
-  map height is unchanged.
+- **Discover:** merging dev kept Vivienne's own Discover ticket pass and dropped Gregory's
+  overlapping light rules; Gregory's part is 14px between rows, 18px between days, and the dark
+  mode below.
+- **Merged dev into `gregory`:** kept dev's dismissible alerts and Event team panel on My Events
+  and Create event, the Delete account panel, the new sidebar wording and both 5 November
+  decisions, with "My Events" throughout (including the Delete account note). Restored the My
+  RSVPs stat-tile styles that dev had dropped, and removed a stray dark-mode fragment that limited
+  the tab pills to dark mode. Vivienne's new event RSVP, sign-in, ticket page and hangout panel
+  dark shadows now use the soft tokens; her Discover dark edges are no longer solid orange.
+  Removed duplicate `design-baseline.css` imports in `DiscoverView.vue` and `MyRsvpsView.vue`.
 - **Dark mode:** four tokens (`--db-dark-hero`, `--db-dark-edge`, `--db-dark-orange`,
   `--db-dark-teal`) replace the solid orange hero edges and shadows and the 60% teal card shadows
   on every ticket page: a plain dark hero with a soft orange corner glow, a 75% orange edge and

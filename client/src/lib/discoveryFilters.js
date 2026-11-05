@@ -29,6 +29,8 @@ export function normalizeDiscoveryFilters(value = {}) {
     ],
     dateFrom: validDate(value.dateFrom) ? value.dateFrom : '',
     dateTo: validDate(value.dateTo) ? value.dateTo : '',
+    // Only your saved (bookmarked) events; a peer of the category chips, so it clears them
+    saved: value.saved === true || value.saved === 'true',
   }
 }
 
@@ -75,6 +77,7 @@ export function discoveryEventQuery(
     categories: selected.categories,
     ...range,
     availableOnly: selected.extras.includes('spots_left'),
+    savedOnly: selected.saved,
     sort,
     page,
   }
@@ -93,6 +96,7 @@ export function discoveryUrlQuery(
     categories: selected.categories.length
       ? selected.categories : undefined,
     sort: sort === 'popular' ? sort : undefined,
+    saved: selected.saved ? 'true' : undefined,
     dateFrom: selected.when === 'pick_dates'
       ? selected.dateFrom || undefined : undefined,
     dateTo: selected.when === 'pick_dates'

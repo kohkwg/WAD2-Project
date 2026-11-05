@@ -60,8 +60,8 @@ async function upload(event) {
     <label class="form-label">Public finished floor-plan image<input class="form-control" type="file" accept="image/jpeg,image/png,image/webp" :disabled="busy || loading || !loadReady || !planId || !published" @change="upload" /></label>
   </template>
   <p v-if="loading" role="status">Loading floor-plan images…</p>
-  <p v-if="busy" role="status">Uploading image…</p><p v-if="message" class="text-success" role="status">{{ message }}</p>
-  <div v-if="error" role="alert" class="alert alert-danger">{{ error }} <button type="button" class="btn btn-sm btn-outline-danger" :disabled="busy || loading" @click="load">Retry loading image</button></div>
+  <p v-if="busy" role="status">Uploading image…</p><p v-dismissible v-if="message" class="text-success" role="status">{{ message }}</p>
+  <div v-dismissible v-if="error" role="alert" class="alert alert-danger">{{ error }} <button type="button" class="btn btn-sm btn-outline-danger" :disabled="busy || loading" @click="load">Retry loading image</button></div>
   <figure v-for="asset in assets" :key="asset.id" class="floor-image-preview"><img :src="asset.publicUrl" :alt="asset.name" class="img-fluid rounded border" @error="error = 'The floor-plan image could not be displayed.'" /><figcaption class="small text-muted">{{ asset.name }}</figcaption></figure>
 </section>
 </template>

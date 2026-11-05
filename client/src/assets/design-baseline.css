@@ -4,7 +4,7 @@
 .design-baseline.design-baseline { position: relative; isolation: isolate; --db-r: 24px; --db-tilt: 1.2deg; }
 
 /* Soft colour blobs live on the body so they have no visible box edges. */
-body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community-page, .group-page, .my-rsvps-page, .discover-page)) {
+body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community-page, .group-page, .my-rsvps-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page)) {
   background:
     radial-gradient(34rem 24rem at 12% 0%, color-mix(in srgb, var(--bookedz-fill) 22%, transparent), transparent 70%),
     radial-gradient(32rem 22rem at 95% 0%, color-mix(in srgb, var(--bookedz-teal) 20%, transparent), transparent 70%),
@@ -123,10 +123,10 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
 
 
 /* Panels as ticket cards */
-.account-page.account-page :is(.profile-form) {
+.account-page.account-page :is(.profile-form, .delete-account) {
   border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); background: var(--bookedz-surface); box-shadow: 6px 6px 0 var(--bookedz-teal);
 }
-:root[data-theme="dark"] .account-page.account-page :is(.profile-form) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 var(--db-dark-teal); }
+:root[data-theme="dark"] .account-page.account-page :is(.profile-form, .delete-account) { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 var(--db-dark-teal); }
 .account-page.account-page :is(.profile-section legend) { font-family: var(--bookedz-heading); font-weight: 900; }
 .account-page.account-page :is(.profile-section, .profile-actions) { border-color: var(--bookedz-control-border); border-style: dashed; }
 .account-page.account-page .profile-interests { border: 0; }
@@ -315,57 +315,137 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
   :is(.community-page.community-page, .group-page.group-page, .my-rsvps-page.my-rsvps-page) :is(.btn:not(:disabled):hover, .group-card:hover, .community-filter[aria-pressed='true'], .rsvp-tabs button[aria-selected=true]) { transform: none; }
   .group-page.group-page .group-event { rotate: 0deg; transition: none; }
 }
+.design-baseline.design-baseline .hangout-head .hangout-washi { background: var(--bookedz-pink); color: #3b0a24; }
+.design-baseline.design-baseline.hangout-wizard :is(.hangout-panel) { box-shadow: 6px 6px 0 var(--bookedz-pink); }
+:root[data-theme="dark"] .design-baseline.design-baseline.hangout-wizard .hangout-panel { box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-pink) 30%, transparent); }
 
-/* ---- Discover (DiscoverView, DiscoveryEventRow, DiscoveryStreetMap, EventFilters) ------------------
-   Same ticket look as My Events and Go together, without a hero so the map keeps its height.
-   CSS only, scoped to .discover-page; layout, row heights and map sizing are unchanged. */
-.discover-page.discover-page { --db-r: 24px; }
-/* Search bar, filter panel and sort as pills */
-.discover-page.discover-page .discovery-search .search-toolbar { border-width: 2px; border-radius: 99px; padding-inline: 8px; }
-.discover-page.discover-page .discovery-search .filter-toggle { border-radius: 99px; }
-.discover-page.discover-page .filter-panel { border-width: 2px; border-radius: 18px; }
-.discover-page.discover-page .results-sort select { padding: 0 12px; border: 2px solid var(--bookedz-control-border); border-radius: 99px; background: var(--bookedz-surface); }
+/* ---- Remaining pages: same elements, no layout changes --------------------------------
+   My RSVPs, Community, Discover, event RSVP page, sign-in and ticket pages. Scoped to each
+   page's own root class, so views and components stay untouched. */
+:is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) { --db-r: 24px; }
 
-/* Category chips: the chosen one is stamped orange, like the Go together filters */
-.discover-page.discover-page .category-shortcuts { padding: 4px 4px 8px; }
-.discover-page.discover-page .category-shortcut { border: 2px solid var(--bookedz-control-border); font-weight: 700; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp), background-color var(--bookedz-motion-fast) var(--bookedz-ease); }
-.discover-page.discover-page .category-shortcut[aria-pressed=true] { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); transform: translateY(-2px) rotate(-.8deg); box-shadow: 3px 3px 0 var(--bookedz-ink); }
-:root[data-theme="dark"] .discover-page.discover-page .category-shortcut[aria-pressed=true] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--db-dark-edge); }
-
-/* Phones: the List | Map thumb is orange too */
-.discover-page.discover-page .pane-switch { border: 2px solid var(--bookedz-control-border); }
-.discover-page.discover-page .pane-thumb { background: var(--bookedz-fill); }
-.discover-page.discover-page .pane-switch button[aria-pressed=true] { color: var(--bookedz-on-fill); }
-
-/* Event rows as small tickets; the selected one gets an orange shadow */
-.discover-page.discover-page .discovery-event-row {
-  border: 2px solid var(--bookedz-ink); border-radius: 18px; box-shadow: 4px 4px 0 var(--bookedz-teal);
-  transition: transform var(--bookedz-motion-normal) var(--bookedz-ease), box-shadow var(--bookedz-motion-normal) var(--bookedz-ease);
+/* Hero */
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvps-heading, .community-hero) {
+  position: relative; overflow: hidden; padding: clamp(1.4rem, 4vw, 2.4rem);
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r);
+  background: linear-gradient(120deg, var(--bookedz-orange-soft), var(--bookedz-mango-soft) 70%);
+  box-shadow: 6px 6px 0 var(--bookedz-ink);
 }
-.discover-page.discover-page .discovery-event-row.is-selected { border-color: var(--bookedz-ink); box-shadow: 4px 4px 0 var(--bookedz-fill); }
-.discover-page.discover-page .discovery-event-row .row-cover { border-radius: 12px; }
-.discover-page.discover-page .discovery-event-row .row-picked { border-radius: 99px; }
-/* More room between rows and days so the hard shadows don't crowd each other */
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvps-heading, .community-hero) h1 {
+  font-size: clamp(2.1rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -.03em;
+  background: linear-gradient(90deg, var(--bookedz-ink) 55%, var(--bookedz-primary-dark)); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvps-heading p, .community-lede) { color: var(--bookedz-ink); font-weight: 500; }
+.my-rsvps-page:is(*, *) .header-star { color: var(--bookedz-fill); opacity: .35; }
+:root[data-theme="dark"] :is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvps-heading, .community-hero) { border-color: var(--db-dark-edge); box-shadow: 6px 6px 0 var(--db-dark-orange); }
+
+/* Cards as tickets */
+:is(.my-rsvps-page, .community-page, .public-event-page, .ticket-page, .auth-wrap):is(*, *) :is(.card, .next-event, .saved-event, .rsvp-empty, .jio-card, .community-soon, .auth-card) {
+  border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal);
+}
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.rsvp-empty, .community-soon) { border-style: dashed; border-color: var(--bookedz-control-border); box-shadow: none; }
+:root[data-theme="dark"] :is(.my-rsvps-page, .community-page, .public-event-page, .ticket-page, .auth-wrap):is(*, *) :is(.card, .next-event, .saved-event, .jio-card, .auth-card) {
+  border-color: var(--bookedz-border); box-shadow: 6px 6px 0 var(--db-dark-teal);
+}
+:is(.my-rsvps-page, .community-page):is(*, *) :is(.event-title, .section-title) { font-family: var(--bookedz-heading); font-weight: 900; }
+
+/* Tabs and filters become pills */
+.my-rsvps-page:is(*, *) .rsvp-tabs { border-bottom: 0; gap: 8px; padding: 6px 4px 10px; }
+.my-rsvps-page:is(*, *) .rsvp-tabs button { border: 2px solid var(--bookedz-control-border); border-radius: 99px; padding: 8px 14px; font-weight: 700; background: var(--bookedz-surface); color: var(--bookedz-ink); }
+.my-rsvps-page:is(*, *) .rsvp-tabs button::after { display: none; }
+.my-rsvps-page:is(*, *) .rsvp-tabs button[aria-selected=true] { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); transform: translateY(-2px) rotate(-.8deg); box-shadow: 3px 3px 0 var(--bookedz-ink); }
+:root[data-theme="dark"] .my-rsvps-page:is(*, *) .rsvp-tabs button[aria-selected=true] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--db-dark-edge); }
+.community-page:is(*, *) :is(.community-filters button, .community-filters .btn, .community-filters a) { border-width: 2px; border-radius: 99px; font-weight: 700; }
+
+/* Buttons, inputs, alerts */
+:is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) .btn { border-radius: 99px; border-width: 2px; }
+:is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) .btn-primary { border-color: var(--bookedz-ink); }
+:root[data-theme="dark"] :is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) .btn-primary { border-color: var(--bookedz-fill); }
+:is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) :is(.form-control, .form-select) { border-width: 2px; border-radius: 14px; }
+:is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) :is(.form-control, .form-select):focus { border-color: var(--bookedz-fill); box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--bookedz-fill) 28%, transparent); }
+:is(.my-rsvps-page, .community-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) .alert { border-width: 2px; border-radius: 16px; }
+@media (hover: hover) {
+  :is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) .btn:not(:disabled):hover { transform: translateY(-2px) rotate(-.6deg); }
+  :is(.my-rsvps-page, .community-page):is(*, *) :is(.saved-event, .jio-card):hover { transform: translate(-2px, -3px) rotate(-.4deg); box-shadow: 9px 10px 0 var(--bookedz-teal); }
+}
+
+/* Discover: search, category pills, event rows and map frame */
+.discover-page:is(*, *) .discovery-search .search-toolbar { border: 2px solid var(--bookedz-control-border); border-radius: 99px; }
+.discover-page:is(*, *) .category-shortcut { border: 2px solid var(--bookedz-control-border); font-weight: 700; transition: transform var(--bookedz-motion-normal) var(--bookedz-ease-stamp); }
+.discover-page:is(*, *) .category-shortcut[aria-pressed=true] { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-fill); transform: translateY(-2px) rotate(-.8deg); box-shadow: 3px 3px 0 var(--bookedz-ink); }
+:root[data-theme="dark"] .discover-page:is(*, *) .category-shortcut[aria-pressed=true] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--db-dark-edge); }
+.discover-page:is(*, *) .discovery-event-row { border: 2px solid var(--bookedz-border); border-radius: 18px; box-shadow: none; transition: box-shadow var(--bookedz-motion-normal) var(--bookedz-ease), border-color var(--bookedz-motion-normal) var(--bookedz-ease); }
+.discover-page:is(*, *) .discovery-event-row:is(:hover, :focus-within) { border-color: var(--bookedz-ink); box-shadow: 4px 4px 0 var(--bookedz-teal); }
+.discover-page:is(*, *) .discovery-event-row.is-selected { border-color: var(--bookedz-fill); }
+.discover-page:is(*, *) .discovery-event-row h3 { font-family: var(--bookedz-heading); font-weight: 900; }
+.discover-page:is(*, *) .discovery-street-map { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-teal); }
+.discover-page:is(*, *) :is(.empty-state, .loading-state) { border: 2px dashed var(--bookedz-control-border); border-radius: var(--db-r); }
+:root[data-theme="dark"] .discover-page:is(*, *) .discovery-street-map { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 var(--db-dark-teal); }
+:root[data-theme="dark"] .discover-page:is(*, *) .discovery-event-row:is(:hover, :focus-within) { border-color: var(--bookedz-border); box-shadow: 4px 4px 0 var(--db-dark-teal); }
+@media (prefers-reduced-motion: reduce) {
+  .discover-page:is(*, *) .discovery-event-row { transition: none; }
+  :is(.my-rsvps-page, .community-page, .discover-page, .public-event-page, .auth-wrap, .ticket-page):is(*, *) :is(.btn:not(:disabled):hover, .saved-event:hover, .jio-card:hover, .rsvp-tabs button[aria-selected=true], .category-shortcut[aria-pressed=true]) { transform: none; }
+}
+
+/* Discover, ticket-style pass (Vivienne): layered over the block above; wins on specificity. */
+.discover-page.discover-page .discovery-search .search-toolbar { border: 2px solid var(--bookedz-ink); border-radius: 999px; background: var(--bookedz-surface); box-shadow: 5px 5px 0 var(--bookedz-teal); }
+.discover-page.discover-page .discovery-search .filter-toggle { border: 2px solid var(--bookedz-ink); border-radius: 999px; font-weight: 700; }
+.discover-page.discover-page .discovery-search .filter-toggle.is-active { background: var(--bookedz-fill); color: var(--bookedz-on-action); }
+.discover-page.discover-page .discovery-search .filter-panel { border: 2px solid var(--bookedz-ink); border-radius: 20px; box-shadow: 5px 5px 0 var(--bookedz-mango); }
+.discover-page.discover-page .category-shortcut { border: 2px solid var(--bookedz-ink); }
+.discover-page.discover-page .category-shortcut:hover { transform: translateY(-2px) rotate(-1deg); }
+.discover-page.discover-page .results-sort select { border: 2px solid var(--bookedz-ink); border-radius: 999px; padding: 0 14px; background: var(--bookedz-surface); font-weight: 600; }
+.discover-page.discover-page .pane-switch { border: 2px solid var(--bookedz-ink); }
+.discover-page.discover-page .event-timeline::before { width: 0; background: none; border-left: 2px dashed var(--bookedz-ink); opacity: .35; }
+.discover-page.discover-page .timeline-date::after { background: var(--bookedz-fill); border: 2px solid var(--bookedz-ink); width: 12px; height: 12px; right: -7px; top: 10px; }
+.discover-page.discover-page .date-label { font-weight: 800; }
+.discover-page.discover-page .weekday { color: var(--bookedz-teal-ink); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.discover-page.discover-page .discovery-event-row { border: 2px solid var(--bookedz-ink); box-shadow: 5px 5px 0 var(--bookedz-teal); background: var(--bookedz-surface); }
+.discover-page.discover-page .discovery-event-row:is(:hover, :focus-within) { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--bookedz-teal); }
+.discover-page.discover-page .discovery-event-row.is-selected { border-color: var(--bookedz-ink); box-shadow: 6px 6px 0 var(--bookedz-fill); background: color-mix(in srgb, var(--bookedz-orange-soft) 55%, var(--bookedz-surface)); }
+.discover-page.discover-page .row-cover { border: 2px solid var(--bookedz-ink); border-radius: 12px; }
+.discover-page.discover-page .row-picked { background: var(--bookedz-pink); color: #3b0a24; border-radius: 999px; padding: 2px 9px; rotate: -2deg; }
+.discover-page.discover-page .discovery-street-map { box-shadow: 6px 6px 0 var(--bookedz-mango); }
+.discover-page.discover-page :is(.empty-state, .loading-state) { background: var(--bookedz-surface); box-shadow: 5px 5px 0 var(--bookedz-mango); }
+.discover-page.discover-page :is(.event-pagination, .event-more) .btn { border: 2px solid var(--bookedz-ink); border-radius: 999px; font-weight: 700; }
+/* Dark mode uses the soft dark tokens like the other ticket pages, instead of solid orange edges */
+:root[data-theme="dark"] .discover-page.discover-page :is(.search-toolbar, .category-shortcut, .results-sort select, .pane-switch) { border-color: var(--bookedz-control-border); }
+:root[data-theme="dark"] .discover-page.discover-page .category-shortcut[aria-pressed=true] { border-color: var(--bookedz-fill); box-shadow: 3px 3px 0 var(--db-dark-edge); }
+:root[data-theme="dark"] .discover-page.discover-page .search-toolbar { box-shadow: 5px 5px 0 var(--db-dark-teal); }
+:root[data-theme="dark"] .discover-page.discover-page .discovery-event-row { border-color: var(--bookedz-border); box-shadow: 5px 5px 0 var(--db-dark-teal); }
+:root[data-theme="dark"] .discover-page.discover-page .discovery-event-row:is(:hover, :focus-within) { box-shadow: 7px 7px 0 var(--db-dark-teal); }
+:root[data-theme="dark"] .discover-page.discover-page .discovery-event-row.is-selected { border-color: var(--db-dark-edge); box-shadow: 6px 6px 0 var(--db-dark-orange); }
+@media (prefers-reduced-motion: reduce) {
+  .discover-page.discover-page :is(.discovery-event-row:is(:hover, :focus-within), .category-shortcut:hover) { transform: none; }
+}
+/* Discover: the removable "active filter" chips duplicate the category pills and Filters panel. */
+.discover-page.discover-page .discovery-search .active-filters { display: none; }
+.discover-page.discover-page :is(.event-pagination, .event-more) .btn { background: var(--bookedz-fill); border-color: var(--bookedz-ink); color: var(--bookedz-on-action); box-shadow: 4px 4px 0 var(--bookedz-ink); }
+.discover-page.discover-page :is(.event-pagination, .event-more) .btn:disabled { opacity: .6; }
+:root[data-theme="dark"] .discover-page.discover-page :is(.event-pagination, .event-more) .btn { border-color: var(--bookedz-fill); box-shadow: 4px 4px 0 var(--db-dark-orange); }
+/* Keep the bookmark tooltip above the next ticket row (the row shadow/transform makes each row its own layer). */
+.discover-page.discover-page .discovery-event-row { position: relative; }
+.discover-page.discover-page .discovery-event-row:is(:hover, :focus-within) { z-index: 6; }
+/* The tooltip anchors to the row's nearest positioned ancestor; make that the bookmark itself so it sits beside the button. */
+.discover-page.discover-page .row-actions .event-bookmark { position: relative; }
+.discover-page.discover-page .row-actions .bookmark-tooltip { top: auto; bottom: calc(100% + 6px); z-index: 7; }
+
+/* Edit event inside Manage event: same plain heading as the Tasks, Budget and other tabs (no festival hero card). */
+.design-baseline.design-baseline.is-embedded .create-heading {
+  margin: 0 0 1.25rem; padding: .2rem 0 1rem; overflow: visible; border: 0; border-bottom: 1px solid var(--bookedz-border);
+  border-radius: 0; background: none; box-shadow: none;
+}
+.design-baseline.design-baseline.is-embedded .create-heading::after { content: none; }
+.design-baseline.design-baseline.is-embedded .create-heading :is(h1, h2) {
+  margin: 0; background: none; color: var(--bookedz-ink); -webkit-text-fill-color: currentColor;
+  font-size: clamp(1.45rem, 2.5vw, 1.8rem); font-weight: 700; letter-spacing: -.035em;
+}
+.design-baseline.design-baseline.is-embedded .create-heading p { max-width: 44rem; margin: .35rem 0 0; color: var(--bookedz-muted); font-weight: 400; }
+:root[data-theme="dark"] .design-baseline.design-baseline.is-embedded .create-heading { border: 0; border-bottom: 1px solid var(--bookedz-border); background: none; box-shadow: none; }
+
+/* Discover rows: more room between rows and days so the hard shadows don't crowd each other */
 .discover-page.discover-page .date-events { gap: 14px; }
 .discover-page.discover-page .date-group { padding-bottom: 18px; }
-:root[data-theme="dark"] .discover-page.discover-page .discovery-event-row { border-color: var(--bookedz-border); box-shadow: 4px 4px 0 var(--db-dark-teal); }
-:root[data-theme="dark"] .discover-page.discover-page .discovery-event-row.is-selected { border-color: var(--db-dark-edge); box-shadow: 4px 4px 0 var(--db-dark-orange); }
-@media (hover: hover) { .discover-page.discover-page .discovery-event-row:hover { transform: translate(-1px, -2px); box-shadow: 6px 6px 0 var(--bookedz-teal); } }
-
-/* The map in a ticket frame */
-.discover-page.discover-page .discovery-street-map { border: 2px solid var(--bookedz-ink); border-radius: var(--db-r); box-shadow: 6px 6px 0 var(--bookedz-pink); }
-.discover-page.discover-page .street-map-canvas { border-radius: 18px; }
-.discover-page.discover-page :is(.street-chip, .street-zoom, .street-preview) { border-width: 2px; }
-:root[data-theme="dark"] .discover-page.discover-page .discovery-street-map { border-color: var(--bookedz-border); box-shadow: 6px 6px 0 color-mix(in srgb, var(--bookedz-pink) 30%, transparent); }
-
-/* Buttons and empty states */
-.discover-page.discover-page .btn { border-radius: 99px; border-width: 2px; }
-@media (hover: hover) { .discover-page.discover-page .btn:not(:disabled):hover { transform: translateY(-2px) rotate(-.6deg); } }
-.discover-page.discover-page .empty-state { border: 2px dashed var(--bookedz-control-border); border-radius: var(--db-r); }
-@media (prefers-reduced-motion: reduce) {
-  .discover-page.discover-page :is(.category-shortcut, .discovery-event-row) { transition: none; }
-  .discover-page.discover-page :is(.category-shortcut[aria-pressed=true], .discovery-event-row:hover, .btn:not(:disabled):hover) { transform: none; }
-}
 
 /* ---- Sort drop-downs (My Events, Discover) ------------------------------------------------------
    Where the browser supports customisable selects, the open list joins the button as if it expands
@@ -387,6 +467,9 @@ body:has(:is(.design-baseline, .account-page, .organiser-events-page, .community
     border: 2px solid var(--bookedz-control-border); border-radius: 0 0 20px 20px;
     background: var(--bookedz-surface); color: var(--bookedz-ink); box-shadow: var(--bookedz-neutral-shadow-hover);
   }
+  /* Discover's sort button has an ink edge in light mode, so its list does too */
+  .discover-page.discover-page .results-sort select::picker(select) { border-color: var(--bookedz-ink); }
+  :root[data-theme="dark"] .discover-page.discover-page .results-sort select::picker(select) { border-color: var(--bookedz-control-border); }
   :is(.organiser-events-page.organiser-events-page .event-sort, .discover-page.discover-page .results-sort) option { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 12px; border-radius: 16px; font-size: var(--text-small); font-weight: 600; }
   :is(.organiser-events-page.organiser-events-page .event-sort, .discover-page.discover-page .results-sort) option::checkmark { order: 1; margin-left: auto; color: var(--bookedz-primary-dark); }
   :is(.organiser-events-page.organiser-events-page .event-sort, .discover-page.discover-page .results-sort) option:is(:hover, :focus-visible) { background: var(--bookedz-hover); outline: none; }

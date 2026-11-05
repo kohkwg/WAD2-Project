@@ -139,7 +139,7 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <div v-if="errorMessage" class="form-text text-danger" role="alert">
+    <div v-dismissible v-if="errorMessage" class="form-text text-danger" role="alert">
       {{ errorMessage }}
       <button type="button" class="btn btn-link btn-sm p-0 align-baseline" @click="useTypedAddress">
         Use "{{ query }}" anyway

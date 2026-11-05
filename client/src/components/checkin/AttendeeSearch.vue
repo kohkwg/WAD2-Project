@@ -61,7 +61,7 @@ defineExpose({ reload: load })
     <div v-if="loading" class="small text-body-secondary mt-2">
       <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Loading attendees…
     </div>
-    <div v-else-if="error" class="alert alert-danger small mt-2 mb-0" role="alert">{{ error }}</div>
+    <div v-dismissible v-else-if="error" class="alert alert-danger small mt-2 mb-0" role="alert">{{ error }}</div>
     <p v-else-if="query.trim() && !matches.length" class="small text-body-secondary mt-2 mb-0">
       No confirmed attendee matches “{{ query.trim() }}”.
     </p>

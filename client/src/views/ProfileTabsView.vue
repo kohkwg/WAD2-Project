@@ -13,7 +13,7 @@ else if (route.query.tab) router.replace({ path: '/profile' })
 <template>
   <div class="account-page py-4 py-md-5">
     <header class="account-heading">
-      <p class="text-body-secondary mb-2">Your Bookedz account</p>
+      <p class="text-body-secondary mb-2">Your Dino account</p>
       <h1>Your profile</h1>
       <p class="text-body-secondary">Keep your details and interests current. Friends are in <RouterLink to="/community#friends">Community</RouterLink>.</p>
     </header>

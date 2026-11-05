@@ -31,7 +31,8 @@ async function mockWeather(page, description, options) {
 
 async function openTool(page, tab = 'tasks', event = 'e-weather-demo') {
   await page.goto(`/organiser/events/${event}/manage?tab=${tab}`)
-  await expect(page.getByRole('link', { name: tab[0].toUpperCase() + tab.slice(1), exact: true })).toBeVisible()
+  const group = tab === 'announcements' || tab === 'edit' ? /^General/ : tab === 'weather' ? /^On the day/ : /^Planning/
+  await expect(page.getByRole('navigation', { name: 'Event tools' }).getByRole('button', { name: group })).toContainText(tab[0].toUpperCase() + tab.slice(1))
 }
 
 async function db(page) {
@@ -216,6 +217,7 @@ test('reused workspace route clears drafts and ignores old weather responses', a
   })
   release()
   await expect(page.getByRole('heading', { name: 'Intro to Vue Workshop', exact: true })).toBeVisible()
+  await page.getByRole('navigation', { name: 'Event tools' }).getByRole('button', { name: /^Planning/ }).click()
   await expect(page.getByRole('link', { name: 'Tasks', exact: true })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('heading', { name: 'Showers', exact: true })).toHaveCount(0)
 })

@@ -55,7 +55,7 @@ test('supplied palette reaches actual surfaces, headings and actions in both the
       await page.getByLabel('Color theme').selectOption(theme)
       await page.setViewportSize({width,height:950})
       if(path==='/discover')await expect(page.locator('.discovery-event-row').first()).toBeVisible()
-      if(path==='/my-rsvps')await expect(page.locator('.plans-summary')).toBeVisible()
+      if(path==='/my-rsvps')await expect(page.locator('.rsvp-tabs')).toBeVisible()
       if(path==='/organiser/events')await expect(page.locator('.organiser-event-card').first()).toBeVisible()
       const actual=await page.evaluate(keys=>{
         const style=getComputedStyle(document.documentElement)

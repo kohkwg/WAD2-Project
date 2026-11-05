@@ -17,8 +17,17 @@ import { supabase } from './supabase.js'
 import { api as recommendationApi } from '../lib/api.js'
 import * as hangouts from './supabaseHangoutsApi.js'
 
+// Network trouble gets a plain message, so people know the action did not go through.
+export function friendlyMessage(error) {
+  // Only real connection failures get this message; a server error keeps the server's own wording.
+  const text = error?.message || ''
+  return /failed to fetch|networkerror|load failed|network request failed/i.test(text)
+    ? 'Could not reach the server. Check your connection and try again; nothing was changed.'
+    : error?.message || 'Something went wrong. Please try again.'
+}
+
 function check({ data, error }) {
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(friendlyMessage(error))
   return data
 }
 
@@ -31,7 +40,7 @@ function check({ data, error }) {
 export async function getCurrentUser() {
   const { data } = await supabase.auth.getSession()
   if (!data.session) return null
-  return { id: data.session.user.id, email: data.session.user.email }
+  return { id: data.session.user.id, email: data.session.user.email, user_metadata: { dino: data.session.user.user_metadata?.dino } }
 }
 
 async function requireUserId() {
@@ -41,17 +50,89 @@ async function requireUserId() {
 }
 
 export async function signIn(email, password) {
-  check(await supabase.auth.signInWithPassword({ email, password }))
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
+  if (!error) return
+  // One message for an unknown email and a wrong password, so the form never reveals which
+  // emails have accounts. `kind` lets the sign-in form count wrong attempts.
+  if (/invalid login credentials/i.test(error.message)) throw Object.assign(new Error('Invalid email or password.'), { kind: 'credentials' })
+  throw new Error(friendlyMessage(error))
 }
 
 // The database makes a profile for every new account (trigger handle_new_user);
-// `full_name` is what it uses as their display name.
-// Returns true if they must click a link in their email before they can sign in.
-export async function signUp(name, email, password) {
+// `full_name` is what it uses as their display name. The trigger does not know about
+// usernames, so when a session starts straight away we save the chosen username on the
+// new profile ourselves. The username is also kept in the account's metadata.
+// Returns { mustConfirmEmail, usernameTaken }: with mustConfirmEmail they must click a link in
+// their email before they can sign in (and choose a username later in their profile).
+export async function signUp(name, email, password, username = '') {
+  const handle = username.trim().replace(/^@/, '').toLowerCase()
   const data = check(
-    await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } }),
+    await supabase.auth.signUp({ email: email.trim().toLowerCase(), password, options: { data: { full_name: name, username: handle } } }),
   )
-  return data.session === null
+  // When "Confirm email" is on, Supabase does not report an existing address as an error (that
+  // would reveal who is registered). It returns a user with an empty `identities` list instead.
+  if (Array.isArray(data.user?.identities) && data.user.identities.length === 0) throw new Error('User already registered')
+  if (data.session === null) return { mustConfirmEmail: true, usernameTaken: false }
+  let usernameTaken = false
+  if (handle) {
+    const { error } = await supabase.from('profiles').update({ username: handle }).eq('id', data.user.id)
+    // 23505 = the unique constraint: someone already has that username.
+    if (error?.code === '23505') usernameTaken = true
+  }
+  return { mustConfirmEmail: false, usernameTaken }
+}
+
+// Emails a reset link that opens /reset-password. Resolves the same way whether or not the
+// address has an account, so the form cannot be used to find out who is registered.
+export async function requestPasswordReset(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` })
+  // Anything except a rate limit is hidden on purpose (see above).
+  if (error?.status === 429 || /rate limit/i.test(error?.message || '')) throw new Error('Too many reset emails were requested. Please wait a few minutes and try again.')
+}
+
+// Saves a new password for whoever is signed in (the reset link signs them in temporarily).
+export async function updatePassword(password) {
+  check(await supabase.auth.updateUser({ password }))
+}
+
+// ---- Account settings (Profile page) ----
+
+// Changes the signed-in user's username. Returns { taken: true } if someone already has it.
+export async function changeUsername(handle) {
+  const userId = await requireUserId()
+  const { error } = await supabase.from('profiles').update({ username: handle }).eq('id', userId)
+  if (error?.code === '23505') return { taken: true }
+  if (error) throw new Error(error.message)
+  return { taken: false }
+}
+
+// Supabase emails a confirmation link; the address only changes once it is clicked.
+export async function changeEmail(newEmail) {
+  check(await supabase.auth.updateUser({ email: newEmail }))
+}
+
+// Proves they know the current password (signing in again with it) before setting the new one.
+export async function changePassword(currentPassword, newPassword) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Please sign in first.')
+  const { error } = await supabase.auth.signInWithPassword({ email: user.email, password: currentPassword })
+  if (error) throw new Error('Your current password is incorrect.')
+  check(await supabase.auth.updateUser({ password: newPassword }))
+}
+
+// Permanently deletes the signed-in account. Needs the password again (checked by signing in
+// with it), then asks the server to delete it, because only the server holds the key that can.
+export async function deleteAccount(password) {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Please sign in first.')
+  const { error } = await supabase.auth.signInWithPassword({ email: user.email, password })
+  if (error) throw new Error('Your password is incorrect.')
+  try {
+    await recommendationApi.delete('/api/account')
+  } catch (failure) {
+    throw new Error(failure.response?.data?.error || 'Could not delete your account. Please try again.')
+  }
+  await supabase.auth.signOut()
 }
 
 export async function signOut() {
@@ -61,7 +142,7 @@ export async function signOut() {
 // Runs callback(user or null) whenever someone signs in or out. Returns a function to stop.
 export function onAuthChange(callback) {
   const { data } = supabase.auth.onAuthStateChange((event, session) => {
-    callback(session ? { id: session.user.id, email: session.user.email } : null)
+    callback(session ? { id: session.user.id, email: session.user.email, user_metadata: { dino: session.user.user_metadata?.dino } } : null)
   })
   return () => data.subscription.unsubscribe()
 }

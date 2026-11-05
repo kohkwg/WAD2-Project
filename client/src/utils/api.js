@@ -31,7 +31,13 @@ export { OFFER_HOURS, ACTIVE_STATUSES, JOINED_STATUSES, CLOSED_STATUSES } from '
 // ---------- Sign-in ----------
 export const getCurrentUser = () => backend.getCurrentUser() // { id, email } or null
 export const signIn = (email, password) => backend.signIn(email, password)
-export const signUp = (name, email, password) => backend.signUp(name, email, password) // true → check email
+export const signUp = (name, email, password, username) => backend.signUp(name, email, password, username) // { mustConfirmEmail, usernameTaken }
+export const requestPasswordReset = (email) => backend.requestPasswordReset(email)
+export const updatePassword = (password) => backend.updatePassword(password)
+export const changeUsername = (handle) => backend.changeUsername(handle) // { taken }
+export const changeEmail = (email) => backend.changeEmail(email)
+export const changePassword = (current, next) => backend.changePassword(current, next)
+export const deleteAccount = (password) => backend.deleteAccount(password)
 export const signOut = () => backend.signOut()
 export const onAuthChange = (callback) => backend.onAuthChange(callback) // returns "stop listening"
 
@@ -71,7 +77,7 @@ export async function getFoodNearby({ lat, lng, at, radius = 800 }) {
   try {
     response = await fetch(`${SERVER}/api/food/nearby?${params}`)
   } catch {
-    throw new Error('Food suggestions need the Bookedz server. Start it with pnpm --dir server dev.')
+    throw new Error('Food suggestions need the Dino server. Start it with pnpm --dir server dev.')
   }
   const body = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(body.message || 'Food suggestions are unavailable right now.')
