@@ -1,4 +1,4 @@
-const test = require('node:test');
+import { test } from "vitest";
 
 const {
   checkTrue,
@@ -200,7 +200,8 @@ test('unverified attendance is ignored and invalid selected timestamps are rejec
     },
     save: active(1)
   }).contribution, aged(5, 1));
-  for (const timestamp of [null, undefined, '', 'yesterday', '2026-10-27T12:00:00', NOW + 1, Infinity]) {
+  // a minute ahead is past the 5-second clock tolerance in eventEvidence.js
+  for (const timestamp of [null, undefined, '', 'yesterday', '2026-10-27T12:00:00', NOW + 60_000, Infinity]) {
     checkThrows(() => evidence({
       rsvp: {
         active: true,

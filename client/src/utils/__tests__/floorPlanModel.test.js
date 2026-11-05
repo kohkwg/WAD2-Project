@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { programmePayload, singaporeInput, clampPosition, validateFloorImage, backgroundUrl, fitContain, clampOpacity, fitRotated, clampRotation, clampScale, findFreeSpot, personFootprint } from '../floorPlanModel.js';
 test('programme uses explicit Singapore times and trims optional content', () => {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import test from 'node:test';
+import { test } from 'vitest';
 
 // load the real composable, replacing only its external service clients.
 

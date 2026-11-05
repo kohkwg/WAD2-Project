@@ -1,5 +1,4 @@
-import test from 'node:test';
-import { readFile } from 'node:fs/promises';
+import { test, vi } from 'vitest';
 import checks from '../../server/tests/checks.js';
 
 const {
@@ -8,16 +7,25 @@ const {
   checkTrue
 } = checks;
 
-const source = (await readFile(new URL('../src/composables/useEvents.js', import.meta.url), 'utf8')).replace(/import[^\n]+\n/g, '');
-
-const {
-  useRecommendations
-} = await import('data:text/javascript;base64,' + Buffer.from(`
-  import { ref } from '${import.meta.resolve('vue')}';
-  const supabase = {auth: {getSession: async () => ({data: {session: null}})}};
-  const api = { get: (...args) => globalThis.__recApi.get(...args), post: (...args) => globalThis.__recApi.post(...args) };
-  ${source}
-`).toString('base64'));
+// Vitest replaces the composable's data boundary. The fake database has a signed-in user and
+// reports an event as saved when the test's recommendations API has saved it.
+vi.mock('@/lib/api', () => ({
+  api: { get: (...args) => globalThis.__recApi.get(...args), post: (...args) => globalThis.__recApi.post(...args) }
+}));
+vi.mock('@/lib/supabase', () => {
+  const rows = table => table === 'user_event_preferences' && globalThis.__recSaved?.()
+    ? [{ event_id: 'event-1', save_active: true }]
+    : [];
+  const query = table => {
+    const builder = new Proxy({}, { get(_target, method) {
+      if (method === 'then') return resolve => resolve({ data: rows(table), error: null });
+      return () => builder;
+    } });
+    return builder;
+  };
+  return { supabase: { auth: { getSession: async () => ({ data: { session: { user: { id: 'user-1' } } } }) }, from: query } };
+});
+const { useRecommendations } = await import('../src/composables/useEvents.js');
 
 const event = {
   id: 'event-1',
@@ -28,6 +36,7 @@ const event = {
 test('save refreshes recommendations; dismiss and undo retain the event for reversal', async () => {
   const calls = [];
   let saved = false;
+  globalThis.__recSaved = () => saved;
   let dismissed = false;
   globalThis.__recApi = {
     post: async (path, {

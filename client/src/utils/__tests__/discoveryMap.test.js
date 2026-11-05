@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { eventLatLng, inBounds, categoryStyle, groupMarkers, mergeOverlapping, eventsNear, distanceKm, SINGAPORE_BOUNDS } from '../discoveryMap.js';
 test('neighbourhood counts include only mapped events within the radius', () => {

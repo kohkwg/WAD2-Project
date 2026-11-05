@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import { expect } from './expect.js';
 import { blankHangout, hangoutStepErrors, hangoutFormFromEvent, hangoutChanges } from '../hangouts.js';
 

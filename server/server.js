@@ -26,8 +26,6 @@ app.use("/api/plan-suggestions", require("./routes/planSuggestions"));
 app.use("/api/route", require("./routes/route"));
 // food places near an event (go together before/after planner)
 app.use("/api/food", require("./routes/food")());
-// live hangouts: group-time ranking over private free times (members only)
-app.use("/api/hangouts", require("./routes/hangouts"));
 if (require.main === module) {
   const port = Number(process.env.PORT || 3000);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("PORT must be an integer from 1 to 65535");

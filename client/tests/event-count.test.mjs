@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import checks from '../../server/tests/checks.js';
 

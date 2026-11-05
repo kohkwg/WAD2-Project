@@ -6,7 +6,7 @@ const {
   checkTrue
 } = checks;
 import { readFile } from 'node:fs/promises';
-import test from 'node:test';
+import { test } from 'vitest';
 import { createSSRApp, reactive } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 import { compileScript, parse } from 'vue/compiler-sfc';
@@ -81,7 +81,8 @@ test('extras and categories share the canonical state and accurate active count'
     extras: ['spots_left'],
     categories: ['sports', 'music'],
     dateFrom: '',
-    dateTo: ''
+    dateTo: '',
+    saved: false
   });
   state.choose('categories', 'sports');
   checkDeepEqual(props.modelValue.categories, ['music']);
@@ -102,7 +103,8 @@ test('clear all clears filters only, pending search is flushed, and Show closes 
     extras: [],
     categories: [],
     dateFrom: '',
-    dateTo: ''
+    dateTo: '',
+    saved: false
   });
   checkEqual(props.search, 'Pottery');
   state.expanded.value = true;
@@ -135,7 +137,8 @@ test('normalization removes Free and unknown choices without mutating inputs', (
     extras: ['spots_left'],
     categories: ['arts'],
     dateFrom: '',
-    dateTo: ''
+    dateTo: '',
+    saved: false
   });
   checkEqual(value.extras.length, 3);
 });
@@ -171,7 +174,8 @@ test('URL roundtrip and derived event queries preserve one filter model', () => 
   checkDeepEqual(discoveryFiltersFromQuery(query), {
     ...filters,
     dateFrom: '',
-    dateTo: ''
+    dateTo: '',
+    saved: false
   });
   checkEqual(query.search, 'workshop');
   checkEqual(query.view, 'list');
@@ -190,6 +194,7 @@ test('URL roundtrip and derived event queries preserve one filter model', () => 
     extras: ['spots_left'],
     categories: ['sports'],
     dateFrom: '',
-    dateTo: ''
+    dateTo: '',
+    saved: false
   });
 });

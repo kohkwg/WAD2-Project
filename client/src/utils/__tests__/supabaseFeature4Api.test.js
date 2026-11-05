@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createSupabaseFeature4Api } from '../supabaseFeature4Api.js';
 

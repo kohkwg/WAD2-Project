@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import checks from '../../server/tests/checks.js';
 import { organiserEventState, organiserEventCounts, filterOrganiserEvents } from '../src/utils/organiserEvents.js';
 

@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { retime, generatePlan, swapAlternatives, travelEstimate, eventListing, placeListing, candidatePool, memberWeights } from '../itinerary.js';
 import { sgDateTime } from '../hangouts.js';

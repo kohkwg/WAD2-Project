@@ -1,4 +1,4 @@
-import test, { beforeEach, afterEach } from 'node:test';
+import { test, beforeEach, afterEach, vi } from 'vitest';
 import assert from 'node:assert/strict';
 import * as api from '../api.js';
 import { createSeedData } from '../mockData.js';
@@ -14,8 +14,8 @@ const originalFetch = globalThis.fetch;
 let stored, failWrite, writes, failAfterCommit;
 beforeEach(context => {
   // freeze construction as well as date.now: offer-expiry reads use new date().
-  context.mock.timers.enable({
-    apis: ['Date'],
+  vi.useFakeTimers({
+    toFake: ['Date'],
     now
   });
   Date.now = () => now;
@@ -38,6 +38,7 @@ beforeEach(context => {
   };
 });
 afterEach(() => {
+  vi.useRealTimers();
   Date.now = originalNow;
   globalThis.fetch = originalFetch;
   delete globalThis.localStorage;

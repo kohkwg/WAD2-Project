@@ -1,4 +1,4 @@
-const test = require("node:test");
+import { test } from "vitest";
 
 const {
   checkTrue,

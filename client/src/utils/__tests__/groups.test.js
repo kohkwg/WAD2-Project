@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { groupErrors, groupEventData, slotTimes, fitSlots, slotCells, availabilityError, mealLabel, suggestionFrom, suggestionErrors, emptyPlan, isGroup } from '../groups.js';
 

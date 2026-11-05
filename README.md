@@ -134,7 +134,7 @@ Denzel, Aishani, Gregory, Huxley, Timothy, Vivienne
   images are stored in Cloudflare R2. Demo mode stores sample data in the browser's local storage.
 - **API** (`server/`): Express 5 (CommonJS) for recommendations, plan suggestions, signed image
   uploads, account deletion, the OneMap routing proxy and food near events.
-- **Tests:** Node's test runner and Playwright.
+- **Tests:** Vitest (unit and route tests) and Playwright (end-to-end).
 
 ### External APIs
 
@@ -179,17 +179,22 @@ HTML report.
 | Profile, notifications and navigation | `f1-profile-design`, `notifications`, `user-notifications`, `navbar-account`, `sidebar-collapse` |
 | Layout at 375, 575, 768 and 1280px | `design-polish` |
 
-**Unit and route tests** run with Node and need no browser or keys:
+**Unit and route tests** run with [Vitest](https://vitest.dev/) and need no browser or keys. The
+client tests always run on demo data, so they never reach the hosted project:
 
 ```bash
-(cd client && NODE_ENV=test node --test src/utils/__tests__/*.test.js src/utils/__tests__/waitlistScore.spec.js)
-node --test client/tests/*.test.mjs
-node --test server/tests/*.test.js
+pnpm --dir client test:unit
+pnpm --dir server test
 npm --prefix server run check
 ```
 
-On Windows, use the first command above instead of `pnpm --dir client test:unit`: that script sets
-`NODE_ENV` in a way the Windows command prompt does not accept.
+| Command | Covers |
+| --- | --- |
+| `pnpm --dir client test:unit` | `client/src/utils/__tests__/` and `client/tests/`: data adapters (demo and live), RSVP and waitlist rules, Go together groups, Discover filters and rows, recommendations, saved events, notifications, Feature 4 tools and weather |
+| `pnpm --dir server test` | `server/tests/`: recommendations, plan suggestions, food places and opening hours, OneMap routes, uploads and account routes |
+| `npm --prefix server run check` | Interest and tag-diversity checks for recommendations |
+
+Add a file path to run one file, for example `pnpm --dir client test:unit tests/event-filters.test.mjs`.
 
 ### Database checks
 
@@ -208,6 +213,8 @@ Replace `groups-db` with any other `*.check.mjs` file in `server/checks/`.
 ### Latest results and known limits
 
 - **End-to-end (6 November 2026):** 99 passed, 0 failed, 0 skipped on a demo server.
+- **Unit and route (6 November 2026):** client 265 passed (39 files), server 154 passed (18 files),
+  0 failed.
 - **Storage:** the R2 bucket is public, so uploaded images are public objects.
 
 ## Project structure
@@ -266,6 +273,7 @@ docs/sql/    SQL for tables the hosted project added outside the migrations (use
 | [nodemon](https://github.com/remy/nodemon) | API restart on change in development | MIT |
 | [AWS SDK for JavaScript](https://github.com/aws/aws-sdk-js-v3) | Signed uploads to Cloudflare R2 | Apache-2.0 |
 | [Playwright](https://github.com/microsoft/playwright) | Browser tests | Apache-2.0 |
+| [Vitest](https://github.com/vitest-dev/vitest) | Unit and route tests | MIT |
 
 **Fonts:** [Bricolage Grotesque](https://github.com/google/fonts/tree/main/ofl/bricolagegrotesque),
 [DM Sans](https://github.com/google/fonts/tree/main/ofl/dmsans) and

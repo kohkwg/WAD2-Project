@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 
 const helpers = await import('../feature4.js').catch(() => ({}));

@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import { expect } from './expect.js';
 import { applyEventDefaults, defaultRevealTime, hideCapacityNumbers, isEventFull, isMeetingUrl, onlineAccess, onlineLinkErrors } from '../onlineEvents.js';
 import { blankEventForm, errorsForStep } from '../eventForm.js';

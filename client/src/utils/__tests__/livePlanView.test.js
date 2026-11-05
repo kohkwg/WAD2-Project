@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { livePlanView as toPlan } from '../groups.js';
 import { slotCells } from '../groups.js';
