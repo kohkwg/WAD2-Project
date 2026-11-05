@@ -361,9 +361,9 @@ async function demoExpireOffers() {
     </div>
   </div>
 
-  <div v-else-if="!event" class="alert alert-danger mt-3">{{ errorMessage }}</div>
+  <div v-dismissible v-else-if="!event" class="alert alert-danger mt-3">{{ errorMessage }}</div>
 
-  <div v-else-if="!isMyEvent" class="alert alert-warning mt-3">
+  <div v-dismissible v-else-if="!isMyEvent" class="alert alert-warning mt-3">
     You can only manage RSVPs for events you organise.
   </div>
 
@@ -387,7 +387,7 @@ async function demoExpireOffers() {
       </div>
     </section>
 
-    <div
+    <div v-dismissible
       v-if="statusMessage"
       ref="statusAlert"
       tabindex="-1"
@@ -396,14 +396,8 @@ async function demoExpireOffers() {
       aria-live="polite"
     >
       <span>{{ statusMessage }}</span>
-      <button
-        type="button"
-        class="btn-close"
-        aria-label="Close"
-        @click="statusMessage = ''"
-      ></button>
     </div>
-    <div v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+    <div v-dismissible v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
 
     <!-- Tabs: Vue decides which one is showing (activeTab), so no Bootstrap JS needed -->
     <div class="nav nav-tabs status-tabs" role="group" aria-label="Filter RSVPs by status">

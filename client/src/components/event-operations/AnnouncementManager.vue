@@ -41,7 +41,7 @@ function date(value) { return new Date(value).toLocaleString('en-SG', { timeZone
     </article>
     <form class="workspace-panel announcement-editor mt-4" @submit.prevent="save">
       <h3 class="section-heading">{{ editingId ? 'Edit announcement' : 'New announcement' }}</h3>
-      <fieldset :disabled="pending"><label for="announcement-body" class="form-label">Announcement text</label><textarea id="announcement-body" ref="bodyInput" v-model="body" class="form-control mb-3" required rows="4" /><p v-if="validation" class="text-danger" role="alert">{{ validation }}</p><div class="d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">{{ editingId ? 'Save announcement' : 'Publish announcement' }}</button><button v-if="editingId" type="button" class="btn btn-outline-secondary" @click="clearDraft">Cancel edit</button></div></fieldset>
+      <fieldset :disabled="pending"><label for="announcement-body" class="form-label">Announcement text</label><textarea id="announcement-body" ref="bodyInput" v-model="body" class="form-control mb-3" required rows="4" /><p v-dismissible v-if="validation" class="text-danger" role="alert">{{ validation }}</p><div class="d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">{{ editingId ? 'Save announcement' : 'Publish announcement' }}</button><button v-if="editingId" type="button" class="btn btn-outline-secondary" @click="clearDraft">Cancel edit</button></div></fieldset>
     </form>
     <ConfirmationDialog v-if="deleting" title="Delete announcement?" focus-fallback="#announcements-write" :pending="pending" :error="actionError" @cancel="cancelDelete" @confirm="deletePost"><p>This removes the announcement from the public event feed.</p></ConfirmationDialog>
   </section>

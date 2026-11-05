@@ -260,9 +260,9 @@ onBeforeUnmount(() => { stopTiles?.(); clearTimeout(placeTimer); placeAbort?.abo
       <button type="button" class="street-zoom-minus" aria-label="Zoom out" :disabled="zoomLevel <= 11" @click="zoomOut">−</button>
     </div>
     <div v-if="loading" class="street-map-message" role="status">Finding events…</div>
-    <div v-else-if="error" class="street-map-message" role="alert">{{ error }} <button type="button" @click="emit('retry')">Try again</button></div>
+    <div v-dismissible v-else-if="error" class="street-map-message" role="alert">{{ error }} <button type="button" @click="emit('retry')">Try again</button></div>
     <div v-else-if="!points.length && !place" class="street-map-message" role="status">{{ events.length ? 'These events have no map coordinates yet. Their details are available in the list.' : 'No events match your search.' }}</div>
-    <div v-if="tileError" class="street-tile-error" role="status">Map background couldn’t load. <button type="button" @click="retryTiles">Retry map</button></div>
+    <div v-dismissible v-if="tileError" class="street-tile-error" role="status">Map background couldn’t load. <button type="button" @click="retryTiles">Retry map</button></div>
     <div v-if="selected || groupEvents.length" class="street-preview" role="region" aria-label="Selected map events">
       <button type="button" class="preview-close" aria-label="Close event preview" @click="dismiss">×</button>
       <template v-if="selected">

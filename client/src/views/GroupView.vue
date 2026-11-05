@@ -121,7 +121,7 @@ const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 
     <RouterLink to="/community" class="group-back">&larr; Go together</RouterLink>
 
     <div v-if="loading" class="group-loading" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Loading the group…</div>
-    <div v-else-if="error" class="group-empty" role="alert">
+    <div v-dismissible v-else-if="error" class="group-empty" role="alert">
       <h1 class="section-title">Can’t open this group</h1>
       <p>{{ error }}</p>
       <RouterLink to="/community" class="btn btn-outline-secondary">See other groups</RouterLink>
@@ -197,7 +197,7 @@ const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 
           <RouterLink :to="{ path: `/events/${event.id}/rsvp`, hash: event.spotsLeft > 0 || event.requiresApproval ? '#rsvp' : '#waitlist' }" class="btn btn-primary btn-sm">{{ eventRsvpLabel }}</RouterLink>
         </div>
         <p v-else-if="isMember && group.myEventStatus" class="group-rsvp-done text-meta">You’re {{ eventStatusText[group.myEventStatus] }}.</p>
-        <p v-if="actionError" class="group-error" role="alert">{{ actionError }}</p>
+        <p v-dismissible v-if="actionError" class="group-error" role="alert">{{ actionError }}</p>
       </section>
 
       <section v-if="inviteUrl" class="group-card" aria-labelledby="group-share-title">

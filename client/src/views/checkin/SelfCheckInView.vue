@@ -126,7 +126,7 @@ onMounted(async () => {
     </div>
 
     <template v-else-if="step === 'done'">
-      <div class="alert" :class="result.already ? 'alert-info' : 'alert-success'" role="status">
+      <div v-dismissible class="alert" :class="result.already ? 'alert-info' : 'alert-success'" role="status">
         <h2 class="h5 mb-1">{{ result.already ? "You're already checked in" : "You're checked in!" }}</h2>
         <p class="mb-0">at {{ formatTime(result.row.checked_in_at) }}</p>
       </div>
@@ -137,7 +137,7 @@ onMounted(async () => {
     </template>
 
     <template v-else>
-      <div class="alert alert-danger" role="alert">{{ message }}</div>
+      <div v-dismissible class="alert alert-danger" role="alert">{{ message }}</div>
       <button class="btn btn-primary w-100" @click="scanAgain">Scan again</button>
     </template>
   </div>

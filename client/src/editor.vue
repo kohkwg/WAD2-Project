@@ -730,7 +730,7 @@ function addPerson() {
     <!-- Viewer mode renders nothing until a plan exists, so event pages without one stay clean -->
     <div v-if="!readOnly || (!loading && !loadError && planId)"
         :class="readOnly ? 'floor-plan-viewer' : embedded ? 'floor-editor' : 'container py-4 floor-editor'">
-        <p v-if="!USING_SUPABASE" class="alert alert-info">Floor plans and programme editing require a configured live
+        <p v-dismissible v-if="!USING_SUPABASE" class="alert alert-info">Floor plans and programme editing require a configured live
             Supabase connection.</p>
         <template v-if="!readOnly && USING_SUPABASE">
             <RouterLink v-if="!embedded" :to="`/organiser/events/${eventId}/manage`" class="small d-block mb-3">&larr; Manage event
@@ -747,7 +747,7 @@ function addPerson() {
                 </div>
 
                 <div v-if="canEdit" class="d-flex align-items-center gap-2">
-                    <span v-if="saveMessage" class="small"
+                    <span v-dismissible v-if="saveMessage" class="small"
                         :class="saveMessage === 'Saved.' ? 'text-success' : 'text-danger'" role="status">{{ saveMessage
                         }}</span>
                     <button class="btn btn-outline-secondary" type="button" :disabled="saving || (!dirty && !helperDirty)"
@@ -766,7 +766,7 @@ function addPerson() {
         <div v-if="loading && !readOnly" class="py-5 text-center">
             <div class="spinner-border" role="status"><span class="visually-hidden">Loading floor plan…</span></div>
         </div>
-        <div v-else-if="loadError" class="alert alert-danger" role="alert">{{ loadError }} <button
+        <div v-dismissible v-else-if="loadError" class="alert alert-danger" role="alert">{{ loadError }} <button
                 class="btn btn-sm btn-outline-danger" @click="load">Retry floor plan</button></div>
 
         <template v-else-if="USING_SUPABASE">
@@ -790,7 +790,7 @@ function addPerson() {
                             :disabled="!canEdit" placeholder="Venue address"></textarea>
                     </label>
                 </div>
-                <p v-if="planSwitchMessage" class="small text-danger mb-0" role="alert">{{ planSwitchMessage }}</p>
+                <p v-dismissible v-if="planSwitchMessage" class="small text-danger mb-0" role="alert">{{ planSwitchMessage }}</p>
             </div>
             <div class="floor-editor-layout" :class="{ 'viewer-layout': readOnly }">
                 <section ref="stageHost" class="editor-shell" aria-label="Floor plan canvas">
@@ -817,8 +817,7 @@ function addPerson() {
                             {{ canvasLocked ? 'Locked' : 'Lock' }}
                         </button>
                     </div>
-                    <div v-if="canEdit" class="canvas-selection" role="group" aria-label="Selected element">
-                        <p v-if="!selectedBox && !selectedPerson" class="selection-empty small mb-0">Select a box or helper to change its name, colour or size.</p>
+                    <div v-if="canEdit && (selectedBox || selectedPerson)" class="canvas-selection" role="group" aria-label="Selected element">
                         <template v-if="selectedBox">
                             <label class="selection-field">Name
                                 <input v-model="selectedBox.label" class="form-control form-control-sm" maxlength="24" :disabled="!layoutEditable">
@@ -885,7 +884,7 @@ function addPerson() {
                         <p v-if="!planId" class="small mb-0 w-100">Save the floor plan before adding a background.</p>
                         <p v-else class="small mb-0 w-100">JPEG, PNG or WebP, up to 10 MiB. Participants see it behind the layout.</p>
                     </div>
-                    <p v-if="bgError" class="small text-danger mb-2" role="alert">{{ bgError }}</p>
+                    <p v-dismissible v-if="bgError" class="small text-danger mb-2" role="alert">{{ bgError }}</p>
                     <div class="stage-wrap">
                         <v-stage ref="stageRef" :config="{ ...scaledStage, onMousedown: deselectAll, onTouchstart: deselectAll }">
                             <v-layer>
@@ -1091,8 +1090,8 @@ function addPerson() {
                         </div>
                         <button v-if="canEdit" class="btn btn-primary" :disabled="helperBusy || !helperDirty"
                             @click="saveHelpers">Save helper positions</button>
-                        <p v-if="helperMessage" role="status" class="text-success mt-2">{{ helperMessage }}</p>
-                        <p v-if="helperError" role="alert" class="text-danger mt-2">{{ helperError }}</p>
+                        <p v-dismissible v-if="helperMessage" role="status" class="text-success mt-2">{{ helperMessage }}</p>
+                        <p v-dismissible v-if="helperError" role="alert" class="text-danger mt-2">{{ helperError }}</p>
                     </section>
                 </aside>
             </div>
@@ -1644,11 +1643,6 @@ function addPerson() {
     border: 1px solid var(--floor-line);
     border-radius: 14px;
     background: var(--floor-surface)
-}
-
-.selection-empty {
-    align-self: center;
-    color: var(--floor-muted)
 }
 
 @media (max-width: 1199.98px) {
