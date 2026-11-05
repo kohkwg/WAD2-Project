@@ -274,8 +274,8 @@ blocked and event/recommendation responses are mocked. Search/category persisten
 clear/empty states, Island/Map/List, details/RSVP navigation and recommendation
 actions are covered; this does not claim a successful live RSVP transaction.
 
-[README](../README.md) is the setup entry point; [status](../status.md) records dated
-results and limits; [decisions](../decisions.md) records permissions/contracts.
+[README](../README.md) is the setup entry point; [status](status.md) records dated
+results and limits; [decisions](decisions.md) records permissions/contracts.
 There is no root runner or lint script. Use Node 22 and pnpm; preserve npm lockfiles.
 
 ## Setup and data modes
@@ -578,7 +578,7 @@ A passing suite does not prove every browser/device, complete accessibility,
 production concurrency or response-loss behaviour. Real-phone camera/geolocation,
 Safari/iOS motion feel, a successful rainy NEA switch, private object-image storage,
 automatic storage cleanup and owner review of hosting/security settings remain
-explicit limits in [status](../status.md#current-checkpoint).
+explicit limits in [status](status.md#current-checkpoint).
 
 
 ## Frontend redesign checks
@@ -747,7 +747,7 @@ the best shared stretch; the first browser test now drags across five cells with
 toggles one with Space and marks "I can't make it" for after. 6 unit and 3 Go together browser
 tests passed. Touch painting and the dark theme were checked by hand in the browser.
 Sidebar: `e2e/sidebar-collapse.spec.js` (collapse to 76px, tooltip label, remembered after
-reload, expand). The navigation specs (`navbar-account`, `shared-ui`, `design-polish`,
+reload, expand; since 5 November it checks the rail as the default instead, see below). The navigation specs (`navbar-account`, `shared-ui`, `design-polish`,
 `landing-page`) had the same 5 failures before and after this change, so the sidebar didn't
 cause them; they were already failing on this branch. Manually,
 `GET /api/food/nearby` near SMU Campus Green on a weekday lunchtime returned a real deal (560 m)
@@ -879,3 +879,47 @@ node server/checks/online-events-db.check.mjs /tmp/wad2-pglite/node_modules/@ele
 under plain Node, at HEAD as well: `lib/api.js` uses an extensionless import and reads
 `import.meta.env` directly. On 5 November it was run with a temporary loader that added `.js`
 and stubbed `lib/api.js` (not committed).
+
+## Signed-out landing motion (5 November)
+
+The existing landing spec, against a demo server you own (the repository config can reuse a
+live server on 5173). Use a temporary config with `baseURL` on that port; the spec stubs the
+account lookup itself so the signed-out page shows:
+
+```sh
+VITE_USE_MOCK=true pnpm --dir client exec vite --port 5196 --strictPort
+pnpm --dir client exec playwright test -c <temporary config> e2e/landing-page.spec.js
+```
+
+There is no committed motion spec. The 5 November checks used a throwaway headless Chromium
+script with the same stub (`LandingView.vue`'s `api` import replaced) so the hero card got
+demo events. It checked the end state of every animation, the headline's accessible label
+during and after the split, pointer tilt, card rotate/pause/next, dino hop, nav pill and
+scrolled state, feature hover, focus finishing the intro, reduced motion, and no horizontal
+overflow at 375/575/768/991/1280px.
+
+Limits found while checking:
+- The desktop app's browser pane pauses `requestAnimationFrame` while hidden, so GSAP and
+  Motion freeze there; use headless Chromium or keep the pane visible.
+- Requests to hosted Supabase got no answer from headless Chromium in the sandbox (Discover
+  too), so live events on the hero card were seen only in the in-app browser.
+- Demo mode can't sign in from the landing form ("Sign-in needs Supabase"), and live sign-in
+  is human-only, so the sign-in celebration needs a human check.
+
+## Sidebar collapsed by default (5 November)
+
+```sh
+VITE_USE_MOCK=true pnpm --dir client exec vite --port 5196 --strictPort
+pnpm --dir client exec playwright test -c <temporary config> e2e/sidebar-collapse.spec.js e2e/navbar-account.spec.js e2e/landing-page.spec.js
+```
+
+`sidebar-collapse.spec.js` checks the 76px rail at 992, 1199, 1200, 1400 and 1920px with nothing
+stored, the page padding matching the rail, an expand and a collapse surviving reload, the toggle
+staying on the divider, and a closed drawer with no sideways scroll at 375, 575, 768 and 991px
+whatever was stored.
+
+Specs that switch theme with the expanded sidebar's drop-down start with
+`localStorage['bookedz-sidebar'] = 'expanded'` from a `test.beforeEach` init script, so they keep
+testing what they were written for. A new spec that needs the drop-down at 992px or wider should
+do the same. On 5 November, every failure in those specs also failed on an untouched copy of
+HEAD served the same way (see status).

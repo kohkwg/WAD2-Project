@@ -10,6 +10,7 @@ import CountUp from '../components/ui/CountUp.vue'
 import {
   getEvent,
   getRsvpsForEvent,
+  getEventGroupMembers,
   approveRsvp,
   rejectRsvp,
   removeRsvp,
@@ -57,10 +58,12 @@ async function loadData(id = eventId.value) {
   const request = ++loadRequest
   const version = routeVersion
   try {
-    const [nextEvent, nextRsvps] = await Promise.all([getEvent(id), getRsvpsForEvent(id)])
+    const [nextEvent, nextRsvps, groupRows] = await Promise.all([getEvent(id), getRsvpsForEvent(id), getEventGroupMembers(id).catch(() => [])])
     if (mounted && request === loadRequest && version === routeVersion && id === eventId.value) {
       event.value = nextEvent
-      rsvps.value = nextRsvps
+      // Mark RSVPs from people coming with a Go together group (an indicator only)
+      const byUser = new Map(groupRows.map((g) => [g.userId, g]))
+      rsvps.value = nextRsvps.map((r) => ({ ...r, group: byUser.get(r.userId) || null }))
       if (['pending', 'confirmed', 'waitlist', 'closed'].includes(route.query.status)) activeTab.value = route.query.status
       else if (nextEvent.requiresApproval) activeTab.value = 'pending'
       loading.value = false
@@ -114,6 +117,12 @@ onUnmounted(() => {
 
 // TODO (Timothy - row-level security): the database should also block other organisers
 const isMyEvent = computed(() => event.value && (event.value.isMine || event.value.canManage || event.value.organiserId === CURRENT_ORGANISER_ID))
+
+// Go together: how many active RSVPs are coming with a group, and how many groups
+const groupSummary = computed(() => {
+  const active = rsvps.value.filter((r) => r.group && ['pending', 'confirmed', 'waitlisted', 'offered'].includes(r.status))
+  return { people: active.length, groups: new Set(active.map((r) => r.group.groupId)).size, pending: active.filter((r) => r.status === 'pending').length }
+})
 
 // ---------- Split RSVPs into the tabs ----------
 
@@ -402,6 +411,9 @@ async function demoExpireOffers() {
     <div v-dismissible v-if="errorMessage" ref="errorAlert" tabindex="-1" class="alert alert-danger" role="alert">{{ errorMessage }}</div>
 
     <!-- Tabs: Vue decides which one is showing (activeTab), so no Bootstrap JS needed -->
+    <p v-if="groupSummary.people" class="group-summary small" role="status">
+      <strong>{{ groupSummary.people }} {{ groupSummary.people === 1 ? 'RSVP is' : 'RSVPs are' }} coming with {{ groupSummary.groups }} Go together {{ groupSummary.groups === 1 ? 'group' : 'groups' }}</strong><template v-if="groupSummary.pending">, {{ groupSummary.pending }} waiting for your approval</template>. They’re marked in the list.
+    </p>
     <div class="nav nav-tabs status-tabs" role="group" aria-label="Filter RSVPs by status">
         <button
           v-for="tab in tabs"
@@ -525,6 +537,7 @@ async function demoExpireOffers() {
 .legend-dot--confirmed { background: var(--bookedz-primary); }
 .legend-dot--offered { background: var(--bookedz-yellow); }
 .legend-dot--available { background: var(--bookedz-mint); border: 1px solid var(--bookedz-muted-border); }
+.group-summary { margin: 0 0 .6rem; padding: .5rem .8rem; border: 1.5px solid var(--bookedz-teal); border-radius: 14px; background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
 .status-tabs { display: flex; flex-wrap: wrap; gap: .35rem; padding: .45rem; border: 1px solid var(--bookedz-border); border-radius: 16px 16px 0 0; background: var(--bookedz-glass-solid); }
 /* Plain scoped selectors: the tab buttons belong to this template. (The earlier :deep() form
    needed an ancestor from this component and never matched, so inactive tabs showed as coral links.) */

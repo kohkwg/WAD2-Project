@@ -155,3 +155,10 @@ export async function dismissGroupNotice(noticeId) {
   await requireUser()
   await rpc('dismiss_group_notice', { p_notice_id: noticeId })
 }
+
+// For an event's organiser: who among its RSVPs is going with a Go together group
+export async function getEventGroupMembers(eventId) {
+  await requireUser()
+  const rows = await rpc('event_group_members', { p_event_id: eventId })
+  return rows.map((r) => ({ userId: r.user_id, groupId: r.group_id, hostName: r.host_name, groupSize: r.group_size, isHost: r.is_host }))
+}

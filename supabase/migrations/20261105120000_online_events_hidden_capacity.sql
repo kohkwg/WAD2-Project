@@ -408,9 +408,13 @@ revoke all on function public.create_event_with_details(uuid, jsonb) from public
 grant execute on function public.create_event_with_details(uuid, jsonb) to authenticated;
 
 -- 5. Go together groups meet at the event's venue, so online events can't have one ------------
--- The 4 November function, plus the online check.
+-- Reconciled on 5 November 2026: this file first redefined the older 5-argument create_group, which
+-- on a fresh database sat beside the 6-argument one from 20261105050527. It now keeps one
+-- create_group with every rule (RSVP first, friend invites, no online events), the same
+-- definition as 20261105074842_event_group_members.sql. The hosted project already has it.
+drop function if exists public.create_group(uuid, text, int, text, text);
 create or replace function public.create_group(p_event_id uuid, p_note text default '', p_capacity int default 4,
-  p_join_mode text default 'open', p_visibility text default 'public')
+  p_join_mode text default 'open', p_visibility text default 'public', p_invite_ids uuid[] default '{}')
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare
   t public.events;
@@ -422,10 +426,15 @@ begin
   if not found then raise exception 'Choose the event you want company for.'; end if;
   if t.is_online then raise exception 'Go together groups are for in-person events, so online events can’t have one.'; end if;
   if t.starts_at <= now() then raise exception 'That event has already started. Choose another one.'; end if;
+  if not exists (select 1 from public.registrations r where r.event_id = t.id and r.user_id = auth.uid()
+                 and r.status in ('pending', 'confirmed', 'waitlisted', 'offered')) then
+    raise exception 'RSVP to this event first, then start a group for it.';
+  end if;
   if char_length(v_note) > 200 then raise exception 'Keep the note to 200 characters or fewer.'; end if;
   if p_capacity is null or p_capacity not between 2 and 8 then raise exception 'A group has 2 to 8 spots, including you.'; end if;
-  if p_join_mode not in ('open', 'auto', 'approval') then raise exception 'Choose how people join.'; end if;
-  if p_visibility not in ('public', 'private') then raise exception 'Choose who can find the group.'; end if;
+  if p_join_mode not in ('open', 'approval') then raise exception 'Choose who can join.'; end if;
+  if p_visibility not in ('public', 'private') then raise exception 'Choose who can see the group.'; end if;
+  if cardinality(coalesce(p_invite_ids, '{}')) > 20 then raise exception 'Invite up to 20 friends at a time.'; end if;
 
   insert into public.events (title, description, starts_at, ends_at, venue_id, capacity, requires_approval, join_mode, status, kind)
   values ('Going to ' || left(t.title, 191), v_note, t.starts_at, t.ends_at, t.venue_id, p_capacity,
@@ -434,8 +443,14 @@ begin
   insert into public.event_interests (event_id, interest_id)
   select v_id, ei.interest_id from public.event_interests ei where ei.event_id = t.id;
   insert into public.groups (event_id, official_event_id, visibility) values (v_id, t.id, p_visibility);
+  insert into public.group_invites (group_id, user_id, invited_by)
+  select distinct v_id, f.id, auth.uid() from unnest(coalesce(p_invite_ids, '{}')) as f(id)
+  where f.id <> auth.uid() and public.are_friends(auth.uid(), f.id)
+  on conflict do nothing;
   return v_id;
 end $$;
+revoke execute on function public.create_group(uuid, text, int, text, text, uuid[]) from public, anon;
+grant execute on function public.create_group(uuid, text, int, text, text, uuid[]) to authenticated;
 
 -- 6. Discovery view: the 3 November view plus is_online and hide_capacity ---------------------
 -- For a hidden capacity, people other than the organiser get no capacity, and spots_left is

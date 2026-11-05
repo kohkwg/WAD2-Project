@@ -1,5 +1,43 @@
 # Decisions
 
+Who decided what, and when. A dated decision covers the work it names; it is not blanket
+approval for later Git, cloud or database changes. Team decisions and implementation contracts
+are attributed to the person who made them. The [status timeline](status.md) records delivery
+and evidence, the [change history](changelog.md) records authorship, and library credits are in
+the [README](../README.md#credits-and-licences). Original supplied material stays in
+`docs/resources/` (local only, not in normal clones).
+
+## Decision log, newest first
+
+5 November 2026 — Denzel, sidebar collapsed by default: from 992px (Bootstrap lg, xl and xxl)
+the sidebar starts as the 76px icon rail and expands only when someone uses its toggle. Denzel
+chose to keep remembering that choice per browser, so someone who prefers the full sidebar keeps
+it after a reload (people who expanded it before this change keep seeing it expanded). Below
+992px nothing changes: phones keep the bottom tab bar and ☰ drawer, tablets the ☰ drawer. No
+hover-to-expand; the rail keeps its tooltips. This replaces the 4 November default of expanded
+from 1200px (Huxley's sidebar decision below), so Huxley should review it.
+
+5 November 2026 — Denzel, signed-out landing motion: the landing page felt static, so Denzel
+chose the "entrance and polish" and "playful dinos" tiers of a motion plan (a scroll-drawn
+trail with a walking dino was deferred). Use the already-installed GSAP (including its
+SplitText and DrawSVG plugins), Motion for Vue and Lenis; Anime.js from Denzel's resource list
+was not adopted because it overlaps GSAP and would be a new dependency. The hero card may show
+real upcoming official events, never invented ones. Loops must be finite or pausable, reveals
+finish on focus, the sign-in form is not animated, and reduced motion shows the page in place.
+No pinned scroll scenes. The landing page is Huxley's sign-in page (4 November), so Huxley
+should review the change. Details are in the design document's Landing section.
+
+5 November 2026 — Huxley, organisers see groups; Friends is a sidebar: on Manage RSVPs, people coming
+with a Go together group get a small chip ("With Bea Lim's group · 3", or "In a friends-only group"
+without the host's name) and a one-line summary says how many RSVPs came with groups and how many are
+waiting for approval. It is only an indicator: approving and removing work as before. Live mode uses
+`event_group_members()`, readable only by the event's team (migration
+`20261105074842_event_group_members.sql`, which also merges the two `create_group` definitions from
+`20261105050527` and `20261105120000` into one with every rule, restoring the online-events check on
+the hosted project; applied there as 20261105074842, and `20261105120000` now defines the same
+single `create_group` so a fresh database matches). In Community, Friends is now a full-height sticky sidebar beside everything from
+1100px wide, and below the groups on smaller screens.
+
 5 November 2026 — Huxley, groups follow RSVPs: only people with an RSVP to an event (going,
 waitlisted, pending or offered) can start a group for it, so the Start a group list shows just your
 upcoming RSVP'd events. Anyone can still join a group; getting in (an open join, an accepted invite
@@ -136,7 +174,7 @@ mode first; the live app shows "Coming soon" until a jio comments migration is a
 Timothy. No SQL or hosted changes.
 
 4 November 2026 — Huxley, design consistency pass: one design document,
-[DESIGN.md](docs/design/DESIGN.md), replaces the design system, design review and
+[DESIGN.md](design/DESIGN.md), replaces the design system, design review and
 implementation record. Discover does **not** show the "Picked for you" strip (this
 supersedes the 3 November instruction to retain it). Map pins use category colours, with
 orange stars for picks and neutral count clusters. Standard words are "RSVP" (or "Join
@@ -228,6 +266,10 @@ exclude organiser/team behavioural evidence while retaining explicit interests a
 bookmark storage; explain recommendations using supporting actions. Preserve the
 existing route fixture and current topic, distance and diversity scoring.
 
+### Late October 2026: Aishani's Discover and recommendation requests
+
+These were recorded without dates; the matching [status](status.md) entries are dated 26–27 October.
+
 Aishani requests the illustrated Singapore hero as a separate landing page rather
 than part of Discover. Bookedz logos must return to it from any page. Use `/` for
 the public landing page and retain `/discover` for recommendations/event browsing;
@@ -300,14 +342,6 @@ Aishani's subsequent 27 October compatibility decision: accept the mean of
 tags included. Explicit 10-point interests start at 50/100. Authorise the isolated
 implementation and local checks; no SQL, routes, frontend or live ranking changes.
 
-Denzel's recorded instructions and approvals, consolidated on 23 October and
-updated through 31 October 2026.
-Dates identify the decision, not a blanket approval for later work. Team decisions
-and implementation contracts are attributed separately. The [status timeline](status.md)
-records delivery and evidence; [README](README.md#change-history) retains
-full authorship and library attribution. Original supplied material remains in
-`docs/resources/` (local-only, excluded from normal clones).
-
 ## Denzel's decisions and approvals
 
 On 23 October, Denzel subsequently authorised a full project-wide frontend redesign
@@ -315,7 +349,7 @@ based on `docs/resources/Bookedz_Design_Ideation_Spec.md`, explicitly supersedin
 the existing visual UI/UX. This supersedes earlier theme/shell preservation and tools-only scope
 for this redesign. Existing backend contracts, business rules, routes, data and
 teammate authorship remain. The implementation's visual choices and assets are
-documented in [the design document](docs/design/DESIGN.md). This does not
+documented in [the design document](design/DESIGN.md). This does not
 authorise a commit, push, deployment, SQL change or hosted data mutation.
 
 | Date | Decision / approval | Status and limits |
@@ -351,8 +385,9 @@ authorise a commit, push, deployment, SQL change or hosted data mutation.
 - Keep secrets and personal data out of source/docs/logs. Environment examples
   contain placeholders. Preserve imported initial SQL and coordinate later
   contracts with Timothy; check hosted history before applying changes.
-- Keep library attributions in code and presentation materials and the change
-  history in README. Restricted resources, generated graphs, installed
+- Keep library attributions in code, presentation materials and the README's credits, and
+  the change history in [changelog](changelog.md) (moved out of the README on 5 November so the
+  README stays a submission-ready overview). Restricted resources, generated graphs, installed
   skills and private host notes remain local/ignored; normal clones do not need them.
 
 ## Adopted technical contracts
@@ -445,7 +480,7 @@ Operational forms, alerts, QR/barcodes and task boards remain immediately usable
 There are no pinned scroll scenes. Later user-requested map loops have explicit
 pause/visibility/reduced-motion controls; this supersedes the earlier no-loop choice.
 
-See [the design document](docs/design/DESIGN.md) and actual evidence in
+See [the design document](design/DESIGN.md) and actual evidence in
 [status](status.md). Automated Chromium does not establish Safari/iOS feel or
 physical camera/GPS behaviour. Map venues use real coordinates within a Singapore
 area envelope; the generalised illustration is not navigation or boundary validation.
@@ -521,7 +556,8 @@ own branches from one fixed dev commit. Preserve both local/remote tips first;
 use explicit force-with-lease only on the owner's feature branch. Subsequent work
 uses normal feature pushes; Denzel will create/review/merge PRs into dev later.
 This authority does not reset teammates' branches now, force-push dev/main, deploy,
-or mutate hosted application data. See `design-branches.md`.
+or mutate hosted application data. The procedure was `design-branches.md` (now in Git history;
+the current workflow is [contributing](contributing.md)).
 
 ## 26 October 2026 — F1 interest formula
 
@@ -548,7 +584,7 @@ undo restores the original positive stage date. No category-level negative
 learning in V1. Preserve the earlier mentoring constraint against generating the
 whole core engine. Begin with source-schema mapping and isolated evidence tests;
 coordinate later schema integration with Timothy. See
-[recommendation design](docs/recommendation-design.md).
+[recommendation design](recommendation-design.md).
 
 Aishani then authorises continuing the persistence adapter without connecting it
 to live ranking, reusing authoritative registration/check-in records. She requests

@@ -54,7 +54,7 @@ export const deleteEvent = (eventId) => backend.deleteEvent(eventId)
 export const getEventOnlineAccess = (eventId) => backend.getEventOnlineAccess(eventId)
 
 // ---------- Go together groups (Community) ----------
-// Live mode uses migrations 20261104142732 and 20261104142907 (see decisions.md); a database
+// Live mode uses migrations 20261104142732 and 20261104142907 (see docs/decisions.md); a database
 // without them makes the live calls say Go together isn't set up yet.
 const groupsBackend = USING_SUPABASE ? supabaseGroupsApi : mockApi
 export const getGroups = () => groupsBackend.getGroups() // public upcoming groups, plus private ones you're in
@@ -75,6 +75,7 @@ export const updateGroupSettings = (groupId, settings) => groupsBackend.updateGr
 export const deleteGroup = (groupId) => groupsBackend.deleteGroup(groupId) // host; members get a notice
 export const getGroupNotices = () => groupsBackend.getGroupNotices() // "a group you were in was deleted"
 export const dismissGroupNotice = (noticeId) => groupsBackend.dismissGroupNotice(noticeId)
+export const getEventGroupMembers = (eventId) => groupsBackend.getEventGroupMembers(eventId) // organiser: who's coming with a group
 
 // Food places and deals near a point, from the Express server (/api/food/nearby).
 // Works in both modes; needs the server running.
