@@ -26,7 +26,7 @@ watch(() => route.path, async () => {
     <div :key="route.path" class="route-view"><RouterView /></div>
   </main>
   <footer class="app-footer">
-    <div class="container"><div><RouterLink to="/" class="footer-home-link" aria-label="Bookedz home">Bookedz</RouterLink><span class="ms-3">A little island. A lot to discover.</span></div><span>Explore Singapore. Make a little room for something new.</span></div>
+    <div class="container"><div><RouterLink to="/" class="footer-home-link" aria-label="Bookedz home">Bookedz</RouterLink><span class="ms-3">A little island. A lot to discover.</span></div><span class="footer-tagline">Explore Singapore. Make a little room for something new.</span></div>
   </footer>
   </div>
   <ToastHost />
