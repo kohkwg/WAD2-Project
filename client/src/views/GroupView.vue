@@ -334,9 +334,9 @@ async function removeGroup() {
         <span class="group-event-go" aria-hidden="true">›</span>
       </RouterLink>
 
-      <!-- Going, invite and chat on the left; Before and after on the right -->
+      <!-- Going, invite and chat in a sidebar; Before and after gets the wide column -->
       <div class="group-columns">
-        <div class="group-col">
+        <div class="group-col group-col-side">
       <section class="group-card" aria-labelledby="group-people-title">
         <div class="group-people-head">
           <h2 id="group-people-title" class="section-title m-0"><BumpValue :value="people.length" /> going</h2>
@@ -383,13 +383,13 @@ async function removeGroup() {
         <GroupChat :key="group.id" :group-id="group.id" :can-post="isMember" @changed="load({ quiet: true })" />
       </section>
         </div>
-        <div class="group-col">
+        <div class="group-col group-col-main">
       <section v-if="isMember && group.plan" class="group-card">
         <GroupPlan :group="group" @update:plan="group.plan = $event" />
       </section>
       <section v-else class="group-card group-teaser">
         <h2 class="section-title m-0">Before and after</h2>
-        <p class="text-meta text-secondary m-0">Members plan food before or after the event, with deals nearby. Join the group to see and add ideas.</p>
+        <p class="text-meta text-secondary m-0">Members plan food before or after the event, with places nearby. Join the group to see and add ideas.</p>
       </section>
         </div>
       </div>
@@ -401,7 +401,7 @@ async function removeGroup() {
 .group-page { max-width: none; padding-block: 1.25rem 3rem; display: grid; gap: 16px; }
 .group-columns { display: grid; gap: 16px; align-items: start; }
 .group-col { display: grid; gap: 16px; min-width: 0; }
-@media (min-width: 992px) { .group-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; } }
+@media (min-width: 992px) { .group-columns { grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); gap: 20px; } }
 .group-back { justify-self: start; color: var(--bookedz-muted); text-decoration: none; font-weight: 600; }
 .group-back:hover { color: var(--bookedz-ink); }
 .group-loading { display: flex; align-items: center; gap: 10px; padding: 40px 0; color: var(--bookedz-muted); }

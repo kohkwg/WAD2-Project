@@ -11,8 +11,8 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('join a group, get the event RSVP prompt, plan lunch and chat', async ({ page }) => {
-  // The food server isn't running in this test; the planner still takes typed places
-  await page.route('**/api/food/nearby**', (route) => route.fulfill({ json: { deals: [{ id: 'd1', kind: 'deal', title: '1-for-1 lattes', merchant: 'Kopi Corner', priceText: '$4', outlet: { name: 'Kopi Corner', lat: 1.297, lng: 103.851 }, distanceM: 120, validAt: 'valid', source: { name: 'Telegram', url: 'https://t.me/example/1' } }], places: [], status: { places: 'unconfigured', deals: 'ok' } } }))
+  // A stand-in for the food server: one cafe near the venue, open at the meal time
+  await page.route('**/api/food/nearby**', (route) => route.fulfill({ json: { places: [{ id: 'place:kopi', kind: 'place', name: 'Kopi Corner', category: 'cafe', address: '1 Example Road', lat: 1.297, lng: 103.851, distanceM: 120, openAt: 'open' }], status: { places: 'ok' } } }))
   await page.goto('/community')
   await expect(page.getByRole('heading', { level: 1, name: 'Community' })).toBeVisible()
   // Groups sit inside their event's card
@@ -36,6 +36,11 @@ test('join a group, get the event RSVP prompt, plan lunch and chat', async ({ pa
   await expect(page).toHaveURL(/\/groups\/grp2$/)
   await expect(page.getByLabel('Invite link')).toHaveValue(/\/g\/inv-grp2$/)
   const before = page.getByRole('article', { name: /before$/ })
+  // On a narrow planner the slots sit behind a Before | After switch
+  const showSlot = async (which) => { const tab = page.getByRole('tab', { name: new RegExp(`${which}$`) }); if (await tab.isVisible()) await tab.click() }
+  await showSlot('before')
+  // The free-time grid is folded into one line until you open it
+  await before.getByRole('button', { name: 'Mark when you’re free' }).click()
   // Paint free times when2meet style: drag down your column
   const cells = before.getByRole('button', { name: /you’re not free/ })
   await cells.nth(10).scrollIntoViewIfNeeded()
@@ -46,16 +51,25 @@ test('join a group, get the event RSVP prompt, plan lunch and chat', async ({ pa
   await page.mouse.move(last.x + last.width / 2, last.y + last.height / 2, { steps: 6 })
   await page.mouse.up()
   await expect(before.getByRole('button', { name: /you’re free/ })).toHaveCount(5)
-  await expect(before).toContainText(/Best time, 1 of 2 free:.*You/)
+  await expect(before).toContainText('Best time · 1 of 2 free')
   // Keyboard toggles one cell
   await before.getByRole('button', { name: /you’re free/ }).first().press('Space')
   await expect(before.getByRole('button', { name: /you’re free/ })).toHaveCount(4)
+  await before.getByRole('button', { name: 'Done' }).click()
   const after = page.getByRole('article', { name: /after$/ })
+  await showSlot('after')
+  await after.getByRole('button', { name: 'Mark when you’re free' }).click()
   await after.getByRole('button', { name: 'I can’t make it' }).click()
-  await expect(after).toContainText('Not marked yet: Ethan')
+  await expect(after).toContainText('Waiting on Ethan')
+  await showSlot('before')
   await before.getByRole('button', { name: /Suggest a spot/ }).click()
-  await expect(before.getByText('1-for-1 lattes')).toBeVisible()
-  await before.getByRole('button', { name: 'Suggest' }).click()
+  // One place box: nearby places to scroll, or type to search
+  const box = before.locator('.place-box')
+  await expect(box).toContainText('Nearby and open at')
+  await expect(box.locator('.place-row', { hasText: 'Kopi Corner' })).toContainText('Open')
+  await box.getByLabel('Find a place').fill('kopi')
+  await expect(box).toContainText('Matches for “kopi”')
+  await box.getByRole('button', { name: 'Suggest Kopi Corner' }).click()
   await expect(before.locator('.group-idea', { hasText: 'Kopi Corner' })).toContainText('Keen 1')
 
   await page.getByLabel('Message').fill('See you there')
@@ -93,11 +107,14 @@ test('only people going can start a group; start a friends-only one and open it 
 
   // The host picks a typed idea for after the event
   const after = page.getByRole('article', { name: /after$/ })
+  const afterTab = page.getByRole('tab', { name: /after$/ })
+  if (await afterTab.isVisible()) await afterTab.click()
   await after.getByRole('button', { name: /Suggest a spot/ }).click()
-  await after.getByLabel('Or type a place').fill('Maxwell Food Centre')
-  await after.getByRole('button', { name: 'Add' }).click()
-  await after.getByRole('button', { name: 'Pick' }).click()
+  await after.getByLabel('Find a place').fill('Maxwell Food Centre')
+  await after.getByRole('button', { name: 'Add Maxwell Food Centre by name' }).click()
+  await after.getByRole('button', { name: 'Lock it in' }).click()
   await expect(after).toContainText('Planned')
+  await expect(after.locator('.group-the-plan')).toContainText('Maxwell Food Centre')
 
   await page.goto(new URL(link).pathname)
   await expect(page.getByRole('heading', { level: 1, name: 'Your group' })).toBeVisible()

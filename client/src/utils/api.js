@@ -72,7 +72,7 @@ export const joinGroup = (target) => groupsBackend.joinGroup(target) // { id, to
 export const getGroupComments = (groupId) => groupsBackend.getGroupComments(groupId)
 export const addGroupComment = (groupId, text) => groupsBackend.addGroupComment(groupId, text)
 export const deleteGroupComment = (commentId) => groupsBackend.deleteGroupComment(commentId)
-export const suggestGroupStop = (groupId, slot, item) => groupsBackend.suggestGroupStop(groupId, slot, item) // slot is 'before' or 'after'; a place, deal or { name }
+export const suggestGroupStop = (groupId, slot, item) => groupsBackend.suggestGroupStop(groupId, slot, item) // slot is 'before' or 'after'; a nearby place, a searched place or { name }
 export const setGroupAvailability = (groupId, slot, cells) => groupsBackend.setGroupAvailability(groupId, slot, cells) // [cell start ISO]; when2meet-style
 export const voteGroupStop = (groupId, slot, suggestionId, keen) => groupsBackend.voteGroupStop(groupId, slot, suggestionId, keen)
 export const chooseGroupStop = (groupId, slot, suggestionId) => groupsBackend.chooseGroupStop(groupId, slot, suggestionId) // host; suggestionId or null
@@ -85,7 +85,7 @@ export const getGroupNotices = () => groupsBackend.getGroupNotices() // "a group
 export const dismissGroupNotice = (noticeId) => groupsBackend.dismissGroupNotice(noticeId)
 export const getEventGroupMembers = (eventId) => groupsBackend.getEventGroupMembers(eventId) // organiser: who's coming with a group
 
-// Food places and deals near a point, from the Express server (/api/food/nearby).
+// Food places near a point that are open at a time, from the Express server (/api/food/nearby).
 // Works in both modes; needs the server running.
 const SERVER = import.meta.env?.VITE_API_URL || 'http://127.0.0.1:3000'
 export async function getFoodNearby({ lat, lng, at, radius = 800 }) {

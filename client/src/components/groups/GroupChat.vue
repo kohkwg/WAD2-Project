@@ -32,7 +32,9 @@ async function post() {
     await load()
     emit('changed')
     await nextTick()
-    (list.value?.$el || list.value)?.lastElementChild?.scrollIntoView({ block: 'nearest' })
+    // Its own statement: a line starting with "(" would otherwise call nextTick()'s result
+    const listEl = list.value?.$el || list.value
+    listEl?.lastElementChild?.scrollIntoView({ block: 'nearest' })
   } catch (e) {
     error.value = e.message
   } finally {

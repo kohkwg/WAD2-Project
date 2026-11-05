@@ -789,3 +789,9 @@ Feature 4; the database is Timothy's area). The user answered these choices:
 - **Consistent data (user's instruction):** every existing event becomes physical with
   capacity shown; demo data is upgraded to the same shape, and the demo keeps links apart
   from events, as the database does.
+
+## 5 November: no food deals in Go together (Huxley)
+
+The Telegram and deal-site pipeline wasn't going to be run or deployed, and it only ever located
+a handful of deals, so Huxley decided to take deals out entirely. Go together's food planner uses
+nearby places from Geoapify (open at the meal time, nearest first), OneMap search and typed names.

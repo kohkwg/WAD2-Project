@@ -109,12 +109,14 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move))
         <button
           type="button"
           class="painter-cell painter-cell--group"
-          :class="{ 'is-best': inBest(cell.start), 'is-best-top': inBest(cell.start) && !inBest(cells[i - 1]?.start || ''), 'is-best-bottom': inBest(cell.start) && !inBest(cells[i + 1]?.start || ''), 'is-half': i % 2 === 1, 'is-focus': focusIndex === i }"
+          :class="{ 'is-best': inBest(cell.start), 'is-best-top': inBest(cell.start) && !inBest(cells[i - 1]?.start || ''), 'is-best-bottom': inBest(cell.start) && !inBest(cells[i + 1]?.start || ''), 'is-half': i % 2 === 1 }"
           :style="{ background: heat(cell) }"
           :aria-label="`${time(cell.start)}: ${cell.free.length} of ${memberCount} free`"
           @click="focusIndex = focusIndex === i ? -1 : i"
           @mouseenter="focusIndex = i"
+          @mouseleave="focusIndex = -1"
           @focus="focusIndex = i"
+          @blur="focusIndex = -1"
         ></button>
       </template>
     </div>
@@ -150,7 +152,6 @@ onBeforeUnmount(() => window.removeEventListener('pointermove', move))
 .painter-cell--group.is-best-top { box-shadow: inset 2px 0 0 var(--bookedz-primary), inset -2px 0 0 var(--bookedz-primary), inset 0 2px 0 var(--bookedz-primary); }
 .painter-cell--group.is-best-bottom { box-shadow: inset 2px 0 0 var(--bookedz-primary), inset -2px 0 0 var(--bookedz-primary), inset 0 -2px 0 var(--bookedz-primary); }
 .painter-cell--group.is-best-top.is-best-bottom { box-shadow: inset 0 0 0 2px var(--bookedz-primary); }
-.painter-cell--group.is-focus { outline: 2px solid var(--bookedz-ink); outline-offset: -2px; position: relative; }
 .painter-grid > .painter-cell:nth-last-child(-n + 2) { border-bottom: 1px solid var(--bookedz-border); }
 .painter-who { min-height: 1.4em; color: var(--bookedz-muted); overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) { .painter-cell--mine, .painter-cell--group { transition: none; animation: none !important; } }
