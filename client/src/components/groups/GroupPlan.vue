@@ -1,14 +1,15 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import GroupMap from './GroupMap.vue'
 import AvailabilityPainter from './AvailabilityPainter.vue'
 import BumpValue from '../ui/BumpValue.vue'
 import { getFoodNearby, suggestGroupStop, voteGroupStop, chooseGroupStop, removeGroupStop, setGroupAvailability } from '../../utils/api.js'
 import { SLOTS, SUGGESTION_NAME_LIMIT } from '../../utils/groups.js'
 import { toast } from '../../composables/useToast'
+import { searchPlaces } from '../../lib/onemap.js'
 
 // Before / after the event: members paint when they're free each side of it, when2meet
-// style (the slot is the longest stretch with the most people free), suggest a nearby place or food deal, mark the ones
+// style (the slot is the longest stretch with the most people free), suggest a nearby place, mark the ones
 // they're keen on, and the host picks one.
 const props = defineProps({ group: { type: Object, required: true } })
 const emit = defineEmits(['update:plan'])
@@ -20,8 +21,7 @@ const hasMap = computed(() => Number.isFinite(venue.value?.lat) && Number.isFini
 const busy = ref('')
 const error = ref('')
 const openSlot = ref('') // which slot's "Add an idea" panel is open
-const food = reactive({ before: null, after: null }) // { loading, error, deals, places, status }
-const tab = ref('deals')
+const food = reactive({ before: null, after: null }) // { loading, error, places, status, at }
 const customName = ref('')
 
 const time = (iso) => new Intl.DateTimeFormat('en-SG', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Singapore' }).format(new Date(iso))
@@ -54,35 +54,124 @@ const remove = (slot, s) => act(`remove-${s.id}`, () => removeGroupStop(props.gr
 
 async function suggest(slot, item) {
   await act(`add-${item.id || 'custom'}`, () => suggestGroupStop(props.group.id, slot, item), 'Idea added')
-  if (!error.value) { customName.value = ''; openSlot.value = '' }
+  if (!error.value) { customName.value = ''; openSlot.value = ''; clearSearch() }
+}
+
+// "Search for a place": OneMap matches for what's typed, so a spot can be added with its address
+// and a pin on the map. Waits for a pause in typing and drops answers to older searches.
+const search = reactive({ results: [], loading: false, error: '' })
+let searchTimer = null
+let searchAbort = null
+function clearSearch() {
+  clearTimeout(searchTimer)
+  searchAbort?.abort()
+  searchAbort = null
+  Object.assign(search, { results: [], loading: false, error: '' })
+}
+watch(customName, (text) => {
+  clearSearch()
+  const query = text.trim()
+  if (query.length < 3) return
+  search.loading = true
+  searchTimer = setTimeout(async () => {
+    const controller = new AbortController()
+    searchAbort = controller
+    try {
+      const places = await searchPlaces(query, controller.signal, 30, 3)
+      if (searchAbort !== controller) return
+      // Nearest the event's venue first
+      const sorted = hasMap.value ? [...places].sort((a, b) => fromVenue(a) - fromVenue(b)) : places
+      Object.assign(search, { results: sorted.slice(0, 5), loading: false, error: '' })
+    } catch (e) {
+      if (controller.signal.aborted) return
+      Object.assign(search, { results: [], loading: false, error: 'Place search is unavailable right now. You can still add the name.' })
+    }
+  }, 400)
+})
+onBeforeUnmount(clearSearch)
+const pickPlace = (slot, place, index) => suggest(slot, { id: `onemap-${index}`, name: place.name.slice(0, SUGGESTION_NAME_LIMIT), address: place.address, lat: place.lat, lng: place.lng })
+const nameTaken = (slot, name) => plan.value[slot].suggestions.some((s) => String(s.name).toLowerCase() === String(name).slice(0, SUGGESTION_NAME_LIMIT).toLowerCase())
+// Straight-line distance from the event's venue, for the search results
+function fromVenue(place) {
+  if (!hasMap.value) return null
+  const rad = (x) => (x * Math.PI) / 180
+  const dLat = rad(place.lat - venue.value.lat), dLng = rad(place.lng - venue.value.lng)
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(venue.value.lat)) * Math.cos(rad(place.lat)) * Math.sin(dLng / 2) ** 2
+  return Math.round(6371000 * 2 * Math.asin(Math.sqrt(h)))
 }
 const alreadySuggested = (slot, item) => plan.value[slot].suggestions.some((s) => s.refId && s.refId === item.id)
 
+// Food near the venue for a slot. Places are checked against the slot's start time, so it asks
+// again if that time has moved.
+async function loadFood(slot) {
+  const at = plan.value[slot].start
+  if (!hasMap.value || (food[slot] && food[slot].at === at && (food[slot].loading || !food[slot].error))) return
+  food[slot] = { loading: true, error: '', places: [], status: {}, at }
+  try {
+    const result = await getFoodNearby({ lat: venue.value.lat, lng: venue.value.lng, at })
+    if (plan.value[slot].start !== at) return
+    food[slot] = { loading: false, error: '', ...result, at }
+  } catch (e) {
+    food[slot] = { loading: false, error: e.message, places: [], status: {}, at }
+  }
+}
 async function toggleAdd(slot) {
   openSlot.value = openSlot.value === slot ? '' : slot
   error.value = ''
-  if (!openSlot.value || food[slot] || !hasMap.value) return
-  food[slot] = { loading: true, error: '', deals: [], places: [], status: {} }
-  try {
-    const result = await getFoodNearby({ lat: venue.value.lat, lng: venue.value.lng, at: plan.value[slot].start })
-    food[slot] = { loading: false, error: '', ...result }
-    tab.value = result.deals.length ? 'deals' : 'places'
-  } catch (e) {
-    food[slot] = { loading: false, error: e.message, deals: [], places: [], status: {} }
-  }
+  customName.value = ''
+  clearSearch()
+  if (!openSlot.value) return
+  await loadFood(slot)
 }
-const validLabel = { valid: 'On at this time', unknown: 'Check times' }
+// One list for the place box: nearby places (Geoapify, open then) narrowed by what's typed, plus
+// OneMap matches once three letters are in, without repeats, nearest the venue first.
+function placeRows(slot) {
+  const q = customName.value.trim().toLowerCase()
+  const nearby = (food[slot]?.places || [])
+    .map((p) => ({ ...p, name: String(p.name ?? '') })) // names can arrive as numbers (a cafe called "1988")
+    .filter((p) => p.name && (!q || p.name.toLowerCase().includes(q) || String(p.category || '').toLowerCase().includes(q)))
+    .map((p) => ({ key: p.id, name: p.name, detail: p.category, distanceM: p.distanceM, open: p.openAt === 'open', busyKey: `add-${p.id}`, taken: alreadySuggested(slot, p) || nameTaken(slot, p.name), pick: () => suggest(slot, p) }))
+  const seen = new Set(nearby.map((r) => r.name.toLowerCase()))
+  const searched = q.length >= 3
+    ? search.results.filter((p) => !seen.has(p.name.toLowerCase())).map((p, i) => ({ key: `onemap:${p.name}:${p.postal}`, name: p.name, detail: p.address, distanceM: fromVenue(p), open: false, busyKey: `add-onemap-${i}`, taken: nameTaken(slot, p.name), pick: () => pickPlace(slot, p, i) }))
+    : []
+  return [...nearby, ...searched].sort((a, b) => (a.distanceM ?? Infinity) - (b.distanceM ?? Infinity))
+}
+const placesUnavailable = (slot) => !hasMap.value || food[slot]?.error || food[slot]?.status?.places === 'unconfigured' || food[slot]?.status?.places === 'unavailable'
+function placeHint(slot) {
+  const q = customName.value.trim()
+  if (q) return `Matches for “${q}”, nearest first`
+  if (placesUnavailable(slot)) return 'Search for a place, or type its name'
+  return `Nearby and open at ${time(plan.value[slot].start)}, nearest first`
+}
+const addTyped = (slot) => { if (customName.value.trim()) suggest(slot, { name: customName.value }) }
+
+// "When are you free?" folds into one line; the grid opens on demand
+const painting = reactive({ before: false, after: false })
+// Phones show one slot at a time
+const activeSlot = ref(SLOTS[0])
+const directionsUrl = (s) => (s.lat != null && s.lng != null
+  ? `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`
+  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${s.name} Singapore`)}`)
+const fromVenueOf = (s) => (s.lat != null && s.lng != null ? fromVenue(s) : null)
 </script>
 
 <template>
   <section class="group-plan" aria-labelledby="group-plan-title">
     <div class="group-plan-head">
       <h2 id="group-plan-title" class="section-title m-0">Before and after</h2>
-      <p class="text-meta text-secondary m-0">Grab food together around the event. Mark when you’re free, suggest a spot and mark the ones you’re keen on{{ isHost ? ', then pick one.' : '; the host picks.' }}</p>
+      <p class="text-meta text-secondary m-0">Find a time, suggest a spot, mark the ones you’re keen on{{ isHost ? ', then lock one in.' : ', and the host locks one in.' }}</p>
+    </div>
+
+    <!-- Phones: one slot at a time -->
+    <div class="group-slot-switch" role="tablist" aria-label="Before or after the event">
+      <button v-for="slot in SLOTS" :key="slot" type="button" role="tab" class="group-slot-tab" :aria-selected="activeSlot === slot" :aria-controls="`slot-card-${slot}`" @click="activeSlot = slot">
+        {{ slotTitle(slot) }}<span v-if="chosen(slot)" class="group-slot-dot" aria-label="planned"></span>
+      </button>
     </div>
 
     <div class="group-slots">
-      <article v-for="slot in SLOTS" :key="slot" class="group-slot" :aria-labelledby="`slot-${slot}`">
+      <article v-for="slot in SLOTS" :id="`slot-card-${slot}`" :key="slot" class="group-slot" :class="{ 'is-inactive': activeSlot !== slot }" :aria-labelledby="`slot-${slot}`">
         <header class="group-slot-head">
           <div>
             <Transition name="list-fade" mode="out-in"><h3 :id="`slot-${slot}`" :key="slotTitle(slot)" class="group-slot-title">{{ slotTitle(slot) }}</h3></Transition>
@@ -91,106 +180,113 @@ const validLabel = { valid: 'On at this time', unknown: 'Check times' }
           <span v-if="chosen(slot)" class="group-slot-badge pop-once">Planned</span>
         </header>
 
-        <p class="group-slot-fit text-caption m-0" aria-live="polite">
-          <template v-if="plan[slot].fitted">
-            <strong>Best time, {{ plan[slot].coming.length }} of {{ plan[slot].memberCount }} free:</strong> {{ names(plan[slot].coming) }}.
-            <template v-if="plan[slot].cant.length"> Not free then: {{ names(plan[slot].cant) }}.</template>
-          </template>
-          <template v-else>Nobody has marked a free stretch of 45 minutes or more yet, so this is a default hour.</template>
-          <template v-if="plan[slot].noReply.length"> Not marked yet: {{ names(plan[slot].noReply) }}.</template>
-        </p>
+        <!-- When: one line, with the grid folded away until someone wants to mark their times -->
+        <div class="group-when">
+          <p class="group-when-copy m-0" aria-live="polite">
+            <template v-if="plan[slot].fitted"><strong>Best time · {{ plan[slot].coming.length }} of {{ plan[slot].memberCount }} free</strong></template>
+            <template v-else><strong>No shared free time yet</strong></template>
+            <span v-if="plan[slot].noReply.length" class="text-caption text-secondary"> · Waiting on {{ names(plan[slot].noReply).replace(/^You\b/, 'you') }}</span>
+            <span v-if="plan[slot].fitted && plan[slot].cant.length" class="text-caption text-secondary"> · Not free then: {{ names(plan[slot].cant) }}</span>
+          </p>
+          <button type="button" class="btn btn-outline-secondary btn-sm" :aria-expanded="painting[slot]" :aria-controls="`paint-${slot}`" @click="painting[slot] = !painting[slot]">
+            {{ painting[slot] ? 'Done' : plan[slot].myCells?.length ? 'Change your times' : 'Mark when you’re free' }}
+          </button>
+        </div>
+        <div v-if="painting[slot]" :id="`paint-${slot}`" class="reveal-down">
+          <AvailabilityPainter :slot="slot" :cells="plan[slot].cells" :my-cells="plan[slot].myCells" :member-count="plan[slot].memberCount" :best="plan[slot].fitted ? { start: plan[slot].start, end: plan[slot].end } : null" @save="saveAvailability(slot, $event)" />
+        </div>
 
-        <AvailabilityPainter :slot="slot" :cells="plan[slot].cells" :my-cells="plan[slot].myCells" :member-count="plan[slot].memberCount" :best="plan[slot].fitted ? { start: plan[slot].start, end: plan[slot].end } : null" @save="saveAvailability(slot, $event)" />
+        <!-- The host's pick, front and centre -->
+        <div v-if="chosen(slot)" :key="chosen(slot).id" class="group-the-plan pop-in">
+          <span class="group-the-plan-label">The plan</span>
+          <strong class="group-the-plan-name">{{ chosen(slot).name }}</strong>
+          <span v-if="chosen(slot).detail" class="text-meta">{{ chosen(slot).detail }}<template v-if="chosen(slot).priceText"> · {{ chosen(slot).priceText }}</template></span>
+          <span class="text-caption text-secondary">
+            <template v-if="fromVenueOf(chosen(slot)) != null">{{ distance(fromVenueOf(chosen(slot))) }} from {{ venue.name }} · {{ walk(fromVenueOf(chosen(slot))) }}</template>
+            <template v-else-if="chosen(slot).address">{{ chosen(slot).address }}</template>
+            <template v-if="chosen(slot).votes"> · {{ chosen(slot).votes }} keen</template>
+          </span>
+          <div class="group-the-plan-actions">
+            <a :href="directionsUrl(chosen(slot))" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Directions</a>
+            <button v-if="isHost" type="button" class="btn btn-outline-secondary btn-sm" :disabled="busy === `pick-${chosen(slot).id}`" @click="choose(slot, chosen(slot))">Change</button>
+          </div>
+        </div>
 
-        <p v-if="chosen(slot)" :key="chosen(slot).id" class="group-slot-chosen pop-in">
-          <strong>{{ chosen(slot).name }}</strong>{{ chosen(slot).detail ? ` · ${chosen(slot).detail}` : '' }}
-        </p>
-
-        <TransitionGroup v-if="plan[slot].suggestions.length" tag="ul" name="list-fade" class="list-unstyled m-0 group-ideas">
-          <li v-for="s in plan[slot].suggestions" :key="s.id" class="group-idea" :class="{ 'is-chosen': s.id === plan[slot].chosenId }">
+        <!-- Everyone's ideas, most keen first (the pick is shown above) -->
+        <TransitionGroup v-if="plan[slot].suggestions.some((s) => s.id !== plan[slot].chosenId)" tag="ul" name="list-fade" class="list-unstyled m-0 group-ideas">
+          <li v-for="s in plan[slot].suggestions.filter((x) => x.id !== plan[slot].chosenId)" :key="s.id" class="group-idea">
             <div class="group-idea-copy">
               <strong>{{ s.name }}</strong>
-              <span v-if="s.kind === 'deal'" class="group-idea-deal">{{ s.detail }}<template v-if="s.priceText"> · {{ s.priceText }}</template></span>
-              <span v-else-if="s.detail" class="text-caption text-secondary">{{ s.detail }}</span>
-              <span class="text-caption text-secondary">Suggested by {{ s.mine ? 'you' : s.suggestedByName }}<template v-if="s.address"> · {{ s.address }}</template></span>
-              <a v-if="s.sourceUrl" :href="s.sourceUrl" target="_blank" rel="noopener" class="text-caption">See the deal post</a>
+              <span v-if="s.detail" class="text-caption text-secondary">{{ s.detail }}</span>
+              <span class="text-caption text-secondary">{{ s.mine ? 'You' : s.suggestedByName }}<template v-if="fromVenueOf(s) != null"> · {{ walk(fromVenueOf(s)) }}</template><template v-else-if="s.address"> · {{ s.address }}</template></span>
             </div>
             <div class="group-idea-actions">
               <button type="button" class="btn btn-sm group-keen" :class="s.myVote ? 'is-on' : ''" :aria-pressed="s.myVote" :disabled="busy === `vote-${s.id}`" @click="vote(slot, s)">
-                Keen <span class="tnum"><BumpValue :value="s.votes" /></span>
+                <span aria-hidden="true">{{ s.myVote ? '♥' : '♡' }}</span> Keen <span class="tnum"><BumpValue :value="s.votes" /></span>
               </button>
-              <button v-if="isHost" type="button" class="btn btn-sm" :class="s.id === plan[slot].chosenId ? 'btn-outline-secondary' : 'btn-primary'" :disabled="busy === `pick-${s.id}`" @click="choose(slot, s)">
-                {{ s.id === plan[slot].chosenId ? 'Unpick' : 'Pick' }}
-              </button>
+              <button v-if="isHost" type="button" class="btn btn-sm btn-primary" :disabled="busy === `pick-${s.id}`" @click="choose(slot, s)">Lock it in</button>
               <button v-if="isHost || s.mine" type="button" class="btn btn-link btn-sm text-secondary p-0" :disabled="busy === `remove-${s.id}`" :aria-label="`Remove ${s.name}`" @click="remove(slot, s)">Remove</button>
             </div>
           </li>
         </TransitionGroup>
-        <p v-else class="text-meta text-secondary m-0">No ideas yet.</p>
+
+        <p v-else-if="!chosen(slot)" class="text-meta text-secondary m-0">No ideas yet. Be the first to suggest a spot.</p>
 
         <button type="button" class="btn btn-outline-secondary btn-sm group-add" :aria-expanded="openSlot === slot" :aria-controls="`add-${slot}`" @click="toggleAdd(slot)">
           {{ openSlot === slot ? 'Close' : `Suggest a spot for ${plan[slot].label.toLowerCase()}` }}
         </button>
 
-        <div v-if="openSlot === slot" :id="`add-${slot}`" class="group-add-panel reveal-down">
-          <template v-if="hasMap">
-            <p v-if="food[slot]?.loading" class="text-meta text-secondary m-0" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Finding food near {{ venue.name }}…</p>
-            <p v-dismissible v-else-if="food[slot]?.error" class="group-add-note" role="status">{{ food[slot].error }}</p>
-            <template v-else-if="food[slot]">
-              <div class="group-tabs" role="tablist" aria-label="Nearby food">
-                <button type="button" role="tab" class="group-tab" :aria-selected="tab === 'deals'" @click="tab = 'deals'">Deals <span class="tnum">{{ food[slot].deals.length }}</span></button>
-                <button type="button" role="tab" class="group-tab" :aria-selected="tab === 'places'" @click="tab = 'places'">Places <span class="tnum">{{ food[slot].places.length }}</span></button>
+        <!-- One place box: nearby places to scroll, or type to search; both lists show as one -->
+        <form v-if="openSlot === slot" :id="`add-${slot}`" class="place-box reveal-down" @submit.prevent="addTyped(slot)">
+          <div class="place-box-field">
+            <span class="place-box-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg></span>
+            <label class="visually-hidden" :for="`custom-${slot}`">Find a place</label>
+            <input :id="`custom-${slot}`" v-model="customName" class="place-box-input" :maxlength="SUGGESTION_NAME_LIMIT" autocomplete="off" placeholder="Search or pick a place nearby" :aria-describedby="`place-hint-${slot}`" @keydown.esc="customName = ''" />
+            <span v-if="search.loading || food[slot]?.loading" class="spinner-border spinner-border-sm place-box-spin" role="status"><span class="visually-hidden">Looking for places…</span></span>
+          </div>
+          <p :id="`place-hint-${slot}`" class="place-box-hint m-0" aria-live="polite">{{ placeHint(slot) }}</p>
+          <ul class="place-box-list list-unstyled m-0" :aria-label="placeHint(slot)">
+            <li v-for="row in placeRows(slot)" :key="row.key" class="place-row">
+              <div class="place-row-copy">
+                <strong class="place-row-name">{{ row.name }}</strong>
+                <span class="place-row-meta">
+                  <span v-if="row.open" class="place-row-open">Open</span>
+                  {{ [row.detail, row.distanceM != null ? `${distance(row.distanceM)} · ${walk(row.distanceM)}` : ''].filter(Boolean).join(' · ') }}
+                </span>
               </div>
-              <ul v-if="tab === 'deals' && food[slot].deals.length" class="list-unstyled m-0 group-options stagger-in">
-                <li v-for="deal in food[slot].deals" :key="deal.id" class="group-option">
-                  <div class="group-idea-copy">
-                    <strong>{{ deal.merchant || deal.outlet.name }}</strong>
-                    <span class="group-idea-deal">{{ deal.title }}<template v-if="deal.priceText"> · {{ deal.priceText }}</template></span>
-                    <span class="text-caption text-secondary">{{ distance(deal.distanceM) }} · {{ walk(deal.distanceM) }} · {{ validLabel[deal.validAt] }}</span>
-                    <a v-if="deal.source.url" :href="deal.source.url" target="_blank" rel="noopener" class="text-caption">From {{ deal.source.name || 'the deal post' }}</a>
-                  </div>
-                  <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="alreadySuggested(slot, deal) || busy === `add-${deal.id}`" @click="suggest(slot, deal)">{{ alreadySuggested(slot, deal) ? 'Added' : 'Suggest' }}</button>
-                </li>
-              </ul>
-              <p v-else-if="tab === 'deals'" class="group-add-note">{{ food[slot].status?.deals === 'no-pipeline-output' ? 'No deals collected yet. The deals pipeline hasn’t run on this server.' : 'No food deals found near here for this time.' }}</p>
-              <ul v-if="tab === 'places' && food[slot].places.length" class="list-unstyled m-0 group-options stagger-in">
-                <li v-for="place in food[slot].places" :key="place.id" class="group-option">
-                  <div class="group-idea-copy">
-                    <strong>{{ place.name }}</strong>
-                    <span class="text-caption text-secondary">{{ place.category }} · {{ distance(place.distanceM) }} · {{ walk(place.distanceM) }}</span>
-                  </div>
-                  <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="alreadySuggested(slot, place) || busy === `add-${place.id}`" @click="suggest(slot, place)">{{ alreadySuggested(slot, place) ? 'Added' : 'Suggest' }}</button>
-                </li>
-              </ul>
-              <p v-else-if="tab === 'places'" class="group-add-note">{{ food[slot].status?.places === 'unconfigured' ? 'Nearby places need a Geoapify key on the server.' : 'No places found near here.' }}</p>
-            </template>
-          </template>
-          <form class="group-custom" @submit.prevent="suggest(slot, { name: customName })">
-            <label class="form-label m-0" :for="`custom-${slot}`">Or type a place</label>
-            <div class="group-custom-row">
-              <input :id="`custom-${slot}`" v-model="customName" class="form-control" :maxlength="SUGGESTION_NAME_LIMIT" autocomplete="off" placeholder="e.g. Maxwell Food Centre" />
-              <button type="submit" class="btn btn-primary" :disabled="!customName.trim() || busy === 'add-custom'">Add</button>
-            </div>
-          </form>
-        </div>
+              <button type="button" class="btn btn-outline-secondary btn-sm" :disabled="row.taken || busy === row.busyKey" :aria-label="row.taken ? `${row.name} is already suggested` : `Suggest ${row.name}`" @click="row.pick()">{{ row.taken ? 'Added' : 'Suggest' }}</button>
+            </li>
+            <li v-if="customName.trim()" class="place-row place-row-typed">
+              <div class="place-row-copy">
+                <strong class="place-row-name">“{{ customName.trim() }}”</strong>
+                <span class="place-row-meta">Just the name, with no map pin</span>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm" :disabled="busy === 'add-custom'" :aria-label="`Add ${customName.trim()} by name`">Add</button>
+            </li>
+            <li v-if="!placeRows(slot).length && !customName.trim() && !food[slot]?.loading" class="place-box-empty">
+              {{ placesUnavailable(slot) ? 'Nearby places aren’t available here. Type a place to search for it.' : `No places near here are open at ${time(plan[slot].start)}. Type to search.` }}
+            </li>
+          </ul>
+          <p v-if="search.error" class="place-box-hint m-0" role="status">{{ search.error }}</p>
+        </form>
       </article>
     </div>
 
     <p v-dismissible v-if="error" class="group-plan-error" role="alert">{{ error }}</p>
     <GroupMap v-if="hasMap" :venue="venue" :spots="mapSpots" />
-    <p class="text-caption text-secondary m-0">Deals come from public Telegram channels and deal sites and may change; check with the shop. Places from OpenStreetMap.</p>
+    <p class="text-caption text-secondary m-0">Nearby places and opening hours come from OpenStreetMap and may be out of date; check with the shop.</p>
   </section>
 </template>
 
 <style scoped>
 .group-plan { display: grid; gap: 14px; }
 .group-plan-head { display: grid; gap: 4px; }
-.group-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* Before and after side by side when there's room (each needs about 280px for its food list), stacked otherwise */
+.group-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; }
 .group-slot { display: grid; align-content: start; gap: 10px; padding: 14px; border: 1px solid var(--bookedz-border); border-radius: 16px; background: var(--bookedz-surface); }
 .group-slot-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .group-slot-title { margin: 0; font: 600 1.05rem var(--bookedz-heading); }
 .group-slot-badge { padding: 3px 10px; border-radius: 99px; background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); font-size: var(--text-caption); font-weight: 700; }
-.group-slot-fit { color: var(--bookedz-muted); overflow-wrap: anywhere; }
 @keyframes chosen-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
 .pop-in { animation: chosen-in var(--bookedz-motion-normal, .24s) var(--bookedz-ease-stamp, ease-out); }
 .group-keen { transition: background-color var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease), border-color var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease), transform var(--bookedz-motion-fast, .16s) var(--bookedz-ease, ease); }
@@ -198,26 +294,53 @@ const validLabel = { valid: 'On at this time', unknown: 'Check times' }
 .group-slot { transition: border-color var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease), box-shadow var(--bookedz-motion-normal, .24s) var(--bookedz-ease, ease); }
 .group-slot:has(.group-slot-badge) { border-color: color-mix(in srgb, var(--bookedz-teal-ink) 50%, var(--bookedz-border)); }
 @media (prefers-reduced-motion: reduce) { .pop-in, .group-keen, .group-slot { animation: none; transition: none; } }
-.group-slot-chosen { margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--bookedz-orange-soft); overflow-wrap: anywhere; }
 .group-ideas,.group-options { display: grid; gap: 8px; }
 .group-idea,.group-option { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 8px 10px; border: 1px solid var(--bookedz-border); border-radius: 12px; }
-.group-idea.is-chosen { border-color: var(--bookedz-primary); }
 .group-idea-copy { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
-.group-idea-deal { color: var(--bookedz-primary-dark); font-size: .9rem; font-weight: 600; }
 .group-idea-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; flex: none; }
 .group-idea-actions .btn,.group-option .btn { min-height: 36px; }
 .group-keen { border: 1px solid var(--bookedz-border); background: var(--bookedz-surface); color: var(--bookedz-ink); }
 .group-keen.is-on { border-color: var(--bookedz-teal-ink); background: var(--bookedz-teal-soft); color: var(--bookedz-teal-ink); }
 .group-add { justify-self: start; min-height: 40px; }
-.group-add-panel { display: grid; gap: 10px; padding-top: 10px; border-top: 1px dashed var(--bookedz-border); }
 .group-add-note { margin: 0; color: var(--bookedz-muted); font-size: .9rem; }
-.group-tabs { display: flex; gap: 6px; }
-.group-tab { min-height: 36px; padding: 4px 12px; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-surface); color: var(--bookedz-ink); font-size: .88rem; }
-.group-tab[aria-selected='true'] { background: var(--bookedz-ink); border-color: var(--bookedz-ink); color: var(--bookedz-surface); }
 .group-options { max-height: 300px; overflow-y: auto; }
-.group-custom { display: grid; gap: 6px; }
-.group-custom-row { display: flex; gap: 8px; }
-.group-custom-row .form-control,.group-custom-row .btn { min-height: 40px; }
+/* The place box: one field and one scrolling list, whichever service a row came from */
+.place-box { display: grid; overflow: hidden; border: 1px solid var(--bookedz-control-border, var(--bookedz-border)); border-radius: 16px; background: var(--bookedz-surface); }
+.place-box-field { display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--bookedz-border); }
+.place-box-field:focus-within { box-shadow: inset 0 -2px 0 var(--bookedz-primary); }
+.place-box-icon { display: grid; flex: none; width: 18px; height: 18px; color: var(--bookedz-muted); }
+.place-box-input { flex: 1; min-width: 0; min-height: 46px; border: 0; background: transparent; color: var(--bookedz-ink); font-size: 1rem; outline: none; }
+.place-box-input::placeholder { color: var(--bookedz-muted); }
+.place-box-spin { flex: none; color: var(--bookedz-muted); }
+.place-box-hint { padding: 8px 12px 4px; color: var(--bookedz-muted); font-size: .78rem; font-weight: 600; }
+.place-box-list { max-height: 300px; overflow-y: auto; overscroll-behavior: contain; }
+.place-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; }
+.place-row + .place-row { border-top: 1px solid var(--bookedz-border); }
+.place-row:hover { background: var(--bookedz-hover); }
+.place-row-copy { display: grid; gap: 2px; min-width: 0; }
+.place-row-name { overflow-wrap: anywhere; }
+.place-row-meta { color: var(--bookedz-muted); font-size: .8rem; overflow-wrap: anywhere; }
+.place-row-open { margin-right: 4px; padding: 0 6px; border-radius: 99px; background: color-mix(in srgb, var(--bookedz-success) 16%, transparent); color: var(--bookedz-success); font-weight: 700; }
+.place-row-typed { background: color-mix(in srgb, var(--bookedz-primary) 6%, transparent); }
+.place-box-empty { padding: 14px 12px; color: var(--bookedz-muted); font-size: .88rem; }
+/* Phones (a narrow planner): a Before | After switch and one slot at a time */
+.group-plan { container-type: inline-size; }
+.group-slot-switch { display: flex; gap: 6px; padding: 4px; border: 1px solid var(--bookedz-border); border-radius: 99px; background: var(--bookedz-surface); }
+.group-slot-tab { position: relative; flex: 1; min-height: 40px; padding: 6px 12px; border: 0; border-radius: 99px; background: transparent; color: var(--bookedz-muted); font-weight: 700; font-size: .88rem; }
+.group-slot-tab[aria-selected='true'] { background: var(--bookedz-ink); color: var(--bookedz-surface); }
+.group-slot-dot { display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: var(--bookedz-success); vertical-align: middle; }
+@container (min-width: 600px) { .group-slot-switch { display: none; } }
+@container (max-width: 599.98px) { .group-slot.is-inactive { display: none; } }
+/* When: one line and a button */
+.group-when { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 10px 12px; border-radius: 14px; background: var(--bookedz-hover); }
+.group-when-copy { min-width: 0; font-size: .9rem; }
+/* The host's pick */
+.group-the-plan { display: grid; gap: 3px; padding: 14px 16px; border: 2px solid var(--bookedz-ink); border-radius: 18px; background: var(--bookedz-mango-soft, #fff1cc); box-shadow: 4px 4px 0 var(--bookedz-ink); }
+.group-the-plan-label { color: var(--bookedz-primary-dark); font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.group-the-plan-name { font: 900 1.2rem/1.25 var(--bookedz-heading); color: var(--bookedz-ink); overflow-wrap: anywhere; }
+.group-the-plan-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+:root[data-theme="dark"] .group-the-plan { border-color: var(--bookedz-border); box-shadow: 4px 4px 0 color-mix(in srgb, var(--bookedz-teal) 60%, transparent); }
+/* No ideas yet: quick picks */
 .group-plan-error { margin: 0; color: var(--bookedz-danger); font-size: .9rem; }
 @media (max-width: 767px) { .group-slots { grid-template-columns: 1fr; } }
 </style>

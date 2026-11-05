@@ -16,6 +16,18 @@ On 5 November 2026, at Denzel's request, we added search suggestions to Discover
 (`lib/searchSuggestions.js`, with the list in Aishani's `EventFilters.vue` and its wiring in
 `DiscoverView.vue`), and changed the live search so text containing a comma or bracket still matches.
 
+On 5 November 2026, at Huxley's request, the food deals were removed from Go together: the
+Python `pipeline/` (Telegram and deal sites, Gemini extraction), the server's deal code and
+`/api/food/ingest/run`, the planner's Deals tab and the related env keys. The food service is now
+`server/services/foodPlaces.js`. Also at Huxley's request: places closed at the meal time are
+hidden and the rest are listed nearest first (`server/services/openingHours.js` reads
+OpenStreetMap opening hours); "Suggest a spot" is one place box, a search field over one list of
+nearby places and OneMap matches that saves the address and map pin; the group page gives Before
+and after the wide column with a Before | After switch on narrow screens, folds the free-time grid
+into one line and leads each slot with "The plan" and the ideas; the free-time grid no longer
+leaves an outline on the group column; and sending a group chat message no longer shows a
+"nextTick" error.
+
 On 5 November 2026, at Gregory's request, we brought back the soft dark mode on every ticket page
 (now including Vivienne's event page and dashboard and the Go together pages) and moved its four
 tokens into `main.css`; made dark-mode outline buttons, dashboard rows and Community tiles easier

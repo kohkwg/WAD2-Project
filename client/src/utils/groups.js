@@ -189,17 +189,14 @@ export function mealLabel(iso) {
 
 // A suggestion from a nearby place, a deal, or a name someone typed
 export function suggestionFrom(item = {}) {
-  if (item.kind === 'deal') {
-    return {
-      kind: 'deal', refId: item.id, name: item.merchant || item.outlet?.name || item.title,
-      detail: item.title, priceText: item.priceText || null, address: item.outlet?.address || null,
-      lat: item.outlet?.lat ?? null, lng: item.outlet?.lng ?? null, sourceUrl: item.source?.url || null,
-    }
-  }
   if (item.kind === 'place') {
     return { kind: 'place', refId: item.id, name: item.name, detail: item.category || null, priceText: null, address: item.address || null, lat: item.lat ?? null, lng: item.lng ?? null, sourceUrl: null }
   }
-  return { kind: 'custom', refId: null, name: String(item.name || '').trim(), detail: null, priceText: null, address: null, lat: null, lng: null, sourceUrl: null }
+  // Typed by a member: just a name, or a place picked from OneMap search with its address and pin
+  const lat = Number(item.lat), lng = Number(item.lng)
+  const located = item.lat != null && item.lng != null && Number.isFinite(lat) && Number.isFinite(lng)
+  const address = typeof item.address === 'string' && item.address.trim() ? item.address.trim().slice(0, 200) : null
+  return { kind: 'custom', refId: null, name: String(item.name || '').trim(), detail: null, priceText: null, address, lat: located ? lat : null, lng: located ? lng : null, sourceUrl: null }
 }
 
 export function suggestionErrors(plan, slot, suggestion) {

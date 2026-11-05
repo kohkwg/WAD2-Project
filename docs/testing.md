@@ -705,7 +705,7 @@ search/view-switch regression. On 25 October, these ran against an owned demo Vi
 server on 5183 using a temporary config overriding baseURL/output paths because
 5173 was occupied; the repository's default config remains unchanged.
 
-## Go together and food deals (4 November)
+## Go together and food deals (4 November; deals removed 5 November, see below)
 
 ```sh
 cd server && node --test tests/foodDeals.test.js
@@ -975,3 +975,70 @@ Five checks: a logged-out visitor sees the organiser then co-organisers; only pu
 back; helpers are left out; a draft is hidden from others but shown to its organiser; an unknown
 event returns nothing. Before the migration is applied, the page leaves the line out instead of
 showing an error. Checked by hand in demo mode at 1280px and 375px, light and dark.
+
+## Go together food: open places, nearest first, and place search
+
+In a group's Before and after planner:
+- **Places tab** (Geoapify, needs `GEOAPIFY_API_KEY` in `server/.env`): places whose
+  OpenStreetMap opening hours say they're closed at the slot's start time are hidden; the rest are
+  listed nearest first and labelled "Open at …" or "Hours not listed" (most places have no hours on
+  OpenStreetMap). The hours reader is `server/services/openingHours.js`; unreadable hours count as
+  "Hours not listed", never as closed. The list is fetched again when the slot's time changes.
+- **Search for a place** (OneMap, no key): matches from up to three result pages, nearest the venue
+  first; picking one saves it with its address and a map pin. OneMap has no opening hours, so these
+  aren't filtered. Typing a name and pressing Add still works.
+
+```bash
+node --test server/tests/openingHours.test.js server/tests/foodPlaces.test.js
+```
+
+Checked by hand against live Geoapify data near SMU: at Saturday 12:30pm the weekday-only
+Starbucks is hidden; at 9:30pm Luckin Coffee (closes 9pm) and both Starbucks are hidden; lists are
+nearest first. Searching "maxwell" lists Maxwell Food Centre; suggesting a search result saves its
+address and shows its pin.
+
+## Go together: Before and after layout
+
+On wide screens the group page puts Going, Invite and Chat in a sidebar (280–340px) and gives
+Before and after the main column, so "before" and "after" sit side by side (each needs ~280px).
+When the planner is narrower than 600px (phones, small laptops) a Before | After switch shows one
+slot at a time (container query on `.group-plan`). Each slot now reads top to bottom:
+- one line for timing ("Best time · 2 of 3 free · Waiting on …") with "Mark when you're free";
+  the free-time grid opens under it and closes with Done (it still saves on every drag);
+- the host's pick as "The plan" (distance and walk from the venue, Directions, Change);
+- other ideas, most keen first, with "Lock it in" for the host;
+- with no ideas yet, the three nearest places open at that time, one tap to suggest (needs the
+  food server; otherwise a plain "be the first" line).
+
+`e2e/go-together.spec.js` covers it (5/6 pass; the remaining failure is the Friends sidebar
+height on Community, unrelated). Checked by hand at 1440px (both slots side by side, the section
+went from about 1,820px to 870px tall), at 375px in dark mode, and with the grid opened and closed.
+
+## Deals removed (5 November)
+
+The food deals (Telegram channels and deal sites, extracted with Gemini) were taken out: the
+`pipeline/` folder, the server's deal code and ingest route, the Deals tab and the deal env keys
+(`GEMINI_*`, `TELEGRAM_*`, `FOOD_INGEST_*`, `PIPELINE_PYTHON`). `server/services/foodDeals.js`
+became `foodPlaces.js` (places only) and `/api/food/nearby` now returns `{ places, status }`.
+The database still accepts an idea of kind `deal`, so any saved before now still shows, as a
+plain idea. `server/tests/foodPlaces.test.js` (4) and `openingHours.test.js` (5) pass;
+`e2e/go-together.spec.js` now stands in a nearby place instead of a deal (5/6 pass, the sixth is
+the unrelated Friends sidebar height). The free-time grid's group column also no longer keeps an
+outline on the last cell pointed at.
+
+## One place box, and the chat fix (5 November)
+
+"Suggest a spot" now opens a single place box: one search field over one scrolling list. With
+the field empty it lists nearby places open at the slot's time (Geoapify), nearest first; typing
+narrows those by name or kind and, from three letters, adds OneMap matches to the same list
+(nearest the venue first, no repeats), with a last row to add just the typed name. The three
+"nearby and open" quick picks under an empty slot were removed. OneMap addresses no longer repeat
+the building name, wherever it appears. Place names that Geoapify sends as numbers (a cafe called
+"1988") are treated as text on the server and the page (a new case in `foodPlaces.test.js`).
+
+Group chat: sending a message showed "nextTick(...) is not a function" because the next line
+began with "(" and was read as a call on `nextTick()`'s result; it is now its own statement.
+
+Checked in demo mode at 375px in dark mode (the nearby list, a search for "lau pa" showing Lau Pa
+Sat with its address and distance, the typed-name row) and by sending a chat message. Go together
+e2e: 5/6 pass, the sixth being the unrelated Friends sidebar height.

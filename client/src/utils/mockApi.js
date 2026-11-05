@@ -771,7 +771,7 @@ export async function deleteGroupComment(commentId) {
   saveDb(db)
 }
 
-// Suggest a place or deal for before or after the event (members only)
+// Suggest a place for before or after the event (members only)
 export async function suggestGroupStop(groupId, slot, item) {
   await fakeDelay()
   const db = loadFreshDb()
